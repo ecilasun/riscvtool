@@ -68,6 +68,7 @@ volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;       // Vi
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
+volatile unsigned int targetjumpaddress = 0x00000000;
 
 void print(int ox, int oy, int len, const char *message)
 {
@@ -181,8 +182,6 @@ int main()
    cls();
    print(0, 184, 29, "V1-OS v.1 c2020 Engin Cilasun");
 
-   unsigned int targetaddress = 0x00000000;
-
    // UART communication section
    while(1)
    {
@@ -215,13 +214,15 @@ int main()
             // Load incoming binary from UART
             if (strstr(incoming, "load")!=nullptr)
             {
-               targetaddress = load();
+               targetjumpaddress = load();
             }
 
             // Run the incoming binary
             if (!strcmp(incoming, "run"))
             {
-               asm ( "j 0x0" );
+               asm("j 0x0;\n");
+               /*asm ( "mv a7, %0;\n"
+                     "jalr 0(a7);\n" : : "ir"(targetjumpaddress) : "a7" );*/
             }
 
             // Rewind read cursor
