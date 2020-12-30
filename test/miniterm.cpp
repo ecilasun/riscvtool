@@ -91,7 +91,7 @@ volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;       // Vi
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-char chartable[32*22];
+char chartable[32*24];
 
 void print(int ox, int oy, int len, const char *message)
 {
@@ -176,20 +176,20 @@ void cls()
 
 void clearchars()
 {
-   for (int cy=0;cy<22;++cy)
+   for (int cy=0;cy<24;++cy)
       for (int cx=0;cx<32;++cx)
          chartable[cx+cy*32] = ' ';
 }
 
 void scroll()
 {
-   for (int cy=0;cy<21;++cy)
+   for (int cy=0;cy<23;++cy)
       for (int cx=0;cx<32;++cx)
          chartable[cx+cy*32] = chartable[cx+(cy+1)*32];
 
    // Clear the last row
-      for (int cx=0;cx<32;++cx)
-         chartable[cx+21*32] = ' ';
+   for (int cx=0;cx<32;++cx)
+      chartable[cx+23*32] = ' ';
 }
 
 int main()
@@ -227,7 +227,7 @@ int main()
             for (int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
             // Step down or scroll
-            if (cmdcounter<21)
+            if (cmdcounter<23)
                ++cmdcounter;
             else
             {
@@ -236,17 +236,17 @@ int main()
             }
 
             // Show the char table
-            for (int cy=0;cy<22;++cy)
+            for (int cy=0;cy<24;++cy)
                for (int cx=0;cx<32;++cx)
                   print(8*cx, 8*cy, 1, &chartable[cx+cy*32]);
 
             // Clear the command line area at bottom 8 pixels of the screen
-            /*for(int y=184;y<192;++y)
+            for(int y=184;y<192;++y)
             {
                int py = y<<8;
                for(int x=0;x<256;++x)
-                  VRAM[x+py] = 0x04;
-            }*/
+                  VRAM[x+py] = 0x0F;
+            }
 
             // Clear the whole screen
             if (!strcmp(incoming, "cls"))
@@ -263,13 +263,11 @@ int main()
             // Rewind read cursor
             rcvcursor=0;
          }
-         /*else
+         else
          {
-            // NOTE: Since we already echo the characters to the remote terminal,
-            // no need to repeat them here.
             // Print out this many characters
             print(0, 184, rcvcursor, incoming);
-         }*/
+         }
 
          // Echo characters back to the terminal
          UARTTX[0] = checkchar;
