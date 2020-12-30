@@ -318,7 +318,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
     char commandtosend[512];
     int commandlength=0;
-    sprintf(commandtosend, "load%c", 13);
+    sprintf(commandtosend, "run%c", 13);
     commandlength = strlen(commandtosend);
 
     printf("Sending ELF binary executable portion over COM4 @256000 bps at 0x%.8X\n", _target);

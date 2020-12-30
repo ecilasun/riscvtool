@@ -68,7 +68,6 @@ volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;       // Vi
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-volatile unsigned int targetjumpaddress = 0x00000000;
 
 void print(int ox, int oy, int len, const char *message)
 {
@@ -87,14 +86,14 @@ void print(int ox, int oy, int len, const char *message)
             {
                fontbyte = font[charcol+x + ((charrow+y)<<8)];
                if (fontbyte==0)
-                  VRAM[i*8+x+ox+py] = 0x00;
+                  VRAM[i*8+x+ox+py] = 0xFF;
             }
       }
       ++i;
    }
 }
 
-unsigned int load()
+void load()
 {
    // Header data
    unsigned int loadlen = 0;
@@ -138,24 +137,6 @@ unsigned int load()
          target[writecursor++] = readdata;
       }
    }
-
-   return loadtarget;
-}
-
-int ExtractIntFromEnd(const char *string)
-{
-   int len = strlen(string)-1;
-   int factor = 1;
-   int result = 0;
-   while(len!=0)
-   {
-      if (string[len] == ' ')
-         break;
-      result += (string[len] - '0')*factor;
-      factor *= 10;
-      --len;
-   }
-   return result;
 }
 
 // Clear the screen
@@ -165,7 +146,7 @@ void cls()
    {
       int py = y<<8;
       for(int x=0;x<256;++x)
-         VRAM[x+py] = 0xFF;
+         VRAM[x+py] = 0x0F;
    }
 }
 
@@ -175,12 +156,12 @@ int main()
    char incoming[32];
 
    unsigned int rcvcursor = 0;
-   unsigned int cmdcounter = 1;
+   unsigned int cmdcounter = 0;
    unsigned int oldcount = 0;
 
    // Startup message
    cls();
-   print(0, 184, 29, "V1-OS v.1 c2020 Engin Cilasun");
+   print(0, 184, 30, "MiniTerm (c)2021 Engin Cilasun");
 
    // UART communication section
    while(1)
@@ -199,12 +180,16 @@ int main()
             // Terminate the string
             incoming[rcvcursor-1] = 0;
 
+            // Print a copy of the string
+            print(0, 8*cmdcounter, rcvcursor, incoming);
+            ++cmdcounter;
+
             // Clear the command line area at bottom 8 pixels of the screen
             for(int y=184;y<192;++y)
             {
                int py = y<<8;
-               for(int x=0;x<255;++x)
-                  VRAM[x+py] = 0xFF;
+               for(int x=0;x<256;++x)
+                  VRAM[x+py] = 0x04;
             }
 
             // Clear the whole screen
@@ -213,18 +198,7 @@ int main()
 
             // Load incoming binary from UART
             if (strstr(incoming, "load")!=nullptr)
-            {
-               targetjumpaddress = load();
-            }
-
-            // Run the incoming binary
-            if (!strcmp(incoming, "run"))
-            {
-                ((void (*)(void)) targetjumpaddress)();
-               //asm("j 0x0;\n");
-               /*asm ( "mv a7, %0;\n"
-                     "jalr 0(a7);\n" : : "ir"(targetjumpaddress) : "a7" );*/
-            }
+               load();
 
             // Rewind read cursor
             rcvcursor=0;
@@ -243,8 +217,6 @@ int main()
          if (rcvcursor>31)
             rcvcursor = 0;
       }
-
-      ++cmdcounter;
    }
 
    return 0;

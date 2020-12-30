@@ -1,8 +1,11 @@
-// V1OS bootloader
+// V1 test
+// Use the following to compile:
+// riscv64-unknown-elf-gcc.exe -c test/test.cpp -Ofast -fno-tree-loop-distribute-patterns -fno-toplevel-reorder -mexplicit-relocs -march=rv32i -mabi=ilp32 -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -fPIC -mno-div -Wl,-e_start
+// riscv64-unknown-elf-ld.exe -A rv32i -m elf32lriscv -o program.elf -T test/test.lds test.o
 
-#if defined(__riscv_compressed)
-#error ("HALT! V1 ROM image: current CPU does not support compressed instruction set!")
-#endif
+/*#if defined(__riscv_compressed)
+#error ("HALT! V1 does not support compressed instruction set!")
+#endif*/
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -40,7 +43,7 @@ volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UA
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
 volatile unsigned int targetjumpaddress = 0x00000000;
 
-void load()
+unsigned int load()
 {
    // Header data
    unsigned int loadlen = 0;
@@ -85,14 +88,60 @@ void load()
       }
    }
 
-   targetjumpaddress = loadtarget;
-   ((void (*)(void)) targetjumpaddress)();
-
-   //asm("j 0x0;\n");
+   return loadtarget;
 }
 
 int main()
 {
-   load();
+   // 32 bytes of incoming command space
+   char incoming[32];
+
+   unsigned int rcvcursor = 0;
+   unsigned int oldcount = 0;
+
+   // UART communication section
+   while(1)
+   {
+      // Step 1: Read UART FIFO byte count
+      unsigned int bytecount = UARTRXStatus[0];
+
+      // Step 2: Check to see if we have something in the FIFO
+      if (bytecount != 0)
+      {
+         // Step 3: Read the data on UARTRX memory location
+         char checkchar = incoming[rcvcursor++] = UARTRX[0];
+
+         if (checkchar == 13) // Enter?
+         {
+            // Terminate the string
+            incoming[rcvcursor-1] = 0;
+
+            // Load incoming binary from UART
+            if (strstr(incoming, "load")!=nullptr)
+            {
+               targetjumpaddress = load();
+            }
+
+            // Run the incoming binary
+            if (!strcmp(incoming, "run"))
+            {
+               targetjumpaddress = load();
+                ((void (*)(void)) targetjumpaddress)();
+            }
+
+            // Rewind read cursor
+            rcvcursor=0;
+         }
+
+         // Echo characters back to the terminal
+         UARTTX[0] = checkchar;
+         if (checkchar == 13)
+            UARTTX[0] = 10; // Echo a linefeed
+
+         if (rcvcursor>31)
+            rcvcursor = 0;
+      }
+   }
+
    return 0;
 }
