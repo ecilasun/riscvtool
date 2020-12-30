@@ -321,7 +321,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     sprintf(commandtosend, "run%c", 13);
     commandlength = strlen(commandtosend);
 
-    printf("Sending ELF binary executable portion over COM4 @256000 bps at 0x%.8X\n", _target);
+    printf("Sending ELF binary executable+data portion over COM4 @256000 bps at 0x%.8X\n", _target);
     hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hComm != INVALID_HANDLE_VALUE)
     {

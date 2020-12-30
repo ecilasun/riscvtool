@@ -18,6 +18,7 @@ extern "C"
    void __attribute__((naked, section (".boot"))) _start()
    {
       asm (
+         "la gp, __global_pointer$;"
          "jal ra, main;"
          "j _exit;"
       );
@@ -116,14 +117,9 @@ int main()
             // Terminate the string
             incoming[rcvcursor-1] = 0;
 
-            // Load incoming binary from UART
-            if (!strcmp(incoming, "load"))
-            {
-               targetjumpaddress = load();
-            }
-
             // Run the incoming binary
-            if (!strcmp(incoming, "run"))
+            //if (!strcmp(incoming, "run")
+            if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
                targetjumpaddress = load();
                 ((void (*)(void)) targetjumpaddress)();

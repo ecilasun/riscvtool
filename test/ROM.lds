@@ -9,8 +9,21 @@ SECTIONS
    {
       *(.text)
    }
+   .sdata :
+   {
+      PROVIDE(__global_pointer$ = . + (4K/2));
+      *(.sdata .sdata.*)
+   }
    .rodata :
    {
       *(.rodata.*)
+   }
+   .got :
+   {
+      *(.got.*)
+   }
+   .bss :
+   {
+      *(.bss.*)
    }
 }

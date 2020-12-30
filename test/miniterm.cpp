@@ -170,7 +170,7 @@ void cls()
    {
       int py = y<<8;
       for(int x=0;x<256;++x)
-         VRAM[x+py] = 0x0F;
+         VRAM[x+py] = 0x30;
    }
 }
 
@@ -198,7 +198,7 @@ int main()
    char incoming[32];
 
    unsigned int rcvcursor = 0;
-   unsigned int cmdcounter = 0;
+   unsigned int cmdcounter = 23;
    unsigned int oldcount = 0;
 
    // Startup message
@@ -227,13 +227,8 @@ int main()
             for (int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
             // Step down or scroll
-            if (cmdcounter<23)
-               ++cmdcounter;
-            else
-            {
-               cls();
-               scroll();
-            }
+            cls();
+            scroll();
 
             // Show the char table
             for (int cy=0;cy<24;++cy)
@@ -245,7 +240,7 @@ int main()
             {
                int py = y<<8;
                for(int x=0;x<256;++x)
-                  VRAM[x+py] = 0x0F;
+                  VRAM[x+py] = 0x30;
             }
 
             // Clear the whole screen
@@ -253,7 +248,6 @@ int main()
             {
                clearchars();
                cls();
-               cmdcounter = 0;
             }
 
             // Load incoming binary from UART
