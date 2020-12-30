@@ -117,7 +117,7 @@ int main()
             incoming[rcvcursor-1] = 0;
 
             // Load incoming binary from UART
-            if (strstr(incoming, "load")!=nullptr)
+            if (!strcmp(incoming, "load"))
             {
                targetjumpaddress = load();
             }

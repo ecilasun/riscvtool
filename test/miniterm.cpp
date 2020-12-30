@@ -257,7 +257,7 @@ int main()
             }
 
             // Load incoming binary from UART
-            if (strstr(incoming, "load")!=nullptr)
+            if (!strcmp(incoming, "load"))
                load();
 
             // Rewind read cursor
