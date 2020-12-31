@@ -17,6 +17,8 @@ extern "C"
    void __attribute__((naked, section (".boot"))) _start()
    {
       asm (
+         "la gp, __global_pointer$;"
+         "la sp, __stack;"
          "jal ra, main;"
          "j _exit;"
       );
@@ -218,7 +220,21 @@ int main()
          // Step 3: Read the data on UARTRX memory location
          char checkchar = incoming[rcvcursor++] = UARTRX[0];
 
-         if (checkchar == 13) // Enter?
+         if (checkchar == 8 && rcvcursor!=1) // Backspace? (make sure your terminal uses ctrl+h for backspace)
+         {
+            --rcvcursor;
+            incoming[rcvcursor-1] = 0;
+            // Copy the string to the chartable
+            for (int i=0;i<rcvcursor;++i)
+               chartable[i+cmdcounter*32] = incoming[i];
+            cls();
+            // Show the char table
+            for (int cy=0;cy<24;++cy)
+               for (int cx=0;cx<32;++cx)
+                  print(8*cx, 8*cy, 1, &chartable[cx+cy*32]);
+            --rcvcursor;
+         }
+         else if (checkchar == 13) // Enter?
          {
             // Terminate the string
             incoming[rcvcursor-1] = 0;
@@ -226,6 +242,7 @@ int main()
             // Copy the string to the chartable
             for (int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
+
             // Step down or scroll
             cls();
             scroll();

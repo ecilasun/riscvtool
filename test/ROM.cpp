@@ -19,6 +19,7 @@ extern "C"
    {
       asm (
          "la gp, __global_pointer$;"
+         "la sp, __stack;"
          "jal ra, main;"
          "j _exit;"
       );
