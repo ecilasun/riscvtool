@@ -1,43 +1,11 @@
-// V1 test
-// Use the following to compile:
-// riscv64-unknown-elf-gcc.exe -c test/test.cpp -Ofast -fno-tree-loop-distribute-patterns -fno-toplevel-reorder -mexplicit-relocs -march=rv32i -mabi=ilp32 -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -fPIC -mno-div -Wl,-e_start
-// riscv64-unknown-elf-ld.exe -A rv32i -m elf32lriscv -o program.elf -T test/test.lds test.o
-
-/*#if defined(__riscv_compressed)
-#error ("HALT! V1 does not support compressed instruction set!")
-#endif*/
+// Bootloader
 
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-
-extern "C"
-{
-   void __attribute__((naked, section (".boot"))) _start()
-   {
-      asm (
-         "la gp, __global_pointer$;"
-         "la sp, __stack;"
-         "jal ra, main;"
-         "j _exit;"
-      );
-   }
-
-   void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
-   {
-      asm (
-         "li a1,0;"
-         "li a2,0;"
-         "li a3,0;"
-         "li a4,0;"
-         "li a5,0;"
-         "li a7,93;"
-         "ecall;"
-      );
-   }
-};
+#include "rvcrt0.h"
 
 volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
