@@ -1,6 +1,6 @@
 // MiniTerm
 // Send to the SoC using:
-// .\build\release\riscvtool.exe .\miniterm.elf -sendelf 0x00000C50
+// .\build\release\riscvtool.exe .\miniterm.elf -sendelf 0x000001D0
 
 #if defined(__riscv_compressed)
 #error ("HALT! The target SoC does not support compressed instruction set!")
