@@ -8,6 +8,7 @@
 #include <memory.h>
 #include <math.h>
 #include "rvcrt0.h"
+#include "umm_malloc.h"
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t font[] __attribute__((aligned(4))) = {
@@ -147,8 +148,12 @@ void scroll()
 
 int main()
 {
+   const unsigned char bgcolor = 0x5B;
+   const unsigned char editbgcolor = 0x00;
+
    // 32 bytes of incoming command space
    char incoming[32];
+   //char *incoming = (char*)malloc(32);
 
    unsigned int rcvcursor = 0;
    unsigned int cmdcounter = 23;
@@ -156,7 +161,7 @@ int main()
 
    // Startup message
    clearchars();
-   cls(0x0F);
+   cls(bgcolor);
    print(0, 184, 30, "MiniTerm (c)2021 Engin Cilasun");
 
    // UART communication section
@@ -178,7 +183,7 @@ int main()
             // Copy the string to the chartable
             for (int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
-            cls(0x0F);
+            cls(bgcolor);
             // Show the char table
             for (int cy=0;cy<24;++cy)
                for (int cx=0;cx<32;++cx)
@@ -194,40 +199,25 @@ int main()
             for (int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
 
-            // Step down or scroll
-            cls(0x0F);
-            scroll();
-
-            // Show the char table
-            for (int cy=0;cy<24;++cy)
-               for (int cx=0;cx<32;++cx)
-                  print(8*cx, 8*cy, 1, &chartable[cx+cy*32]);
-
-            // Clear the command line area at bottom 8 pixels of the screen
-            for(int y=184;y<192;++y)
-            {
-               int py = y<<8;
-               for(int x=0;x<256;++x)
-                  VRAM[x+py] = 0x0F;
-            }
-
             // Clear the whole screen
             //if (!strcmp(incoming, "cls"))
             if (incoming[0]='c' && incoming[1]=='l' && incoming[2]=='s')
             {
                clearchars();
-               cls(0x0F);
+               cls(bgcolor);
             }
-
-            // Load incoming binary from UART
-            //if (!strcmp(incoming, "load"))
-            if (incoming[0]='l' && incoming[1]=='o' && incoming[2]=='a' && incoming[3]=='d')
+            else if (incoming[0]='l' && incoming[1]=='o' && incoming[2]=='a' && incoming[3]=='d') // Load incoming binary from UART
                targetjumpaddress = load();
-
-            if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
+            else if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
                targetjumpaddress = load();
                ((void (*)(void)) targetjumpaddress)();
+            }
+            else
+            {
+               // Step down or scroll
+               cls(bgcolor);
+               scroll();
             }
 
             // Rewind read cursor
@@ -239,6 +229,11 @@ int main()
             print(0, 184, rcvcursor, incoming);
          }
 
+         // Show the char table
+         for (int cy=0;cy<24;++cy)
+            for (int cx=0;cx<32;++cx)
+               print(8*cx, 8*cy, 1, &chartable[cx+cy*32]);
+
          // Echo characters back to the terminal
          UARTTX[0] = checkchar;
          if (checkchar == 13)
@@ -248,6 +243,8 @@ int main()
             rcvcursor = 0;
       }
    }
+
+   //free(incoming);
 
    return 0;
 }
