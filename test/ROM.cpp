@@ -61,6 +61,16 @@ unsigned int load()
    return loadtarget;
 }
 
+void cls()
+{
+   for(int y=0;y<192;++y)
+   {
+      int py = y<<8;
+      for(int x=0;x<256;++x)
+         VRAM[x+py] = 0x30;
+   }
+}
+
 int main()
 {
    // 32 bytes of incoming command space
@@ -68,6 +78,8 @@ int main()
 
    unsigned int rcvcursor = 0;
    unsigned int oldcount = 0;
+
+   cls();
 
    // UART communication section
    while(1)
@@ -79,7 +91,10 @@ int main()
       if (bytecount != 0)
       {
          // Step 3: Read the data on UARTRX memory location
-         char checkchar = incoming[rcvcursor++] = UARTRX[0];
+         char checkchar = incoming[rcvcursor] = UARTRX[0];
+         rcvcursor++;
+         if (rcvcursor>31)
+            rcvcursor = 0;
 
          if (checkchar == 13) // Enter?
          {
@@ -102,9 +117,6 @@ int main()
          UARTTX[0] = checkchar;
          if (checkchar == 13)
             UARTTX[0] = 10; // Echo a linefeed
-
-         if (rcvcursor>31)
-            rcvcursor = 0;
       }
    }
 
