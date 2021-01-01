@@ -29,9 +29,9 @@ Memory mapped I/O
 Memory layout:
 
 ```
-ROM: 0x0000 - 0x4000 (16 Kbytes, DWORD access, read only, copied to RAM at hardware boot time)
-USERRAM: 0x000001D0 - 0x00003FFF (64 Kbytes, DWORD / WORD / BYTE access, read & write)
-VRAM: 0x80000000 - 0x8000C000 (48 Kbytes, 8bpp, DWORD / WORD / BYTE access, write only)
+ROM: 0x0000 - 0x1000 (4 Kbytes, DWORD addressible, read only, copied to RAM at hardware boot time)
+USERRAM: 0x00000220 - 0x00014000 (80 Kbytes, BYTE addressible, read & write, 0x0-0x220 usable after bootloader loads program at 0x220)
+VRAM: 0x80000000 - 0x8000C000 (48 Kbytes, 8bpp, BYTE addressible, write only)
 IOSTATUS: 0x60000000 - ? (read only) [DWORD at +0: uart byte count]
 IOREAD: 0x50000000 - ? (read only) [DWORD at +0: incoming uart byte]
 IOWRITE: 0x40000000 - ? (write only) [DWORD at +0: byte to send]
