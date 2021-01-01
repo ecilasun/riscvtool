@@ -91,10 +91,7 @@ int main()
       if (bytecount != 0)
       {
          // Step 3: Read the data on UARTRX memory location
-         char checkchar = incoming[rcvcursor] = UARTRX[0];
-         rcvcursor++;
-         if (rcvcursor>31)
-            rcvcursor = 0;
+         char checkchar = incoming[rcvcursor++] = UARTRX[0];
 
          if (checkchar == 13) // Enter?
          {
@@ -117,6 +114,9 @@ int main()
          UARTTX[0] = checkchar;
          if (checkchar == 13)
             UARTTX[0] = 10; // Echo a linefeed
+
+         if (rcvcursor>31)
+            rcvcursor = 0;
       }
    }
 
