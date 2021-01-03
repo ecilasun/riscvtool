@@ -1381,25 +1381,30 @@ unsigned int numRand()
     return(seed);
 }
 
-void demo()
+void plotsprite(int ox, int oy, int sid)
 {
-   for (unsigned int k=0;k<512;++k)
+   for (int y=0;y<16;++y)
    {
-      int rx = numRand()&0xFF;
-      int ry = numRand()&0xFF;
-      int sid = (numRand()%64)&0xFF; // offset of sprite
-      for (int y=0;y<16;++y)
+      for (int x=0;x<16;++x)
       {
-         for (int x=0;x<16;++x)
+         if ((x+ox<256) && (y+oy<192) && (x+ox>=0) && (y+oy>=0))
          {
-            if ((x+rx<256) && (y+ry<192) && (x+rx>0) && (y+ry>0))
-            {
-               unsigned char S = spritedata[x+y*16 + (sid<<8)];
-               if (S!=0xFF)
-                  VRAM[rx+x+(ry+y<<8)] = S;
-            }
+            unsigned char S = spritedata[x+y*16 + (sid<<8)];
+            if (S!=0xFF)
+               VRAM[ox+x+(oy+y<<8)] = S;
          }
       }
+   }
+}
+
+void demo()
+{
+   for (unsigned int k=0;k<192;++k)
+   {
+      int rx = (k%16)<<4;//numRand()&0xFF;
+      int ry = (k/16)<<4;//numRand()&0xFF;
+      int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
+      plotsprite(rx, ry, sid);
    }
 }
 
@@ -1425,7 +1430,7 @@ void print(int ox, int oy, int len, const char *message)
             {
                fontbyte = font[charcol+x + ((charrow+y)<<8)];
                if (fontbyte)
-                  VRAM[i*8+x+ox+py] = 0xFF;
+                  VRAM[i*8+x+ox+py] = 0x00;
             }
       }
       ++i;
@@ -1444,7 +1449,7 @@ void echoterm(const char *_message)
 
 int main()
 {
-   const unsigned char bgcolor = 0x5B; // BRG -> B=0xC0, R=0x38, G=0x07
+   const unsigned char bgcolor = 0xFF; // BRG -> B=0xC0, R=0x38, G=0x07
    const unsigned char editbgcolor = 0x00;
 
    // 32 bytes of incoming command space
