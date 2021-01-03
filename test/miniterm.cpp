@@ -1295,30 +1295,6 @@ volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UA
 volatile unsigned int targetjumpaddress = 0x00000000;
 char chartable[32*24];
 
-void print(int ox, int oy, int len, const char *message)
-{
-   int i=0;
-   int charbyte, charrow, charcol, fontbyte;
-   // Loop until we hit a null-terminator or end of string
-   while (i<len && message[i] != 0)
-   {
-      charbyte = message[i]-32;
-      charrow = (charbyte>>5)*8;
-      charcol = (charbyte%32)*8;
-      for (int y=0;y<8;++y)
-      {
-            int py = ((y+oy)<<8);
-            for (int x=0;x<8;++x)
-            {
-               fontbyte = font[charcol+x + ((charrow+y)<<8)];
-               if (fontbyte)
-                  VRAM[i*8+x+ox+py] = 0xFF;
-            }
-      }
-      ++i;
-   }
-}
-
 unsigned int load()
 {
    // Header data
@@ -1407,7 +1383,7 @@ unsigned int numRand()
 
 void demo()
 {
-   for (unsigned int k=0;k<64;++k)
+   for (unsigned int k=0;k<512;++k)
    {
       int rx = numRand()&0xFF;
       int ry = numRand()&0xFF;
@@ -1424,6 +1400,45 @@ void demo()
             }
          }
       }
+   }
+}
+
+void print(int ox, int oy, int len, const char *message)
+{
+   int i=0;
+   int charbyte, charrow, charcol, fontbyte;
+   // Loop until we hit a null-terminator or end of string
+   while (i<len && message[i] != 0)
+   {
+      charbyte = message[i]-32;
+      charrow = (charbyte>>5)*8;
+      charcol = (charbyte%32)*8;
+      if(charbyte<0) // Skip non-printables
+      {
+         ++i;
+         continue;
+      }
+      for (int y=0;y<8;++y)
+      {
+            int py = ((y+oy)<<8);
+            for (int x=0;x<8;++x)
+            {
+               fontbyte = font[charcol+x + ((charrow+y)<<8)];
+               if (fontbyte)
+                  VRAM[i*8+x+ox+py] = 0xFF;
+            }
+      }
+      ++i;
+   }
+}
+
+void echoterm(const char *_message)
+{
+   int i=0;
+   while (_message[i]!=0)
+   {
+      UARTTX[0] = _message[i];
+      ++i;
    }
 }
 
@@ -1473,6 +1488,8 @@ int main()
          }
          else if (checkchar == 13) // Enter?
          {
+            cls(bgcolor);
+
             // Terminate the string
             incoming[rcvcursor-1] = 0;
 
@@ -1485,10 +1502,9 @@ int main()
             if (incoming[0]='c' && incoming[1]=='l' && incoming[2]=='s')
             {
                clearchars();
-               cls(bgcolor);
             }
-            else if (incoming[0]='l' && incoming[1]=='o' && incoming[2]=='a' && incoming[3]=='d') // Load incoming binary from UART
-               targetjumpaddress = load();
+            else if (incoming[0]='v' && incoming[1]=='e' && incoming[2]=='r')
+               echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\r");
             else if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
                targetjumpaddress = load();
@@ -1496,15 +1512,10 @@ int main()
             }
             else if (incoming[0]='d' && incoming[1]=='e' && incoming[2]=='m' && incoming[3]=='o')
             {
-               cls(bgcolor);
                demo();
             }
-            else
-            {
-               // Step down or scroll
-               cls(bgcolor);
-               scroll();
-            }
+
+            scroll();
 
             // Rewind read cursor
             rcvcursor=0;

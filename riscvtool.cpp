@@ -106,7 +106,7 @@ void sendcommand(char *_commandstring)
 
     int commandlength = strlen(_commandstring);
 
-    printf("Sending command over COM4 @256000 bps...\n");
+    printf("Sending %dbyte command over COM4 @256000 bps...\n", commandlength);
     hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hComm != INVALID_HANDLE_VALUE)
     {
@@ -130,8 +130,6 @@ void sendcommand(char *_commandstring)
                     DWORD byteswritten;
                     // Send the command
                     WriteFile(hComm, _commandstring, commandlength, &byteswritten, nullptr);
-                    // Plus, a return at the end so it gets executed
-                    WriteFile(hComm, "\r", 1, &byteswritten, nullptr);
                     printf("Done\n");
                 }
                 else
@@ -189,7 +187,7 @@ void sendbinary(char *_filename, const unsigned int _target=0x80000000)
 
     char commandtosend[512];
     int commandlength=0;
-    sprintf(commandtosend, "load%c", 13);
+    sprintf(commandtosend, "dat%c", 13);
     commandlength = strlen(commandtosend);
 
     printf("Sending raw binary file over COM4 @256000 bps at 0x%.8X\n", _target);
@@ -214,7 +212,7 @@ void sendbinary(char *_filename, const unsigned int _target=0x80000000)
                 if (SetCommTimeouts(hComm, &timeouts) != 0)
                 {
                     DWORD byteswritten;
-                    // Send the string "load\r"
+                    // Send the string "dat\r"
                     WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
                     // Wait a bit for the receiving end to start accepting
                     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -250,10 +248,10 @@ void sendbinary(char *_filename, const unsigned int _target=0x80000000)
 }
 
 
-unsigned int generateelfuploadpackage(unsigned char *_elfbinary)
+unsigned int generateelfuploadpackage(unsigned char *_elfbinaryread, unsigned char *_elfbinaryout)
 {
     // Parse the header and check the magic word
-    SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
+    SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinaryread;
 
     if (fheader->m_Magic != 0x464C457F)
     {
@@ -262,17 +260,17 @@ unsigned int generateelfuploadpackage(unsigned char *_elfbinary)
     }
 
     // Parse the header and dump the executable
-    SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinary+fheader->m_PHOff);
+    SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinaryread+fheader->m_PHOff);
 
     // Aliasing to re-use same buffer
-    unsigned int *targetarea = (unsigned int*)_elfbinary;
-    unsigned int *sourcearea = (unsigned int*)(_elfbinary+pheader->m_Offset);
+    unsigned int *targetarea = (unsigned int*)_elfbinaryout;
+    unsigned int *sourcearea = (unsigned int*)(_elfbinaryread+pheader->m_Offset);
     unsigned int binarysize = pheader->m_MemSz;
 
     printf("Preparing %dbyte binary package (relocating executable code and data from 0x%.8X to 0x00000000)\n", pheader->m_MemSz, pheader->m_Offset);
     for (unsigned int i=0;i<binarysize/4;++i)
     {
-        printf("%.8X:%.8X\n", i*4, sourcearea[i]);
+        //printf("%.8X:%.8X\n", i*4, sourcearea[i]);
         targetarea[i] = sourcearea[i];
     }
 
@@ -301,14 +299,17 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 	fsetpos(fp, &pos);
 	filebytesize = (unsigned int)endpos;
 
-    // TODO: Actual binary to send starts at 0x1000
+    unsigned char *bytestoread = new unsigned char[filebytesize];
     unsigned char *bytestosend = new unsigned char[filebytesize+8];
-    fread(bytestosend+8, 1, filebytesize, fp);
+    fread(bytestoread, 1, filebytesize, fp);
     fclose(fp);
-    unsigned int actualbinarysize = generateelfuploadpackage(bytestosend+8);
+
+    unsigned int actualbinarysize = generateelfuploadpackage(bytestoread, bytestosend+8);
     if (actualbinarysize == 0xFFFFFFFF) // Failed
     {
         printf("ERROR: header parse error, can't send ELF file %s\n", _filename);
+        delete [] bytestoread;
+        delete [] bytestosend;
         return;
     }
     else
@@ -343,7 +344,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
                 if (SetCommTimeouts(hComm, &timeouts) != 0)
                 {
                     DWORD byteswritten;
-                    // Send the string "load\r"
+                    // Send the string "run\r"
                     WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
                     // Wait a bit for the receiving end to start accepting
                     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -375,6 +376,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     }
 
     CloseHandle(hComm);
+    delete [] bytestoread;
     delete [] bytestosend;
 }
 
@@ -400,7 +402,9 @@ int main(int argc, char **argv)
             }
             if (strstr(argv[2], "-sendcommand"))
             {
-                sendcommand(argv[1]);
+                char commandline[512];
+                sprintf(commandline, "%s\n", argv[1]);
+                sendcommand(commandline);
             }
         }
         else
