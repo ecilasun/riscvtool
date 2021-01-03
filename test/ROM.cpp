@@ -67,7 +67,7 @@ void cls()
    {
       int py = y<<8;
       for(int x=0;x<256;++x)
-         VRAM[x+py] = 0x30;
+         VRAM[x+py] = 0xDB; // Gray-ish blue
    }
 }
 

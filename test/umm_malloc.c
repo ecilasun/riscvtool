@@ -541,7 +541,9 @@ UMM_H_ATTPACKPRE typedef struct umm_block_t {
 #  define umm_realloc realloc
 #endif
 
+// TODO: Make this point at user-defined memory address instead (point at __heap_top perhaps?)
 umm_block umm_heap[(UMM_MALLOC_CFG__HEAP_SIZE / sizeof(umm_block))];
+//umm_block *umm_heap = (umm_block *)__heap_top;
 const unsigned short int umm_numblocks = (sizeof(umm_heap) / sizeof(umm_block));
 
 #define UMM_NUMBLOCKS (umm_numblocks)

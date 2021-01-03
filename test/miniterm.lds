@@ -31,4 +31,5 @@ SECTIONS
    {
       *(.bss.*)
    }
+   __heap_top = .;
 }

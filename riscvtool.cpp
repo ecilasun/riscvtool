@@ -272,7 +272,7 @@ unsigned int generateelfuploadpackage(unsigned char *_elfbinary)
     printf("Preparing %dbyte binary package (relocating executable code and data from 0x%.8X to 0x00000000)\n", pheader->m_MemSz, pheader->m_Offset);
     for (unsigned int i=0;i<binarysize/4;++i)
     {
-        printf("src %.8X:%.8X\n", i, sourcearea[i]);
+        printf("%.8X:%.8X\n", i*4, sourcearea[i]);
         targetarea[i] = sourcearea[i];
     }
 
