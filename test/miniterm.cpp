@@ -1295,54 +1295,6 @@ volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UA
 volatile unsigned int targetjumpaddress = 0x00000000;
 char chartable[32*24];
 
-unsigned int load()
-{
-   // Header data
-   unsigned int loadlen = 0;
-   unsigned int loadtarget = 0;
-   char *loadlenaschar = (char*)&loadlen;
-   char *loadtargetaschar = (char*)&loadtarget;
-
-   // Data length
-   unsigned int writecursor = 0;
-   while(writecursor < 4)
-   {
-      unsigned int bytecount = UARTRXStatus[0];
-      if (bytecount != 0)
-      {
-         unsigned char readdata = UARTRX[0];
-         loadlenaschar[writecursor++] = readdata;
-      }
-   }
-
-   // Target address
-   writecursor = 0;
-   while(writecursor < 4)
-   {
-      unsigned int bytecount = UARTRXStatus[0];
-      if (bytecount != 0)
-      {
-         unsigned char readdata = UARTRX[0];
-         loadtargetaschar[writecursor++] = readdata;
-      }
-   }
-
-   // Read binary data
-   writecursor = 0;
-   volatile unsigned char* target = (volatile unsigned char* )loadtarget;
-   while(writecursor < loadlen)
-   {
-      unsigned int bytecount = UARTRXStatus[0];
-      if (bytecount != 0)
-      {
-         unsigned char readdata = UARTRX[0];
-         target[writecursor++] = readdata;
-      }
-   }
-
-   return loadtarget;
-}
-
 // Clear the screen
 void cls(const unsigned char color)
 {
@@ -1479,17 +1431,14 @@ int main()
 
          if (checkchar == 8 && rcvcursor!=1) // Backspace? (make sure your terminal uses ctrl+h for backspace)
          {
+            cls(bgcolor);
+ 
             --rcvcursor;
             incoming[rcvcursor-1] = 0;
             // Copy the string to the chartable
             for (int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
-            cls(bgcolor);
-            // Show the char table
-            for (int cy=0;cy<24;++cy)
-               for (int cx=0;cx<32;++cx)
-                  print(8*cx, 8*cy, 1, &chartable[cx+cy*32]);
-            --rcvcursor;
+             --rcvcursor;
          }
          else if (checkchar == 13) // Enter?
          {
@@ -1510,11 +1459,6 @@ int main()
             }
             else if (incoming[0]='v' && incoming[1]=='e' && incoming[2]=='r')
                echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\r");
-            else if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
-            {
-               targetjumpaddress = load();
-               ((void (*)(void)) targetjumpaddress)();
-            }
             else if (incoming[0]='d' && incoming[1]=='e' && incoming[2]=='m' && incoming[3]=='o')
             {
                demo();
