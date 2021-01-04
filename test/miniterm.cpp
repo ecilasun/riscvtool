@@ -1415,7 +1415,7 @@ int main()
    // Startup message
    clearchars();
    cls(bgcolor);
-   print(0, 176, 30, "MiniTerm (c)2021 Engin Cilasun");
+   print(0, 176, 32, " MiniTerm (c)2021 Engin Cilasun ");
 
    // UART communication section
    while(1)
