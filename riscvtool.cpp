@@ -106,14 +106,14 @@ void sendcommand(char *_commandstring)
 
     int commandlength = strlen(_commandstring);
 
-    printf("Sending %dbyte command over COM4 @256000 bps...\n", commandlength);
+    printf("Sending %dbyte command over COM4 @115200 bps...\n", commandlength);
     hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hComm != INVALID_HANDLE_VALUE)
     {
         serialParams.DCBlength = sizeof(serialParams);
         if (GetCommState(hComm, &serialParams))
         {
-            serialParams.BaudRate = CBR_256000;
+            serialParams.BaudRate = CBR_115200;
             serialParams.ByteSize = 8;
             serialParams.StopBits = ONESTOPBIT;
             serialParams.Parity = NOPARITY;
@@ -190,14 +190,14 @@ void sendbinary(char *_filename, const unsigned int _target=0x80000000)
     sprintf(commandtosend, "dat%c", 13);
     commandlength = strlen(commandtosend);
 
-    printf("Sending raw binary file over COM4 @256000 bps at 0x%.8X\n", _target);
+    printf("Sending raw binary file over COM4 @115200 bps at 0x%.8X\n", _target);
     hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hComm != INVALID_HANDLE_VALUE)
     {
         serialParams.DCBlength = sizeof(serialParams);
         if (GetCommState(hComm, &serialParams))
         {
-            serialParams.BaudRate = CBR_256000;
+            serialParams.BaudRate = CBR_115200;
             serialParams.ByteSize = 8;
             serialParams.StopBits = ONESTOPBIT;
             serialParams.Parity = NOPARITY;
@@ -322,14 +322,14 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     sprintf(commandtosend, "run%c", 13);
     commandlength = strlen(commandtosend);
 
-    printf("Sending ELF binary executable+data portion over COM4 @256000 bps at 0x%.8X\n", _target);
+    printf("Sending ELF binary executable+data portion over COM4 @115200 bps at 0x%.8X\n", _target);
     hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hComm != INVALID_HANDLE_VALUE)
     {
         serialParams.DCBlength = sizeof(serialParams);
         if (GetCommState(hComm, &serialParams))
         {
-            serialParams.BaudRate = CBR_256000;
+            serialParams.BaudRate = CBR_115200;
             serialParams.ByteSize = 8;
             serialParams.StopBits = ONESTOPBIT;
             serialParams.Parity = NOPARITY;

@@ -10,7 +10,7 @@
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
+volatile unsigned int* VRAM = (volatile unsigned int* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
 volatile unsigned int targetjumpaddress = 0x00000000;
 
 unsigned int load()
@@ -63,8 +63,8 @@ unsigned int load()
 
 void cls()
 {
-   for(int a=0;a<192*256;++a)
-      VRAM[a] = 0x38; // BRG -> B=0xC0, R=0x38, G=0x07
+   for(int a=0;a<192*256/4;++a)
+      VRAM[a] = 0xC0380738; // BRG -> B=0xC0, R=0x38, G=0x07
 }
 
 int main()
@@ -99,6 +99,11 @@ int main()
             if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
                targetjumpaddress = load();
+               // Reset sp and gp before we branch into loaded software
+               asm (
+                  "la gp, __global_pointer$;"
+                  "la sp, __stack;"
+               );
                 ((void (*)(void)) targetjumpaddress)();
             }
 

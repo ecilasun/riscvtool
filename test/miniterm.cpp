@@ -1354,6 +1354,38 @@ void demo()
       int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
       plotsprite(rx, ry, sid);
    }
+
+   /*for (int y = 0; y < 192; ++y)
+   {
+      for (int x = 0; x < 256; ++x)
+      {
+         int R = numRand()&0xFF;
+         VRAM[x+(y<<8)] = R;
+      }
+   }*/
+
+   /*for (int y = 0; y < 192; y+=2)
+   {
+      for (int x = 0; x < 256; x+=2)
+      {
+         float ca = 0.002f * float(x - 80) / 80.f - 0.7463f;
+         float cb = 0.002f * float(y - 40) / 80.f + 0.1102f;
+         float a = ca;
+         float b = cb;
+         int n = 0;
+         const int factor = 16;
+         for (; n < 65536 / factor; ++n)
+         {
+            float ta = a * a - b * b;
+            if (ta > 2.f)
+               break;
+            b = cb + 2 * a * b;
+            a = ca + ta;
+         }
+         VRAM[x+(y<<8)] = (n * 3);
+      }
+   }*/
+
 }
 
 void print(int ox, int oy, int len, const char *message)
