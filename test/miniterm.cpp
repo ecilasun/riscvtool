@@ -1298,12 +1298,8 @@ char chartable[32*24];
 // Clear the screen
 void cls(const unsigned char color)
 {
-   for(int y=0;y<192;++y)
-   {
-      int py = y<<8;
-      for(int x=0;x<256;++x)
-         VRAM[x+py] = color;
-   }
+   for(int a=0;a<192*256;++a)
+      VRAM[a] = color;
 }
 
 void clearchars()
@@ -1394,7 +1390,7 @@ void echoterm(const char *_message)
    int i=0;
    while (_message[i]!=0)
    {
-      UARTTX[0] = _message[i];
+      UARTTX[i] = _message[i];
       ++i;
    }
 }
@@ -1442,14 +1438,14 @@ int main()
          }
          else if (checkchar == 13) // Enter?
          {
-            cls(bgcolor);
-
             // Terminate the string
             incoming[rcvcursor-1] = 0;
 
             // Copy the string to the chartable
             for (int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
+            
+            int canclear = 1;
 
             // Clear the whole screen
             //if (!strcmp(incoming, "cls"))
@@ -1458,11 +1454,17 @@ int main()
                clearchars();
             }
             else if (incoming[0]='v' && incoming[1]=='e' && incoming[2]=='r')
+            {
                echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\r");
+            }
             else if (incoming[0]='d' && incoming[1]=='e' && incoming[2]=='m' && incoming[3]=='o')
             {
+               canclear = 0;
                demo();
             }
+
+            if(canclear)
+               cls(bgcolor);
 
             scroll();
 
