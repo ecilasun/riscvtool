@@ -1364,34 +1364,13 @@ void plotspritefastnomask(int ox, int oy, int sid)
 
 void demo2()
 {
-   int K = 131;
-   while(1)
+   for (int y = 0; y < 192; ++y)
    {
-      for (int y = 0; y < 80; ++y)
+      for (int x = 0; x < 256; ++x)
       {
-         for (int x = 0; x < 160; ++x)
-         {
-            int ca = (K*(x-80)/80)*64;
-            int cb = (K*(y-40)/40)*64;
-            int a = ca;
-            int b = cb;
-            int n = 0;
-            for (; n < 32; ++n)
-            {
-               //int ta = (a*a - b*b)/4096;
-               int ta = (a*a - b*b);
-               if (ta > 8192)
-                  break;
-               b = cb + 2 * a * b;
-               a = ca + ta;
-            }
-            VRAM[x+(y<<8)] = (n * 3);
-         }
+         int R = numRand()&0xFF;
+         VRAM[x+(y<<8)] = R;
       }
-      K--;
-      unsigned int bytecount = UARTRXStatus[0];
-      if (bytecount!=0)
-         break;
    }
 }
 
@@ -1421,14 +1400,7 @@ void demo()
          break;
    }
 
-   /*for (int y = 0; y < 192; ++y)
-   {
-      for (int x = 0; x < 256; ++x)
-      {
-         int R = numRand()&0xFF;
-         VRAM[x+(y<<8)] = R;
-      }
-   }*/
+
 
    /*for (int y = 0; y < 192; y+=2)
    {

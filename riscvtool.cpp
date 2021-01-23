@@ -215,11 +215,11 @@ void sendbinary(char *_filename, const unsigned int _target=0x80000000)
                     // Send the string "dat\r"
                     WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
                     // Wait a bit for the receiving end to start accepting
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
                     // Send raw binary with 8byte header (file size)
                     WriteFile(hComm, bytestosend, filebytesize+8, &byteswritten, nullptr);
                     // Wait a bit after sending last bytes to avoid issues with repeated calls
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
                     printf("Done\n");
                 }
                 else
@@ -347,12 +347,12 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
                     // Send the string "run\r"
                     WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
                     // Wait a bit for the receiving end to start accepting
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                    // Send raw binary with 8byte header (file size)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                    // Send 8 byte header plus the data
                     WriteFile(hComm, bytestosend, actualbinarysize+8, &byteswritten, nullptr);
                     // Wait a bit after sending last bytes to avoid issues with repeated calls
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                    printf("Done\n");
+                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                    printf("Done, written %.8X bytes (including 8 byte header)\n", byteswritten);
                 }
                 else
                 {

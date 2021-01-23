@@ -61,21 +61,37 @@ unsigned int load()
    return loadtarget;
 }
 
-void cls()
+void cls(uint32_t val)
 {
    for(int a=0;a<192*256/4;++a)
-      VRAM[a] = 0xC0380738; // BRG -> B=0xC0, R=0x38, G=0x07
+      VRAM[a] = val;
+}
+
+void echoterm(const char *_message)
+{
+   int i=0;
+   while (_message[i]!=0)
+   {
+      UARTTX[i] = _message[i];
+      ++i;
+   }
+   UARTTX[0] = 13; // Also echo a CR+LF
+   UARTTX[1] = 10; // Also echo a CR+LF
 }
 
 int main()
 {
-   // 32 bytes of incoming command space
-   char incoming[32];
+   // 128 bytes of incoming command space
+   char incoming[128];
 
+   uint32_t val1 = 0x38000000; // BRG -> B=0xC0, R=0x38, G=0x07
+   uint32_t val2 = 0x00000038; // BRG -> B=0xC0, R=0x38, G=0x07
    unsigned int rcvcursor = 0;
    unsigned int oldcount = 0;
+   unsigned int ticker = 0;
 
-   cls();
+   cls(0xC0C0C0C0);
+   echoterm("ECRV32 v0.1");
 
    // UART communication section
    while(1)
@@ -94,30 +110,32 @@ int main()
             // Terminate the string
             incoming[rcvcursor-1] = 0;
 
+            // Rewind read cursor
+            rcvcursor = 0;
+
             // Run the incoming binary
-            //if (!strcmp(incoming, "run")
             if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
                targetjumpaddress = load();
-               // Reset sp and gp before we branch into loaded software
-               asm (
-                  "la gp, __global_pointer$;"
-                  "la sp, __stack;"
-               );
-                ((void (*)(void)) targetjumpaddress)();
+               ((void (*)(void)) targetjumpaddress)();
             }
-
-            // Rewind read cursor
-            rcvcursor=0;
          }
 
-         // Echo characters back to the terminal
-         UARTTX[0] = checkchar;
-         if (checkchar == 13)
-            UARTTX[0] = 10; // Echo a linefeed
-
-         if (rcvcursor>31)
+         if (rcvcursor>126)
             rcvcursor = 0;
+      }
+
+      // Tick animation
+      ++ticker;
+      if (ticker > 131072)
+      {
+         ticker = 0;
+         val1 = (val1>>8) | ((val1&0x000000FF)<<24);
+         val2 = ((val2&0x00FFFFFF)<<8) | ((val2>>24)&0x000000FF);
+         for(int a=0;a<4*256/4;++a)
+            VRAM[92*256/4+a] = val1;
+         for(int a=0;a<4*256/4;++a)
+            VRAM[96*256/4+a] = val2;
       }
    }
 

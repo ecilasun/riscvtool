@@ -10,26 +10,37 @@ SECTIONS
       . = 0x0000000;
       *(.boot)
    }
+   .bss :
+   {
+      *(.bss.*)
+   }
     .text :
    {
       *(.text)
+   }
+   .data :
+   {
+      *(.data.*)
+   }
+   .rodata :
+   {
+      *(.rodata.*)
+   }
+   COMMON :
+   {
+      *(COMMON*)
    }
    .sdata :
    {
       PROVIDE(__global_pointer$ = . + (4K/2));
       *(.sdata .sdata.*)
    }
-   .rodata :
+   .shstrtab :
    {
-      *(.rodata.*)
+      *(.shstrtab)
    }
    .got :
    {
       *(.got.*)
    }
-   .bss :
-   {
-      *(.bss.*)
-   }
-   __heap_top = .;
 }
