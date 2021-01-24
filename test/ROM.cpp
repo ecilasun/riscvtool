@@ -47,6 +47,8 @@ unsigned int load()
 
    // Read binary data
    writecursor = 0;
+   int scanline = 0;
+   uint32_t thecolor = 0xC0C0C0C0;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
    while(writecursor < loadlen)
    {
@@ -55,7 +57,12 @@ unsigned int load()
       {
          unsigned char readdata = UARTRX[0];
          target[writecursor++] = readdata;
+         thecolor = (readdata) | (readdata<<8) | (readdata<<16) | (readdata<<24);
       }
+      for(int a=0;a<64;++a)
+         VRAM[scanline*64+a] = thecolor;
+      ++scanline;
+      if (scanline>191) scanline = 0;
    }
 
    return loadtarget;
@@ -87,8 +94,8 @@ int main()
    uint32_t val1 = 0x38000000; // BRG -> B=0xC0, R=0x38, G=0x07
    uint32_t val2 = 0x00000038; // BRG -> B=0xC0, R=0x38, G=0x07
    unsigned int rcvcursor = 0;
-   unsigned int oldcount = 0;
-   unsigned int ticker = 0;
+   int scanline = 0;
+   uint32_t thecolor = 0xC0C0C0C0;
 
    cls(0xC0C0C0C0);
    echoterm("ECRV32 v0.1");
@@ -104,6 +111,7 @@ int main()
       {
          // Step 3: Read the data on UARTRX memory location
          char checkchar = incoming[rcvcursor++] = UARTRX[0];
+         thecolor = (checkchar) | (checkchar<<8) | (checkchar<<16) | (checkchar<<24);
 
          if (checkchar == 13) // Enter?
          {
@@ -125,18 +133,10 @@ int main()
             rcvcursor = 0;
       }
 
-      // Tick animation
-      ++ticker;
-      if (ticker > 131072)
-      {
-         ticker = 0;
-         val1 = (val1>>8) | ((val1&0x000000FF)<<24);
-         val2 = ((val2&0x00FFFFFF)<<8) | ((val2>>24)&0x000000FF);
-         for(int a=0;a<4*256/4;++a)
-            VRAM[92*256/4+a] = val1;
-         for(int a=0;a<4*256/4;++a)
-            VRAM[96*256/4+a] = val2;
-      }
+      for(int a=0;a<64;++a)
+         VRAM[scanline*64+a] = thecolor;
+      ++scanline;
+      if (scanline>191) scanline = 0;
    }
 
    return 0;
