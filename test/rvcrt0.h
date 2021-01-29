@@ -1,6 +1,6 @@
-#if defined(__riscv_compressed)
+/*#if defined(__riscv_compressed)
 #error ("HALT! The target SoC does not support compressed instruction set!")
-#endif
+#endif*/
 
 extern "C"
 {
