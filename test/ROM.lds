@@ -4,7 +4,7 @@ MEMORY{
 
 SECTIONS
 {
-   __stack = ORIGIN(RAM) + LENGTH(RAM) - 4;
+   __stack = ORIGIN(RAM) + LENGTH(RAM) - 16;
    .boot :
    {
       . = 0x0000000;

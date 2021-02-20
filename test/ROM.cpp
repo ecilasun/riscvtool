@@ -7,6 +7,9 @@
 #include <math.h>
 #include "rvcrt0.h"
 
+#pragma GCC push_options
+#pragma GCC optimize ("align-functions=16")
+
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
@@ -57,20 +60,20 @@ unsigned int load()
       {
          unsigned char readdata = UARTRX[0];
          target[writecursor++] = readdata;
-         thecolor = (readdata) | (readdata<<8) | (readdata<<16) | (readdata<<24);
+         thecolor = readdata | (readdata<<8) | (readdata<<16) | (readdata<<24);
       }
       for(int a=0;a<64;++a)
          VRAM[scanline*64+a] = thecolor;
       ++scanline;
-      if (scanline>191) scanline = 0;
+      if (scanline>32) scanline = 0;
    }
 
    return loadtarget;
 }
 
-void cls(uint32_t val)
+void cls(unsigned int val)
 {
-   for(int a=0;a<192*256/4;++a)
+   for(int a=0;a<192*64;++a)
       VRAM[a] = val;
 }
 
@@ -91,14 +94,12 @@ int main()
    // 128 bytes of incoming command space
    char incoming[128];
 
-   uint32_t val1 = 0x38000000; // BRG -> B=0xC0, R=0x38, G=0x07
-   uint32_t val2 = 0x00000038; // BRG -> B=0xC0, R=0x38, G=0x07
    unsigned int rcvcursor = 0;
    int scanline = 0;
-   uint32_t thecolor = 0xC0C0C0C0;
 
-   cls(0xC0C0C0C0);
-   echoterm("ECRV32 v0.1");
+   cls(0x38383838);
+   echoterm("ECRV32 v0.2");
+   //print(0,0,12,"ECRV32 v0.2");
 
    // UART communication section
    while(1)
@@ -111,7 +112,6 @@ int main()
       {
          // Step 3: Read the data on UARTRX memory location
          char checkchar = incoming[rcvcursor++] = UARTRX[0];
-         thecolor = (checkchar) | (checkchar<<8) | (checkchar<<16) | (checkchar<<24);
 
          if (checkchar == 13) // Enter?
          {
@@ -124,20 +124,26 @@ int main()
             // Run the incoming binary
             if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
+               scanline = 0;
                targetjumpaddress = load();
+               /*asm (
+                  "lw a5, %0;"
+                  "jalr a5;" : : "m" (targetjumpaddress)
+               );*/
                ((void (*)(void)) targetjumpaddress)();
             }
          }
 
+         UARTTX[0] = checkchar;
+         if (checkchar==13)
+            UARTTX[1] = 10;
+
          if (rcvcursor>126)
             rcvcursor = 0;
       }
-
-      for(int a=0;a<64;++a)
-         VRAM[scanline*64+a] = thecolor;
-      ++scanline;
-      if (scanline>191) scanline = 0;
    }
 
    return 0;
 }
+
+#pragma GCC pop_options
