@@ -14,7 +14,6 @@ volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UA
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
 volatile unsigned int* VRAM = (volatile unsigned int* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
-volatile unsigned int targetjumpaddress = 0x00000000;
 
 unsigned int load()
 {
@@ -51,7 +50,7 @@ unsigned int load()
    // Read binary data
    writecursor = 0;
    int scanline = 0;
-   uint32_t thecolor = 0xC0C0C0C0;
+   uint32_t thecolor;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
    while(writecursor < loadlen)
    {
@@ -65,16 +64,10 @@ unsigned int load()
       for(int a=0;a<64;++a)
          VRAM[scanline*64+a] = thecolor;
       ++scanline;
-      if (scanline>32) scanline = 0;
+      if (scanline>190) scanline = 0;
    }
 
    return loadtarget;
-}
-
-void cls(unsigned int val)
-{
-   for(int a=0;a<192*64;++a)
-      VRAM[a] = val;
 }
 
 void echoterm(const char *_message)
@@ -97,8 +90,7 @@ int main()
    unsigned int rcvcursor = 0;
    int scanline = 0;
 
-   cls(0x38383838);
-   echoterm("ECRV32 v0.2");
+   echoterm("ECRV32 v0.21");
    //print(0,0,12,"ECRV32 v0.2");
 
    // UART communication section
@@ -125,7 +117,7 @@ int main()
             if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
                scanline = 0;
-               targetjumpaddress = load();
+               unsigned int targetjumpaddress = load();
                /*asm (
                   "lw a5, %0;"
                   "jalr a5;" : : "m" (targetjumpaddress)
