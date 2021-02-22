@@ -10,10 +10,17 @@
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
 
+volatile unsigned int* VRAM = (volatile unsigned int* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-volatile unsigned int* VRAM = (volatile unsigned int* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
+volatile unsigned int targetjumpaddress = 0x00000000;
+
+/*void cls(const unsigned int color)
+{
+   for(int a=0;a<192*64;++a)
+      VRAM[a] = color;
+}*/
 
 unsigned int loadbinary()
 {
@@ -53,16 +60,18 @@ unsigned int loadbinary()
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
    while(writecursor < loadlen)
    {
+      unsigned int colorout = 0x00000000;
       unsigned int bytecount = UARTRXStatus[0];
       if (bytecount != 0)
       {
          unsigned char readdata = UARTRX[0];
          target[writecursor++] = readdata;
+
+         colorout = readdata | (readdata<<8) | (readdata<<16) | (readdata<<24);
+         VRAM[scanline*64] = colorout;
+         ++scanline;
+         if (scanline>191) scanline = 0;
       }
-      for(int a=0;a<64;++a)
-         VRAM[scanline*64+a] = scanline;
-      ++scanline;
-      if (scanline>190) scanline = 0;
    }
 
    return loadtarget;
@@ -83,7 +92,7 @@ void echoterm(const char *_message)
 int main()
 {
    // 128 bytes of incoming command space
-   char incoming[128];
+   char incoming[32];
 
    unsigned int rcvcursor = 0;
 
@@ -107,26 +116,32 @@ int main()
             // Terminate the string
             incoming[rcvcursor-1] = 0;
 
-            // Rewind read cursor
-            rcvcursor = 0;
+            // Help text
+            if (incoming[0]='h' && incoming[1]=='e' && incoming[2]=='l' && incoming[3]=='p')
+            {
+               echoterm("run\n[binsize][targetaddress][binarystream]");
+            }
 
             // Run the incoming binary
             if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
-               unsigned int targetjumpaddress = loadbinary();
+               targetjumpaddress = loadbinary();
                /*asm (
                   "lw a5, %0;"
                   "jalr a5;" : : "m" (targetjumpaddress)
                );*/
                ((void (*)(void)) targetjumpaddress)();
             }
+
+            // Rewind read cursor
+            rcvcursor = 0;
          }
 
          UARTTX[0] = checkchar;
          if (checkchar==13)
             UARTTX[1] = 10;
 
-         if (rcvcursor>126)
+         if (rcvcursor>31)
             rcvcursor = 0;
       }
    }
