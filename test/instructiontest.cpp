@@ -13,7 +13,7 @@
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-volatile unsigned int* VRAM = (volatile unsigned int* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
+volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
 
 
 const uint8_t spritedata[] __attribute__((aligned(16))) = {
@@ -1310,30 +1310,23 @@ void plotspritefastnomask(int ox, int oy, int sid)
 
 int main()
 {
-   while(1)
+   for (unsigned int k=0;k<96;++k)
    {
-      for (unsigned int k=0;k<96;++k)
-      {
-         int rx = (k%16)<<2; // <- has to be <<4 for slow sprite mode (byte aligned)
-         int ry = (k/16)<<4;
-         int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
-         // DWORD-aligned unmasked sprite writes
-         plotspritefastnomask(rx, ry, sid);
-      }
-
-      for (unsigned int k=0;k<96;++k)
-      {
-         int rx = (k%16)<<4;
-         int ry = 96 + ((k/16)<<4);
-         int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
-         // BYTE-aligned masked sprite writes
-         plotspriteslowmasked(rx, ry, sid);
-      }
-      unsigned int bytecount = UARTRXStatus[0];
-      if (bytecount!=0)
-         break;
+      int rx = (k%16)<<2; // <- has to be <<4 for slow sprite mode (byte aligned)
+      int ry = (k/16)<<4;
+      int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
+      // DWORD-aligned unmasked sprite writes
+      plotspritefastnomask(rx, ry, sid);
    }
 
+   for (unsigned int k=0;k<96;++k)
+   {
+      int rx = (k%16)<<4;
+      int ry = 96 + ((k/16)<<4);
+      int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
+      // BYTE-aligned masked sprite writes
+      plotspriteslowmasked(rx, ry, sid);
+   }
    return 0;
 }
 
