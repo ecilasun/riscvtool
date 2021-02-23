@@ -1,6 +1,6 @@
 del ROMasmdump.txt
 del minitermasmdump.txt
-del instructiontest.txt
+del instructiontestasmdump.txt
 del ROM.coe
 del miniterm.coe
 del instructiontest.coe

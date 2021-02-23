@@ -7,9 +7,16 @@ extern "C"
    void __attribute__((naked, section (".boot"))) _start()
    {
       asm (
+         "li a1,0;"
+         "li a2,0;"
+         "li a3,0;"
+         "li a4,0;"
+         "li a5,0;"
+         "li a7,0;"
          "la gp, __global_pointer$;"
          "la sp, __stack;"
-         "jal ra, main;"
+         "add s0, sp, zero;"
+         "call main;"
          "j _exit;"
       );
    }

@@ -10,8 +10,8 @@
 #include "rvcrt0.h"
 #include "umm_malloc.h"
 
-#pragma GCC push_options
-#pragma GCC optimize ("align-functions=16")
+// #pragma GCC push_options
+// #pragma GCC optimize ("align-functions=16")
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t font[] __attribute__((aligned(4))) = {
@@ -1573,4 +1573,4 @@ int main()
    return 0;
 }
 
-#pragma GCC pop_options
+// #pragma GCC pop_options

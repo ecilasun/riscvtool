@@ -10,30 +10,30 @@ SECTIONS
       . = 0x00002C0;
       *(.boot)
    }
-   .bss :
-   {
-      *(.bss.*)
-   }
     .text :
    {
       *(.text)
-   }
-   .data :
-   {
-      *(.data.*)
    }
    .rodata :
    {
       *(.rodata.*)
    }
-   COMMON :
+   .data :
    {
-      *(COMMON*)
+      *(.data.*)
    }
    .sdata :
    {
       PROVIDE(__global_pointer$ = . + (4K/2));
       *(.sdata .sdata.*)
+   }
+   .bss :
+   {
+      *(.bss.*)
+   }
+   COMMON :
+   {
+      *(COMMON*)
    }
    .shstrtab :
    {

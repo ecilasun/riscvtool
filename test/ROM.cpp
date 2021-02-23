@@ -131,6 +131,12 @@ int main()
                   "jalr a5;" : : "m" (targetjumpaddress)
                );*/
                ((void (*)(void)) targetjumpaddress)();
+               // Programs always load here
+               /*asm (
+                     "lui ra, 0x300;"
+                     //"fence.i;"
+                     "ret;"
+                  );*/
             }
 
             // Rewind read cursor

@@ -7,8 +7,8 @@
 #include <math.h>
 #include "rvcrt0.h"
 
-#pragma GCC push_options
-#pragma GCC optimize ("align-functions=16")
+//#pragma GCC push_options
+//#pragma GCC optimize ("align-functions=16")
 
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
@@ -1327,7 +1327,8 @@ int main()
       // BYTE-aligned masked sprite writes
       plotspriteslowmasked(rx, ry, sid);
    }
+
    return 0;
 }
 
-#pragma GCC pop_options
+//#pragma GCC pop_options
