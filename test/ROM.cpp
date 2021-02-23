@@ -68,7 +68,8 @@ unsigned int loadbinary()
          target[writecursor++] = readdata;
 
          colorout = readdata | (readdata<<8) | (readdata<<16) | (readdata<<24);
-         VRAM[scanline*64] = colorout;
+         for(int a=0;a<64;++a)
+            VRAM[scanline*64+a] = colorout;
          ++scanline;
          if (scanline>191) scanline = 0;
       }
