@@ -1275,25 +1275,6 @@ unsigned int numRand()
     return(seed);
 }
 
-void plotspriteslowmasked(int ox, int oy, int sid)
-{
-   for (int y=0;y<16;++y)
-   {
-      int sy = oy+y;
-      if ((y+oy>=192) && (y+oy<0))
-         continue;
-      for (int x=0;x<16;++x)
-      {
-         int sx = ox+x;
-         if ((x+ox>=192) && (x+ox<0))
-            continue;
-         unsigned char S = spritedata[x+y*16 + (sid<<8)];
-         if (S!=0xFF)
-            VRAM[sx+(sy<<8)] = S;
-      }
-   }
-}
-
 void plotspritefastnomask(int ox, int oy, int sid)
 {
    volatile unsigned int *VRAMDW = (unsigned int *)VRAM;
@@ -1310,22 +1291,14 @@ void plotspritefastnomask(int ox, int oy, int sid)
 
 int main()
 {
-   for (unsigned int k=0;k<96;++k)
+   for (unsigned int k=0;k<192;++k)
    {
       int rx = (k%16)<<2; // <- has to be <<4 for slow sprite mode (byte aligned)
       int ry = (k/16)<<4;
-      int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
+      //int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
+      int sid = ((numRand()%64))&0xFF; // offset of sprite
       // DWORD-aligned unmasked sprite writes
       plotspritefastnomask(rx, ry, sid);
-   }
-
-   for (unsigned int k=0;k<96;++k)
-   {
-      int rx = (k%16)<<4;
-      int ry = 96 + ((k/16)<<4);
-      int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF; // offset of sprite
-      // BYTE-aligned masked sprite writes
-      plotspriteslowmasked(rx, ry, sid);
    }
 
    return 0;

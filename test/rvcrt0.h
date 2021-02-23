@@ -31,6 +31,7 @@ extern "C"
          "li a5,0;"
          "li a7,93;"
          "ecall;"
+         "j _exit;"
       );
    }
 };
