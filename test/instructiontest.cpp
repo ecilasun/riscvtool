@@ -1470,7 +1470,7 @@ int main()
       for(int z=0;z<256;++z)
       {
          int k = ssin(z*7+f)/170 + 96;
-         VRAM[z+(k<<8)] = z+f;
+         VRAM[z+(k<<8)] = (z-f+3)*f;
       }
       f+=53;
    }
