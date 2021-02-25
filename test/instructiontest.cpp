@@ -1469,10 +1469,10 @@ int main()
 
       for(int z=0;z<256;++z)
       {
-         int k = ssin(z*13+f)/170 + 96;
+         int k = ssin(z*7+f)/170 + 96;
          VRAM[z+(k<<8)] = z+f;
       }
-      f+=9;
+      f+=53;
    }
    return 0;
 }
