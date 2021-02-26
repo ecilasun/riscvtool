@@ -16,12 +16,6 @@ volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UA
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
 volatile unsigned int targetjumpaddress = 0x00000000;
 
-/*void cls(const unsigned int color)
-{
-   for(int a=0;a<192*64;++a)
-      VRAM[a] = color;
-}*/
-
 unsigned int loadbinary()
 {
    // Header data
@@ -120,7 +114,7 @@ int main()
             // Help text
             if (incoming[0]='h' && incoming[1]=='e' && incoming[2]=='l' && incoming[3]=='p')
             {
-               echoterm("run\n[binsize][targetaddress][binarystream]");
+               echoterm("\nrun[0x13][binsize][targetaddress][binarystream]");
             }
 
             // Run the incoming binary
@@ -131,6 +125,8 @@ int main()
                   "lw a5, %0;"
                   "jalr a5;" : : "m" (targetjumpaddress)
                );*/
+               for(int a=0;a<192*64;++a)
+                  VRAM[a] = 0x00000000;
                ((void (*)(void)) targetjumpaddress)();
                // Programs always load here
                /*asm (

@@ -273,7 +273,7 @@ int main()
       }
       cnt++;
 
-      print(2, 180, 64, "rv32ic @200Mhz");
+      print(2, 180, 64, "rv32ic @120Mhz");
    }
    return 0;
 }
