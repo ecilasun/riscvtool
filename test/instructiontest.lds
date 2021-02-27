@@ -1,5 +1,5 @@
 MEMORY{
-   RAM (rwx) : ORIGIN = 0x00000300, LENGTH = 65536
+   RAM (rwx) : ORIGIN = 0x00000400, LENGTH = 65536
 }
 
 SECTIONS
@@ -7,7 +7,7 @@ SECTIONS
    __stack = ORIGIN(RAM) + LENGTH(RAM) - 16;
    .boot :
    {
-      . = 0x0000300;
+      . = 0x0000400;
       *(.boot)
    }
     .text :

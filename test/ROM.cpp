@@ -62,8 +62,7 @@ unsigned int loadbinary()
          target[writecursor++] = readdata;
 
          colorout = readdata | (readdata<<8) | (readdata<<16) | (readdata<<24);
-         for(int a=0;a<64;++a)
-            VRAM[scanline*64+a] = colorout;
+         VRAM[scanline*64] = VRAM[scanline*64+63] = colorout;
          ++scanline;
          if (scanline>191) scanline = 0;
       }
@@ -95,6 +94,9 @@ int main()
    //print(0,0,12,"ECRV32 v0.2");
 
    // UART communication section
+   int scanline = 0;
+   int spincolor = 0;
+   int clk = 0;
    while(1)
    {
       // Step 1: Read UART FIFO byte count
@@ -147,6 +149,18 @@ int main()
          if (rcvcursor>31)
             rcvcursor = 0;
       }
+
+      // Two scrolling color bars on each side of the screen
+      VRAM[scanline*64] = VRAM[scanline*64+63] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
+      if (clk>113370 == 0)
+      {
+         ++spincolor;
+         clk = 0;
+      }
+      ++clk;
+      ++scanline;
+      if (scanline>191)
+         scanline = 0;
    }
 
    return 0;
