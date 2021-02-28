@@ -16,6 +16,10 @@ volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UA
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
 volatile unsigned int targetjumpaddress = 0x00000000;
 
+void cls()
+{
+   for(uint32_t i=0; i<192*64; ++i) VRAM[i] = 0x00000000;
+}
 unsigned int loadbinary()
 {
    // Header data
@@ -62,7 +66,7 @@ unsigned int loadbinary()
          target[writecursor++] = readdata;
 
          colorout = readdata | (readdata<<8) | (readdata<<16) | (readdata<<24);
-         VRAM[scanline*64] = VRAM[scanline*64+63] = colorout;
+         VRAM[scanline*64] = VRAM[scanline*64+1] = VRAM[scanline*64+62] = VRAM[scanline*64+63] = colorout;
          ++scanline;
          if (scanline>191) scanline = 0;
       }
@@ -79,8 +83,6 @@ void echoterm(const char *_message)
       UARTTX[i] = _message[i];
       ++i;
    }
-   UARTTX[0] = 13; // Also echo a CR+LF
-   UARTTX[1] = 10; // Also echo a CR+LF
 }
 
 int main()
@@ -90,7 +92,7 @@ int main()
 
    unsigned int rcvcursor = 0;
 
-   echoterm("ECRV32 v0.22");
+   echoterm("ECRV32 v0.22\r\n");
    //print(0,0,12,"ECRV32 v0.2");
 
    // UART communication section
@@ -116,23 +118,18 @@ int main()
             // Help text
             if (incoming[0]='h' && incoming[1]=='e' && incoming[2]=='l' && incoming[3]=='p')
             {
-               echoterm("\nrun[0x13][binsize][targetaddress][binarystream]");
+               echoterm("\r\nrun[0x13][binsize][targetaddress][binarystream]\r\n");
             }
 
-            // Run the incoming binary
+            // Load the incoming binary, clear the screen, and jump to its entry point
             if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
             {
                targetjumpaddress = loadbinary();
-               /*asm (
-                  "lw a5, %0;"
-                  "jalr a5;" : : "m" (targetjumpaddress)
-               );*/
-               for(int a=0;a<192*64;++a)
-                  VRAM[a] = 0x00000000;
+               cls();
                ((void (*)(void)) targetjumpaddress)();
-               // Programs always load here
+               // Assuming program always loads at 0x600, we could do:
                /*asm (
-                     "lui ra, 0x300;"
+                     "lui ra, 0x600;"
                      //"fence.i;"
                      "ret;"
                   );*/
@@ -142,17 +139,19 @@ int main()
             rcvcursor = 0;
          }
 
+         // Echo the character back to the sender
          UARTTX[0] = checkchar;
          if (checkchar==13)
             UARTTX[1] = 10;
 
+         // Wrap around if we're overflowing
          if (rcvcursor>31)
             rcvcursor = 0;
       }
 
-      // Two scrolling color bars on each side of the screen
+      // Show two scrolling color bars on each side of the screen as 'alive' indicator
       VRAM[scanline*64] = VRAM[scanline*64+63] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
-      if (clk>14 == 0)
+      if (clk > 12)
       {
          ++spincolor;
          clk = 0;
