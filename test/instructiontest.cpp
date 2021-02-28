@@ -5,7 +5,9 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include "rvcrt0.h"
+
+// Accessing the linker sections:
+// uint8_t *data_byte = &_sdata;
 
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")

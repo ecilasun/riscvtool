@@ -7,7 +7,6 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include "rvcrt0.h"
 #include "umm_malloc.h"
 
 // #pragma GCC push_options

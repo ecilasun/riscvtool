@@ -5,7 +5,7 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include "rvcrt0.h"
+#include "rom_rvcrt0.h"
 
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
