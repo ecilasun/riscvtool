@@ -152,7 +152,7 @@ int main()
 
       // Two scrolling color bars on each side of the screen
       VRAM[scanline*64] = VRAM[scanline*64+63] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
-      if (clk>113370 == 0)
+      if (clk>14 == 0)
       {
          ++spincolor;
          clk = 0;
