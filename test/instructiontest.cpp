@@ -1523,25 +1523,25 @@ int main()
 
       for(int z=0;z<256;++z)
       {
-         int k = ssin(z*2+f)/170 + 96;
-         VRAM[z+(k<<8)] = cnt^0xFF;
+         int k = ssin(z*2+f)/173 + 96;
+         VRAM[z+(k<<8)] = cnt;
       }
       for(int z=0;z<192;++z)
       {
-         int k = ssin(z+f)/130 + 128;
+         int k = ssin(z*4+f)/130 + 128;
          VRAM[k+(z<<8)] = cnt;
       }
       f+=45;
 
-      if (cnt%128==0)
+      /*if (cnt%128==0)
       {
          int swp = dy;
          dy = dx;
          dx = swp;
-      }
+      }*/
       cnt++;
 
-      print(2, 180, 64, "rv32ic @100Mhz");
+      print(2, 180, 64, "rv32imc @100Mhz");
    }
    return 0;
 }
