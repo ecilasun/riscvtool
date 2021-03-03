@@ -1,4 +1,4 @@
-This project contains a set of helper utilities and sample code, as well as the bootloader ROM image for ecrv32 RISC-V SoC.
+This project contains a set of helper utilities and sample code, as well as the bootloader ROM image for ecrv32 RISC-V SoC found here: https://github.com/ecilasun/ecrv32
 
 To build the sample code and the ROM, simply type build.bat at the root level of this project. The ROM image will be converted to a COE format for Vivado, which then needs to be replaced with the one in the SoC project as the boot ROM image. The 'miniterm' sample will produce a miniterm.elf binary at the root of the project folder.
 
