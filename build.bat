@@ -15,11 +15,10 @@ riscv64-unknown-elf-objdump.exe -d miniterm.elf >> minitermasmdump.txt
 riscv64-unknown-elf-readelf.exe -S miniterm.elf >> minitermasmdump.txt
 .\build\release\riscvtool.exe miniterm.elf -makerom >> miniterm.coe
 
-REM riscv64-unknown-elf-gcc.exe -o instructiontest.elf test/instructiontest.cpp test/umm_malloc.c -Ofast -mexplicit-relocs -march=rv32imc -mabi=ilp32 -ffreestanding -static -mcmodel=medany -fvisibility=hidden -fPIC -ffunction-sections -fdata-sections -Wl,-e_start -Wl,-melf32lriscv -Wl,-gc-sections -Wl,--strip-debug -lc -lgcc -Wl,-Ttest/APP.lds
 riscv64-unknown-elf-gcc.exe -o instructiontest.elf test/instructiontest.cpp test/umm_malloc.c -Ofast -march=rv32imc -mabi=ilp32 -ffreestanding -fno-common -static -mcmodel=medany -fvisibility=hidden -fPIC -ffunction-sections -fdata-sections -Wl,-e_start -Wl,-melf32lriscv -Wl,-gc-sections -Wl,--strip-debug -lc -lgcc -Wl,-Ttest/APP.lds
 riscv64-unknown-elf-objdump.exe -d instructiontest.elf >> instructiontestasmdump.txt
 riscv64-unknown-elf-readelf.exe -S instructiontest.elf >> instructiontestasmdump.txt
 .\build\release\riscvtool.exe instructiontest.elf -makerom >> instructiontest.coe
 
 
-REM -ffreestanding -fstack-protector-strong -fno-common -ffunction-sections -fdata-sections -fPIC
+REM -ffreestanding -fstack-protector-strong

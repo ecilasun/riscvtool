@@ -198,7 +198,7 @@ unsigned int numRand()
 void cls()
 {
    volatile unsigned int *VRAMDW = (unsigned int *)VRAM;
-   for(uint32_t i=0;i<192*256;++i) VRAMDW[i]=0xFFFFFFFF;
+   for(uint32_t i=0;i<192*64;++i) VRAMDW[i]=0xFFFFFFFF;
 }
 
 void print(int ox, int oy, int len, const char *message)
@@ -247,33 +247,23 @@ void drawrect(int ox, int oy)
    }
 }
 
-void ddaline()
-{
-   float step;
-   int i;
-
-   float x1 = 0.f;
-   float y1 = 0.f;
-   float x2 = 220.f;
-   float y2 = 50.f;
-   float dx = (x2 - x1);
-   float dy = (y2 - y1);
-   if (abs(dx) >= abs(dy))
-      step = abs(dx);
-   else
-      step = abs(dy);
-   dx = dx / step;
-   dy = dy / step;
-   float x = x1;
-   float y = y1;
-   i = 1;
-   while (i <= step) {
-      VRAM[int(x) + (int(y)<<8)] = 0x00;
-      x = x + dx;
-      y = y + dy;
-      i = i + 1;
-   }
-}
+void bresenham(int x1, int y1, int x2, int y2, uint8_t color) 
+{ 
+   int m_new = 2 * (y2 - y1); 
+   int slope_error_new = m_new - (x2 - x1); 
+   for (int x = x1, y = y1; x <= x2; x++) 
+   {
+      VRAM[x+(y<<8)] = color;
+  
+      slope_error_new += m_new; 
+  
+      if (slope_error_new >= 0) 
+      { 
+         y++; 
+         slope_error_new  -= 2 * (x2 - x1); 
+      } 
+   } 
+} 
 
 int main()
 {
@@ -299,17 +289,19 @@ int main()
 
       for(int z=0;z<256;++z)
       {
-         int k = ssin(z*2+f)/173 + 96;
+         int k = ssin(z*3+f)/173 + 96;
          VRAM[z+(k<<8)] = cnt;
       }
       for(int z=0;z<192;++z)
       {
-         int k = ssin(z*4+f)/130 + 128;
+         int k = ssin(z*3+f)/130 + 128;
          VRAM[k+(z<<8)] = cnt;
       }
-      f+=45;
+      f+=33;
 
-      //ddaline();
+      //bresenham(0, 0, 255, 191, 0x38);
+      //bresenham(131, 30, 200, 190, 0x38);
+      //bresenham(0, 0, 200, 190, 0x38);
 
       /*if (cnt%128==0)
       {
@@ -319,7 +311,7 @@ int main()
       }*/
       cnt++;
 
-      print(2, 180, 64, "rv32imc @100Mhz");
+      print(2, 182, 64, "rv32imc @100Mhz");
    }
    return 0;
 }
