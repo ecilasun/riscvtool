@@ -1,15 +1,9 @@
 MEMORY{
-   RAM (rwx) : ORIGIN = 0x00000400, LENGTH = 65536
+   RAM (rwx) : ORIGIN = 0x00000500, LENGTH = 65536
 }
 
 SECTIONS
 {
-   .boot :
-   {
-      . = 0x0000400;
-      *(.boot)
-      _boot = .;
-   }
     .text :
    {
       *(.text*)
@@ -34,9 +28,8 @@ SECTIONS
       PROVIDE(__global_pointer$ = . + (4K/2));
       *(.sdata .sdata.*)
    }
-   .stack (NOLOAD) :
+   .stack (NOLOAD) : ALIGN(16)
    {
-      . = ALIGN(16);
       . = . + 4096;
       . = ALIGN(16);
    } > RAM

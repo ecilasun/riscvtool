@@ -92,8 +92,8 @@ int main()
 
    unsigned int rcvcursor = 0;
 
-   echoterm("ECRV32 v0.22\r\n");
-   //print(0,0,12,"ECRV32 v0.2");
+   echoterm("v0.23 rv32imc@100Mhz\r\n");
+   //print(0,0,12,"ECRV32 v0.23 rv32imc");
 
    // UART communication section
    int scanline = 0;
