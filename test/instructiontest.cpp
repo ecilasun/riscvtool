@@ -12,7 +12,7 @@
 //#pragma GCC push_options
 //#pragma GCC optimize ("align-functions=16")
 
-/*static void callConstructors()
+static void callConstructors()
 {
     // Start and end points of the constructor list,
     // defined by the linker script.
@@ -25,7 +25,7 @@
     for (void (**p)() = &__init_array_start; p < &__init_array_end; ++p) {
         (*p)();
     }
-}*/
+}
 
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
@@ -348,10 +348,10 @@ void mandelthing()
 
 int main()
 {
+   callConstructors();
    testclass someclass;
    someclass.dosomething();
    char something = (char)(someclass.getsomething() + '0');
-   //callConstructors();
 
    char msg[] = "rv32imc @100Mhz !";
    msg[16] = something;

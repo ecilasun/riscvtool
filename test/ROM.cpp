@@ -14,36 +14,22 @@ volatile unsigned int* VRAM = (volatile unsigned int* )0x80000000;       // Vide
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-volatile unsigned int targetjumpaddress = 0x00000000;
 
 void cls()
 {
    for(uint32_t i=0; i<192*64; ++i) VRAM[i] = 0x00000000;
 }
-unsigned int loadbinary()
+
+void loadbinaryblob()
 {
    // Header data
    unsigned int loadlen = 0;
    unsigned int loadtarget = 0;
-   unsigned int starttarget = 0;
    char *loadlenaschar = (char*)&loadlen;
    char *loadtargetaschar = (char*)&loadtarget;
-   char *starttargetaschar = (char*)&starttarget;
-
-   // Data length
-   unsigned int writecursor = 0;
-   while(writecursor < 4)
-   {
-      unsigned int bytecount = UARTRXStatus[0];
-      if (bytecount != 0)
-      {
-         unsigned char readdata = UARTRX[0];
-         loadlenaschar[writecursor++] = readdata;
-      }
-   }
 
    // Target address
-   writecursor = 0;
+   unsigned int writecursor = 0;
    while(writecursor < 4)
    {
       unsigned int bytecount = UARTRXStatus[0];
@@ -54,7 +40,7 @@ unsigned int loadbinary()
       }
    }
 
-   // Start address
+   // Data length
    writecursor = 0;
    while(writecursor < 4)
    {
@@ -62,11 +48,11 @@ unsigned int loadbinary()
       if (bytecount != 0)
       {
          unsigned char readdata = UARTRX[0];
-         starttargetaschar[writecursor++] = readdata;
+         loadlenaschar[writecursor++] = readdata;
       }
    }
 
-   // Read binary data
+   // Binary blob
    writecursor = 0;
    unsigned int scanline = 0;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
@@ -85,8 +71,30 @@ unsigned int loadbinary()
          if (scanline>191) scanline = 0;
       }
    }
+}
 
-   return starttarget;
+void runbinary()
+{
+   // Header data
+   unsigned int branchaddress = 0;
+   char *branchaddressaschar = (char*)&branchaddress;
+
+   // Data length
+   unsigned int writecursor = 0;
+   while(writecursor < 4)
+   {
+      unsigned int bytecount = UARTRXStatus[0];
+      if (bytecount != 0)
+      {
+         unsigned char readdata = UARTRX[0];
+         branchaddressaschar[writecursor++] = readdata;
+      }
+   }
+
+   // Jump to entry point
+   ((void (*)(void)) branchaddress)();
+
+   // Or alternatively, set 'ra' to branchaddress and 'ret' since we won't be exiting main()
 }
 
 void echoterm(const char *_message)
@@ -129,26 +137,11 @@ int main()
             // Terminate the string
             incoming[rcvcursor-1] = 0;
 
-            // Help text
-            if (incoming[0]='h' && incoming[1]=='e' && incoming[2]=='l' && incoming[3]=='p')
-            {
-               echoterm("\r\nrun[0x13][binsize][targetaddress][binarystream]\r\n");
-            }
-
-            // Load the incoming binary, clear the screen, and jump to its entry point
+            // Load the incoming binary
+            if (incoming[0]='b' && incoming[1]=='i' && incoming[2]=='n')
+               loadbinaryblob();
             if (incoming[0]='r' && incoming[1]=='u' && incoming[2]=='n')
-            {
-               targetjumpaddress = loadbinary();
-               cls();
-               ((void (*)(void)) targetjumpaddress)();
-               // Assuming program always loads at 0x600, we could do:
-               /*asm (
-                     "lui ra, 0x600;"
-                     //"fence.i;"
-                     "ret;"
-                  );*/
-            }
-
+               runbinary();
             // Rewind read cursor
             rcvcursor = 0;
          }
