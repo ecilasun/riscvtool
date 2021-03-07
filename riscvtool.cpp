@@ -195,13 +195,13 @@ void sendbinary(char *_filename, const unsigned int _target=0x80000000)
     unsigned char *bytestosend = new unsigned char[filebytesize+8];
     fread(bytestosend+8, 1, filebytesize, fp);
     fclose(fp);
-    ((unsigned int*)bytestosend)[0] = filebytesize;
-    ((unsigned int*)bytestosend)[1] = targetaddress;
+    ((unsigned int*)bytestosend)[0] = targetaddress;
+    ((unsigned int*)bytestosend)[1] = filebytesize;
 
     char commandtosend[512];
     int commandlength=0;
-    sprintf(commandtosend, "dat%c", 13);
-    commandlength = strlen(commandtosend);
+    sprintf(commandtosend, "bin%c", 13);
+    commandlength = 4;
 
     printf("Sending raw binary file over COM4 @115200 bps at 0x%.8X\n", _target);
     hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
