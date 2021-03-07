@@ -9,8 +9,23 @@
 // Accessing the linker sections:
 // uint8_t *data_byte = &_sdata;
 
-#pragma GCC push_options
-#pragma GCC optimize ("align-functions=16")
+//#pragma GCC push_options
+//#pragma GCC optimize ("align-functions=16")
+
+/*static void callConstructors()
+{
+    // Start and end points of the constructor list,
+    // defined by the linker script.
+    extern void (*__init_array_start)();
+    extern void (*__init_array_end)();
+
+    // Call each function in the list.
+    // We have to take the address of the symbols, as __init_array_start *is*
+    // the first function pointer, not the address of it.
+    for (void (**p)() = &__init_array_start; p < &__init_array_end; ++p) {
+        (*p)();
+    }
+}*/
 
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
@@ -176,6 +191,17 @@ int sinewave[1024] = {
     0x3cdc,0x3d40,0x3da5,0x3e09,0x3e6e,0x3ed2,0x3f37,0x3f9b
 };
 
+class testclass
+{
+public:
+   testclass() : i(0) {}
+   ~testclass() {}
+   void dosomething() {++i;}
+   int getsomething() {return i;}
+protected:
+   int i;
+};
+
 int ssin(int s)
 {
     return(sinewave[(s%1024)]-16384);
@@ -263,17 +289,82 @@ void bresenham(int x1, int y1, int x2, int y2, uint8_t color)
          slope_error_new  -= 2 * (x2 - x1); 
       } 
    } 
-} 
+}
+
+int mandelbrot(float _real, float _imag)
+{
+	int limit = 100;
+	float zReal = _real;
+	float zImag = _imag;
+
+	for (int i = 0; i < limit; ++i)
+   {
+		float r2 = zReal * zReal;
+		float i2 = zImag * zImag;
+		
+		if (r2 + i2 > 4.f)
+         return i;
+
+		zImag = 2.f * zReal * zImag + _imag;
+		zReal = r2 - i2 + _real;
+	}
+	return limit;
+}
+
+void mandelthing()
+{
+   float x_start = -2.f;
+   float x_fin = 1.f;
+   float y_start = -1.f;
+   float y_fin = 1.f;
+   float dx = (x_fin - x_start)/255.f;
+   float dy = (y_fin - y_start)/191.f;
+   for (int i = 0; i < 255; i++)
+   {
+      for (int j = 0; j < 191; j++)
+      {
+         float x = x_start + j*dx; // current real value
+         //float y = y_fin - i*dy; // current imaginary value
+
+         /*int limit = 100;
+         float zReal = x;
+         float zImag = y;
+         int im = 0;
+
+         for (im = 0; im < limit; ++im)
+         {
+            float r2 = zReal * zReal;
+            float i2 = zImag * zImag;
+            if (r2 + i2 > 4.f)
+               break;
+            zImag = 2.f * zReal * zImag + y;
+            zReal = r2 - i2 + x;
+         }*/
+
+         VRAM[i+(j<<8)] = (int(x)^j)%255;
+      }
+   }
+}
 
 int main()
 {
+   testclass someclass;
+   someclass.dosomething();
+   char something = (char)(someclass.getsomething() + '0');
+   //callConstructors();
+
+   char msg[] = "rv32imc @100Mhz !";
+   msg[16] = something;
+
    cls();
+
+   //mandelthing();
 
    int x=0, y=0;
    int dx=3, dy=2;
    int sid = 64; // Blue gem
-   int f=0;
    int cnt=0;
+   int f=0;
    while(1)
    {
       //int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF;
@@ -290,30 +381,30 @@ int main()
       for(int z=0;z<256;++z)
       {
          int k = ssin(z*3+f)/173 + 96;
-         VRAM[z+(k<<8)] = cnt;
+         VRAM[z+(k<<8)] = 0x03;//cnt&0x07;
       }
       for(int z=0;z<192;++z)
       {
          int k = ssin(z*3+f)/130 + 128;
-         VRAM[k+(z<<8)] = cnt;
+         VRAM[k+(z<<8)] = 0x02;//(cnt^0xFF)&0xC0;
       }
       f+=33;
 
-      //bresenham(0, 0, 255, 191, 0x38);
-      //bresenham(131, 30, 200, 190, 0x38);
+      bresenham(0, 0, 255, 191, 0x38);
+      bresenham(131, 30, 255, 191, 0x38);
       //bresenham(0, 0, 200, 190, 0x38);
 
-      /*if (cnt%128==0)
+      if (cnt%128==0)
       {
          int swp = dy;
          dy = dx;
          dx = swp;
-      }*/
+      }
       cnt++;
 
-      print(2, 182, 64, "rv32imc @100Mhz");
+      print(2, 182, 64, msg);
    }
    return 0;
 }
 
-#pragma GCC pop_options
+//#pragma GCC pop_options

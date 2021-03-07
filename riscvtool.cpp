@@ -38,6 +38,19 @@ struct SElfProgramHeader32
     unsigned int m_Flags;
     unsigned int m_Align;
 };
+struct SElfSectionHeader32
+{
+    unsigned int m_NameOffset;
+    unsigned int m_Type;
+    unsigned int m_Flags;
+    unsigned int m_Addr;
+    unsigned int m_Offset;
+    unsigned int m_Size;
+    unsigned int m_Link;
+    unsigned int m_Info;
+    unsigned int m_AddrAlign;
+    unsigned int m_EntSize;
+};
 #pragma pack(pop)
 
 void parseelfheader(unsigned char *_elfbinary)
@@ -267,7 +280,7 @@ unsigned int generateelfuploadpackage(unsigned char *_elfbinaryread, unsigned ch
     unsigned int *sourcearea = (unsigned int*)(_elfbinaryread+pheader->m_Offset);
     unsigned int binarysize = pheader->m_MemSz;
 
-    printf("Preparing %dbyte binary package (relocating executable code and data from 0x%.8X to 0x00000000)\n", pheader->m_MemSz, pheader->m_Offset);
+    printf("Preparing binary package\n");
     for (unsigned int i=0;i<binarysize/4;++i)
     {
         //printf("%.8X:%.8X\n", i*4, sourcearea[i]);
@@ -304,7 +317,33 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     fread(bytestoread, 1, filebytesize, fp);
     fclose(fp);
 
-    unsigned int actualbinarysize = generateelfuploadpackage(bytestoread, bytestosend+8);
+    SElfFileHeader32 *fheader = (SElfFileHeader32 *)bytestoread;
+    SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(bytestoread+fheader->m_PHOff);
+    printf("Program PADDR 0x%.8X\n", pheader->m_PAddr);
+    unsigned int relativeStartAddress = (fheader->m_Entry-pheader->m_PAddr)+_target;
+    printf("Executable entry point is at 0x%.8X (new relative entry point: 0x%.8X)\n", fheader->m_Entry, relativeStartAddress);
+    unsigned int stringtableindex = fheader->m_SHStrndx;
+    SElfSectionHeader32 *stringtablesection = (SElfSectionHeader32 *)(bytestoread+fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
+    char *names = (char*)(bytestoread+stringtablesection->m_Offset);
+    for(int i=0;i<fheader->m_SHNum;++i)
+    {
+        SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(bytestoread+fheader->m_SHOff+fheader->m_SHEntSize*i);
+        if (sheader->m_Type == 0x1 || sheader->m_Type == 0xE || sheader->m_Type == 0xF || sheader->m_Type == 0x10) // Progbits/Iniarray/Finiarray/Preinitarray
+        {
+            char sectionname[128];
+            int n=0;
+            do
+            {
+                sectionname[n] = names[sheader->m_NameOffset+n];
+                ++n;
+            }
+            while(names[sheader->m_NameOffset+n]!='.' && sheader->m_NameOffset+n<stringtablesection->m_Size);
+            sectionname[n] = 0;
+            printf("'%s' @0x%.8X (rel:0x%.8X) offset: 0x%.8X size: 0x%.8X\n", sectionname, sheader->m_Addr, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Offset, sheader->m_Size);
+        }
+    }
+
+    unsigned int actualbinarysize = generateelfuploadpackage(bytestoread, bytestosend+12);
     if (actualbinarysize == 0xFFFFFFFF) // Failed
     {
         printf("ERROR: header parse error, can't send ELF file %s\n", _filename);
@@ -314,8 +353,9 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     }
     else
         printf("Actual ELF executable portion size: 0x%.8X\n", actualbinarysize);
-    ((unsigned int*)bytestosend)[0] = actualbinarysize;
-    ((unsigned int*)bytestosend)[1] = targetaddress;
+    ((unsigned int*)bytestosend)[0] = actualbinarysize; // binary size
+    ((unsigned int*)bytestosend)[1] = targetaddress; // load address
+    ((unsigned int*)bytestosend)[2] = relativeStartAddress; // start address
 
     char commandtosend[512];
     int commandlength=0;
@@ -348,11 +388,11 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
                     WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
                     // Wait a bit for the receiving end to start accepting
                     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-                    // Send 8 byte header plus the data
-                    WriteFile(hComm, bytestosend, actualbinarysize+8, &byteswritten, nullptr);
+                    // Send 12 byte header plus the data
+                    WriteFile(hComm, bytestosend, actualbinarysize+12, &byteswritten, nullptr);
                     // Wait a bit after sending last bytes to avoid issues with repeated calls
                     std::this_thread::sleep_for(std::chrono::milliseconds(5));
-                    printf("Done, written %.8X bytes (including 8 byte header)\n", byteswritten);
+                    printf("Done, written %.8X bytes (including 12 byte header)\n", byteswritten);
                 }
                 else
                 {

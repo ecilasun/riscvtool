@@ -25,8 +25,10 @@ unsigned int loadbinary()
    // Header data
    unsigned int loadlen = 0;
    unsigned int loadtarget = 0;
+   unsigned int starttarget = 0;
    char *loadlenaschar = (char*)&loadlen;
    char *loadtargetaschar = (char*)&loadtarget;
+   char *starttargetaschar = (char*)&starttarget;
 
    // Data length
    unsigned int writecursor = 0;
@@ -52,6 +54,18 @@ unsigned int loadbinary()
       }
    }
 
+   // Start address
+   writecursor = 0;
+   while(writecursor < 4)
+   {
+      unsigned int bytecount = UARTRXStatus[0];
+      if (bytecount != 0)
+      {
+         unsigned char readdata = UARTRX[0];
+         starttargetaschar[writecursor++] = readdata;
+      }
+   }
+
    // Read binary data
    writecursor = 0;
    unsigned int scanline = 0;
@@ -72,7 +86,7 @@ unsigned int loadbinary()
       }
    }
 
-   return loadtarget;
+   return starttarget;
 }
 
 void echoterm(const char *_message)
