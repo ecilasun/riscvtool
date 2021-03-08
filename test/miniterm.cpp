@@ -1421,6 +1421,33 @@ void demo3()
    }
 }
 
+void demo4()
+{
+   for (int y = 0; y < 192; y+=2)
+   {
+      for (int x = 0; x < 256; x+=2)
+      {
+         float ca = 0.002f * float(x - 80) / 80.f - 0.7463f;
+         float cb = 0.002f * float(y - 40) / 80.f + 0.1102f;
+         float a = ca;
+         float b = cb;
+         int n = 0;
+         for (; n < 64; ++n)
+         {
+            float ta = a * a - b * b;
+            if (ta > 2.f)
+               break;
+            b = cb + 2 * a * b;
+            a = ca + ta;
+         }
+         VRAM[x+(y<<8)] = (n * 3);
+         VRAM[x+1+(y<<8)] = (n * 3);
+         VRAM[x+((y+1)<<8)] = (n * 3);
+         VRAM[x+1+((y+1)<<8)] = (n * 3);
+      }
+   }
+}
+
 void demo()
 {
    while(1)
@@ -1550,12 +1577,14 @@ int main()
             }
             else if ((incoming[0]='h') && (incoming[1]=='e') && (incoming[2]=='l') && (incoming[3]=='p'))
             {
-               echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\rdemo: sprite demo, type to quit\n\rdemo2: random number demo\n\rdemo3: mandelbrot demo\n\rcls: clear screen\n\rhelp: help screen\n\rreset: reboot to loader\n\r");
+               echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\rdemo: sprite demo, type to quit\n\rdemo2: random number demo\n\rdemo3/demo4: fractal demos\n\rcls: clear screen\n\rhelp: help screen\n\rreset: reboot to loader\n\r");
             }
             else if ((incoming[0]='d') && (incoming[1]=='e') && (incoming[2]=='m') && (incoming[3]=='o'))
             {
                canclear = 0;
-               if (incoming[4]=='3')
+               if (incoming[4]=='4')
+                  demo4();
+               else if (incoming[4]=='3')
                   demo3();
                else if (incoming[4]=='2')
                   demo2();
