@@ -438,7 +438,10 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             WriteFile(hComm, bytestoread+sheader->m_Offset, sheader->m_Size, &byteswritten, nullptr);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-            printf("done (0x%.8X bytes written)\n", byteswritten);
+            if (byteswritten != 0)
+                printf("done (0x%.8X bytes written)\n", byteswritten);
+            else
+                printf("failed!\n");
         }
         /*else
             printf("skipping '%s' @0x%.8X len:%.8X\n", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size);*/
