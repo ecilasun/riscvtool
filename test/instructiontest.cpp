@@ -6,25 +6,11 @@
 #include <memory.h>
 #include <math.h>
 
-//_exit, close, environ, execve, fork, fstat, getpid, isatty, kill, link, lseek, open, read, sbrk, stat, times, unlink, wait, write
+// OS calls:
+// _exit, close, environ, execve, fork, fstat, getpid, isatty, kill, link, lseek, open, read, sbrk, stat, times, unlink, wait, write
 
 // Accessing the linker sections:
 // uint8_t *data_byte = &_sdata;
-
-/*static void callConstructors()
-{
-    // Start and end points of the constructor list,
-    // defined by the linker script.
-    extern void (*__init_array_start)();
-    extern void (*__init_array_end)();
-
-    // Call each function in the list.
-    // We have to take the address of the symbols, as __init_array_start *is*
-    // the first function pointer, not the address of it.
-    for (void (**p)() = &__init_array_start; p < &__init_array_end; ++p) {
-        (*p)();
-    }
-}*/
 
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
@@ -296,8 +282,6 @@ void bresenham(int xA, int yA, int xB, int yB, uint8_t color)
 
 int main(int argc, char ** argv)
 {
-   //callConstructors();
-
    testclass someclass;
    someclass.dosomething();
    char something = (char)(someclass.getsomething() + '0');
