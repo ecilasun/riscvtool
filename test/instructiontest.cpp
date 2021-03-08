@@ -171,12 +171,8 @@ void drawrect(int ox, int oy)
    }
 }
 
-void bresenham(int xA, int yA, int xB, int yB, uint8_t color)
+void bresenham(int x1, int y1, int x2, int y2, uint8_t color)
 {
-   int x1 = xA<xB?xA:xB;
-   int x2 = xA>xB?xA:xB;
-   int y1 = xA<xB?yA:yB;
-   int y2 = xA>xB?yA:yB;
    int m_new = 2 * (y2 - y1); 
    int slope_error_new = m_new - (x2 - x1); 
    for (int x = x1, y = y1; x <= x2; x++) 
@@ -191,6 +187,32 @@ void bresenham(int xA, int yA, int xB, int yB, uint8_t color)
          slope_error_new  -= 2 * (x2 - x1); 
       } 
    } 
+}
+
+void DDA(float X0, float Y0, float X1, float Y1, uint8_t color)
+{
+   // calculate dx , dy
+   float dx = X1 - X0;
+   float dy = Y1 - Y0;
+
+   // Depending upon absolute value of dx & dy
+   // choose number of steps to put pixel as
+   // steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy)
+   float steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+   // calculate increment in x & y for each steps
+   float Xinc = dx / (float) steps;
+   float Yinc = dy / (float) steps;
+
+   // Put pixel for each step
+   float X = X0;
+   float Y = Y0;
+   for (int i = 0; i <= steps; i++)
+   {
+      VRAM[int(X)+(int(Y)<<8)] = color;
+      X += Xinc;
+      Y += Yinc;
+   }
 }
 
 class testclass
@@ -244,9 +266,9 @@ int main(int argc, char ** argv)
       }
       f+=33;
 
-      //bresenham(0, 0, 230, 191, 0x38);
-      //bresenham(230, 191, 131, 30, 0x38);
-      //bresenham(0, 0, 131, 30, 0x38);
+      //bresenham(0, 0, 230, 150, 0x38);
+      //DDA(230, 150, 131, 30, 0x38);
+      //DDA(0, 0, 131, 30, 0x38);
 
       cnt++;
 
