@@ -1295,6 +1295,7 @@ volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UA
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
 volatile unsigned int targetjumpaddress = 0x00000000;
+volatile unsigned int ROMResetVector = 0x000FA00;
 char chartable[32*24];
 
 // Clear the screen
@@ -1376,6 +1377,50 @@ void demo2()
    }
 }
 
+void demo3()
+{
+   const int maxiter = 32;
+   int height = 192;
+   int width = 256;
+   for (int row = 0; row < height; row+=2) {
+      for (int col = 0; col < width; col+=2) {
+         float c_re = (col - width/2.f)*2.2f/width;
+         float c_im = (row - height/2.f)*2.2f/width;
+         float x = 0.f, y = 0.f;
+         int iteration = 0;
+         while (x*x+y*y <= 4.f && iteration < maxiter)
+         {
+               float x_new = x*x - y*y + c_re;
+               y = 2.f*x*y + c_im;
+               x = x_new;
+               iteration++;
+         }
+         if (iteration < maxiter)
+         {
+            VRAM[col+(row<<8)] = iteration*8;
+            VRAM[col+1+(row<<8)] = iteration*8;
+            VRAM[col+((row+1)<<8)] = iteration*8;
+            VRAM[col+1+((row+1)<<8)] = iteration*8;
+         }
+         else
+         {
+            VRAM[col+(row<<8)] = iteration%16;
+            VRAM[col+1+(row<<8)] = iteration%16;
+            VRAM[col+((row+1)<<8)] = iteration%16;
+            VRAM[col+1+((row+1)<<8)] = iteration%16;
+         }
+
+         unsigned int bytecount = UARTRXStatus[0];
+         if (bytecount!=0)
+         {
+            // Eat the character
+            char checkchar = UARTRX[0];
+            return;
+         }
+      }
+   }
+}
+
 void demo()
 {
    while(1)
@@ -1399,33 +1444,12 @@ void demo()
       }
       unsigned int bytecount = UARTRXStatus[0];
       if (bytecount!=0)
-         break;
-   }
-
-
-
-   /*for (int y = 0; y < 192; y+=2)
-   {
-      for (int x = 0; x < 256; x+=2)
       {
-         float ca = 0.002f * float(x - 80) / 80.f - 0.7463f;
-         float cb = 0.002f * float(y - 40) / 80.f + 0.1102f;
-         float a = ca;
-         float b = cb;
-         int n = 0;
-         const int factor = 16;
-         for (; n < 65536 / factor; ++n)
-         {
-            float ta = a * a - b * b;
-            if (ta > 2.f)
-               break;
-            b = cb + 2 * a * b;
-            a = ca + ta;
-         }
-         VRAM[x+(y<<8)] = (n * 3);
+         // Eat the character
+         char checkchar = UARTRX[0];
+         break;
       }
-   }*/
-
+   }
 }
 
 void print(int ox, int oy, int len, const char *message)
@@ -1520,22 +1544,27 @@ int main()
             int canclear = 1;
 
             // Clear the whole screen
-            //if (!strcmp(incoming, "cls"))
             if ((incoming[0]='c') && (incoming[1]=='l') && (incoming[2]=='s'))
             {
                clearchars();
             }
             else if ((incoming[0]='h') && (incoming[1]=='e') && (incoming[2]=='l') && (incoming[3]=='p'))
             {
-               echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\rdemo: sprite demo, type to quit\n\rdemo2: fractal demo, type to quit\n\rcls: clear screen\n\rhelp: help screen\n\r");
+               echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\rdemo: sprite demo, type to quit\n\rdemo2: random number demo\n\rdemo3: mandelbrot demo\n\rcls: clear screen\n\rhelp: help screen\n\rreset: reboot to loader\n\r");
             }
             else if ((incoming[0]='d') && (incoming[1]=='e') && (incoming[2]=='m') && (incoming[3]=='o'))
             {
                canclear = 0;
-               if (incoming[4]=='2')
+               if (incoming[4]=='3')
+                  demo3();
+               else if (incoming[4]=='2')
                   demo2();
                else
                   demo(); 
+            }
+            else if ((incoming[0]='r') && (incoming[1]=='e') && (incoming[2]=='s') && (incoming[3]=='e') && (incoming[4]=='t'))
+            {
+               ((void (*)(void)) ROMResetVector)();
             }
 
             if(canclear)

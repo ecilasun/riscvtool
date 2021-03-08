@@ -310,7 +310,7 @@ int main(int argc, char ** argv)
 
       for(int z=0;z<256;++z)
       {
-         int k = ssin(z*3+f)/173 + 96;
+         int k = ssin(z*2+f)/173 + 96;
          VRAM[z+(k<<8)] = cnt;
       }
       for(int z=0;z<192;++z)
@@ -320,8 +320,8 @@ int main(int argc, char ** argv)
       }
       f+=33;
 
-      bresenham(0, 0, 255, 191, 0x38);
-      bresenham(255, 191, 131, 30, 0x38);
+      //bresenham(0, 0, 230, 191, 0x38);
+      //bresenham(230, 191, 131, 30, 0x38);
       //bresenham(0, 0, 131, 30, 0x38);
 
       cnt++;
