@@ -1470,7 +1470,7 @@ void echoterm(const char *_message)
 int main()
 {
    const unsigned char bgcolor = 0xFF; // BRG -> B=0xC0, R=0x38, G=0x07
-   const unsigned char editbgcolor = 0x00;
+   //const unsigned char editbgcolor = 0x00;
 
    // 32 bytes of incoming command space
    char incoming[32];
@@ -1478,7 +1478,7 @@ int main()
 
    unsigned int rcvcursor = 0;
    unsigned int cmdcounter = 23;
-   unsigned int oldcount = 0;
+   //unsigned int oldcount = 0;
 
    // Startup message
    clearchars();
@@ -1504,7 +1504,7 @@ int main()
             --rcvcursor;
             incoming[rcvcursor-1] = 0;
             // Copy the string to the chartable
-            for (int i=0;i<rcvcursor;++i)
+            for (unsigned int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
              --rcvcursor;
          }
@@ -1514,22 +1514,22 @@ int main()
             incoming[rcvcursor-1] = 0;
 
             // Copy the string to the chartable
-            for (int i=0;i<rcvcursor;++i)
+            for (unsigned int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
             
             int canclear = 1;
 
             // Clear the whole screen
             //if (!strcmp(incoming, "cls"))
-            if (incoming[0]='c' && incoming[1]=='l' && incoming[2]=='s')
+            if ((incoming[0]='c') && (incoming[1]=='l') && (incoming[2]=='s'))
             {
                clearchars();
             }
-            else if (incoming[0]='h' && incoming[1]=='e' && incoming[2]=='l' && incoming[3]=='p')
+            else if ((incoming[0]='h') && (incoming[1]=='e') && (incoming[2]=='l') && (incoming[3]=='p'))
             {
                echoterm("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\rdemo: sprite demo, type to quit\n\rdemo2: fractal demo, type to quit\n\rcls: clear screen\n\rhelp: help screen\n\r");
             }
-            else if (incoming[0]='d' && incoming[1]=='e' && incoming[2]=='m' && incoming[3]=='o')
+            else if ((incoming[0]='d') && (incoming[1]=='e') && (incoming[2]=='m') && (incoming[3]=='o'))
             {
                canclear = 0;
                if (incoming[4]=='2')

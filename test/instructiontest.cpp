@@ -6,13 +6,12 @@
 #include <memory.h>
 #include <math.h>
 
+//_exit, close, environ, execve, fork, fstat, getpid, isatty, kill, link, lseek, open, read, sbrk, stat, times, unlink, wait, write
+
 // Accessing the linker sections:
 // uint8_t *data_byte = &_sdata;
 
-//#pragma GCC push_options
-//#pragma GCC optimize ("align-functions=16")
-
-static void callConstructors()
+/*static void callConstructors()
 {
     // Start and end points of the constructor list,
     // defined by the linker script.
@@ -25,7 +24,7 @@ static void callConstructors()
     for (void (**p)() = &__init_array_start; p < &__init_array_end; ++p) {
         (*p)();
     }
-}
+}*/
 
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
 volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
@@ -273,8 +272,12 @@ void drawrect(int ox, int oy)
    }
 }
 
-void bresenham(int x1, int y1, int x2, int y2, uint8_t color) 
-{ 
+void bresenham(int xA, int yA, int xB, int yB, uint8_t color)
+{
+   int x1 = xA<xB?xA:xB;
+   int x2 = xA>xB?xA:xB;
+   int y1 = xA<xB?yA:yB;
+   int y2 = xA>xB?yA:yB;
    int m_new = 2 * (y2 - y1); 
    int slope_error_new = m_new - (x2 - x1); 
    for (int x = x1, y = y1; x <= x2; x++) 
@@ -291,78 +294,21 @@ void bresenham(int x1, int y1, int x2, int y2, uint8_t color)
    } 
 }
 
-int mandelbrot(float _real, float _imag)
+int main(int argc, char ** argv)
 {
-	int limit = 100;
-	float zReal = _real;
-	float zImag = _imag;
+   //callConstructors();
 
-	for (int i = 0; i < limit; ++i)
-   {
-		float r2 = zReal * zReal;
-		float i2 = zImag * zImag;
-		
-		if (r2 + i2 > 4.f)
-         return i;
-
-		zImag = 2.f * zReal * zImag + _imag;
-		zReal = r2 - i2 + _real;
-	}
-	return limit;
-}
-
-void mandelthing()
-{
-   float x_start = -2.f;
-   float x_fin = 1.f;
-   float y_start = -1.f;
-   float y_fin = 1.f;
-   float dx = (x_fin - x_start)/255.f;
-   float dy = (y_fin - y_start)/191.f;
-   for (int i = 0; i < 255; i++)
-   {
-      for (int j = 0; j < 191; j++)
-      {
-         float x = x_start + j*dx; // current real value
-         //float y = y_fin - i*dy; // current imaginary value
-
-         /*int limit = 100;
-         float zReal = x;
-         float zImag = y;
-         int im = 0;
-
-         for (im = 0; im < limit; ++im)
-         {
-            float r2 = zReal * zReal;
-            float i2 = zImag * zImag;
-            if (r2 + i2 > 4.f)
-               break;
-            zImag = 2.f * zReal * zImag + y;
-            zReal = r2 - i2 + x;
-         }*/
-
-         VRAM[i+(j<<8)] = (int(x)^j)%255;
-      }
-   }
-}
-
-int main()
-{
-   callConstructors();
    testclass someclass;
    someclass.dosomething();
    char something = (char)(someclass.getsomething() + '0');
 
-   char msg[] = "rv32imc @100Mhz !";
+   char msg[] = "rv32imc @100Mhz X";
    msg[16] = something;
 
    cls();
 
-   //mandelthing();
-
    int x=0, y=0;
    int dx=3, dy=2;
-   int sid = 64; // Blue gem
    int cnt=0;
    int f=0;
    while(1)
@@ -381,30 +327,22 @@ int main()
       for(int z=0;z<256;++z)
       {
          int k = ssin(z*3+f)/173 + 96;
-         VRAM[z+(k<<8)] = 0x03;//cnt&0x07;
+         VRAM[z+(k<<8)] = cnt;
       }
       for(int z=0;z<192;++z)
       {
          int k = ssin(z*3+f)/130 + 128;
-         VRAM[k+(z<<8)] = 0x02;//(cnt^0xFF)&0xC0;
+         VRAM[k+(z<<8)] = (cnt^0xFF);
       }
       f+=33;
 
       bresenham(0, 0, 255, 191, 0x38);
-      bresenham(131, 30, 255, 191, 0x38);
-      //bresenham(0, 0, 200, 190, 0x38);
+      bresenham(255, 191, 131, 30, 0x38);
+      //bresenham(0, 0, 131, 30, 0x38);
 
-      if (cnt%128==0)
-      {
-         int swp = dy;
-         dy = dx;
-         dx = swp;
-      }
       cnt++;
 
       print(2, 182, 64, msg);
    }
    return 0;
 }
-
-//#pragma GCC pop_options

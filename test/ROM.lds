@@ -6,7 +6,7 @@ SECTIONS
 {
    .boot :
    {
-      . = 0x0000000;
+      . = 0x000FA00;
       *(.boot)
       _boot = .;
    }
