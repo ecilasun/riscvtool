@@ -88,7 +88,7 @@ struct FILEHANDLE
 int fat_getpartition();
 int fat_getfilesize(struct FILEHANDLE *fh);
 int fat_find_file(const char *fn, struct FILEHANDLE *fh);
-int fat_list_files();
+int fat_list_files(char *target);
 int fat_readfile(struct FILEHANDLE *fh, char *buffer, int read_bytes, int *total_read);
 int fat_openfile(const char *fn, struct FILEHANDLE *fh);
 void fat_closefile(struct FILEHANDLE *fh);

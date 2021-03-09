@@ -26,6 +26,7 @@
 #include "FAT.h"
 #include "SDCARD.h"
 #include "utils.h"
+#include <string.h>
 
 #define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
 
@@ -149,7 +150,7 @@ int fat_find_file(const char *fn, struct FILEHANDLE *fh)
     return 0;
 }
 
-int fat_list_files()
+int fat_list_files(char *target)
 {
     bpb_t *bpb = &fatcontext.bpb;
     fatdir_t *dir = fatcontext.dir;
@@ -175,8 +176,18 @@ int fat_list_files()
             if(dir->name[0]==0xE5 || dir->attr[0]==0xF)
                 continue;
 
-            Print(0,col,11,dir->name);
-            col+=8;
+            if (target==nullptr)
+            {
+                Print(0,col,11,dir->name); // name:8 + ext:3
+                col+=8;
+            }
+            else
+            {
+                strncat(target, dir->name, 8);
+                strcat(target, ".");
+                strncat(target, dir->ext, 3);
+                strcat(target, "\r\n");
+            }
         }
     }
     else

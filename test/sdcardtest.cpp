@@ -31,7 +31,7 @@ int main(int argc, char ** argv)
    else
       Print(0, 0, "File not found");*/
 
-   fat_list_files();
+   fat_list_files(nullptr);
 
    /*int cnt=0;
    int x=0, y=0;
