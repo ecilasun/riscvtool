@@ -1334,8 +1334,8 @@ void demo3()
    const int maxiter = 96;
    int height = 192;
    int width = 256;
-   for (int row = 0; row < height; row+=2) {
-      for (int col = 0; col < width; col+=2) {
+   for (int row = 0; row < height; row++) {
+      for (int col = row%2; col < width; col+=2) {
          float c_re = (col - width/0.65f)*1.2f/width;
          float c_im = (row - height/2.f)*1.2f/width;
          float x = 0.f, y = 0.f;
@@ -1350,9 +1350,6 @@ void demo3()
 
          unsigned char color = (unsigned char)((iteration/4)%255);
          VRAM[col+(row<<8)] = color;
-         VRAM[col+1+(row<<8)] = color;
-         VRAM[col+((row+1)<<8)] = color;
-         VRAM[col+1+((row+1)<<8)] = color;
 
          unsigned int bytecount = UARTRXStatus[0];
          if (bytecount!=0)

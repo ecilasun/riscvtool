@@ -154,7 +154,7 @@ int scos(int s)
     return(sinewave[((s+512)%1024)]-16384);
 }
 
-void drawrect(int ox, int oy)
+void drawrect(int ox, int oy, const uint8_t color)
 {
    for (int y=0;y<16;++y)
    {
@@ -166,7 +166,7 @@ void drawrect(int ox, int oy)
          int sx = ox+x;
          if (sx>255 || sx<0)
             continue;
-         VRAM[sx+(sy<<8)] = 0x7C;
+         VRAM[sx+(sy<<8)] = color;
       }
    }
 }
@@ -226,33 +226,193 @@ protected:
    int i;
 };
 
+uint8_t SDIdle()
+{
+   uint8_t response;
+   // Enter idle state
+   SPIOutput[33] = 0xFF;
+   SPIOutput[0] = SPI_CMD(CMD0_GO_IDLE_STATE);
+   SPIOutput[1] = 0x00;
+   SPIOutput[2] = 0x00;
+   SPIOutput[3] = 0x00;
+   SPIOutput[4] = 0x00;
+   SPIOutput[5] = 0x95; // Checksum
+   do {
+      SPIOutput[36] = 0xFF;
+      response = SPIInput[0];
+      if (response != 0xFF)
+         break;
+   } while(1); // Expected: 0x01 - got 0x01
+
+   return response;
+}
+
+uint8_t SDCheckVoltageRange(uint32_t &databack)
+{
+   uint8_t response;
+
+   SPIOutput[35] = 0xFF;
+   SPIOutput[0] = SPI_CMD(CMD8_SEND_IF_COND);
+   SPIOutput[1] = 0x00;
+   SPIOutput[2] = 0x00;
+   SPIOutput[3] = 0x01;
+   SPIOutput[4] = 0xAA;
+   SPIOutput[5] = 0x87; // Checksum
+
+   do {
+      SPIOutput[36] = 0xFF;
+      response = SPIInput[0];
+      if (response != 0xFF)
+         break;
+   } while(1); // Expected: 0x01(version 2 SDCARD) or 0x05(version 1 or MMC card) - got 0x01
+
+   // Read the 00 00 01 AA sequence back from the SD CARD
+   databack = 0x00000000;
+   SPIOutput[36] = 0xFF;
+   databack |= SPIInput[0];
+   SPIOutput[36] = 0xFF;
+   databack |= (databack<<8)|SPIInput[1];
+   SPIOutput[36] = 0xFF;
+   databack |= (databack<<8)|SPIInput[2];
+   SPIOutput[36] = 0xFF;
+   databack |= (databack<<8)|SPIInput[3];
+
+   return response;
+}
+
+uint8_t SDCardInit()
+{
+   uint8_t response;
+
+   // ACMD header
+   SPIOutput[37] = 0xFF;
+   SPIOutput[0] = SPI_CMD(CMD55_APP_CMD);
+   SPIOutput[1] = 0x00;
+   SPIOutput[2] = 0x00;
+   SPIOutput[3] = 0x00;
+   SPIOutput[4] = 0x00;
+   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+   do {
+      SPIOutput[38] = 0xFF;
+      response = SPIInput[0];
+      if (response != 0xFF)
+         break;
+   } while(1); // Expected: ??
+
+   // Set high capacity mode on
+   SPIOutput[37] = 0xFF;
+   SPIOutput[0] = SPI_CMD(ACMD41_SD_SEND_OP_COND);
+   SPIOutput[1] = 0x40;
+   SPIOutput[2] = 0x00;
+   SPIOutput[3] = 0x00;
+   SPIOutput[4] = 0x00;
+   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+   do {
+      SPIOutput[38] = 0xFF;
+      response = SPIInput[0];
+      if (response != 0xFF)
+         break;
+   } while(1); // Expected: 0x00 eventually, but will also get several 0x01 (idle)
+
+   // Initialize
+   /*SPIOutput[37] = 0xFF;
+   SPIOutput[0] = SPI_CMD(CMD1_SEND_OP_COND);
+   SPIOutput[1] = 0x00;
+   SPIOutput[2] = 0x00;
+   SPIOutput[3] = 0x00;
+   SPIOutput[4] = 0x00;
+   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+
+   do {
+      SPIOutput[38] = 0xFF;
+      response = SPIInput[0];
+      if (response != 0xFF)
+         break;
+   } while(1); // Expected: 0x00*/
+
+   return response;
+}
+
+uint8_t SDSetBlockSize512()
+{
+   uint8_t response;
+   // Enter idle state
+   SPIOutput[33] = 0xFF;
+   SPIOutput[0] = SPI_CMD(CMD16_SET_BLOCKLEN);
+   SPIOutput[1] = 0x00;
+   SPIOutput[2] = 0x00;
+   SPIOutput[3] = 0x02;
+   SPIOutput[4] = 0x00;
+   SPIOutput[5] = 0x95; // Checksum
+   do {
+      SPIOutput[36] = 0xFF;
+      response = SPIInput[0];
+      if (response != 0xFF)
+         break;
+   } while(1); // Expected: 0x00
+
+   return response;
+}
+
+void SDCardStartup(unsigned char &response, unsigned char &response2, unsigned char &response3, unsigned char &response4)
+{
+   int k=0;
+
+   response = SDIdle();
+   uint32_t databack;
+   response2 = SDCheckVoltageRange(databack);
+   response3 = SDCardInit();
+   while (response3 == 0x01)
+   {
+      response3 = SDCardInit();
+      VRAM[4200] = k;
+      k=k^0xFF;
+   } // Repeat this until we receive a non-idle
+
+   response4 = SDSetBlockSize512();
+}
+
+const char hexdigits[] = "0123456789ABCDEF";
 int main(int argc, char ** argv)
 {
    testclass someclass;
    someclass.dosomething();
    char something = (char)(someclass.getsomething() + '0');
 
-   char msg[] = "rv32imc @100Mhz X";
+   char msg[] = "                                ";
    msg[16] = something;
 
-   ClearScreen(0xFF);
+   ClearScreen(0xC8);
 
-   int x=0, y=0;
-   int dx=3, dy=2;
+   unsigned char response, response2, response3, response4;
+   SDCardStartup(response, response2, response3, response4);
+   msg[0] = hexdigits[(response>>4)%16];
+   msg[1] = hexdigits[(response%16)];
+   msg[3] = hexdigits[(response2>>4)%16];
+   msg[4] = hexdigits[(response2%16)];
+   msg[6] = hexdigits[(response3>>4)%16];
+   msg[7] = hexdigits[(response3%16)];
+   msg[9] = hexdigits[(response4>>4)%16];
+   msg[10] = hexdigits[(response4%16)];
+
    int cnt=0;
-   int f=0;
+   /*int x=0, y=0;
+   int dx=3, dy=2;
+   int f=0;*/
    while(1)
    {
+      drawrect(96, 96, cnt);
+
       //int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF;
 
-      if (x>239 || x<0)
+      /*if (x>239 || x<0)
          dx=-dx;
       if (y>176 || y<0)
          dy=-dy;
       x += dx;
       y += dy;
 
-      drawrect(x, y);
+      drawrect(x, y, 0x7C);
 
       for(int z=0;z<256;++z)
       {
@@ -269,10 +429,10 @@ int main(int argc, char ** argv)
       //bresenham(0, 0, 230, 150, 0x38);
       //DDA(230, 150, 131, 30, 0x38);
       //DDA(0, 0, 131, 30, 0x38);
-
+*/
       cnt++;
 
-      Print(2, 182, msg);
+      Print(0, 184, msg);
    }
    return 0;
 }

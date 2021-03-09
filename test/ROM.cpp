@@ -6,19 +6,10 @@
 #include <memory.h>
 #include <math.h>
 #include "rom_rvcrt0.h"
+#include "utils.h"
 
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
-
-volatile unsigned int* VRAM = (volatile unsigned int* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
-volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
-volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
-volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-
-void cls()
-{
-   for(uint32_t i=0; i<192*64; ++i) VRAM[i] = 0x00000000;
-}
 
 void loadbinaryblob()
 {
@@ -66,7 +57,7 @@ void loadbinaryblob()
          target[writecursor++] = readdata;
 
          colorout = readdata | (readdata<<8) | (readdata<<16) | (readdata<<24);
-         VRAM[scanline*64] = VRAM[scanline*64+1] = VRAM[scanline*64+62] = VRAM[scanline*64+63] = colorout;
+         VRAM[scanline*256] = VRAM[scanline*256+255] = colorout;
          ++scanline;
          if (scanline>191) scanline = 0;
       }
@@ -106,16 +97,13 @@ void echoterm(const char *_message)
       ++i;
    }
 }
-
 int main()
 {
    // 128 bytes of incoming command space
    char incoming[32];
-
    unsigned int rcvcursor = 0;
 
    echoterm("v0.23 rv32imc@100Mhz\r\n");
-   //print(0,0,12,"ECRV32 v0.23 rv32imc");
 
    // UART communication section
    int scanline = 0;
@@ -157,7 +145,7 @@ int main()
       }
 
       // Show two scrolling color bars on each side of the screen as 'alive' indicator
-      VRAM[scanline*64] = VRAM[scanline*64+63] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
+      VRAM[scanline*256] = VRAM[scanline*256+255] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
       if (clk > 12)
       {
          ++spincolor;
