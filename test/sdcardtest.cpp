@@ -15,7 +15,6 @@
 // Accessing the linker sections:
 // uint8_t *data_byte = &_sdata;
 
-const char hexdigits[] = "0123456789ABCDEF";
 int main(int argc, char ** argv)
 {
    ClearScreen(0xC8);

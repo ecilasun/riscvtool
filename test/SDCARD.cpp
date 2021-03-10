@@ -199,6 +199,8 @@ int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blocka
    for (uint32_t i=0;i<numblocks;++i)
    {
       uint8_t response = SDReadSingleBlock(blockaddress+i, datablock+512*i, checksum);
+      /*for (uint32_t o=0;o<512;++o)
+         EchoInt(((uint32_t*)(blockaddress+i))[o]);*/
       if (response != 0xFE)
          return -1;
    }

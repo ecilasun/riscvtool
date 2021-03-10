@@ -79,6 +79,27 @@ int fat_getpartition()
             //printf("ERROR: Unknown file system type %c%c%c\n", bpb->fst[0], bpb->fst[1], bpb->fst[2]);
             return 0;
         }
+
+        // Load the FAT
+        uint32_t bytes_per_fat = 512 * bpb->spf32;
+        uint32_t sector_i;
+        EchoInt(bpb->spf32); // 0x00003B15
+        for(sector_i = 0; sector_i < 4/*bpb->spf32*/; sector_i++)
+        {
+            uint32_t sector[512];
+
+            uint32_t partition_begin_sector = 0;
+            uint32_t fat_begin_sector = partition_begin_sector + bpb->rsc;
+            if (SDReadMultipleBlocks((unsigned char*)sector, 1, fat_begin_sector + sector_i) != -1)
+            {
+                uint32_t integer_j;
+                for(integer_j = 0; integer_j < 512/4; integer_j++)
+                {
+                    fatcontext.FAT[sector_i * (512 / 4) + integer_j] = sector[integer_j];
+                }
+            }
+        }
+
         //printf(" SUCCESS\n");
         return 1;
     }
@@ -99,9 +120,8 @@ int fat_find_file(const char *fn, struct FILEHANDLE *fh)
     fh->file_offset = 0;
     fh->file_open = 0;
     fh->data_sec = 0;
-    fh->fat32 = 0;
-    fh->fat16 = 0;
-    fh->bpb = 0;
+    fh->fat32 = nullptr;
+    fh->fat16 = nullptr;
 
     bpb_t *bpb = &fatcontext.bpb;
     fatdir_t *dir = fatcontext.dir;
@@ -122,10 +142,6 @@ int fat_find_file(const char *fn, struct FILEHANDLE *fh)
         // iterate on each entry and check if it's the one we're looking for
         for(; dir->name[0]!=0; dir++)
         {
-            // Debug dump root directory entries
-            //printf("> '%c%c%c%c%c%c%c%c.%c%c%c' : %d\n", dir->name[0],dir->name[1],dir->name[2],dir->name[3],dir->name[4],dir->name[5],dir->name[6],dir->name[7],dir->ext[0],dir->ext[1],dir->ext[2], dir->size);
-            //printf("> '%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X.%.2X%.2X%.2X' : %d\n", dir->name[0],dir->name[1],dir->name[2],dir->name[3],dir->name[4],dir->name[5],dir->name[6],dir->name[7],dir->ext[0],dir->ext[1],dir->ext[2], dir->size);
-
             // Is it a valid entry?
             if(dir->name[0]==0xE5 || dir->attr[0]==0xF)
                 continue;
@@ -153,6 +169,7 @@ int fat_find_file(const char *fn, struct FILEHANDLE *fh)
 int fat_list_files(char *target)
 {
     bpb_t *bpb = &fatcontext.bpb;
+
     fatdir_t *dir = fatcontext.dir;
     unsigned int root_sec, s;
     // find the root directory's LBA
@@ -165,6 +182,7 @@ int fat_list_files(char *target)
     }
     // add partition LBA
     root_sec += partitionlba;
+
     // load the root directory
     int col = 0;
     if(SDReadMultipleBlocks((unsigned char*)dir, s/512+1, root_sec) != -1)
@@ -206,7 +224,7 @@ int fat_openfile(const char *fn, struct FILEHANDLE *fh)
         // BIOS Parameter Block
         fh->bpb = &fatcontext.bpb;
         // File allocation tables. We choose between FAT16 and FAT32 dynamically
-        fh->fat32 = (unsigned int*)0x00006000;//&_end+0x20000;//(unsigned int*)fatcontext.fat;
+        fh->fat32 = fatcontext.FAT;//(unsigned int*)(&fh->bpb+fh->bpb->rsc*512); //(unsigned int*)0x00006000;//&_end+0x20000;//(unsigned int*)fatcontext.fat;
         fh->fat16 = (unsigned short*)fh->fat32;
         // find the LBA of the first data sector
         fh->data_sec = ((fh->bpb->spf16 ? fh->bpb->spf16 : fh->bpb->spf32)*fh->bpb->nf) + fh->bpb->rsc;
@@ -218,16 +236,24 @@ int fat_openfile(const char *fn, struct FILEHANDLE *fh)
         // add partition LBA
         fh->data_sec += partitionlba;
 
-        //printf("\nFAT First data sector: %.8X\n", fh->data_sec);
-
         //printf("> reading FAT for %s @ %.8X\n", fn, fh->fat32);
         // Load file allocation table into top of heap
-        unsigned int file_allocation_table_size = (fh->bpb->spf16 ? fh->bpb->spf16 : fh->bpb->spf32) + fh->bpb->rsc;
-        if (SDReadMultipleBlocks((unsigned char*)&fh->fat32, file_allocation_table_size, partitionlba+1) == -1)
+        /*unsigned int file_allocation_table_size = (fh->bpb->spf16 ? fh->bpb->spf16 : fh->bpb->spf32) + fh->bpb->rsc;
+        if (file_allocation_table_size != 0)
         {
-            //printf("ERROR: FAT could not read table for %s\n", fn);
-            return 0;
-        }
+            EchoInt(file_allocation_table_size);
+            if (SDReadMultipleBlocks((unsigned char*)fh->fat32, (file_allocation_table_size/512)+1, partitionlba+1) == -1)
+            {
+                //printf("ERROR: FAT could not read table for %s\n", fn);
+                return 0;
+            }
+        }*/
+
+        /*while(1)
+        {
+            if (SDReadMultipleBlocks((unsigned char*)fh->fat32, 1, fh->file_first_cluster_backup) == -1)
+            cluster = get_next_cluster_id(fs, cluster);
+        }*/
 
         fh->file_open = 1;
     }
@@ -247,9 +273,9 @@ void fat_closefile(struct FILEHANDLE *fh)
         fh->file_offset = 0;
         fh->file_open = 0;
         fh->data_sec = 0;
-        fh->fat32 = 0;
-        fh->fat16 = 0;
-        fh->bpb = 0;
+        fh->fat32 = nullptr;
+        fh->fat16 = nullptr;
+        //fh->bpb = 0;
     }
 }
 

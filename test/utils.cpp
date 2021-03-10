@@ -164,6 +164,21 @@ void EchoUART(const char *_message)
    }
 }
 
+void EchoInt(const uint32_t i)
+{
+   const char hexdigits[] = "0123456789ABCDEF";
+   char msg[] = "        \r\n";
+   msg[0] = hexdigits[((i>>28)%16)];
+   msg[1] = hexdigits[((i>>24)%16)];
+   msg[2] = hexdigits[((i>>20)%16)];
+   msg[3] = hexdigits[((i>>16)%16)];
+   msg[4] = hexdigits[((i>>12)%16)];
+   msg[5] = hexdigits[((i>>8)%16)];
+   msg[6] = hexdigits[((i>>4)%16)];
+   msg[7] = hexdigits[(i%16)];
+   EchoUART(msg);
+}
+
 void ClearScreen(const uint8_t color)
 {
    volatile uint32_t *VRAMDW = (uint32_t *)VRAM;

@@ -39,7 +39,20 @@ void scroll()
 
 void loadelf(char *commandline)
 {
-   EchoUART("\r\nNot implemented yet\r\n");
+   FILEHANDLE fh;
+   if (fat_openfile(&commandline[5], &fh))
+   {
+      EchoUART("\r\nFile accessed\r\n");
+      uint32_t fsz = fat_getfilesize(&fh);
+      EchoInt(fsz);
+      char buffer[2048];
+      int readsize;
+      fat_readfile(&fh, buffer, 2048, &readsize);
+      EchoUART(buffer);
+      fat_closefile(&fh);
+   }
+   else
+      EchoUART("\r\nFile not found\r\n");
 }
 
 int main()

@@ -54,5 +54,6 @@ void Print(const int ox, const int oy, const int maxlen, const char *message);
 void PrintMasked(const int ox, const int oy, const char *message);
 void PrintMasked(const int ox, const int oy, const int maxlen, const char *message);
 void EchoUART(const char *_message);
+void EchoInt(const uint32_t i);
 void ClearScreen(const uint8_t color);
 unsigned int Random();
