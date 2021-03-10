@@ -47,7 +47,7 @@ void loadelf(char *commandline)
       EchoInt(fsz);
       char buffer[4096]; // AT LEAST 4096! (spc(8)*bps(512)==4096)
       int readsize;
-      fat_readfile(&fh, buffer, fsz, &readsize);
+      fat_readfile(&fh, buffer, fsz>4096?4096:fsz, &readsize);
       buffer[fsz] = 0;
       EchoUART(buffer);
       fat_closefile(&fh);
