@@ -42,14 +42,16 @@ void loadelf(char *commandline)
    FILEHANDLE fh;
    if (fat_openfile(&commandline[5], &fh))
    {
-      EchoUART("\r\nFile accessed\r\n");
+      EchoUART("\r\nReading file...\r\n");
       uint32_t fsz = fat_getfilesize(&fh);
       EchoInt(fsz);
-      char buffer[2048];
+      char buffer[4096]; // AT LEAST 4096! (spc(8)*bps(512)==4096)
       int readsize;
-      fat_readfile(&fh, buffer, 2048, &readsize);
+      fat_readfile(&fh, buffer, fsz, &readsize);
+      buffer[fsz] = 0;
       EchoUART(buffer);
       fat_closefile(&fh);
+      EchoUART("Done\r\n");
    }
    else
       EchoUART("\r\nFile not found\r\n");

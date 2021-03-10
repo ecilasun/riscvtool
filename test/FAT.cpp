@@ -80,25 +80,8 @@ int fat_getpartition()
             return 0;
         }
 
-        // Load the FAT
-        uint32_t bytes_per_fat = 512 * bpb->spf32;
-        uint32_t sector_i;
-        EchoInt(bpb->spf32); // 0x00003B15
-        for(sector_i = 0; sector_i < 4/*bpb->spf32*/; sector_i++)
-        {
-            uint32_t sector[512];
-
-            uint32_t partition_begin_sector = 0;
-            uint32_t fat_begin_sector = partition_begin_sector + bpb->rsc;
-            if (SDReadMultipleBlocks((unsigned char*)sector, 1, fat_begin_sector + sector_i) != -1)
-            {
-                uint32_t integer_j;
-                for(integer_j = 0; integer_j < 512/4; integer_j++)
-                {
-                    fatcontext.FAT[sector_i * (512 / 4) + integer_j] = sector[integer_j];
-                }
-            }
-        }
+        // We do not load any FAT entry initially
+        fatcontext.CachedFATPage = 0xFFFFFFFF;
 
         //printf(" SUCCESS\n");
         return 1;
@@ -297,16 +280,40 @@ int fat_readfile(struct FILEHANDLE *fh, char *buffer, int read_bytes, int *total
         unsigned int source_block = (cluster-2)*fh->bpb->spc+fh->data_sec;
         if (SDReadMultipleBlocks(target_buffer, fh->bpb->spc, source_block) == -1)
         {
-            //printf("ERROR: File read failed!");
+            EchoUART("Error reading file block\r\n");
             return 0;
         }
-        // move pointer, sector per cluster * bytes per sector
+
+        // Move pointer, sector per cluster * bytes per sector
         int actual_read = fh->bpb->spc*fh->bpb->bps;
         target_buffer += actual_read;
         fh->file_offset += actual_read;
         *total_read += actual_read;
+
+        // Now the tricky part.
+        // We need to re-load the 512 byte FAT table slice
+        // where 'cluster' lies within
+        uint32_t FAT_page = fh->bpb->spf16 > 0 ? cluster/256 : cluster/128;
+        if (FAT_page != fatcontext.CachedFATPage)
+        {
+            fatcontext.CachedFATPage = FAT_page;
+            uint32_t partition_begin_sector = 0;
+            uint32_t fat_begin_sector = partition_begin_sector + fh->bpb->rsc;
+            unsigned int sector[128];
+            if (SDReadMultipleBlocks((unsigned char*)sector, 1, fat_begin_sector + fatcontext.CachedFATPage) != -1)
+            {
+                for (int i=0;i<128;++i)
+                    fatcontext.FAT[i] = sector[i];
+            }
+            else
+            {
+                EchoUART("Error reading FAT block\r\n");
+                return 0;
+            }
+        }
+
         // Get the next cluster in chain
-        cluster = fh->bpb->spf16 > 0 ? fh->fat16[cluster] : fh->fat32[cluster];
+        cluster = fh->bpb->spf16 > 0 ? fh->fat16[cluster%256] : fh->fat32[cluster%128];
         if (*total_read >= read_bytes || fh->file_offset >= file_size)
             break;
     }

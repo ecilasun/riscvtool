@@ -64,10 +64,11 @@ typedef struct {
 
 struct FATCONTEXT
 {
-    __attribute__((aligned(4))) bpb_t bpb;              // BIOS parameter block
-    __attribute__((aligned(4))) unsigned char mbr[512]; // Master boot record
-    __attribute__((aligned(4))) fatdir_t dir[512];      // Root directory entries (should be more, this is only enough for FAT16)
-    __attribute__((aligned(4))) unsigned int FAT[2048];  // This can be quite large (3x512 for now)
+    __attribute__((aligned(4))) unsigned int CachedFATPage; // Page number of cache FAT table
+    __attribute__((aligned(4))) bpb_t bpb;                  // BIOS parameter block
+    __attribute__((aligned(4))) unsigned char mbr[512];     // Master boot record
+    __attribute__((aligned(4))) fatdir_t dir[512];          // Root directory entries (should be more, this is only enough for FAT16)
+    __attribute__((aligned(4))) unsigned int FAT[512];      // Cached FAT table
 };
 
 struct FILEHANDLE
