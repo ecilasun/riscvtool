@@ -35,7 +35,3 @@ riscv64-unknown-elf-objdump -d mandelbrot.elf >> mandelbrotasmdump.txt
 riscv64-unknown-elf-readelf -S mandelbrot.elf >> mandelbrotasmdump.txt
 
 ./build/release/riscvtool ROM.elf -makerom >> ROM.coe
-./build/release/riscvtool miniterm.elf -makerom >> miniterm.coe
-./build/release/riscvtool instructiontest.elf -makerom >> instructiontest.coe
-./build/release/riscvtool sdcardtest.elf -makerom >> sdcardtest.coe
-./build/release/riscvtool mandelbrot.elf -makerom >> mandelbrot.coe

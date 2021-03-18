@@ -1,17 +1,52 @@
 This project contains a set of helper utilities and sample code, as well as the bootloader ROM image for ecrv32 RISC-V SoC found here: https://github.com/ecilasun/ecrv32
 
-To build the sample code and the ROM, simply type build.bat at the root level of this project. The ROM image will be converted to a COE format for Vivado, which then needs to be replaced with the one in the SoC project as the boot ROM image. The 'miniterm' sample will produce a miniterm.elf binary at the root of the project folder.
+To build the sample executables, use:
+
+```
+./build.sh
+```
+
+at the root level of this project. This will generate the following samples and the ROM image (.COE) files for them in case you wish to paste them directly as ROM files into the memory initialization file of the Verilog source.
+
+With the exception of the ROM image, you can use a reasonable amount of C++11 code at its basic level, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file.
+
+```
+ROM - the device ROM file, also generates a .COE (coefficient) file for Vivado, compiled using base instruction set only
+miniterm - a small terminal program, connect to device serial port (usually at /dev/ttyUSB1) at 115200 baud, 1 stop bit, no xon/off and type help in the terminal window
+instructiontest - test the compressed instructions and math instructions
+sdcardtest - SD card FAT access demo, acts as memory mapped IO test
+mandelbrot - draws a mandelbrot figure on the video buffer
+```
 
 Before you can build the riscvtool itself, use the ctrl+shift+b shortcut in Visual Studio Code and select 'configure'. After this initial step you can use the same shortcut and select 'build'.
 
-To upload the miniterm.elf to the SoC, use the following command line:
+As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use the following command line:
 ```
-./build/release/riscvtool miniterm.elf -sendelf 0x000001D0
+sudo ./build/release/riscvtool miniterm.elf -sendelf 0x00000000
 ```
 
-Please make sure that the load address is not lower than 0x1D0 to not overwrite the loader code. After that point on, the range of memory 0x0-0x1CF becomes available for code use as the boot loader is no longer in use.
+If everything went well, you should be seeing an output similar to the following:
+```
+Program PADDR 0x00010000 relocated to 0x00000000
+Executable entry point is at 0x00010336 (new relative entry point: 0x00000336)
+Sending ELF binary over COM4 @115200 bps
+sending '.text' @0x00000074 len:00001AAC off:00000074...done (0x00001AB8 bytes written)
+sending '.rodata' @0x00001B20 len:0000197A off:00001B20...done (0x00001986 bytes written)
+sending '.eh_frame' @0x0000449C len:00000458 off:0000349C...done (0x00000464 bytes written)
+sending '.init_array' @0x000048F4 len:00000008 off:000038F4...done (0x00000014 bytes written)
+sending '.fini_array' @0x000048FC len:00000004 off:000038FC...done (0x00000010 bytes written)
+sending '.data' @0x00004900 len:00000448 off:00003900...done (0x00000454 bytes written)
+sending '.got' @0x00004D48 len:00000038 off:00003D48...done (0x00000044 bytes written)
+sending '.sdata' @0x00004D80 len:0000000C off:00003D80...done (0x00000018 bytes written)
+sending '.bss' @0x00004D8C len:00004F88 off:00003D8C...done (0x00004F94 bytes written)
+Branching to 0x00000336
+```
 
-For the miniterm sample, you can send raw binaries to be displayed on screen. For example, to send a 256x192 raw 8bpp image to copy to the VRAM, you could use the following command line:
+NOTE: Please make sure that the load address is 0x00000000 unless you really want to offset the binary for some reason. Take care to keep your binary short enough so that the running loader code at address 0x0000FA00 does not get overwritten.
+
+You can send raw binaries to any address on the device. The video memory lives at address 0x80000000, therefore to displayed an image on screen, you could use the following command line with your raw 8 bit image file name (make sure it's 256x192 pixels long):
 ```
-./build/release/riscvtool my8bitimage.raw -sendraw 0x80000000
+sudo ./build/release/riscvtool my8bitimage.raw -sendraw 0x80000000
 ```
+
+NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknown-elf-g++) are missing from your system, please follow the instructions at https://github.com/riscv/riscv-gnu-toolchain (especially useful is the section with multilib, try to build rv32i / rv32ic / rv32imc / rv32imac libraries as there's no floating point support yet on ECRV32)
