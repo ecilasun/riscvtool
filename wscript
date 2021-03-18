@@ -13,45 +13,24 @@ top = '.'
 
 def options(opt):
     # Prefers msvc, but could also use conf.load('clang++') instead
-    opt.load('msvc')
-
+    opt.load('clang++')
 
 def configure(conf):
     # Prefers msvc, but could also use conf.load('clang++') instead
-    conf.load('msvc')
-    #conf.find_program('riscv64-unknown-elf-c++', name='gccriscv', exts='.exe')
-    #conf.find_program('riscv64-unknown-elf-ld', name='ldriscv', exts='.exe')
-    #conf.find_program('riscv64-unknown-elf-objdump', name='objdumpriscv', exts='.exe')
-    #conf.find_program('riscv64-unknown-elf-readelf', name='readelfriscv', exts='.exe')
+    conf.load('clang++')
 
 def build(bld):
 
     platform_defines = ['_CRT_SECURE_NO_WARNINGS', 'CAT_WINDOWS']
-    slib = '%ProgramFiles%Windows Kits/10/Lib/'
-    sinc = '%ProgramFiles%Windows Kits/10/Include/'
-    win_sdk_lib_path = os.path.expandvars(slib+'10.0.19041.0/um/x64/')
-    winsdkinclude = os.path.expandvars(sinc+'10.0.19041.0/um/x64/')
-    wsdkincludeshared = os.path.expandvars(sinc+'10.0.19041.0/shared')
-    includes = ['source', 'includes', 'buildtools',
-                winsdkinclude, wsdkincludeshared]
-    libs = ['user32', 'Comdlg32', 'gdi32', 'ole32',
-            'kernel32', 'winmm', 'ws2_32']
+    includes = ['source', 'includes']
 
     # RELEASE
-    compile_flags = ['/permissive-', '/std:c++17', '/arch:AVX',
-                        '/GL', '/WX', '/Ox', '/Ot', '/Oy', '/fp:fast',
-                        '/Qfast_transcendentals', '/Zi', '/EHsc',
-                        '/FS', '/D_SECURE_SCL 0',
-                        '/D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS']
-    linker_flags = [ '/LTCG', '/RELEASE']
+    sdk_lib_path = []
+    libs = []
+    compile_flags = []
+    linker_flags = []
 
-    # DEBUG
-    #compile_flags = ['/permissive-', '/std:c++17', '/arch:AVX',
-    #                 '/GL', '/WX', '/Od', '/DDEBUG', '/fp:fast',
-    #                 '/Qfast_transcendentals', '/Zi', '/Gs',
-    #                 '/EHsc', '/FS']
-    #linker_flags = ['/DEBUG']
-
+    # Build risctool
     bld.program(
         source=glob.glob('*.cpp'),
         cxxflags=compile_flags,
@@ -59,5 +38,5 @@ def build(bld):
         target='riscvtool',
         defines=platform_defines,
         includes=includes,
-        libpath=[win_sdk_lib_path],
+        libpath=[sdk_lib_path],
         lib=libs)

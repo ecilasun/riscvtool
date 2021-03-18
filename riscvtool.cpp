@@ -1,5 +1,12 @@
-#include <windows.h>
+// #include <windows.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <fcntl.h>
+#include <errno.h>
+#include <termios.h>
+#include <unistd.h>
+
 #include <chrono>
 #include <thread>
 
@@ -82,10 +89,6 @@ void parseelfheader(unsigned char *_elfbinary)
 
 void dumpelf(char *_filename)
 {
-    HANDLE hComm;
-    DCB serialParams{0};
-    COMMTIMEOUTS timeouts{0};
-
     FILE *fp;
     fp = fopen(_filename, "rb");
     if (!fp)
@@ -99,7 +102,7 @@ void dumpelf(char *_filename)
 	fseek(fp, 0, SEEK_END);
 	fgetpos(fp, &endpos);
 	fsetpos(fp, &pos);
-	filebytesize = (unsigned int)endpos;
+	filebytesize = (unsigned int)endpos.__pos;
 
     // TODO: Actual binary to send starts at 0x1000
     unsigned char *bytestosend = new unsigned char[filebytesize];
@@ -113,7 +116,7 @@ void dumpelf(char *_filename)
 
 void sendcommand(char *_commandstring)
 {
-    HANDLE hComm;
+    /*HANDLE hComm;
     DCB serialParams{0};
     COMMTIMEOUTS timeouts{0};
 
@@ -166,12 +169,12 @@ void sendcommand(char *_commandstring)
         printf("ERROR: can't open comm on port COM4\n");
     }
 
-    CloseHandle(hComm);
+    CloseHandle(hComm);*/
 }
 
 void sendbinary(char *_filename, const unsigned int _target=0x80000000)
 {
-    HANDLE hComm;
+    /*HANDLE hComm;
     DCB serialParams{0};
     COMMTIMEOUTS timeouts{0};
 
@@ -257,7 +260,7 @@ void sendbinary(char *_filename, const unsigned int _target=0x80000000)
     }
 
     CloseHandle(hComm);
-    delete [] bytestosend;
+    delete [] bytestosend;*/
 }
 
 
@@ -289,10 +292,6 @@ unsigned int generateelfuploadpackage(unsigned char *_elfbinaryread, unsigned ch
 
 void sendelf(char *_filename, const unsigned int _target=0x00000000)
 {
-    HANDLE hComm;
-    DCB serialParams{0};
-    COMMTIMEOUTS timeouts{0};
-
     FILE *fp;
     fp = fopen(_filename, "rb");
     if (!fp)
@@ -300,6 +299,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
         printf("ERROR: can't open ELF file %s\n", _filename);
         return;
     }
+
 	unsigned int filebytesize = 0;
     unsigned int targetaddress = _target;
 	fpos_t pos, endpos;
@@ -307,7 +307,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 	fseek(fp, 0, SEEK_END);
 	fgetpos(fp, &endpos);
 	fsetpos(fp, &pos);
-	filebytesize = (unsigned int)endpos;
+	filebytesize = (unsigned int)endpos.__pos;
 
     unsigned char *bytestoread = new unsigned char[filebytesize];
     unsigned char *bytestosend = new unsigned char[filebytesize];
@@ -322,44 +322,54 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     unsigned int stringtableindex = fheader->m_SHStrndx;
     SElfSectionHeader32 *stringtablesection = (SElfSectionHeader32 *)(bytestoread+fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
     char *names = (char*)(bytestoread+stringtablesection->m_Offset);
-    /*for(int i=0;i<fheader->m_SHNum;++i)
-    {
-        SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(bytestoread+fheader->m_SHOff+fheader->m_SHEntSize*i);
-        //if (sheader->m_Type == 0x1 || sheader->m_Type == 0xE || sheader->m_Type == 0xF || sheader->m_Type == 0x10) // Progbits/Iniarray/Finiarray/Preinitarray
-        if (sheader->m_Flags & 0x00000007) // writeable/alloc/exec
-        {
-            char sectionname[128];
-            int n=0;
-            do
-            {
-                sectionname[n] = names[sheader->m_NameOffset+n];
-                ++n;
-            }
-            while(names[sheader->m_NameOffset+n]!='.' && sheader->m_NameOffset+n<stringtablesection->m_Size);
-            sectionname[n] = 0;
-            printf("'%s' @0x%.8X (rel:0x%.8X) offset: 0x%.8X size: 0x%.8X\n", sectionname, sheader->m_Addr, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Offset, sheader->m_Size);
-        }
-    }*/
-
-    /*unsigned int actualbinarysize = generateelfuploadpackage(bytestoread, bytestosend);
-    if (actualbinarysize == 0xFFFFFFFF) // Failed
-    {
-        printf("ERROR: header parse error, can't send ELF file %s\n", _filename);
-        delete [] bytestoread;
-        delete [] bytestosend;
-        return;
-    }
-    else
-        printf("Actual ELF executable portion size: 0x%.8X\n", actualbinarysize);*/
 
     // Open COM port
-    hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hComm == INVALID_HANDLE_VALUE)
+    int serial_port = open("/dev/ttyUSB1", O_RDWR);
+    if (serial_port <0 )
     {
-        printf("ERROR: can't open comm on port COM4\n");
+        printf("Error %i from open: %s\n", errno, strerror(errno));
         return;
     }
-    serialParams.DCBlength = sizeof(serialParams);
+
+    struct termios tty;
+    if(tcgetattr(serial_port, &tty) != 0)
+    {
+        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+        return;
+    }
+
+    // Set tty. flags
+    tty.c_cflag &= ~PARENB; // No parity
+    tty.c_cflag &= ~CSTOPB; // One stop bit
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8; // 8 bits
+    tty.c_cflag &= ~CRTSCTS;
+    tty.c_cflag |= CREAD | CLOCAL; // Not model (local), write
+
+    tty.c_lflag &= ~ICANON;
+    tty.c_lflag &= ~ECHO;
+    tty.c_lflag &= ~ISIG;
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);
+
+    tty.c_oflag &= ~OPOST;
+    tty.c_oflag &= ~ONLCR;
+    //tty.c_oflag &= ~OXTABS;
+    //tty.c_oflag &= ~ONOEOT;
+
+    tty.c_cc[VTIME] = 50;
+    tty.c_cc[VMIN] = 0;
+
+    cfsetispeed(&tty, B115200);
+    cfsetospeed(&tty, B115200); // or only cfsetspeed(&tty, B115200);
+
+    if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
+    {
+        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+        return;
+    }
+
+    /*serialParams.DCBlength = sizeof(serialParams);
     if (GetCommState(hComm, &serialParams))
     {
         serialParams.BaudRate = CBR_115200;
@@ -390,12 +400,12 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     {
         printf("ERROR: can't open comm on port COM4\n");
         return;
-    }
+    }*/
 
     printf("Sending ELF binary over COM4 @115200 bps\n");
 
     // Send all binary sections to their correct addresses
-    for(int i=0;i<fheader->m_SHNum;++i)
+    for(int i=0; i<fheader->m_SHNum; ++i)
     {
         SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(bytestoread+fheader->m_SHOff+fheader->m_SHEntSize*i);
 
@@ -423,19 +433,19 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             ((unsigned int*)blobheader)[0] = (sheader->m_Addr-pheader->m_PAddr)+_target; // relative start address
             ((unsigned int*)blobheader)[1] = sheader->m_Size; // binary section size
 
-            DWORD byteswritten;
+            uint32_t byteswritten = 0;
 
             // Send the string "bin\r"
-            WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
+            byteswritten += write(serial_port, commandtosend, commandlength);
             // Wait a bit for the receiving end to start accepting
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send 8 byte header
-            WriteFile(hComm, blobheader, 8, &byteswritten, nullptr);
+            byteswritten += write(serial_port, blobheader, 8);
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send data
-            WriteFile(hComm, bytestoread+sheader->m_Offset, sheader->m_Size, &byteswritten, nullptr);
+            byteswritten += write(serial_port, bytestoread+sheader->m_Offset, sheader->m_Size);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             if (byteswritten != 0)
@@ -443,8 +453,6 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             else
                 printf("failed!\n");
         }
-        /*else
-            printf("skipping '%s' @0x%.8X len:%.8X\n", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size);*/
     }
 
     // Start the executable
@@ -459,19 +467,20 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
         printf("Branching to 0x%.8X\n", relativeStartAddress);
 
-        DWORD byteswritten;
+        uint32_t byteswritten = 0;
 
         // Send the string "run\r"
-        WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
+        byteswritten += write(serial_port, commandtosend, commandlength);
         // Wait a bit for the receiving end to start accepting
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         // Send start address
-        WriteFile(hComm, blobheader, 4, &byteswritten, nullptr);
+        byteswritten += write(serial_port, blobheader, 4);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    CloseHandle(hComm);
+    close(serial_port);
+
     delete [] bytestoread;
     delete [] bytestosend;
 }

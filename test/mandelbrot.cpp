@@ -1,3 +1,10 @@
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <memory.h>
+#include <math.h>
+#include "utils.h"
+
 void mandelbrot1()
 {
    const int maxiter = 96;
@@ -48,4 +55,16 @@ void mandelbrot2()
          VRAM[x+1+((y+1)<<8)] = (n * 3);
       }
    }
+}
+
+int main(int argc, char ** argv)
+{
+   ClearScreen(0xC8);
+
+   mandelbrot1();
+
+   while(1)
+   {
+   }
+   return 0;
 }
