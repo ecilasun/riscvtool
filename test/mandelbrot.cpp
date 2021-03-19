@@ -5,27 +5,35 @@
 #include <math.h>
 #include "utils.h"
 
-void mandelbrot1()
+#pragma GCC push_options
+#pragma GCC optimize ("align-functions=16")
+
+void mandelbrot1(float ox, float oy, float sx)
 {
-   const int maxiter = 96;
+   const int maxiter = 32;
    int height = 192;
    int width = 256;
-   for (int row = 0; row < height; row++) {
-      for (int col = row%2; col < width; col+=2) {
-         float c_re = (col - width/0.65f)*1.2f/width;
-         float c_im = (row - height/2.f)*1.2f/width;
-         float x = 0.f, y = 0.f;
+   for (int row = 0; row < height; ++row) {
+      for (int col = (row%2)*2; col < width; col+=4) {
+         float c_re = (col - width/0.65f)*(sx+1.2f)/width + ox;
+         float c_im = (row - height/2.f)*(sx+1.2f)/width + oy;
          int iteration = 0;
-         while (x*x+y*y <= 4.f && iteration < maxiter)
+
+         float x = 0.f, y = 0.f;
+         float x2 = 0.f, y2 = 0.f;
+         while (x2+y2 <= 4.f && iteration < maxiter)
          {
-               float x_new = x*x - y*y + c_re;
-               y = 2.f*x*y + c_im;
-               x = x_new;
-               iteration++;
+            y = 2.f*x*y + c_im;
+            x = x2 - y2 + c_re;
+            x2 = x*x;
+            y2 = y*y;
+            iteration++;
          }
 
          unsigned char color = (unsigned char)((iteration/4)%255);
          VRAM[col+(row<<8)] = color;
+         /*VRAM[col+1+(row<<8)] = color;
+         VRAM[col+((row+1)<<8)] = color;*/
       }
    }
 }
@@ -59,12 +67,19 @@ void mandelbrot2()
 
 int main(int argc, char ** argv)
 {
-   ClearScreen(0xC8);
+   ClearScreen(0x00);
 
-   mandelbrot1();
-
+   float ox = 0.f;
+   float oy = 0.f;
+   float sx = 0.f;
    while(1)
    {
+      mandelbrot1(ox,oy,sx);
+      ox -= 0.05f;
+      oy += 0.01f;
+      sx -= 0.05f;
    }
    return 0;
 }
+
+#pragma GCC pop_options
