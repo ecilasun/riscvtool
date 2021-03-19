@@ -7,7 +7,10 @@ You'll also need a working Python so that the WAF build system can build the ris
 
 # Building riscvtool
 
-Before you can build the riscvtool itself, use the ctrl+shift+b shortcut in Visual Studio Code and select 'configure'. After this initial step you can use the same shortcut and select 'build'. It uses
+Before you can build the riscvtool itself, use the ctrl+shift+b shortcut in Visual Studio Code and select 'configure'. After this initial step you can use the same shortcut and select 'build'.
+Alternatively, you can use the following command sequences:
+```
+```
 
 # Building the samples
 
