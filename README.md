@@ -1,5 +1,11 @@
 This project contains a set of helper utilities and sample code, as well as the bootloader ROM image for ecrv32 RISC-V SoC found here: https://github.com/ecilasun/ecrv32
 
+# Prerequisites
+
+You'll need the risc-v toolchain from https://github.com/riscv/riscv-gnu-toolchain or its precompiled version (make sure to have support for 32bit ELF and rv32imc variant)
+
+# The samples
+
 To build the sample executables, use:
 
 ```
