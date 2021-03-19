@@ -12,8 +12,10 @@ Alternatively, you can use the following command sequences:
 ```
 # To configure (required only once:
 python waf --out='build/release' configure
+
 # To build after code changes:
 python waf build -v
+
 # To 'clean' the output binaries
 python waf clean
 ```
