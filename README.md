@@ -3,10 +3,15 @@ This project contains a set of helper utilities and sample code, as well as the 
 # Prerequisites
 
 You'll need the risc-v toolchain from https://github.com/riscv/riscv-gnu-toolchain or its precompiled version (make sure to have support for 32bit ELF and rv32imc variant)
+You'll also need a working Python so that the WAF build system can build the riscvtool.
 
-# The samples
+# Building riscvtool
 
-To build the sample executables, use:
+Before you can build the riscvtool itself, use the ctrl+shift+b shortcut in Visual Studio Code and select 'configure'. After this initial step you can use the same shortcut and select 'build'. It uses
+
+# Building the samples
+
+Currently there's no 'make' file to build the sample executables. Please use the following to build them:
 
 ```
 ./build.sh
@@ -23,8 +28,6 @@ instructiontest - test the compressed instructions and math instructions
 sdcardtest - SD card FAT access demo, acts as memory mapped IO test
 mandelbrot - draws a mandelbrot figure on the video buffer
 ```
-
-Before you can build the riscvtool itself, use the ctrl+shift+b shortcut in Visual Studio Code and select 'configure'. After this initial step you can use the same shortcut and select 'build'.
 
 As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use the following command line:
 ```
