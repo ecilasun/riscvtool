@@ -54,7 +54,11 @@ void loadelf(char *commandline)
       EchoUART("Done\r\n");
    }
    else
-      EchoUART("\r\nFile not found\r\n");
+   {
+      EchoUART("\r\nFile ");
+      EchoUART(&commandline[5]);
+      EchoUART(" not found\r\n");
+   }
 }
 
 int main()
@@ -151,7 +155,12 @@ int main()
             }
             else if ((incoming[0]='r') && (incoming[1]=='e') && (incoming[2]=='s') && (incoming[3]=='e') && (incoming[4]=='t'))
             {
-               ((void (*)(void)) ROMResetVector)();
+               return 0;
+               //((void (*)(void)) ROMResetVector)();
+               /*__asm(
+                  "la ra, __global_pointer$;"
+                  "ret;"
+               );*/
             }
 
             if(canclear)
