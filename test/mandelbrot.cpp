@@ -8,7 +8,7 @@
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
 
-void mandelbrotFloat(float ox, float oy, float sx)
+void fractalFloat(float ox, float oy, float sx)
 {
    for (int y = 0; y < 192; ++y)
    {
@@ -21,7 +21,7 @@ void mandelbrotFloat(float ox, float oy, float sx)
          int n = 0;
          for (; n < 64; ++n)
          {
-            float ta = a * a - b * b;
+            float ta = a*a - b*b;
             if (ta > 2.f)
                break;
             b = cb + 2.f * a * b;
@@ -32,19 +32,49 @@ void mandelbrotFloat(float ox, float oy, float sx)
    }
 }
 
+void mandelbrotFloat(float ox, float oy, float sx)
+{
+   const int maxiter = 4096;
+   int height = 192;
+   int width = 256;
+   for (int row = 0; row < height; ++row) {
+      for (int col = (row%2)*2; col < width; col+=4) {
+         float c_re = (col - 128)/96.f * sx + ox;
+         float c_im = (row - 96)/96.f * sx + oy;
+         int iteration = 0;
+
+         float x = 0.f, y = 0.f;
+         float x2 = 0.f, y2 = 0.f;
+         while (x2+y2 <= 4.f && iteration < maxiter)
+         {
+            y = 2.f*x*y + c_im;
+            x = x2 - y2 + c_re;
+            x2 = x*x;
+            y2 = y*y;
+            iteration++;
+         }
+
+         float hue = float(iteration)/4096.f;
+         VRAM[col+((height-row)<<8)] = int(hue*255.f);
+      }
+   }
+}
+
 int main(int argc, char ** argv)
 {
    ClearScreen(0x00);
 
-   float ox = -0.7463f;
-   float oy = 0.1102f;
-   float sx = 0.002f;
+   // Please see http://www.cuug.ab.ca/dewara/mandelbrot/Mandelbrowser.html
+   // for some more interesting XYR points
+ 
+   float X = -0.235125;
+   float Y = 0.827215;
+   float R = 4.0E-5f;
+ 
    while(1)
    {
-      mandelbrotFloat(ox,oy,sx);
-      //ox -= 0.01f;
-      //oy += 0.01f;
-      sx += 0.001f;
+      mandelbrotFloat(X,Y,R);
+      R += 0.001f; // Zoom
    }
    return 0;
 }
