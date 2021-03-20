@@ -34,11 +34,12 @@ void fractalFloat(float ox, float oy, float sx)
 
 void mandelbrotFloat(float ox, float oy, float sx)
 {
-   const int maxiter = 4096;
+   const int maxiter = 256;
    int height = 192;
    int width = 256;
    for (int row = 0; row < height; ++row) {
-      for (int col = (row%2)*2; col < width; col+=4) {
+      for (int col = 0; col < width; ++col) {
+      //for (int col = (row%2)*2; col < width; col+=4) {
          float c_re = (col - 128)/96.f * sx + ox;
          float c_im = (row - 96)/96.f * sx + oy;
          int iteration = 0;
@@ -54,8 +55,7 @@ void mandelbrotFloat(float ox, float oy, float sx)
             iteration++;
          }
 
-         float hue = float(iteration)/4096.f;
-         VRAM[col+((height-row)<<8)] = int(hue*255.f);
+         VRAM[col+((height-row)<<8)] = iteration;
       }
    }
 }
