@@ -40,8 +40,8 @@ void mandelbrotFloat(float ox, float oy, float sx)
    for (int row = 0; row < height; ++row) {
       for (int col = 0; col < width; ++col) {
       //for (int col = (row%2)*2; col < width; col+=4) {
-         float c_re = (col - 128)/96.f * sx + ox;
-         float c_im = (row - 96)/96.f * sx + oy;
+         float c_re = float(col - 128) / 96.f * sx + ox;
+         float c_im = float(row - 96) / 96.f * sx + oy;
          int iteration = 0;
 
          float x = 0.f, y = 0.f;
@@ -55,7 +55,7 @@ void mandelbrotFloat(float ox, float oy, float sx)
             iteration++;
          }
 
-         VRAM[col+((height-row)<<8)] = iteration;
+         VRAM[col+((191-row)<<8)] = iteration;
       }
    }
 }

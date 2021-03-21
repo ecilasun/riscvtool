@@ -13,6 +13,8 @@
 
 void loadbinaryblob()
 {
+   volatile uint32_t *VRAMDW = (uint32_t *)VRAM;
+
    // Header data
    unsigned int loadlen = 0;
    unsigned int loadtarget = 0;
@@ -57,7 +59,7 @@ void loadbinaryblob()
          target[writecursor++] = readdata;
 
          colorout = readdata | (readdata<<8) | (readdata<<16) | (readdata<<24);
-         VRAM[scanline*256] = VRAM[scanline*256+255] = colorout;
+         VRAMDW[scanline*64] = VRAMDW[scanline*64+63] = colorout;
          ++scanline;
          if (scanline>191) scanline = 0;
       }
@@ -97,8 +99,13 @@ void echoterm(const char *_message)
       ++i;
    }
 }
+
 int main()
 {
+   volatile uint32_t *VRAMDW = (uint32_t *)VRAM;
+   uint32_t clearcolor = 0xFFFFFFFF;
+   for(uint32_t i=0;i<192*64;++i) VRAMDW[i]=clearcolor;
+
    // 128 bytes of incoming command space
    char incoming[32];
    unsigned int rcvcursor = 0;
@@ -145,8 +152,8 @@ int main()
       }
 
       // Show two scrolling color bars on each side of the screen as 'alive' indicator
-      VRAM[scanline*256] = VRAM[scanline*256+255] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
-      if (clk > 12)
+      VRAMDW[scanline*64] = VRAMDW[scanline*64+63] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
+      if (clk > 8192)
       {
          ++spincolor;
          clk = 0;
