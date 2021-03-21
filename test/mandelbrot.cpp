@@ -5,57 +5,40 @@
 #include <math.h>
 #include "utils.h"
 
+#define max(A,B) (A>B?A:B)
+#define min(A,B) (A>B?B:A)
+
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
 
-void fractalFloat(float ox, float oy, float sx)
+void evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
-   for (int y = 0; y < 192; ++y)
+   int iteration = 0;
+
+   float c_re = float(col - 128) / 96.f * sx + ox;
+   float c_im = float(row - 96) / 96.f * sx + oy;
+   float x = 0.f, y = 0.f;
+   float x2 = 0.f, y2 = 0.f;
+   while (x2+y2 < 4.f && iteration < maxiter)
    {
-      for (int x = 0; x < 256; ++x)
-      {
-         float ca = sx * float(x - 128) / 128.f + ox;
-         float cb = sx * float(y - 96) / 128.f + oy;
-         float a = ca;
-         float b = cb;
-         int n = 0;
-         for (; n < 64; ++n)
-         {
-            float ta = a*a - b*b;
-            if (ta > 2.f)
-               break;
-            b = cb + 2.f * a * b;
-            a = ca + ta;
-         }
-         VRAM[x+(y<<8)] = (n * 3);
-      }
+      y = c_im + 2.f*x*y;
+      x = c_re + x2 - y2;
+      x2 = x*x;
+      y2 = y*y;
+      ++iteration;
    }
+
+   VRAM[col+(row<<8)] = iteration;
 }
 
 void mandelbrotFloat(float ox, float oy, float sx)
 {
-   const int maxiter = 256;
-   int height = 192;
-   int width = 256;
-   for (int row = 0; row < height; ++row) {
-      for (int col = 0; col < width; ++col) {
-      //for (int col = (row%2)*2; col < width; col+=4) {
-         float c_re = float(col - 128) / 96.f * sx + ox;
-         float c_im = float(row - 96) / 96.f * sx + oy;
-         int iteration = 0;
-
-         float x = 0.f, y = 0.f;
-         float x2 = 0.f, y2 = 0.f;
-         while (x2+y2 <= 4.f && iteration < maxiter)
-         {
-            y = 2.f*x*y + c_im;
-            x = x2 - y2 + c_re;
-            x2 = x*x;
-            y2 = y*y;
-            iteration++;
-         }
-
-         VRAM[col+((191-row)<<8)] = iteration;
+   for (int row = 0; row < 192; ++row)
+   {
+      for (int col = (row%2)*2; col < 256; col+=4)
+      {
+         VRAM[col+(row<<8)] = 0xFF;
+         evalMandel(256, col, row, ox, oy, sx);
       }
    }
 }
