@@ -142,9 +142,9 @@ int main()
          }
 
          // Echo the character back to the sender
-         UARTTX[0] = checkchar;
+         /*UARTTX[0] = checkchar;
          if (checkchar==13)
-            UARTTX[1] = 10;
+            UARTTX[1] = 10;*/
 
          // Wrap around if we're overflowing
          if (rcvcursor>31)
@@ -153,7 +153,7 @@ int main()
 
       // Show two scrolling color bars on each side of the screen as 'alive' indicator
       VRAMDW[scanline*64] = VRAMDW[scanline*64+63] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
-      if (clk > 131072)
+      if (clk > 130944) // 682*192
       {
          ++spincolor;
          clk = 0;
