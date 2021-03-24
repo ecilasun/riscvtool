@@ -153,7 +153,7 @@ int main()
 
       // Show two scrolling color bars on each side of the screen as 'alive' indicator
       VRAMDW[scanline*64] = VRAMDW[scanline*64+63] = (spincolor&0x000000FF) | ((spincolor&0x000000FF)<<8) | ((spincolor&0x000000FF)<<16) | ((spincolor&0x000000FF)<<24);
-      if (clk > 8192)
+      if (clk > 131072)
       {
          ++spincolor;
          clk = 0;
