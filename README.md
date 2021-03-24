@@ -38,6 +38,7 @@ miniterm - a small terminal program, connect to device serial port (usually at /
 instructiontest - test the compressed instructions and math instructions
 sdcardtest - SD card FAT access demo, acts as memory mapped IO test
 mandelbrot - draws a mandelbrot figure on the video buffer
+rastertest - raster out flicker / tearing test using an offscreen draw target
 ```
 
 As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use the following command line:
