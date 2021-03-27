@@ -110,7 +110,7 @@ int main()
    char incoming[32];
    unsigned int rcvcursor = 0;
 
-   echoterm("v0.23 rv32imc@100Mhz\r\n");
+   echoterm("v0.25 rv32im@140Mhz\r\n");
 
    // UART communication section
    int scanline = 0;
