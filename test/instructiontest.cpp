@@ -233,7 +233,7 @@ int main(int argc, char ** argv)
    someclass.dosomething();
    char something = (char)(someclass.getsomething() + '0');
 
-   char msg[] = "RV32imc                         ";
+   char msg[] = "RV32im                          ";
    msg[16] = something;
 
    ClearScreen(0xC8);

@@ -51,6 +51,7 @@ enum cmdSupported {
 
 void Print(const int ox, const int oy, const char *message);
 void Print(const int ox, const int oy, const int maxlen, const char *message);
+void PrintHex(const int ox, const int oy, const uint32_t i);
 void PrintMasked(const int ox, const int oy, const char *message);
 void PrintMasked(const int ox, const int oy, const int maxlen, const char *message);
 void EchoUART(const char *_message);

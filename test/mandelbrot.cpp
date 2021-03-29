@@ -54,8 +54,11 @@ int main(int argc, char ** argv)
    float Y = 0.827215;
    float R = 4.0E-5f;
  
+   uint32_t cnt = 0;
    while(1)
    {
+      PrintHex(0,184,cnt);
+      ++cnt;
       mandelbrotFloat(X,Y,R);
       R += 0.001f; // Zoom
    }
