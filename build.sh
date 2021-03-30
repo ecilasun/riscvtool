@@ -11,14 +11,14 @@ rm rastertestasmdump.txt
 rm ROM.coe
 
 # BIOS
-riscv64-unknown-elf-gcc -o ROM.elf test/ROM.cpp test/utils.cpp -O3 -fno-tree-loop-distribute-patterns -mexplicit-relocs -march=rv32i -mabi=ilp32 -static -mcmodel=medany -fvisibility=hidden -nostartfiles -fPIC -ffunction-sections -fdata-sections -Wl,-e_start -Wl,-melf32lriscv -Wl,-gc-sections -Wl,--strip-debug -lc -lgcc -Wl,-Ttest/ROM.lds
+riscv64-unknown-elf-gcc -o ROM.elf test/ROM.cpp test/utils.cpp -Ofast -fno-tree-loop-distribute-patterns -mexplicit-relocs -march=rv32i -mabi=ilp32 -static -mcmodel=medany -fvisibility=hidden -nostartfiles -fPIC -ffunction-sections -fdata-sections -Wl,-e_start -Wl,-melf32lriscv -Wl,-gc-sections -Wl,--strip-debug -lc -lgcc -Wl,-Ttest/ROM.lds
 
 # Examples
-riscv64-unknown-elf-g++ -o miniterm.elf test/miniterm.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -O3 -ffast-math -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
-riscv64-unknown-elf-g++ -o instructiontest.elf test/instructiontest.cpp test/utils.cpp -std=c++11 -Wall -O3 -ffast-math -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
-riscv64-unknown-elf-g++ -o sdcardtest.elf test/sdcardtest.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -O3 -ffast-math -march=rv32im -mabi=ilp32 -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc
-riscv64-unknown-elf-g++ -o mandelbrot.elf test/mandelbrot.cpp test/utils.cpp -std=c++11 -Wall -O3 -ffast-math -march=rv32im -mabi=ilp32 -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc
-riscv64-unknown-elf-g++ -o rastertest.elf test/rastertest.cpp test/utils.cpp -std=c++11 -Wall -O3 -ffast-math -march=rv32im -mabi=ilp32 -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc
+riscv64-unknown-elf-g++ -o miniterm.elf test/miniterm.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
+riscv64-unknown-elf-g++ -o instructiontest.elf test/instructiontest.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
+riscv64-unknown-elf-g++ -o sdcardtest.elf test/sdcardtest.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc
+riscv64-unknown-elf-g++ -o mandelbrot.elf test/mandelbrot.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc
+riscv64-unknown-elf-g++ -o rastertest.elf test/rastertest.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc
 
 # ASM dumps
 riscv64-unknown-elf-objdump -d ROM.elf >> ROMasmdump.txt

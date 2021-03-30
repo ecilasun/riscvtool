@@ -11,7 +11,7 @@
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
 
-void evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
+int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
    int iteration = 0;
 
@@ -28,17 +28,27 @@ void evalMandel(const int maxiter, int col, int row, float ox, float oy, float s
       ++iteration;
    }
 
-   VRAM[col+(row<<8)] = iteration;
+   return iteration;
 }
 
 void mandelbrotFloat(float ox, float oy, float sx)
 {
    for (int row = 0; row < 192; ++row)
-   {
       for (int col = (row%2)*2; col < 256; col+=4)
+         VRAM[col+(row<<8)] = evalMandel(256, col, row, ox, oy, sx);
+}
+
+void mandelGrad(float ox, float oy, float sx)
+{
+   for (int row = 0; row < 191; ++row)
+   {
+      for (int col = 0; col < 255; ++col)
       {
-         VRAM[col+(row<<8)] = 0xFF;
-         evalMandel(256, col, row, ox, oy, sx);
+         int i0 = evalMandel(256, col, row, ox, oy, sx);
+         int i1 = evalMandel(256, col+1, row, ox, oy, sx);
+         int i2 = evalMandel(256, col+1, row+1, ox, oy, sx);
+         //int i3 = evalMandel(256, col, row+4, ox, oy, sx);
+         VRAM[col+(row<<8)] = ((i0-i1)*(i0-i1)+(i0-i2)*(i0-i2))&0xFF;
       }
    }
 }
