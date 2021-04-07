@@ -3,6 +3,7 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
+#include <cmath>
 #include "utils.h"
 
 #define max(A,B) (A>B?A:B)
@@ -33,9 +34,20 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
 
 void mandelbrotFloat(float ox, float oy, float sx)
 {
-   for (int row = 0; row < 192; ++row)
-      for (int col = (row%2)*2; col < 256; col+=4)
-         VRAM[col+(row<<8)] = evalMandel(256, col, row, ox, oy, sx);
+   int R = int(27.71f-5.156f*logf(sx));
+
+   for (int row = 0; row < 192; row+=2)
+      for (int col = 0; col < 256; col+=2)
+      {
+         int M = evalMandel(R, col, row, ox, oy, sx);
+         float ratio = float(M)/float(R);
+         uint8_t c = ((100>>6)<<6) | ((int(10+1.f*ratio*140)>>5)<<3) | (int(1.f*ratio*200)>>5);
+
+         VRAM[col+(row<<8)] = c;
+         VRAM[col+1+(row<<8)] = c;
+         VRAM[col+((row+1)<<8)] = c;
+         VRAM[col+1+((row+1)<<8)] = c;
+      }
 }
 
 void mandelGrad(float ox, float oy, float sx)
