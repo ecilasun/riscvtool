@@ -184,7 +184,9 @@ int fat_list_files(char *target)
             }
             else
             {
-                strncat(target, dir->name, 8);
+                memcpy(target, dir->name, 8);
+                target[8] = 0;
+                //strncat(target, dir->name, 8);
                 strcat(target, ".");
                 strncat(target, dir->ext, 3);
                 strcat(target, "\r\n");
@@ -314,7 +316,7 @@ int fat_readfile(struct FILEHANDLE *fh, char *buffer, int read_bytes, int *total
 
         // Get the next cluster in chain
         cluster = fh->bpb->spf16 > 0 ? fh->fat16[cluster%256] : fh->fat32[cluster%128];
-        if (*total_read >= read_bytes || fh->file_offset >= file_size)
+        if (*total_read >= read_bytes || fh->file_offset >= (uint32_t)file_size)
             break;
     }
 

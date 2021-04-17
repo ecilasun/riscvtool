@@ -2,13 +2,14 @@
 
 #include "utils.h"
 
-volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;       // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
-volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000; // UART input status (read)
-volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;     // UART receive data (read)
-volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;     // UART send data (write)
-volatile unsigned char *SPIInput = (volatile unsigned char* )0x30000000;   // SPI receive data (read)
-volatile unsigned char *SPIOutput = (volatile unsigned char* )0x20000000;  // SPU send data (write)
-volatile unsigned int ROMResetVector = 0x000FA00;
+volatile unsigned int *GPUFIFO = (volatile unsigned int* )0x80000000;         // GPU control FIFO
+volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;          // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
+volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000;    // UART input status (read)
+volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;        // UART receive data (read)
+volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;        // UART send data (write)
+volatile unsigned char *SPIInput = (volatile unsigned char* )0x30000000;      // SPI receive data (read)
+volatile unsigned char *SPIOutput = (volatile unsigned char* )0x20000000;     // SPU send data (write)
+volatile unsigned int ROMResetVector = 0x001FA00;
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t font[] __attribute__((aligned(4))) = {

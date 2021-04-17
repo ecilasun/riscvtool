@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 
+extern volatile unsigned int *GPUFIFO;
 extern volatile unsigned char *VRAM;
 extern volatile unsigned char *UARTRX;
 extern volatile unsigned char *UARTTX;
