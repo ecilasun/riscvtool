@@ -10,6 +10,7 @@ rm mandelbrotasmdump.txt
 rm rastertestasmdump.txt
 
 rm ROM.coe
+rm ROM_nekoichi.coe
 
 # BIOS for ecrv32
 riscv64-unknown-elf-gcc -o ROM.elf test/ROM.cpp test/utils.cpp -Ofast -fno-tree-loop-distribute-patterns -mexplicit-relocs -march=rv32i -mabi=ilp32 -static -mcmodel=medany -fvisibility=hidden -nostartfiles -fPIC -ffunction-sections -fdata-sections -Wl,-e_start -Wl,-melf32lriscv -Wl,-gc-sections -Wl,--strip-debug -lc -lgcc -Wl,-Ttest/ROM.lds

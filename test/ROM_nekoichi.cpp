@@ -322,21 +322,25 @@ int main(int argc, char ** argv)
 
       f+=33;
 
-      mandelbrotFloat(X,Y,R);
-      R += 0.001f; // Zoom
-
       // DMA test: DMA the sine table onto to of VRAM asynchronous to CPU memory access
-      uint32_t sysramsource = uint32_t(sinewave);
+
+      // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
+      uint32_t sysramsource = uint32_t(sinewave)>>2;
       GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(sysramsource));
       GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(sysramsource));
 
+      // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
       uint32_t vramramtarget = 0x00000000;
       GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vramramtarget));
       GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vramramtarget));
 
       uint32_t dmacount = 512;
-      uint32_t setsysdma = ((dmacount&0x3FFF) << 10) | 0x1A4;  // -------- cc cccc cccc cccc 011 010 0100 sysdma g2, g3, dmacount
+      uint32_t setsysdma = ((dmacount&0x3FFF) << 10) | 0x1A4;  // ---- ---- cc cccc cccc cccc 011 010 0100 sysdma g2, g3, dmacount
       GPUFIFO[4] = setsysdma;
+
+      // Draw mandelbrot
+      mandelbrotFloat(X,Y,R);
+      R += 0.001f; // Zoom
 
       cnt++;
    }
