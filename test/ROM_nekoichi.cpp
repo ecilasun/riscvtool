@@ -22,7 +22,6 @@
 #define GPUWRITEVRAM 0x2
 #define GPUCLEAR 0x3
 #define GPUSYSDMA 0x4
-#define GPUWAITVSYNC 0x5
 
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
@@ -351,7 +350,7 @@ int main(int argc, char ** argv)
       R += 0.001f; // Zoom
 
       // Stall GPU until vsync is reached
-      GPUFIFO[4] = GPUOPCODE(GPUWAITVSYNC, 0, 0, 0);
+      // GPUFIFO[4] = GPUOPCODE(GPUWAITVSYNC, 0, 0, 0);
 
       cnt++;
    }
