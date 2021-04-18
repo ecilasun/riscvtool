@@ -7,7 +7,7 @@ SECTIONS
    .boot :
    {
       /* Reset vector */
-      . = 0x0001A00;
+      . = 0x00000100;
       *(.boot)
       _boot = .;
    }
