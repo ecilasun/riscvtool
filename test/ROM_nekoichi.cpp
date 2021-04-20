@@ -5,23 +5,13 @@
 #include <math.h>
 #include <cmath>
 #include "utils.h"
+#include "gpu.h"
 
 // Bootloader
 #include "rom_rvcrt0.h"
 
 #define max(A,B) (A>B?A:B)
 #define min(A,B) (A>B?B:A)
-
-// GPU command macros
-#define GPU22BITIMM(_immed_) (_immed_&0x003FFFFF)
-#define GPU10BITIMM(_immed_) ((_immed_&0xFFC00000)>>22)
-#define GPUOPCODE(_cmd_, _rs_, _rd_, _imm_) (_imm_<<10)|(_rd_<<7)|(_rs_<<4)|(_cmd_)
-#define GPUOPCODE2(_cmd_, _rs_, _rd_,_mask_, _imm_) (_imm_<<14) | (_mask_<<10) | (_rd_<<7) | (_rs_<<4) | (_cmd_);
-// GPU opcodes (4 bits wide)
-#define GPUSETREGISTER 0x1
-#define GPUWRITEVRAM 0x2
-#define GPUCLEAR 0x3
-#define GPUSYSDMA 0x4
 
 #pragma GCC push_options
 #pragma GCC optimize ("align-functions=16")
@@ -220,7 +210,9 @@ void mandelbrotFloat(float ox, float oy, float sx)
    //volatile uint32_t *VRAMDW = (uint32_t *)VRAM;
    int R = int(27.71f-5.156f*logf(sx));
 
-   for (int row = 64; row < 128; ++row)
+   //for (int row = 64; row < 128; ++row)
+   static int row = 64;
+
       for (int col = 64; col < 192; ++col)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
@@ -255,6 +247,9 @@ void mandelbrotFloat(float ox, float oy, float sx)
          uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
          GPUFIFO[2] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x020 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 010 0010 write g2, vramaddrs */
       }
+   
+   ++row;
+   row = row>=128 ? 64 : row;
 }
 
 int main(int argc, char ** argv)
@@ -276,9 +271,9 @@ int main(int argc, char ** argv)
 
    while(1)
    {
-      if (x>239 || x<1)
+      if (x>128 || x<1)
          dx=-dx;
-      if (y>176 || y<1)
+      if (y>128 || y<1)
          dy=-dy;
       x += dx;
       y += dy;
@@ -325,7 +320,8 @@ int main(int argc, char ** argv)
 
       f+=33;
 
-      // DMA mandebrot buffer onto VRAM, one scanline at a time
+      // DMA mandebrot buffer (129x64) onto VRAM
+      // Copies output one scanline at a time
       for (uint32_t mandelscanline = 0; mandelscanline<64; ++mandelscanline)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
@@ -334,7 +330,7 @@ int main(int argc, char ** argv)
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(sysramsource));
 
          // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
-         uint32_t vramramtarget = (mandelscanline*256)>>2;
+         uint32_t vramramtarget = (x + (y+mandelscanline)*256)>>2;
          GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vramramtarget));
          GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vramramtarget));
 
@@ -350,13 +346,12 @@ int main(int argc, char ** argv)
       R += 0.001f; // Zoom
 
       // Stall GPU until vsync is reached
-      // GPUFIFO[4] = GPUOPCODE(GPUWAITVSYNC, 0, 0, 0);
+      GPUFIFO[4] = GPUOPCODE(GPUNOOP, 0, 0, 0);
 
       cnt++;
    }
 
    return 0;
 }
-
 
 #pragma GCC pop_options
