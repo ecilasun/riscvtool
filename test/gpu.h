@@ -5,10 +5,10 @@
 #define GPUOPCODE(_cmd_, _rs_, _rd_, _imm_) (_imm_<<10)|(_rd_<<7)|(_rs_<<4)|(_cmd_)
 #define GPUOPCODE2(_cmd_, _rs_, _rd_,_mask_, _imm_) (_imm_<<14) | (_mask_<<10) | (_rd_<<7) | (_rs_<<4) | (_cmd_);
 
-// GPU opcodes (4 bits wide)
+// GPU opcodes (only lower 3 bits out of 4 used)
 
-// Note: NOOP is also 'wait for vsync' command
-#define GPUNOOP 0x00
+// Stalls the GPU until next vsync
+#define GPUVSYNC 0x0
 
 // Set register lower 22 bits when source register is zero, otherwise sets uppper 10 bits
 #define GPUSETREGISTER 0x1

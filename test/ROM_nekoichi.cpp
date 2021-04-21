@@ -180,7 +180,7 @@ void drawrect(int ox, int oy)
    }
 }
 
-uint8_t mandelbuffer[128*64];
+uint8_t mandelbuffer[64*64];
 
 int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
@@ -213,7 +213,7 @@ void mandelbrotFloat(float ox, float oy, float sx)
    //for (int row = 64; row < 128; ++row)
    static int row = 64;
 
-      for (int col = 64; col < 192; ++col)
+      for (int col = 96; col < 160; ++col)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          uint8_t c;
@@ -236,7 +236,7 @@ void mandelbrotFloat(float ox, float oy, float sx)
             VRAM[col+1+((row+1)<<8)] = c;*/
          }
 
-         mandelbuffer[(col-64) + ((row-64)<<7)] = c;
+         mandelbuffer[(col-96) + ((row-64)<<6)] = c;
 
          /*uint32_t colorbits = (c<<24) | (c<<16) | (c<<8) | c;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colorbits));
@@ -255,8 +255,8 @@ void mandelbrotFloat(float ox, float oy, float sx)
 int main(int argc, char ** argv)
 {
    int cnt=0;
-   int x=9, y=10;
-   int dx=3, dy=2;
+   int x=16, y=32;
+   int dx=2, dy=3;
    int f=0;
 
    float X = -0.235125;
@@ -271,61 +271,22 @@ int main(int argc, char ** argv)
 
    while(1)
    {
-      if (x>128 || x<1)
+      if (x>=192 || x<=4)
          dx=-dx;
-      if (y>128 || y<1)
+      if (y>=128 || y<=4)
          dy=-dy;
       x += dx;
       y += dy;
 
-      uint8_t curvecolorA = uint8_t(cnt&0xFF);
-      uint8_t curvecolorB = (cnt&0xFF)^0xff;
+      // CLS
+      GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
 
-      uint32_t colorbits = (curvecolorA<<24) | (curvecolorA<<16) | (curvecolorA<<8) | curvecolorA;
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colorbits));
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(colorbits));
-
-      colorbits = (curvecolorB<<24) | (curvecolorB<<16) | (curvecolorB<<8) | curvecolorB;
-      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorbits));
-      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorbits));
-
-      GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // -- ---- ---- ---- ---- ---- --- 001 0011 clear g1
-
-      //drawrect(x, y);
-
-      for(int z=0;z<256;++z)
-      {
-         int k = float(ssin(z*2+f))/173.2f + 96.f;
-         //VRAM[z+(k<<8)] = cnt;
-
-         //GPUWriteByte(GPURegisters::g2, wordaddrs);
-         uint32_t wordaddrs = (z+(k<<8));
-         uint32_t bytesel = wordaddrs&3;
-         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
-         GPUFIFO[4] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x020 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 010 0010 write g2, vramaddrs
-      }
-
-      for(int z=0;z<192;++z)
-      {
-         int k = float(ssin(z*3+f))/130.3f + 128.f;
-         //VRAM[k+(z<<8)] = (cnt^0xFF);
-
-         //GPUWriteByte(GPURegisters::g3, wordaddrs);
-         uint32_t wordaddrs = (k+(z<<8));
-         uint32_t bytesel = wordaddrs&3;
-         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
-         //GPUOPCODE2(GPUWRITEVRAM, 3, 0, bytemask, (wordaddrs>>2)&0x3FFF)
-         GPUFIFO[4] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x030 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 011 0010 write g3, vramaddrs
-      }
-
-      f+=33;
-
-      // DMA mandebrot buffer (129x64) onto VRAM
-      // Copies output one scanline at a time
+      // DMA
+      // Copies mandebrot ofscreen buffer (64x64) from SYSRAM onto VRAM, one scanline at a time
       for (uint32_t mandelscanline = 0; mandelscanline<64; ++mandelscanline)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*128)>>2;
+         uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*64)>>2;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(sysramsource));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(sysramsource));
 
@@ -335,18 +296,46 @@ int main(int argc, char ** argv)
          GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vramramtarget));
 
          // Length of copy in DWORDs
-         uint32_t dmacount = 128>>2;
-         GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 2, 3, (dmacount&0x3FFF)); //((dmacount&0x3FFF) << 10) | 0x1A0 | GPUSYSDMA;  // ---- ---- cc cccc cccc cccc 011 010 0100 sysdma g2, g3, dmacount
+         uint32_t dmacount = 64>>2;
+         GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 2, 3, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
       }
 
-      // Generate mandelbrot into buffer
+      // CURVES
+      uint8_t curvecolorA = 0x00;
+      uint8_t curvecolorB = 0xFF;
+      uint32_t colorbits = (curvecolorA<<24) | (curvecolorA<<16) | (curvecolorA<<8) | curvecolorA;
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colorbits));
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(colorbits));
+      colorbits = (curvecolorB<<24) | (curvecolorB<<16) | (curvecolorB<<8) | curvecolorB;
+      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorbits));
+      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorbits));
+
+      for(int z=0;z<256;++z)
+      {
+         int k = float(ssin(z*2+f))/173.2f + 96.f;
+         uint32_t wordaddrs = (z+(k<<8));
+         uint32_t bytesel = wordaddrs&3;
+         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
+         GPUFIFO[4] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x020 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 010 0010 write g2, vramaddrs
+      }
+      for(int z=0;z<192;++z)
+      {
+         int k = float(ssin(z*3+f))/130.3f + 128.f;
+         uint32_t wordaddrs = (k+(z<<8));
+         uint32_t bytesel = wordaddrs&3;
+         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
+         //GPUOPCODE2(GPUWRITEVRAM, 3, 0, bytemask, (wordaddrs>>2)&0x3FFF)
+         GPUFIFO[4] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x030 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 011 0010 write g3, vramaddrs
+      }
+      f+=3;
+
+      // Generate one line of mandelbrot into offscreen buffer
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
-      // This also acts as a 'pause' so we can see what's in the framebuffer before next CLEAR operation kicks in
       mandelbrotFloat(X,Y,R);
       R += 0.001f; // Zoom
 
-      // Stall GPU until vsync is reached
-      GPUFIFO[4] = GPUOPCODE(GPUNOOP, 0, 0, 0);
+      // Stall GPU until vsync is reached (should probably be before the mandelbrot)
+      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
 
       cnt++;
    }
