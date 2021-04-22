@@ -288,7 +288,7 @@ int main(int argc, char ** argv)
       GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
 
       // RASTERIZE TRIANGLES
-      for (int i=0; i<8192; ++i)
+      for (int i=0; i<8; ++i)
       {
          x1 = Random()%255; y1 = Random()%192;
          x2 = Random()%255; y2 = Random()%192;

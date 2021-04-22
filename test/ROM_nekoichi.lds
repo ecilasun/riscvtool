@@ -48,20 +48,16 @@ SECTIONS
       PROVIDE(__global_pointer$ = . + (4K/2));
       *(.sdata .sdata.*)
    }
+   .got :
+   {
+      *(.got.*)
+   }
    .bss :
    {
       _sbss = . ;
       *(.bss*)
       *(COMMON*)
-      _ebss = . ;
-   }
-   .shstrtab :
-   {
-      *(.shstrtab)
-   }
-   .got :
-   {
-      *(.got.*)
+      PROVIDE(__BSS_END__$ = . );
    }
    _end = . ;
    __stack = ORIGIN(RAM) + LENGTH(RAM) - 16;
