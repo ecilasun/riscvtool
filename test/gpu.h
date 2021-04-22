@@ -1,4 +1,7 @@
 
+// Utility macros
+#define MAKERGB8BITCOLOR(_r, _g, _b) (((_b>>6)<<6) | ((_r>>5)<<3) | ((_g>>5)))
+
 // GPU command macros
 #define GPU22BITIMM(_immed_) (_immed_&0x003FFFFF)
 #define GPU10BITIMM(_immed_) ((_immed_&0xFFC00000)>>22)
@@ -21,3 +24,12 @@
 
 // Copies DWORD aligned SYSRAM address in rs to DWORD aligned VRAM address in rd, by given DWORDs
 #define GPUSYSDMA 0x4
+
+// Rasterize primitive
+#define GPURASTERIZE 0x5
+
+// Unused
+#define GPUUNUSED0 0x6
+
+// Unused
+#define GPUUNUSED1 0x7

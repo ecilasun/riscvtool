@@ -202,8 +202,6 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
    return iteration;
 }
 
-#define MAKERGB(_r, _g, _b) (((_b>>6)<<6) | ((_r>>5)<<3) | ((_g>>5)))
-
 // http://blog.recursiveprocess.com/2014/04/05/mandelbrot-fractal-v2/
 void mandelbrotFloat(float ox, float oy, float sx)
 {
@@ -219,7 +217,7 @@ void mandelbrotFloat(float ox, float oy, float sx)
          uint8_t c;
          if (M < 2)
          {
-            c = MAKERGB(0, 100, 0);
+            c = MAKERGB8BITCOLOR(0, 100, 0);
             /*VRAM[col+(row<<8)] = c;
             VRAM[col+1+(row<<8)] = c;
             VRAM[col+((row+1)<<8)] = c;
@@ -228,7 +226,7 @@ void mandelbrotFloat(float ox, float oy, float sx)
          else
          {
             float ratio = float(M)/float(R);
-            c = MAKERGB(int(10+1.f*ratio*140), 100, int(1.f*ratio*200));
+            c = MAKERGB8BITCOLOR(int(10+1.f*ratio*140), 100, int(1.f*ratio*200));
 
             /*VRAM[col+(row<<8)] = c;
             VRAM[col+1+(row<<8)] = c;
@@ -255,8 +253,8 @@ void mandelbrotFloat(float ox, float oy, float sx)
 int main(int argc, char ** argv)
 {
    int cnt=0;
-   int x=16, y=32;
-   int dx=2, dy=3;
+   int x=16, y=32, x1=4, y1=64, x2=192, y2=128, x3=64, y3=8;
+   int dx=2, dy=3, dx1=1, dy1=1, dx2=2, dy2=1, dx3=1, dy3=2;
    int f=0;
 
    float X = -0.235125;
@@ -271,12 +269,20 @@ int main(int argc, char ** argv)
 
    while(1)
    {
-      if (x>=192 || x<=4)
-         dx=-dx;
-      if (y>=128 || y<=4)
-         dy=-dy;
+      if (x>=192 || x<=4) dx=-dx;
+      if (y>=128 || y<=4) dy=-dy;
       x += dx;
       y += dy;
+
+      /*if (x1>=255 || x1<=1) dx1=-dx1;
+      if (x2>=255 || x2<=1) dx2=-dx2;
+      if (x3>=255 || x3<=1) dx3=-dx3;
+      if (y1>=191 || y1<=1) dy1=-dy1;
+      if (y2>=191 || y2<=1) dy2=-dy2;
+      if (y3>=191 || y3<=1) dy3=-dy3;
+      x1 += dx1; y1 += dy1;
+      x2 += dx2; y2 += dy2;
+      x3 += dx3; y3 += dy3;*/
 
       // CLS
       GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
@@ -298,6 +304,22 @@ int main(int argc, char ** argv)
          // Length of copy in DWORDs
          uint32_t dmacount = 64>>2;
          GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 2, 3, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
+      }
+
+      // RASTERIZE TRIANGLE
+      for (int i=0; i<8192; ++i)
+      {
+         x1 = Random()%255; y1 = Random()%192;
+         x2 = Random()%255; y2 = Random()%192;
+         x3 = Random()%255; y3 = Random()%192;
+         uint8_t triFrontColor = i%255;
+         uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+         uint32_t vertexC2 = ((triFrontColor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex10));
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
+         GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
       }
 
       // CURVES
@@ -335,7 +357,7 @@ int main(int argc, char ** argv)
       R += 0.001f; // Zoom
 
       // Stall GPU until vsync is reached (should probably be before the mandelbrot)
-      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+      //GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
 
       cnt++;
    }
