@@ -17,11 +17,31 @@ SECTIONS
       *(.rodata*)
       _etext = .;
    }
+   .eh_frame :
+   {
+      *(.eh_frame*)
+   }
+   .init_array :
+   {
+      *(.init_array*)
+   }
+   .fini_array :
+   {
+      *(.fini_array*)
+   }
+   .srodata :
+   {
+      *(.srodata*)
+   }
    .data :
    {
       _sdata = .;
       *(.data*)
       _edata = .;
+   }
+   .got :
+   {
+      *(.got*)
    }
    .sdata :
    {

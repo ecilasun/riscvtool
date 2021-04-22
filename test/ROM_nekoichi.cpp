@@ -8,7 +8,7 @@
 #include "gpu.h"
 
 // Bootloader
-#include "rom_rvcrt0.h"
+#include "rom_nekoichi_rvcrt0.h"
 
 #define max(A,B) (A>B?A:B)
 #define min(A,B) (A>B?B:A)
@@ -287,26 +287,7 @@ int main(int argc, char ** argv)
       // CLS
       GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
 
-      // DMA
-      // Copies mandebrot ofscreen buffer (64x64) from SYSRAM onto VRAM, one scanline at a time
-      for (uint32_t mandelscanline = 0; mandelscanline<64; ++mandelscanline)
-      {
-         // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*64)>>2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(sysramsource));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(sysramsource));
-
-         // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
-         uint32_t vramramtarget = (x + (y+mandelscanline)*256)>>2;
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vramramtarget));
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vramramtarget));
-
-         // Length of copy in DWORDs
-         uint32_t dmacount = 64>>2;
-         GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 2, 3, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
-      }
-
-      // RASTERIZE TRIANGLE
+      // RASTERIZE TRIANGLES
       for (int i=0; i<8192; ++i)
       {
          x1 = Random()%255; y1 = Random()%192;
@@ -320,6 +301,25 @@ int main(int argc, char ** argv)
          GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
          GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
          GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
+      }
+
+      // DMA
+      // Copies mandebrot ofscreen buffer (64x64) from SYSRAM onto VRAM, one scanline at a time
+      for (uint32_t mandelscanline = 0; mandelscanline<64; ++mandelscanline)
+      {
+         // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
+         uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*64)>>2;
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
+
+         // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
+         uint32_t vramramtarget = (x + (y+mandelscanline)*256)>>2;
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vramramtarget));
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vramramtarget));
+
+         // Length of copy in DWORDs
+         uint32_t dmacount = 64>>2;
+         GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
       }
 
       // CURVES
@@ -357,7 +357,7 @@ int main(int argc, char ** argv)
       R += 0.001f; // Zoom
 
       // Stall GPU until vsync is reached (should probably be before the mandelbrot)
-      //GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
 
       cnt++;
    }
