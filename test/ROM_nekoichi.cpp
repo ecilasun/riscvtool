@@ -6,6 +6,7 @@
 #include <cmath>
 #include "utils.h"
 #include "gpu.h"
+#include "simplevectormath.h"
 
 // Bootloader
 #include "rom_nekoichi_rvcrt0.h"
@@ -253,8 +254,8 @@ void mandelbrotFloat(float ox, float oy, float sx)
 int main(int argc, char ** argv)
 {
    int cnt=0;
-   int x=16, y=32, x1=4, y1=64, x2=192, y2=128, x3=64, y3=8;
-   int dx=2, dy=3, dx1=1, dy1=1, dx2=2, dy2=1, dx3=1, dy3=2;
+   int x=16, y=32;
+   int dx=2, dy=3;
    int f=0;
 
    float X = -0.235125;
@@ -287,21 +288,37 @@ int main(int argc, char ** argv)
       // CLS
       GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
 
-      // RASTERIZE TRIANGLES
-      for (int i=0; i<8; ++i)
-      {
-         x1 = Random()%255; y1 = Random()%192;
-         x2 = Random()%255; y2 = Random()%192;
-         x3 = Random()%255; y3 = Random()%192;
-         uint8_t triFrontColor = i%255;
-         uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-         uint32_t vertexC2 = ((triFrontColor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex10));
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
+      // 3D TEST
+      /*{
+         mat44_t view, persp, viewpersp;
+         vec3_t eye{0.f,0.f,4.f};
+         vec3_t target{0.f,0.f,0.f};
+         vec3_t upvec{0.f,1.f,0.f};
+         MatrixLookAt(eye, target, upvec, view);
+         MatrixPerspectiveRH(128.f, 96.f, 0.01f, 1000.f, persp);
+         MatrixMultiply(view, persp, viewpersp);
+
+         vec4_t vertices[3] = {{-20.f,-10.f,0.f,1.f}, {20.f,-10.f,0.f,1.f}, {0.f,30.f,0.f,1.f}};
+         vec4_t v0, v1, v2;
+         Vec4Transform(vertices[0], viewpersp, v0);
+         Vec4Transform(vertices[1], viewpersp, v1);
+         Vec4Transform(vertices[2], viewpersp, v2);
+
+         int x1 = int(v0[0]);
+         int y1 = int(v0[1]);
+         int x2 = int(v1[0]);
+         int y2 = int(v1[1]);
+         int x3 = int(v2[0]);
+         int y3 = int(v2[1]);
+
+         uint32_t v10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+         uint32_t vC2 = ((0&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(v10)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(v10));
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vC2)); // {0, frontcolor, v2.y, v2.x}
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vC2));
          GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
-      }
+      }*/
 
       // DMA
       // Copies mandebrot ofscreen buffer (64x64) from SYSRAM onto VRAM, one scanline at a time
@@ -321,6 +338,66 @@ int main(int argc, char ** argv)
          uint32_t dmacount = 64>>2;
          GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
       }
+
+      // TRIPLE TRIANGLE TEST
+      int x1 = 64;
+      int y1 = 16;
+      int x2 = 128;
+      int y2 = 92;
+      int x3 = int(float(ssin(f))/130.2f + 128.f);
+      int y3 = 191;
+      int x4 = 200;
+      int y4 = 16;
+
+      uint8_t triFrontColor_A = 0xFF;
+      uint32_t vertexA_10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+      uint32_t vertexA_C2 = ((triFrontColor_A&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertexA_10)); // {v1.y, v1.x, v0.y, v0.x}
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertexA_10));
+      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexA_C2)); // {0, frontcolor, v2.y, v2.x}
+      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexA_C2));
+
+      uint8_t triFrontColor_B = 0xC0;
+      uint32_t vertexB_10 = ((y4&0xFF)<<24) | ((x4&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+      uint32_t vertexB_C2 = ((triFrontColor_B&0xFF)<<16) | ((y2&0xFF)<<8) | (x2&0xFF);
+
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertexB_10));
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertexB_10));
+      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexB_C2));
+      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexB_C2));
+
+      uint8_t triFrontColor_C = 0x07;
+      uint32_t vertexC_10 = ((y3&0xFF)<<24) | ((x3&0xFF)<<16) | ((y4&0xFF)<<8) | (x4&0xFF);
+      uint32_t vertexC_C2 = ((triFrontColor_C&0xFF)<<16) | ((y2&0xFF)<<8) | (x2&0xFF);
+
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(vertexC_10));
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(vertexC_10));
+      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 7, GPU22BITIMM(vertexC_C2));
+      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 7, 7, GPU10BITIMM(vertexC_C2));
+
+      GPUFIFO[0] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
+      GPUFIFO[1] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
+      GPUFIFO[2] = GPUOPCODE(GPURASTERIZE, 6, 7, 0);
+
+      // RASTERIZE TRIANGLES
+      /*for (int i=0; i<64; ++i)
+      {
+         int x1 = Random()%256;
+         int y1 = Random()%192;
+         int x2 = Random()%256;
+         int y2 = Random()%192;
+         int x3 = Random()%256;
+         int y3 = Random()%192;
+         uint8_t triFrontColor = i%255;
+         uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+         uint32_t vertexC2 = ((triFrontColor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex10));
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
+         GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
+      }*/
 
       // CURVES
       uint8_t curvecolorA = 0x00;
