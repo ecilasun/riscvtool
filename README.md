@@ -20,7 +20,19 @@ python waf build -v
 python waf clean
 ```
 
-# Building the samples
+# Building the ROM for NekoIchi
+
+NekoIchi has a different architecture and currently doesn't have a UART loader. To build the ROM files, simply run:
+
+```
+./build.sh
+```
+
+and the ROM_nekoichi.coe file will be generated. You can then copy this over the BIOS.coe file in the source directory of NekoIchi.
+
+You can find NekoIchi SoC here: https://github.com/ecilasun/NekoIchi
+
+# Building the samples for ecrv32
 
 Currently there's no 'make' file to build the sample executables. Please use the following to build them:
 
