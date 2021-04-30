@@ -1,445 +1,213 @@
+// Bootloader
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include <cmath>
+#include "rom_nekoichi_rvcrt0.h"
 #include "utils.h"
 #include "gpu.h"
-#include "simplevectormath.h"
 
-// Bootloader
-#include "rom_nekoichi_rvcrt0.h"
-
-#define max(A,B) (A>B?A:B)
-#define min(A,B) (A>B?B:A)
-
-#pragma GCC push_options
-#pragma GCC optimize ("align-functions=16")
-
-int sinewave[1024] = {
-    0x4000,0x4065,0x40c9,0x412e,0x4192,0x41f7,0x425b,0x42c0,
-    0x4324,0x4388,0x43ed,0x4451,0x44b5,0x451a,0x457e,0x45e2,
-    0x4646,0x46aa,0x470e,0x4772,0x47d6,0x4839,0x489d,0x4901,
-    0x4964,0x49c7,0x4a2b,0x4a8e,0x4af1,0x4b54,0x4bb7,0x4c1a,
-    0x4c7c,0x4cdf,0x4d41,0x4da4,0x4e06,0x4e68,0x4eca,0x4f2b,
-    0x4f8d,0x4fee,0x5050,0x50b1,0x5112,0x5173,0x51d3,0x5234,
-    0x5294,0x52f4,0x5354,0x53b4,0x5413,0x5473,0x54d2,0x5531,
-    0x5590,0x55ee,0x564c,0x56ab,0x5709,0x5766,0x57c4,0x5821,
-    0x587e,0x58db,0x5937,0x5993,0x59ef,0x5a4b,0x5aa7,0x5b02,
-    0x5b5d,0x5bb8,0x5c12,0x5c6c,0x5cc6,0x5d20,0x5d79,0x5dd3,
-    0x5e2b,0x5e84,0x5edc,0x5f34,0x5f8c,0x5fe3,0x603a,0x6091,
-    0x60e7,0x613d,0x6193,0x61e8,0x623d,0x6292,0x62e7,0x633b,
-    0x638e,0x63e2,0x6435,0x6488,0x64da,0x652c,0x657e,0x65cf,
-    0x6620,0x6671,0x66c1,0x6711,0x6760,0x67af,0x67fe,0x684c,
-    0x689a,0x68e7,0x6935,0x6981,0x69ce,0x6a1a,0x6a65,0x6ab0,
-    0x6afb,0x6b45,0x6b8f,0x6bd8,0x6c21,0x6c6a,0x6cb2,0x6cfa,
-    0x6d41,0x6d88,0x6dcf,0x6e15,0x6e5a,0x6e9f,0x6ee4,0x6f28,
-    0x6f6c,0x6faf,0x6ff2,0x7034,0x7076,0x70b8,0x70f9,0x7139,
-    0x7179,0x71b9,0x71f8,0x7236,0x7274,0x72b2,0x72ef,0x732c,
-    0x7368,0x73a3,0x73df,0x7419,0x7453,0x748d,0x74c6,0x74ff,
-    0x7537,0x756e,0x75a5,0x75dc,0x7612,0x7648,0x767d,0x76b1,
-    0x76e5,0x7718,0x774b,0x777e,0x77b0,0x77e1,0x7812,0x7842,
-    0x7871,0x78a1,0x78cf,0x78fd,0x792b,0x7958,0x7984,0x79b0,
-    0x79db,0x7a06,0x7a30,0x7a59,0x7a82,0x7aab,0x7ad3,0x7afa,
-    0x7b21,0x7b47,0x7b6d,0x7b92,0x7bb6,0x7bda,0x7bfd,0x7c20,
-    0x7c42,0x7c64,0x7c85,0x7ca5,0x7cc5,0x7ce4,0x7d03,0x7d21,
-    0x7d3f,0x7d5b,0x7d78,0x7d93,0x7daf,0x7dc9,0x7de3,0x7dfc,
-    0x7e15,0x7e2d,0x7e45,0x7e5c,0x7e72,0x7e88,0x7e9d,0x7eb1,
-    0x7ec5,0x7ed8,0x7eeb,0x7efd,0x7f0f,0x7f20,0x7f30,0x7f40,
-    0x7f4f,0x7f5d,0x7f6b,0x7f78,0x7f85,0x7f91,0x7f9c,0x7fa7,
-    0x7fb1,0x7fbb,0x7fc4,0x7fcc,0x7fd4,0x7fdb,0x7fe1,0x7fe7,
-    0x7fec,0x7ff1,0x7ff5,0x7ff8,0x7ffb,0x7ffd,0x7fff,0x8000,
-    0x8000,0x8000,0x7fff,0x7ffd,0x7ffb,0x7ff8,0x7ff5,0x7ff1,
-    0x7fec,0x7fe7,0x7fe1,0x7fdb,0x7fd4,0x7fcc,0x7fc4,0x7fbb,
-    0x7fb1,0x7fa7,0x7f9c,0x7f91,0x7f85,0x7f78,0x7f6b,0x7f5d,
-    0x7f4f,0x7f40,0x7f30,0x7f20,0x7f0f,0x7efd,0x7eeb,0x7ed8,
-    0x7ec5,0x7eb1,0x7e9d,0x7e88,0x7e72,0x7e5c,0x7e45,0x7e2d,
-    0x7e15,0x7dfc,0x7de3,0x7dc9,0x7daf,0x7d93,0x7d78,0x7d5b,
-    0x7d3f,0x7d21,0x7d03,0x7ce4,0x7cc5,0x7ca5,0x7c85,0x7c64,
-    0x7c42,0x7c20,0x7bfd,0x7bda,0x7bb6,0x7b92,0x7b6d,0x7b47,
-    0x7b21,0x7afa,0x7ad3,0x7aab,0x7a82,0x7a59,0x7a30,0x7a06,
-    0x79db,0x79b0,0x7984,0x7958,0x792b,0x78fd,0x78cf,0x78a1,
-    0x7871,0x7842,0x7812,0x77e1,0x77b0,0x777e,0x774b,0x7718,
-    0x76e5,0x76b1,0x767d,0x7648,0x7612,0x75dc,0x75a5,0x756e,
-    0x7537,0x74ff,0x74c6,0x748d,0x7453,0x7419,0x73df,0x73a3,
-    0x7368,0x732c,0x72ef,0x72b2,0x7274,0x7236,0x71f8,0x71b9,
-    0x7179,0x7139,0x70f9,0x70b8,0x7076,0x7034,0x6ff2,0x6faf,
-    0x6f6c,0x6f28,0x6ee4,0x6e9f,0x6e5a,0x6e15,0x6dcf,0x6d88,
-    0x6d41,0x6cfa,0x6cb2,0x6c6a,0x6c21,0x6bd8,0x6b8f,0x6b45,
-    0x6afb,0x6ab0,0x6a65,0x6a1a,0x69ce,0x6981,0x6935,0x68e7,
-    0x689a,0x684c,0x67fe,0x67af,0x6760,0x6711,0x66c1,0x6671,
-    0x6620,0x65cf,0x657e,0x652c,0x64da,0x6488,0x6435,0x63e2,
-    0x638e,0x633b,0x62e7,0x6292,0x623d,0x61e8,0x6193,0x613d,
-    0x60e7,0x6091,0x603a,0x5fe3,0x5f8c,0x5f34,0x5edc,0x5e84,
-    0x5e2b,0x5dd3,0x5d79,0x5d20,0x5cc6,0x5c6c,0x5c12,0x5bb8,
-    0x5b5d,0x5b02,0x5aa7,0x5a4b,0x59ef,0x5993,0x5937,0x58db,
-    0x587e,0x5821,0x57c4,0x5766,0x5709,0x56ab,0x564c,0x55ee,
-    0x5590,0x5531,0x54d2,0x5473,0x5413,0x53b4,0x5354,0x52f4,
-    0x5294,0x5234,0x51d3,0x5173,0x5112,0x50b1,0x5050,0x4fee,
-    0x4f8d,0x4f2b,0x4eca,0x4e68,0x4e06,0x4da4,0x4d41,0x4cdf,
-    0x4c7c,0x4c1a,0x4bb7,0x4b54,0x4af1,0x4a8e,0x4a2b,0x49c7,
-    0x4964,0x4901,0x489d,0x4839,0x47d6,0x4772,0x470e,0x46aa,
-    0x4646,0x45e2,0x457e,0x451a,0x44b5,0x4451,0x43ed,0x4388,
-    0x4324,0x42c0,0x425b,0x41f7,0x4192,0x412e,0x40c9,0x4065,
-    0x4000,0x3f9b,0x3f37,0x3ed2,0x3e6e,0x3e09,0x3da5,0x3d40,
-    0x3cdc,0x3c78,0x3c13,0x3baf,0x3b4b,0x3ae6,0x3a82,0x3a1e,
-    0x39ba,0x3956,0x38f2,0x388e,0x382a,0x37c7,0x3763,0x36ff,
-    0x369c,0x3639,0x35d5,0x3572,0x350f,0x34ac,0x3449,0x33e6,
-    0x3384,0x3321,0x32bf,0x325c,0x31fa,0x3198,0x3136,0x30d5,
-    0x3073,0x3012,0x2fb0,0x2f4f,0x2eee,0x2e8d,0x2e2d,0x2dcc,
-    0x2d6c,0x2d0c,0x2cac,0x2c4c,0x2bed,0x2b8d,0x2b2e,0x2acf,
-    0x2a70,0x2a12,0x29b4,0x2955,0x28f7,0x289a,0x283c,0x27df,
-    0x2782,0x2725,0x26c9,0x266d,0x2611,0x25b5,0x2559,0x24fe,
-    0x24a3,0x2448,0x23ee,0x2394,0x233a,0x22e0,0x2287,0x222d,
-    0x21d5,0x217c,0x2124,0x20cc,0x2074,0x201d,0x1fc6,0x1f6f,
-    0x1f19,0x1ec3,0x1e6d,0x1e18,0x1dc3,0x1d6e,0x1d19,0x1cc5,
-    0x1c72,0x1c1e,0x1bcb,0x1b78,0x1b26,0x1ad4,0x1a82,0x1a31,
-    0x19e0,0x198f,0x193f,0x18ef,0x18a0,0x1851,0x1802,0x17b4,
-    0x1766,0x1719,0x16cb,0x167f,0x1632,0x15e6,0x159b,0x1550,
-    0x1505,0x14bb,0x1471,0x1428,0x13df,0x1396,0x134e,0x1306,
-    0x12bf,0x1278,0x1231,0x11eb,0x11a6,0x1161,0x111c,0x10d8,
-    0x1094,0x1051,0x100e,0xfcc,0xf8a,0xf48,0xf07,0xec7,
-    0xe87,0xe47,0xe08,0xdca,0xd8c,0xd4e,0xd11,0xcd4,
-    0xc98,0xc5d,0xc21,0xbe7,0xbad,0xb73,0xb3a,0xb01,
-    0xac9,0xa92,0xa5b,0xa24,0x9ee,0x9b8,0x983,0x94f,
-    0x91b,0x8e8,0x8b5,0x882,0x850,0x81f,0x7ee,0x7be,
-    0x78f,0x75f,0x731,0x703,0x6d5,0x6a8,0x67c,0x650,
-    0x625,0x5fa,0x5d0,0x5a7,0x57e,0x555,0x52d,0x506,
-    0x4df,0x4b9,0x493,0x46e,0x44a,0x426,0x403,0x3e0,
-    0x3be,0x39c,0x37b,0x35b,0x33b,0x31c,0x2fd,0x2df,
-    0x2c1,0x2a5,0x288,0x26d,0x251,0x237,0x21d,0x204,
-    0x1eb,0x1d3,0x1bb,0x1a4,0x18e,0x178,0x163,0x14f,
-    0x13b,0x128,0x115,0x103,0xf1,0xe0,0xd0,0xc0,
-    0xb1,0xa3,0x95,0x88,0x7b,0x6f,0x64,0x59,
-    0x4f,0x45,0x3c,0x34,0x2c,0x25,0x1f,0x19,
-    0x14,0xf,0xb,0x8,0x5,0x3,0x1,0x0,
-    0x0,0x0,0x1,0x3,0x5,0x8,0xb,0xf,
-    0x14,0x19,0x1f,0x25,0x2c,0x34,0x3c,0x45,
-    0x4f,0x59,0x64,0x6f,0x7b,0x88,0x95,0xa3,
-    0xb1,0xc0,0xd0,0xe0,0xf1,0x103,0x115,0x128,
-    0x13b,0x14f,0x163,0x178,0x18e,0x1a4,0x1bb,0x1d3,
-    0x1eb,0x204,0x21d,0x237,0x251,0x26d,0x288,0x2a5,
-    0x2c1,0x2df,0x2fd,0x31c,0x33b,0x35b,0x37b,0x39c,
-    0x3be,0x3e0,0x403,0x426,0x44a,0x46e,0x493,0x4b9,
-    0x4df,0x506,0x52d,0x555,0x57e,0x5a7,0x5d0,0x5fa,
-    0x625,0x650,0x67c,0x6a8,0x6d5,0x703,0x731,0x75f,
-    0x78f,0x7be,0x7ee,0x81f,0x850,0x882,0x8b5,0x8e8,
-    0x91b,0x94f,0x983,0x9b8,0x9ee,0xa24,0xa5b,0xa92,
-    0xac9,0xb01,0xb3a,0xb73,0xbad,0xbe7,0xc21,0xc5d,
-    0xc98,0xcd4,0xd11,0xd4e,0xd8c,0xdca,0xe08,0xe47,
-    0xe87,0xec7,0xf07,0xf48,0xf8a,0xfcc,0x100e,0x1051,
-    0x1094,0x10d8,0x111c,0x1161,0x11a6,0x11eb,0x1231,0x1278,
-    0x12bf,0x1306,0x134e,0x1396,0x13df,0x1428,0x1471,0x14bb,
-    0x1505,0x1550,0x159b,0x15e6,0x1632,0x167f,0x16cb,0x1719,
-    0x1766,0x17b4,0x1802,0x1851,0x18a0,0x18ef,0x193f,0x198f,
-    0x19e0,0x1a31,0x1a82,0x1ad4,0x1b26,0x1b78,0x1bcb,0x1c1e,
-    0x1c72,0x1cc5,0x1d19,0x1d6e,0x1dc3,0x1e18,0x1e6d,0x1ec3,
-    0x1f19,0x1f6f,0x1fc6,0x201d,0x2074,0x20cc,0x2124,0x217c,
-    0x21d5,0x222d,0x2287,0x22e0,0x233a,0x2394,0x23ee,0x2448,
-    0x24a3,0x24fe,0x2559,0x25b5,0x2611,0x266d,0x26c9,0x2725,
-    0x2782,0x27df,0x283c,0x289a,0x28f7,0x2955,0x29b4,0x2a12,
-    0x2a70,0x2acf,0x2b2e,0x2b8d,0x2bed,0x2c4c,0x2cac,0x2d0c,
-    0x2d6c,0x2dcc,0x2e2d,0x2e8d,0x2eee,0x2f4f,0x2fb0,0x3012,
-    0x3073,0x30d5,0x3136,0x3198,0x31fa,0x325c,0x32bf,0x3321,
-    0x3384,0x33e6,0x3449,0x34ac,0x350f,0x3572,0x35d5,0x3639,
-    0x369c,0x36ff,0x3763,0x37c7,0x382a,0x388e,0x38f2,0x3956,
-    0x39ba,0x3a1e,0x3a82,0x3ae6,0x3b4b,0x3baf,0x3c13,0x3c78,
-    0x3cdc,0x3d40,0x3da5,0x3e09,0x3e6e,0x3ed2,0x3f37,0x3f9b
-};
-
-int ssin(int s)
+void loadbinaryblob()
 {
-    return(sinewave[(s%1024)]-16384);
-}
+   // Header data
+   unsigned int loadlen = 0;
+   unsigned int loadtarget = 0;
+   char *loadlenaschar = (char*)&loadlen;
+   char *loadtargetaschar = (char*)&loadtarget;
 
-int scos(int s)
-{
-    return(sinewave[((s+512)%1024)]-16384);
-}
-
-void drawrect(int ox, int oy)
-{
-   for (int y=0;y<16;++y)
+   // Target address
+   unsigned int writecursor = 0;
+   while(writecursor < 4)
    {
-      int sy = oy+y;
-      if (sy>191 || sy<0)
-         continue;
-      for (int x=0;x<16;++x)
+      unsigned int bytecount = UARTRXStatus[0];
+      if (bytecount != 0)
       {
-         int sx = ox+x;
-         if (sx>255 || sx<0)
-            continue;
-
-         // The following code is equivalent to: VRAM[sx+(sy<<8)] = color;
-         // Write contents of register g1 at given memory address
-         uint32_t wordaddrs = (sx+(sy<<8));
-         uint32_t bytesel = wordaddrs&3;
-         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
-         GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 1, 0, bytemask, ((wordaddrs>>2)&0x3FFF));  // -- --dd dddd dddd dddd mmmm --- 001 0010 write g1, vramaddrs
+         unsigned char readdata = UARTRX[0];
+         loadtargetaschar[writecursor++] = readdata;
       }
    }
-}
 
-uint8_t mandelbuffer[64*64];
-
-int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
-{
-   int iteration = 0;
-
-   float c_re = float(col - 128) / 64.f * sx + ox;
-   float c_im = float(row - 96) / 64.f * sx + oy;
-   float x = 0.f, y = 0.f;
-   float x2 = 0.f, y2 = 0.f;
-   while (x2+y2 < 4.f && iteration < maxiter)
+   // Data length
+   writecursor = 0;
+   while(writecursor < 4)
    {
-      y = c_im + 2.f*x*y;
-      x = c_re + x2 - y2;
-      x2 = x*x;
-      y2 = y*y;
-      ++iteration;
+      unsigned int bytecount = UARTRXStatus[0];
+      if (bytecount != 0)
+      {
+         unsigned char readdata = UARTRX[0];
+         loadlenaschar[writecursor++] = readdata;
+      }
    }
 
-   return iteration;
-}
+   int x1 = 0;
+   int y1 = 0;
+   int x2 = 8;
+   int y2 = 0;
+   int x3 = 0;
+   int y3 = 8;
 
-// http://blog.recursiveprocess.com/2014/04/05/mandelbrot-fractal-v2/
-void mandelbrotFloat(float ox, float oy, float sx)
-{
-   //volatile uint32_t *VRAMDW = (uint32_t *)VRAM;
-   int R = int(27.71f-5.156f*logf(sx));
-
-   //for (int row = 64; row < 128; ++row)
-   static int row = 64;
-
-      for (int col = 96; col < 160; ++col)
-      {
-         int M = evalMandel(R, col, row, ox, oy, sx);
-         uint8_t c;
-         if (M < 2)
-         {
-            c = MAKERGB8BITCOLOR(0, 100, 0);
-            /*VRAM[col+(row<<8)] = c;
-            VRAM[col+1+(row<<8)] = c;
-            VRAM[col+((row+1)<<8)] = c;
-            VRAM[col+1+((row+1)<<8)] = c;*/
-         }
-         else
-         {
-            float ratio = float(M)/float(R);
-            c = MAKERGB8BITCOLOR(int(10+1.f*ratio*140), 100, int(1.f*ratio*200));
-
-            /*VRAM[col+(row<<8)] = c;
-            VRAM[col+1+(row<<8)] = c;
-            VRAM[col+((row+1)<<8)] = c;
-            VRAM[col+1+((row+1)<<8)] = c;*/
-         }
-
-         mandelbuffer[(col-96) + ((row-64)<<6)] = c;
-
-         /*uint32_t colorbits = (c<<24) | (c<<16) | (c<<8) | c;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colorbits));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(colorbits));
-
-         uint32_t wordaddrs = (col+(row<<8));
-         uint32_t bytesel = wordaddrs&3;
-         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
-         GPUFIFO[2] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x020 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 010 0010 write g2, vramaddrs */
-      }
-   
-   ++row;
-   row = row>=128 ? 64 : row;
-}
-
-int main(int argc, char ** argv)
-{
-   int cnt=0;
-   int x=16, y=32;
-   int dx=2, dy=3;
-   int f=0;
-
-   float X = -0.235125;
-   float Y = 0.827215;
-   float R = 4.0E-5f;
-
-   // Set register g1 with color data
-   uint8_t bgcolor = 0x7C;
-   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-
-   while(1)
+   // Read binary blob
+   writecursor = 0;
+   volatile unsigned char* target = (volatile unsigned char* )loadtarget;
+   uint8_t ncolor = 0;
+   while(writecursor < loadlen)
    {
-      if (x>=192 || x<=4) dx=-dx;
-      if (y>=128 || y<=4) dy=-dy;
-      x += dx;
-      y += dy;
-
-      /*if (x1>=255 || x1<=1) dx1=-dx1;
-      if (x2>=255 || x2<=1) dx2=-dx2;
-      if (x3>=255 || x3<=1) dx3=-dx3;
-      if (y1>=191 || y1<=1) dy1=-dy1;
-      if (y2>=191 || y2<=1) dy2=-dy2;
-      if (y3>=191 || y3<=1) dy3=-dy3;
-      x1 += dx1; y1 += dy1;
-      x2 += dx2; y2 += dy2;
-      x3 += dx3; y3 += dy3;*/
-
-      // CLS
-      GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
-
-      // 3D TEST
-      /*{
-         mat44_t view, persp, viewpersp;
-         vec3_t eye{0.f,0.f,4.f};
-         vec3_t target{0.f,0.f,0.f};
-         vec3_t upvec{0.f,1.f,0.f};
-         MatrixLookAt(eye, target, upvec, view);
-         MatrixPerspectiveRH(128.f, 96.f, 0.01f, 1000.f, persp);
-         MatrixMultiply(view, persp, viewpersp);
-
-         vec4_t vertices[3] = {{-20.f,-10.f,0.f,1.f}, {20.f,-10.f,0.f,1.f}, {0.f,30.f,0.f,1.f}};
-         vec4_t v0, v1, v2;
-         Vec4Transform(vertices[0], viewpersp, v0);
-         Vec4Transform(vertices[1], viewpersp, v1);
-         Vec4Transform(vertices[2], viewpersp, v2);
-
-         int x1 = int(v0[0]);
-         int y1 = int(v0[1]);
-         int x2 = int(v1[0]);
-         int y2 = int(v1[1]);
-         int x3 = int(v2[0]);
-         int y3 = int(v2[1]);
-
-         uint32_t v10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-         uint32_t vC2 = ((0&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(v10)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(v10));
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vC2)); // {0, frontcolor, v2.y, v2.x}
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vC2));
-         GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
-      }*/
-
-      // DMA
-      // Copies mandebrot ofscreen buffer (64x64) from SYSRAM onto VRAM, one scanline at a time
-      for (uint32_t mandelscanline = 0; mandelscanline<64; ++mandelscanline)
+      unsigned int bytecount = UARTRXStatus[0];
+      if (bytecount != 0)
       {
-         // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*64)>>2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
+         unsigned char readdata = UARTRX[0];
+         target[writecursor++] = readdata;
 
-         // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
-         uint32_t vramramtarget = (x + (y+mandelscanline)*256)>>2;
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vramramtarget));
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vramramtarget));
-
-         // Length of copy in DWORDs
-         uint32_t dmacount = 64>>2;
-         GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
-      }
-
-      // TRIPLE TRIANGLE TEST
-      int x1 = 64;
-      int y1 = 16;
-      int x2 = 128;
-      int y2 = 92;
-      int x3 = int(float(ssin(f))/130.2f + 128.f);
-      int y3 = 191;
-      int x4 = 200;
-      int y4 = 16;
-
-      uint8_t triFrontColor_A = 0xFF;
-      uint32_t vertexA_10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-      uint32_t vertexA_C2 = ((triFrontColor_A&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertexA_10)); // {v1.y, v1.x, v0.y, v0.x}
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertexA_10));
-      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexA_C2)); // {0, frontcolor, v2.y, v2.x}
-      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexA_C2));
-
-      uint8_t triFrontColor_B = 0xC0;
-      uint32_t vertexB_10 = ((y4&0xFF)<<24) | ((x4&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-      uint32_t vertexB_C2 = ((triFrontColor_B&0xFF)<<16) | ((y2&0xFF)<<8) | (x2&0xFF);
-
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertexB_10));
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertexB_10));
-      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexB_C2));
-      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexB_C2));
-
-      uint8_t triFrontColor_C = 0x07;
-      uint32_t vertexC_10 = ((y3&0xFF)<<24) | ((x3&0xFF)<<16) | ((y4&0xFF)<<8) | (x4&0xFF);
-      uint32_t vertexC_C2 = ((triFrontColor_C&0xFF)<<16) | ((y2&0xFF)<<8) | (x2&0xFF);
-
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(vertexC_10));
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(vertexC_10));
-      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 7, GPU22BITIMM(vertexC_C2));
-      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 7, 7, GPU10BITIMM(vertexC_C2));
-
-      GPUFIFO[0] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
-      GPUFIFO[1] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
-      GPUFIFO[2] = GPUOPCODE(GPURASTERIZE, 6, 7, 0);
-
-      // RASTERIZE TRIANGLES
-      /*for (int i=0; i<64; ++i)
-      {
-         int x1 = Random()%256;
-         int y1 = Random()%192;
-         int x2 = Random()%256;
-         int y2 = Random()%192;
-         int x3 = Random()%256;
-         int y3 = Random()%192;
-         uint8_t triFrontColor = i%255;
+         // Draw a small colored triangle every time we receive a byte
          uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-         uint32_t vertexC2 = ((triFrontColor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+         uint32_t vertexC2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex10));
          GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
          GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
          GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
-      }*/
 
-      // CURVES
-      uint8_t curvecolorA = 0x00;
-      uint8_t curvecolorB = 0xFF;
-      uint32_t colorbits = (curvecolorA<<24) | (curvecolorA<<16) | (curvecolorA<<8) | curvecolorA;
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colorbits));
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(colorbits));
-      colorbits = (curvecolorB<<24) | (curvecolorB<<16) | (curvecolorB<<8) | curvecolorB;
-      GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorbits));
-      GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorbits));
-
-      for(int z=0;z<256;++z)
-      {
-         int k = float(ssin(z*2+f))/173.2f + 96.f;
-         uint32_t wordaddrs = (z+(k<<8));
-         uint32_t bytesel = wordaddrs&3;
-         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
-         GPUFIFO[4] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x020 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 010 0010 write g2, vramaddrs
+         x1 += 8; x2 += 8; x3 += 8;
+         if (x1 > 248)
+         {
+            x1 = 0; x2 = 8; x3 = 0;
+            y1 = y1+8; y2 = y2+8; y3 = y3+8;
+            if (y1 > 184)
+            {
+               y1 = 0; y2 = 0; y3 = 8;
+            }
+         }
+         ncolor+=readdata;
       }
-      for(int z=0;z<192;++z)
+   }
+}
+
+void runbinary()
+{
+   // Header data
+   unsigned int branchaddress = 0;
+   char *branchaddressaschar = (char*)&branchaddress;
+
+   // Data length
+   unsigned int writecursor = 0;
+   while(writecursor < 4)
+   {
+      unsigned int bytecount = UARTRXStatus[0];
+      if (bytecount != 0)
       {
-         int k = float(ssin(z*3+f))/130.3f + 128.f;
-         uint32_t wordaddrs = (k+(z<<8));
-         uint32_t bytesel = wordaddrs&3;
-         uint32_t bytemask = bytesel==3 ? 8 : (bytesel==2 ? 4 : (bytesel==1 ? 2 : 1));
-         //GPUOPCODE2(GPUWRITEVRAM, 3, 0, bytemask, (wordaddrs>>2)&0x3FFF)
-         GPUFIFO[4] = (((wordaddrs>>2)&0x3FFF) << 14) | (bytemask<<10) | 0x030 | GPUWRITEVRAM;  // -- --dd dddd dddd dddd mmmm --- 011 0010 write g3, vramaddrs
+         unsigned char readdata = UARTRX[0];
+         branchaddressaschar[writecursor++] = readdata;
       }
-      f+=3;
+   }
 
-      // Generate one line of mandelbrot into offscreen buffer
-      // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
-      mandelbrotFloat(X,Y,R);
-      R += 0.001f; // Zoom
+   // Jump to entry point
+   ((void (*)(void)) branchaddress)();
 
-      // Stall GPU until vsync is reached (should probably be before the mandelbrot)
-      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+   // Or alternatively, set 'ra' to branchaddress and 'ret' since we won't be exiting main()
+}
 
-      cnt++;
+void echoterm(const char *_message)
+{
+   int i=0;
+   while (_message[i]!=0)
+   {
+      UARTTX[i] = _message[i];
+      ++i;
+   }
+}
+
+int main()
+{
+   // 128 bytes of incoming command space
+   char incoming[32];
+   unsigned int rcvcursor = 0;
+
+   echoterm("NekoIchi\r\nrv32imf@60Mhz\r\nv0001\r\n");
+
+   // Clear screen
+   uint8_t bgcolor = 0x7C;
+   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
+   GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
+
+   int x1 = 0;
+   int y1 = 0;
+   int x2 = 8;
+   int y2 = 0;
+   int x3 = 0;
+   int y3 = 8;
+   uint8_t ncolor = 0;
+   int counter = 0;
+
+   // UART communication section
+   while(1)
+   {
+      // Step 1: Read UART FIFO byte count
+      unsigned int bytecount = UARTRXStatus[0];
+
+      // Step 2: Check to see if we have something in the FIFO
+      if (bytecount != 0)
+      {
+         // Step 3: Read the data on UARTRX memory location
+         char checkchar = incoming[rcvcursor++] = UARTRX[0];
+
+         if (checkchar == 13) // Enter?
+         {
+            // Terminate the string
+            incoming[rcvcursor-1] = 0;
+
+            // Load the incoming binary
+            if ((incoming[0]='b') && (incoming[1]=='i') && (incoming[2]=='n'))
+               loadbinaryblob();
+            if ((incoming[0]='r') && (incoming[1]=='u') && (incoming[2]=='n'))
+               runbinary();
+            // Rewind read cursor
+            rcvcursor = 0;
+         }
+
+         // Echo the character back to the sender
+         UARTTX[0] = checkchar;
+         if (checkchar==13)
+            UARTTX[1] = 10;
+
+         // Wrap around if we're overflowing
+         if (rcvcursor>31)
+            rcvcursor = 0;
+      }
+
+      if (++counter > 131072)
+      {
+         // CLS
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
+         GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
+
+         // TRI
+         uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+         uint32_t vertexC2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex10));
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
+         GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
+
+         x1 += 8; x2 += 8; x3 += 8;
+         if (x1 > 248)
+         {
+            x1 = 0; x2 = 8; x3 = 0;
+            y1 = y1+8; y2 = y2+8; y3 = y3+8;
+            if (y1 > 184)
+            {
+               y1 = 0; y2 = 0; y3 = 8;
+            }
+         }
+         ++ncolor;
+         counter = 0;         
+      }
    }
 
    return 0;
 }
-
-#pragma GCC pop_options
