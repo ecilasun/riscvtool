@@ -1,17 +1,11 @@
-// Bootloader
-
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
 #include <math.h>
+#include <cmath>
 #include "utils.h"
-
-// OS calls:
-// _exit, close, environ, execve, fork, fstat, getpid, isatty, kill, link, lseek, open, read, sbrk, stat, times, unlink, wait, write
-
-// Accessing the linker sections:
-// uint8_t *data_byte = &_sdata;
+#include "gpu.h"
 
 int sinewave[1024] = {
     0x4000,0x4065,0x40c9,0x412e,0x4192,0x41f7,0x425b,0x42c0,
@@ -154,126 +148,87 @@ int scos(int s)
     return(sinewave[((s+512)%1024)]-16384);
 }
 
-void drawrect(int ox, int oy, const uint8_t color)
+void drawrect(int ox, int oy, uint8_t ncolor)
 {
-   for (int y=0;y<16;++y)
-   {
-      int sy = oy+y;
-      if (sy>191 || sy<0)
-         continue;
-      for (int x=0;x<16;++x)
-      {
-         int sx = ox+x;
-         if (sx>255 || sx<0)
-            continue;
-         VRAM[sx+(sy<<8)] = color;
-      }
-   }
+   int x1 = ox;
+   int y1 = oy;
+   int x2 = ox+15;
+   int y2 = oy;
+   int x3 = ox+15;
+   int y3 = oy+15;
+
+   uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+   uint32_t vertexC2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex10));
+   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
+   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexC2));
+   GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
 }
 
-void bresenham(int x1, int y1, int x2, int y2, uint8_t color)
-{
-   int m_new = 2 * (y2 - y1); 
-   int slope_error_new = m_new - (x2 - x1); 
-   for (int x = x1, y = y1; x <= x2; x++) 
-   {
-      VRAM[x+(y<<8)] = color;
-  
-      slope_error_new += m_new; 
-  
-      if (slope_error_new >= 0) 
-      { 
-         y++; 
-         slope_error_new  -= 2 * (x2 - x1); 
-      } 
-   } 
-}
-
-void DDA(float X0, float Y0, float X1, float Y1, uint8_t color)
-{
-   // calculate dx , dy
-   float dx = X1 - X0;
-   float dy = Y1 - Y0;
-
-   // Depending upon absolute value of dx & dy
-   // choose number of steps to put pixel as
-   // steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy)
-   float steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
-
-   // calculate increment in x & y for each steps
-   float Xinc = dx / (float) steps;
-   float Yinc = dy / (float) steps;
-
-   // Put pixel for each step
-   float X = X0;
-   float Y = Y0;
-   for (int i = 0; i <= steps; i++)
-   {
-      VRAM[int(X)+(int(Y)<<8)] = color;
-      X += Xinc;
-      Y += Yinc;
-   }
-}
-
-class testclass
-{
-public:
-   testclass() : i(0) {}
-   ~testclass() {}
-   void dosomething() {++i;}
-   int getsomething() {return i;}
-protected:
-   int i;
-};
-
-const char hexdigits[] = "0123456789ABCDEF";
 int main(int argc, char ** argv)
 {
-   testclass someclass;
-   someclass.dosomething();
-   char something = (char)(someclass.getsomething() + '0');
-
-   char msg[] = "RV32im                          ";
-   msg[16] = something;
-
-   ClearScreen(0xC8);
+   // Set register g1 with color data
+   uint8_t bgcolor = 0x00;
+   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
+   // CLS
+   GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
 
    int cnt=0;
-   int x=0, y=0;
+   int x=5, y=5;
    int dx=3, dy=2;
    int f=0;
    while(1)
    {
-      //int sid = ((numRand()%2)+(numRand()%4)+(numRand()%8)+(numRand()%64))&0xFF;
-
       if (x>239 || x<0)
          dx=-dx;
-      if (y>176 || y<0)
+      if (y>175 || y<0)
          dy=-dy;
       x += dx;
       y += dy;
 
       drawrect(x, y, 0x7C);
 
+      uint8_t c1 = cnt&0xFF;
+      uint8_t c2 = cnt^0xFF;
+
+      uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(colortwo));
+
+      uint32_t colorthree = (c2<<24) | (c2<<16) | (c2<<8) | c2;
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorthree));
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorthree));
+
       for(int z=0;z<256;++z)
       {
          int k = ssin(z*2+f)/173 + 96;
-         VRAM[z+(k<<8)] = cnt;
+         uint32_t addrs = (k<<8)+z;
+         uint32_t wordaddrs = addrs>>2;
+         uint32_t mask = addrs&0x3;
+         mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
+         GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 2, 0, mask, (wordaddrs&0x3FFF));
       }
       for(int z=0;z<192;++z)
       {
          int k = ssin(z*3+f)/130 + 128;
-         VRAM[k+(z<<8)] = (cnt^0xFF);
+         uint32_t addrs = (z<<8)+k;
+         uint32_t wordaddrs = addrs>>2;
+         uint32_t mask = addrs&0x3;
+         mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
+         GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 3, 0, mask, (wordaddrs&0x3FFF));
       }
-      f+=33;
-
-      //bresenham(0, 0, 230, 150, 0x38);
-      //DDA(230, 150, 131, 30, 0x38);
-      //DDA(0, 0, 131, 30, 0x38);
+      f+=26;
 
       cnt++;
 
-      Print(0, 184, msg);
+      PrintDMA(48,96,"GPU PIPELINE TEST", false);
+
+      // Stall GPU until vsync is reached (should probably be before the mandelbrot)
+      //GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
    }
+
    return 0;
 }

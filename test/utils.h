@@ -50,8 +50,8 @@ enum cmdSupported {
 #define CMD8_PATTERN (0xAA)
 #define SPI_CMD(x) (0x40 | (x & 0x3f))
 
-void PrintDMA(const int ox, const int oy, const char *message);
-void PrintDMA(const int col, const int row, const int maxlen, const char *message);
+void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);
+void PrintDMA(const int col, const int row, const int maxlen, const char *message, bool masked=true);
 void Print(const int ox, const int oy, const char *message);
 void Print(const int ox, const int oy, const int maxlen, const char *message);
 void PrintHex(const int ox, const int oy, const uint32_t i);

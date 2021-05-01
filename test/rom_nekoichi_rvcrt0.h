@@ -92,8 +92,8 @@ extern "C"
          // Clear BSS
          "la a0, __malloc_max_total_mem;"
          "la a2, __BSS_END__$;"
-         "sub a2,a2,a0;"
-         "li a1,0;"
+         "sub a2, a2, a0;"
+         "li a1, 0;"
          "jal ra, memset;"
 
          // Skip if there's no atexit function
