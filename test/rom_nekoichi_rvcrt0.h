@@ -7,6 +7,7 @@ extern "C"
    void __attribute__((naked, section (".boot"))) _start()
    {
       asm (
+#ifdef STARTUP_ROM
          "mv  x1, x0;"
          "mv  x2, x1;"
          "mv  x3, x1;"
@@ -38,6 +39,39 @@ extern "C"
          "mv x29, x1;"
          "mv x30, x1;"
          "mv x31, x1;"
+         "fmv.w.x	f0, zero;"
+         "fmv.w.x	f1, zero;"
+         "fmv.w.x	f2, zero;"
+         "fmv.w.x	f3, zero;"
+         "fmv.w.x	f4, zero;"
+         "fmv.w.x	f5, zero;"
+         "fmv.w.x	f6, zero;"
+         "fmv.w.x	f7, zero;"
+         "fmv.w.x	f8, zero;"
+         "fmv.w.x	f9, zero;"
+         "fmv.w.x	f10, zero;"
+         "fmv.w.x	f11, zero;"
+         "fmv.w.x	f12, zero;"
+         "fmv.w.x	f13, zero;"
+         "fmv.w.x	f14, zero;"
+         "fmv.w.x	f15, zero;"
+         "fmv.w.x	f16, zero;"
+         "fmv.w.x	f17, zero;"
+         "fmv.w.x	f18, zero;"
+         "fmv.w.x	f19, zero;"
+         "fmv.w.x	f20, zero;"
+         "fmv.w.x	f21, zero;"
+         "fmv.w.x	f22, zero;"
+         "fmv.w.x	f23, zero;"
+         "fmv.w.x	f24, zero;"
+         "fmv.w.x	f25, zero;"
+         "fmv.w.x	f26, zero;"
+         "fmv.w.x	f27, zero;"
+         "fmv.w.x	f28, zero;"
+         "fmv.w.x	f29, zero;"
+         "fmv.w.x	f30, zero;"
+         "fmv.w.x	f31, zero;"
+#endif
 
          //".cfi_startproc;"
          //".cfi_undefined ra;"
@@ -50,8 +84,10 @@ extern "C"
          ".option pop;"
 
          // Set up stack pointer and align it to 16 bytes
+#ifdef STARTUP_ROM
          "la sp, __stack_top;"
          "add s0, sp, zero;"
+#endif
 
          // Clear BSS
          "la a0, __malloc_max_total_mem;"

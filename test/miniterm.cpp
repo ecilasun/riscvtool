@@ -1,6 +1,4 @@
 // MiniTerm
-// Send to the SoC using:
-// .\build\release\riscvtool.exe .\miniterm.elf -sendelf 0x00000210
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -9,6 +7,7 @@
 #include <math.h>
 #include "umm_malloc.h"
 #include "utils.h"
+#include "gpu.h"
 #include "SDCARD.h"
 #include "FAT.h"
 
@@ -69,7 +68,7 @@ int main()
       s_filesystemready = 1;
    }
 
-   const unsigned char bgcolor = 0xFF; // BRG -> B=0xC0, R=0x38, G=0x07
+   const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    //const unsigned char editbgcolor = 0x00;
 
    // 32 bytes of incoming command space
@@ -82,8 +81,8 @@ int main()
 
    // Startup message
    clearchars();
-   ClearScreen(bgcolor);
-   PrintMasked(0, 176, " MiniTerm (c)2021 Engin Cilasun ");
+   ClearScreenGPU(bgcolor);
+   PrintDMA(0, 176, " MiniTerm (c)2021 Engin Cilasun ");
 
    // UART communication section
    while(1)
@@ -99,8 +98,6 @@ int main()
 
          if (checkchar == 8 && rcvcursor!=1) // Backspace? (make sure your terminal uses ctrl+h for backspace)
          {
-            ClearScreen(bgcolor);
- 
             --rcvcursor;
             incoming[rcvcursor-1] = 0;
             // Copy the string to the chartable
@@ -117,8 +114,6 @@ int main()
             for (unsigned int i=0;i<rcvcursor;++i)
                chartable[i+cmdcounter*32] = incoming[i];
             
-            int canclear = 1;
-
             // Clear the whole screen
             if ((incoming[0]='c') && (incoming[1]=='l') && (incoming[2]=='s'))
             {
@@ -163,24 +158,19 @@ int main()
                );*/
             }
 
-            if(canclear)
-               ClearScreen(bgcolor);
-
             scroll();
 
             // Rewind read cursor
             rcvcursor=0;
          }
-         else
-         {
-            // Print out this many characters
-            PrintMasked(0, 184, rcvcursor, incoming);
-         }
 
          // Show the char table
+         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+         ClearScreenGPU(bgcolor);
          for (int cy=0;cy<24;++cy)
-            for (int cx=0;cx<32;++cx)
-               PrintMasked(8*cx, 8*cy, 1, &chartable[cx+cy*32]);
+            PrintDMA(0, 8*cy, 32, &chartable[cy*32]);
+         if (checkchar != 13)
+            PrintDMA(0, 184, rcvcursor, incoming);
 
          // Echo characters back to the terminal
          UARTTX[0] = checkchar;

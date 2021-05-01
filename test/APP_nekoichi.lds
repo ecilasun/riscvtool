@@ -38,6 +38,7 @@ SECTIONS
   /* text: Program code section */
   .text : 
   {
+    KEEP(*(.vector*))
     *(.text)
     *(.text.*)
     *(.gnu.linkonce.t.*)
@@ -170,13 +171,14 @@ SECTIONS
   PROVIDE ( __BSS_END__$ = . );
   _bss_end = .;
 
-   .stack :
+   .stack (NOLOAD):
    {
-    . = ALIGN(4);
+    . = ALIGN(8);
     _stack_end = .;
     . += _STACK_SIZE;
     __stack_top = .;
     __stack = __stack_top;
+    . = ALIGN(8);
   }
 
   /* End of uninitialized data segment (used by syscalls.c for heap) */

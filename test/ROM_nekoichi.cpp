@@ -5,7 +5,10 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
+
+#define STARTUP_ROM
 #include "rom_nekoichi_rvcrt0.h"
+
 #include "utils.h"
 #include "gpu.h"
 
