@@ -210,6 +210,8 @@ int main()
          ++ncolor;
          counter = 0;         
       }
+
+      // GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
    }
 
    return 0;

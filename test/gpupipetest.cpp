@@ -152,10 +152,10 @@ void drawrect(int ox, int oy, uint8_t ncolor)
 {
    int x1 = ox;
    int y1 = oy;
-   int x2 = ox+15;
-   int y2 = oy;
-   int x3 = ox+15;
-   int y3 = oy+15;
+   int x2 = ox+31;
+   int y2 = oy+4;
+   int x3 = ox+25;
+   int y3 = oy+31;
 
    uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
    uint32_t vertexC2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
@@ -173,23 +173,22 @@ int main(int argc, char ** argv)
    uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-   // CLS
-   GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
 
    int cnt=0;
    int x=5, y=5;
    int dx=3, dy=2;
-   int f=0;
+   int f=0, m=0;
    while(1)
    {
-      if (x>239 || x<0)
+      // CLS
+      GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
+
+      if (x>255-32 || x<0)
          dx=-dx;
-      if (y>175 || y<0)
+      if (y>192-32 || y<0)
          dy=-dy;
       x += dx;
       y += dy;
-
-      drawrect(x, y, 0x7C);
 
       uint8_t c1 = cnt&0xFF;
       uint8_t c2 = cnt^0xFF;
@@ -222,12 +221,16 @@ int main(int argc, char ** argv)
       }
       f+=26;
 
+      drawrect(x, y, 0x7C);
+
+      if ((cnt%60) == 0)
+         m+=4;
+      PrintDMA(m%60,96,"GPU PIPELINE TEST");
+
       cnt++;
 
-      PrintDMA(48,96,"GPU PIPELINE TEST", false);
-
-      // Stall GPU until vsync is reached (should probably be before the mandelbrot)
-      //GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+      // Stall GPU until vsync is reached
+      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
    }
 
    return 0;
