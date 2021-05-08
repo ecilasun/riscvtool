@@ -150,20 +150,39 @@ int scos(int s)
 
 void drawrect(int ox, int oy, uint8_t ncolor)
 {
-   int x1 = ox;
-   int y1 = oy;
-   int x2 = ox+31;
-   int y2 = oy+4;
-   int x3 = ox+25;
-   int y3 = oy+31;
+   static float roll = 0.f;
+
+   float rx0 = cosf(roll)*60.f;
+   float ry0 = sinf(roll)*60.f;
+   float rx1 = cosf(roll+3.1415927f*0.5f)*30.f;
+   float ry1 = sinf(roll+3.1415927f*0.5f)*30.f;
+
+   int x1 = ox + int(-rx0 - rx1);
+   int y1 = oy + int(-ry0 - ry1);
+   int x2 = ox + int( rx0 - rx1);
+   int y2 = oy + int( ry0 - ry1);
+   int x3 = ox + int( rx0 + rx1);
+   int y3 = oy + int( ry0 + ry1);
+   int x4 = ox + int(-rx0 + rx1);
+   int y4 = oy + int(-ry0 + ry1);
 
    uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-   uint32_t vertexC2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
+   uint32_t vertexCA2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex10));
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex10));
-   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
-   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexC2));
+   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexCA2));
+   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexCA2));
    GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
+
+   uint32_t vertex41 = ((y4&0xFF)<<24) | ((x4&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
+   uint32_t vertexCB2 = (((ncolor^0xFF)&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex41));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex41));
+   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexCB2));
+   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexCB2));
+   GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
+
+   roll += 0.01f;
 }
 
 int main(int argc, char ** argv)
@@ -174,63 +193,87 @@ int main(int argc, char ** argv)
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
 
-   int cnt=0;
-   int x=5, y=5;
-   int dx=3, dy=2;
+   float x=128.f, y=96.f;
    int f=0, m=0;
+
+   volatile unsigned int gpustate = 0x00000000;
+   unsigned int cnt = 0x00000000;
+
+   char msg[] = "xxxxxxxx";
+
    while(1)
    {
-      // CLS
-      GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
-
-      if (x>255-32 || x<0)
-         dx=-dx;
-      if (y>192-32 || y<0)
-         dy=-dy;
-      x += dx;
-      y += dy;
-
       uint8_t c1 = cnt&0xFF;
       uint8_t c2 = cnt^0xFF;
 
-      uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(colortwo));
-
-      uint32_t colorthree = (c2<<24) | (c2<<16) | (c2<<8) | c2;
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorthree));
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorthree));
-
-      for(int z=0;z<256;++z)
+      if (gpustate == cnt) // GPU work complete, push more
       {
-         int k = ssin(z*2+f)/173 + 96;
-         uint32_t addrs = (k<<8)+z;
-         uint32_t wordaddrs = addrs>>2;
-         uint32_t mask = addrs&0x3;
-         mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
-         GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 2, 0, mask, (wordaddrs&0x3FFF));
+         ++cnt;
+
+         // CLS
+         GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
+
+         uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(colortwo));
+
+         uint32_t colorthree = (c2<<24) | (c2<<16) | (c2<<8) | c2;
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorthree));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorthree));
+
+         drawrect(x, y, 0x7C);
+
+         for(int z=0;z<256;++z)
+         {
+            int k = ssin(z*2+f)/173 + 96;
+            uint32_t addrs = (k<<8)+z;
+            uint32_t wordaddrs = addrs>>2;
+            uint32_t mask = addrs&0x3;
+            mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
+            GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 2, 0, mask, (wordaddrs&0x3FFF));
+         }
+         for(int z=0;z<192;++z)
+         {
+            int k = ssin(z*3+f)/130 + 128;
+            uint32_t addrs = (z<<8)+k;
+            uint32_t wordaddrs = addrs>>2;
+            uint32_t mask = addrs&0x3;
+            mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
+            GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 3, 0, mask, (wordaddrs&0x3FFF));
+         }
+         f+=26;
+
+         if ((cnt%60) == 0)
+            m+=4;
+         PrintDMA(m%60,96,"GPU PIPELINE TEST");
+
+         const char hexdigits[] = "0123456789ABCDEF";
+
+         msg[0] = hexdigits[((gpustate>>28)%16)];
+         msg[1] = hexdigits[((gpustate>>24)%16)];
+         msg[2] = hexdigits[((gpustate>>20)%16)];
+         msg[3] = hexdigits[((gpustate>>16)%16)];
+         msg[4] = hexdigits[((gpustate>>12)%16)];
+         msg[5] = hexdigits[((gpustate>>8)%16)];
+         msg[6] = hexdigits[((gpustate>>4)%16)];
+         msg[7] = hexdigits[(gpustate%16)];
+         PrintDMA(16,160,msg);
+
+         // Stall GPU until vsync is reached
+         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+
+         // GPU status address in G6
+         uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(gpustateDWORDaligned));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(gpustateDWORDaligned));
+
+         // Write 'end of processing' from GPU so that CPU can resume its work
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 7, GPU22BITIMM(cnt));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 7, 7, GPU10BITIMM(cnt));
+         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 7, 6, 0);
+
+         gpustate = 0;
       }
-      for(int z=0;z<192;++z)
-      {
-         int k = ssin(z*3+f)/130 + 128;
-         uint32_t addrs = (z<<8)+k;
-         uint32_t wordaddrs = addrs>>2;
-         uint32_t mask = addrs&0x3;
-         mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
-         GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 3, 0, mask, (wordaddrs&0x3FFF));
-      }
-      f+=26;
-
-      drawrect(x, y, 0x7C);
-
-      if ((cnt%60) == 0)
-         m+=4;
-      PrintDMA(m%60,96,"GPU PIPELINE TEST");
-
-      cnt++;
-
-      // Stall GPU until vsync is reached
-      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
    }
 
    return 0;

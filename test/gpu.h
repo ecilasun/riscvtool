@@ -28,8 +28,8 @@
 // Rasterize primitive
 #define GPURASTERIZE 0x5
 
-// Unused
-#define GPUUNUSED0 0x6
+// Write DWORD in rs onro SYSRAM address in rd, effectively signalling CPU from GPU side
+#define GPUSYSMEMOUT 0x6
 
 // Unused
 #define GPUUNUSED1 0x7

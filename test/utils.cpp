@@ -58,7 +58,7 @@ void PrintDMA(const int col, const int row, const char *message, bool masked)
       for (int y=0;y<8;++y)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)))>>2;
+         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)));
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
 
@@ -94,7 +94,7 @@ void PrintDMA(const int col, const int row, const int maxlen, const char *messag
       for (int y=0;y<8;++y)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)))>>2;
+         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)));
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
 

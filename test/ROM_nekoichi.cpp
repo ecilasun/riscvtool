@@ -181,7 +181,10 @@ int main()
             rcvcursor = 0;
       }
 
-      if (++counter > 131072)
+      ++counter;
+
+      // Wait a long while before pushing a new triangle
+      if ((counter%4096) == 0)
       {
          // CLS
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
@@ -208,10 +211,7 @@ int main()
             }
          }
          ++ncolor;
-         counter = 0;         
       }
-
-      // GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
    }
 
    return 0;
