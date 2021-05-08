@@ -152,10 +152,10 @@ void drawrect(int ox, int oy, uint8_t ncolor)
 {
    static float roll = 0.f;
 
-   float rx0 = cosf(roll)*60.f;
-   float ry0 = sinf(roll)*60.f;
-   float rx1 = cosf(roll+3.1415927f*0.5f)*30.f;
-   float ry1 = sinf(roll+3.1415927f*0.5f)*30.f;
+   float rx0 = cosf(roll)*64.f;
+   float ry0 = sinf(roll)*64.f;
+   float rx1 = cosf(roll+3.1415927f*0.5f)*64.f;
+   float ry1 = sinf(roll+3.1415927f*0.5f)*64.f;
 
    int x1 = ox + int(-rx0 - rx1);
    int y1 = oy + int(-ry0 - ry1);
