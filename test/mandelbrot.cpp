@@ -93,7 +93,7 @@ int main(int argc, char ** argv)
       for (uint32_t mandelscanline = 0; mandelscanline<192; ++mandelscanline)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*256)>>2;
+         uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*256);
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
 
