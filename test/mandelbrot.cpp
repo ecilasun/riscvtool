@@ -85,7 +85,7 @@ int main(int argc, char ** argv)
    float X = -0.235125f;
    float Y = 0.827215f;
 
-   char msg[] = "Zoom hex: xxxxxxxx";
+   //char msg[] = "Zoom hex: xxxxxxxx";
    while(1)
    {
       // DMA
@@ -107,7 +107,7 @@ int main(int argc, char ** argv)
          GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
       }
 
-      {
+      /*{
          const char hexdigits[] = "0123456789ABCDEF";
          uint32_t framecnt = *(uint32_t*)(&R);
          msg[10] = hexdigits[((framecnt>>28)%16)];
@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
          msg[16] = hexdigits[((framecnt>>4)%16)];
          msg[17] = hexdigits[(framecnt%16)];
          PrintDMA(24, 170, msg);
-      }
+      }*/
 
       // Generate one line of mandelbrot into offscreen buffer
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker

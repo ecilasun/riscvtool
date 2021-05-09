@@ -6,6 +6,9 @@
 #include <cmath>
 #include "utils.h"
 #include "gpu.h"
+#include "rom_nekoichi_rvcrt0.h"
+
+#define MAX_PARTICLES 512
 
 int sinewave[1024] = {
     0x4000,0x4065,0x40c9,0x412e,0x4192,0x41f7,0x425b,0x42c0,
@@ -148,87 +151,104 @@ int scos(int s)
     return(sinewave[((s+512)%1024)]-16384);
 }
 
-void drawrect(int ox, int oy, uint8_t ncolor)
+void drawrect(const float ox, const float oy, uint8_t ncolor)
 {
-   static float roll = 0.f;
+   static float roll = 1.8f;
 
-   float rx0 = cosf(roll)*16.f;
-   float ry0 = sinf(roll)*16.f;
-   float rx1 = cosf(roll+3.1415927f*0.5f)*16.f;
-   float ry1 = sinf(roll+3.1415927f*0.5f)*16.f;
+   float rx0 = cosf(roll)*64.f;
+   float ry0 = sinf(roll)*64.f;
+   float rx1 = cosf(roll+3.1415927f*0.5f)*32.f;
+   float ry1 = sinf(roll+3.1415927f*0.5f)*32.f;
 
-   int x1 = ox + int(-rx0 - rx1);
-   int y1 = oy + int(-ry0 - ry1);
-   int x2 = ox + int( rx0 - rx1);
-   int y2 = oy + int( ry0 - ry1);
-   int x3 = ox + int( rx0 + rx1);
-   int y3 = oy + int( ry0 + ry1);
-   int x4 = ox + int(-rx0 + rx1);
-   int y4 = oy + int(-ry0 + ry1);
+   short x1 = short(ox - rx0 - rx1);
+   short y1 = short(oy - ry0 - ry1);
+   short x2 = short(ox + rx0 - rx1);
+   short y2 = short(oy + ry0 - ry1);
+   short x3 = short(ox + rx0 + rx1);
+   short y3 = short(oy + ry0 + ry1);
+   short x4 = short(ox - rx0 + rx1);
+   short y4 = short(oy - ry0 + ry1);
 
-   uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-   uint32_t vertexCA2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex10));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex10));
-   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexCA2));
-   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexCA2));
-   GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
+   uint32_t vertex0 = (y1<<16) | (x1);
+   uint32_t vertex1 = (y2<<16) | (x2);
+   uint32_t vertex2 = (y3<<16) | (x3);
+   uint32_t vertex3 = (y4<<16) | (x4);
 
-   uint32_t vertex41 = ((y4&0xFF)<<24) | ((x4&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-   uint32_t vertexCB2 = (((ncolor^0xFF)&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex41));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex41));
-   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexCB2));
-   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexCB2));
-   GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
+   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1));
+   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
+   GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2));
+   GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
+   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex3));
+   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex3));
+   GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (ncolor));
+   GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (ncolor^0xFF));
 
-   roll += 0.11f;
+   roll += 0.03f;
 }
 
-void resetparticles(int *particles)
+void resetparticles(short *particles)
 {
-   for (int i=0;i<512;++i)
+   for (int i=0;i<MAX_PARTICLES;++i)
    {
-      particles[3*i+0] = 0;
-      particles[3*i+1] = -1;
-      particles[3*i+2] = 1 + (Random()%8);
+      particles[4*i+0] = 16 + (Random()%232); // X position
+      particles[4*i+1] = -32; // Y position, <-30 if dead
+      particles[4*i+2] = 2 + (Random()%8); // Speed
+      particles[4*i+3] = 192 + (Random()%32); // Barrier
    }
 }
 
-void drawparticles(int *particles)
+void drawparticles(short *particles)
 {
-   for (int i=0;i<512;++i)
+   static int spawnerindex = 0;
+
+   // Move particles, kill those that go past the barrier
+   for (int i=0;i<MAX_PARTICLES;++i)
    {
-      if (particles[3*i+1] == -1 && ((Random()%120)>100))
-      {
-         particles[3*i+0] = 8 + (Random()%240);
-         particles[3*i+1] = 0;
-         particles[3*i+2] = 1 + (Random()%8);
-      }
-
-      particles[3*i+1] += particles[3*i+2];
-
-      if (particles[3*i+1] > 180)
-         particles[3*i+1] = -1;
+      particles[4*i+1] += particles[4*i+2];
+      if (particles[4*i+1] > particles[4*i+3])
+         particles[4*i+1] = (Random()%24)-24;
    }
 
-   for (int i=0;i<512;++i)
+   // Spawn one particle if the current position is 'dead'
+   spawnerindex = (spawnerindex + 1)%MAX_PARTICLES;
+   if (particles[3*spawnerindex+1] < -32) // Dead
    {
-      if (particles[2*i+1] != -1)
+      particles[3*spawnerindex+0] = 16 + (Random()%232);
+      //particles[3*spawnerindex+1] = (Random()%24)-24;
+      particles[3*spawnerindex+2] = 2 + (Random()%4);
+      particles[4*spawnerindex+3] = 192 + (Random()%32); // Barrier
+   }
+
+   // Draw the live particles
+   short rx0 = 2;//cosf(proll)*7.f;
+   short ry0 = 0;//sinf(proll)*7.f;
+   short rx1 = 0;//cosf(proll+3.1415927f*0.5f)*7.f;
+   short ry1 = 2;//sinf(proll+3.1415927f*0.5f)*7.f;
+   for (int i=0;i<MAX_PARTICLES;++i)
+   {
+      if (particles[4*i+1] != -1)
       {
-         int x1 = particles[3*i+0];
-         int y1 = particles[3*i+1];
-         int x2 = x1 + 4;
-         int y2 = y1 + 2;
-         int x3 = x1 + 2;
-         int y3 = y1 + 4;
-         uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-         uint32_t vertexCA2 = ((i&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex10));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex10));
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexCA2));
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexCA2));
-         GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
+         short ox = particles[4*i+0];
+         short oy = particles[4*i+1];
+         short x1 = ox + (-rx0 - rx1);
+         short y1 = oy + (-ry0 - ry1);
+         short x2 = ox + ( rx0 - rx1);
+         short y2 = oy + ( ry0 - ry1);
+         short x3 = ox + ( rx0 + rx1);
+         short y3 = oy + ( ry0 + ry1);
+
+         uint32_t vertex0 = (y1<<16) | (x1);
+         uint32_t vertex1 = (y2<<16) | (x2);
+         uint32_t vertex2 = (y3<<16) | (x3);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
+         GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
+         GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
+         GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (i&0xFF));
       }
    }
 }
@@ -238,12 +258,13 @@ int main(int argc, char ** argv)
    // Set register g1 with color data
    uint8_t bgcolor = 0x00;
    uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 7, GPU22BITIMM(colorbits));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 7, 7, GPU10BITIMM(colorbits));
 
    float x=128.f, y=96.f;
    float dx=1.5f, dy=2.75f;
-   int f=0, m=0;
+   int f=0;
+   int m=0;
 
    volatile unsigned int gpustate = 0x00000000;
    unsigned int cnt = 0x00000000;
@@ -254,7 +275,7 @@ int main(int argc, char ** argv)
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
    GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
 
-   int triparticles[3*512];
+   short triparticles[4*MAX_PARTICLES];
    resetparticles(triparticles);
 
    while(1)
@@ -264,9 +285,9 @@ int main(int argc, char ** argv)
 
       if (gpustate == cnt) // GPU work complete, push more
       {
-         if ((x>240.f) || (x<16.f))
+         if ((x>255.f) || (x<0.f))
             dx=-dx;
-         if ((y>176.f) || (y<16.f))
+         if ((y>192.f) || (y<0.f))
             dy=-dy;
          x+=dx;
          y+=dy;
@@ -274,7 +295,43 @@ int main(int argc, char ** argv)
          ++cnt;
 
          // CLS
-         GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
+         GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 7, 0, 0);  // clearvram g1
+
+         /*short x1 = 8; short y1 = 8;
+         short x2 = 121; short y2 = 96;
+         short x3 = 63; short y3 = 140;
+         uint32_t vertex0 = (y1<<16) | (x1);
+         uint32_t vertex1 = (y2<<16) | (x2);
+         uint32_t vertex2 = (y3<<16) | (x3);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
+         GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
+         GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
+         GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, 0xFF);*/
+
+         /*for (int T = 0; T<16; ++T)
+         {
+            short x1 = Random()%256; short y1 = Random()%192;
+            short x2 = Random()%256; short y2 = Random()%192;
+            short x3 = Random()%256; short y3 = Random()%192;
+
+            uint32_t vertex0 = (y1<<16) | (x1);
+            uint32_t vertex1 = (y2<<16) | (x2);
+            uint32_t vertex2 = (y3<<16) | (x3);
+            GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
+            GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
+            GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
+            GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
+            GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
+            GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
+            GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (T&0xFF));
+         }*/
+
+         drawparticles(triparticles);
+
+         //drawrect(x, y, 0x7C);
 
          uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
@@ -283,25 +340,6 @@ int main(int argc, char ** argv)
          uint32_t colorthree = (c2<<24) | (c2<<16) | (c2<<8) | c2;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorthree));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorthree));
-
-         drawparticles(triparticles);
-
-         /*for (int T = 0; T<16; ++T)
-         {
-            int x1 = Random()%256; int y1 = Random()%192;
-            int x2 = Random()%256; int y2 = Random()%192;
-            int x3 = Random()%256; int y3 = Random()%192;
-
-            uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-            uint32_t vertexCA2 = (((cnt+T)&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-            GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex10));
-            GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex10));
-            GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vertexCA2));
-            GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vertexCA2));
-            GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 4, 5, 0);
-         }*/
-
-         drawrect(x, y, 0x7C);
 
          for(int z=0;z<256;++z)
          {
@@ -341,22 +379,22 @@ int main(int argc, char ** argv)
 
          // Swap video page
          page = (page+1)%2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
+         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
 
          // Stall GPU until vsync is reached
          GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
 
-         // GPU status address in G6
+         // GPU status address in G1
          uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(gpustateDWORDaligned));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(gpustateDWORDaligned));
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(gpustateDWORDaligned));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(gpustateDWORDaligned));
 
          // Write 'end of processing' from GPU so that CPU can resume its work
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 7, GPU22BITIMM(cnt));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 7, 7, GPU10BITIMM(cnt));
-         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 7, 6, 0);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(cnt));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(cnt));
+         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 2, 1, 0);
 
          gpustate = 0;
       }

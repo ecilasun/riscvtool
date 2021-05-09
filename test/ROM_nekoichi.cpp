@@ -44,17 +44,9 @@ void loadbinaryblob()
       }
    }
 
-   int x1 = 0;
-   int y1 = 0;
-   int x2 = 8;
-   int y2 = 0;
-   int x3 = 0;
-   int y3 = 8;
-
    // Read binary blob
    writecursor = 0;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
-   uint8_t ncolor = 0;
    while(writecursor < loadlen)
    {
       unsigned int bytecount = UARTRXStatus[0];
@@ -62,27 +54,6 @@ void loadbinaryblob()
       {
          unsigned char readdata = UARTRX[0];
          target[writecursor++] = readdata;
-
-         // Draw a small colored triangle every time we receive a byte
-         uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-         uint32_t vertexC2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex10));
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
-         GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
-
-         x1 += 8; x2 += 8; x3 += 8;
-         if (x1 > 248)
-         {
-            x1 = 0; x2 = 8; x3 = 0;
-            y1 = y1+8; y2 = y2+8; y3 = y3+8;
-            if (y1 > 184)
-            {
-               y1 = 0; y2 = 0; y3 = 8;
-            }
-         }
-         ncolor+=readdata;
       }
    }
 }
@@ -192,13 +163,16 @@ int main()
          GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
 
          // TRI
-         uint32_t vertex10 = ((y2&0xFF)<<24) | ((x2&0xFF)<<16) | ((y1&0xFF)<<8) | (x1&0xFF);
-         uint32_t vertexC2 = ((ncolor&0xFF)<<16) | ((y3&0xFF)<<8) | (x3&0xFF);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex10)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex10));
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertexC2)); // {0, frontcolor, v2.y, v2.x}
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertexC2));
-         GPUFIFO[4] = GPUOPCODE(GPURASTERIZE, 2, 3, 0);
+         uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
+         uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
+         uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
+         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
+         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
+         GPUFIFO[4] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, ncolor);
 
          x1 += 8; x2 += 8; x3 += 8;
          if (x1 > 248)
