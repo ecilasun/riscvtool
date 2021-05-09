@@ -1,6 +1,73 @@
 
 ROM_nekoichi.elf:     file format elf32-littleriscv
 
+SYMBOL TABLE:
+00000000 l    d  .boot	00000000 .boot
+0000017c l    d  .text	00000000 .text
+0000080c l    d  .rodata	00000000 .rodata
+00000830 l    d  .srodata	00000000 .srodata
+00000834 l    d  .eh_frame	00000000 .eh_frame
+000008e8 l    d  .data	00000000 .data
+00000d20 l    d  .got	00000000 .got
+00000d4c l    d  .got.plt	00000000 .got.plt
+00000d54 l    d  .sbss	00000000 .sbss
+00000d60 l    d  .stack	00000000 .stack
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
+00000000 l    df *ABS*	00000000 ROM_nekoichi.cpp
+00000148 l       .boot	00000000 noatexitfound
+00000000 l    df *ABS*	00000000 atexit.c
+00000000 l    df *ABS*	00000000 fini.c
+00000000 l    df *ABS*	00000000 init.c
+00000000 l    df *ABS*	00000000 __atexit.c
+00000000 l    df *ABS*	00000000 impure.c
+000008e8 l     O .data	00000428 impure_data
+00000000 l    df *ABS*	00000000 utils.cpp
+00000000 l    df *ABS*	00000000 
+0000082d l       .srodata	00000000 __fini_array_end
+0000082d l       .srodata	00000000 __fini_array_start
+0000082d l       .srodata	00000000 __init_array_end
+0000082d l       .srodata	00000000 __preinit_array_end
+00000d20 l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
+0000082d l       .srodata	00000000 __init_array_start
+0000082d l       .srodata	00000000 __preinit_array_start
+00001560 g       *ABS*	00000000 __global_pointer$
+000008f0 g       .data	00000000 _fdata
+0000082d g       .rodata	00000000 _etext
+00000d18 g     O .data	00000004 UARTRXStatus
+00001560 g       .sbss	00000000 _gp
+0000017c g       .boot	00000000 _boot
+00000d10 g     O .data	00000004 GPUFIFO
+00000d60 g       .stack	00000000 _bss_start
+00000d5c g     O .sbss	00000004 __malloc_top_pad
+00000d58 g     O .sbss	00000004 __malloc_max_sbrked_mem
+00000830 g     O .srodata	00000004 _global_impure_ptr
+000001ec g     F .text	0000009c __libc_init_array
+00000d14 g     O .data	00000004 UARTRX
+000004a8 g     F .text	00000054 _Z9runbinaryv
+00000d60 g       .stack	00000000 _bss_end
+00000190 g     F .text	0000005c __libc_fini_array
+000004fc g     F .text	00000034 _Z8echotermPKc
+00001d60 g       .stack	00000000 __stack_top
+0000017c g       .boot	00000000 _ftext
+00000000 g     F .boot	0000015c _start
+00000364 g     F .text	0000009c __register_exitproc
+00001000 g       *ABS*	00000000 _STACK_SIZE
+00000288 g     F .text	000000dc memset
+00000530 g     F .text	000002dc main
+00000d54 g     O .sbss	00000004 __malloc_max_total_mem
+00000d60 g       .stack	00000000 _stack_end
+0000017c g     F .text	00000014 atexit
+00000d60 g       .stack	00000000 __BSS_END__$
+00001d60 g       .stack	00000000 __stack
+00000d20 g       .data	00000000 _edata
+00001d60 g       .stack	00000000 _end
+0000015c g     F .boot	00000020 _exit
+00000d1c g     O .data	00000004 UARTTX
+00000d60 g       .sbss	00000000 _fbss
+00000400 g     F .text	000000a8 _Z14loadbinaryblobv
+
+
 
 Disassembly of section .boot:
 
@@ -69,23 +136,23 @@ Disassembly of section .boot:
   f4:	f0000f53          	fmv.w.x	ft10,zero
   f8:	f0000fd3          	fmv.w.x	ft11,zero
   fc:	00001197          	auipc	gp,0x1
- 100:	c381a183          	lw	gp,-968(gp) # d34 <_GLOBAL_OFFSET_TABLE_+0x4>
+ 100:	c281a183          	lw	gp,-984(gp) # d24 <_GLOBAL_OFFSET_TABLE_+0x4>
  104:	00001117          	auipc	sp,0x1
- 108:	c4412103          	lw	sp,-956(sp) # d48 <_GLOBAL_OFFSET_TABLE_+0x18>
+ 108:	c3412103          	lw	sp,-972(sp) # d38 <_GLOBAL_OFFSET_TABLE_+0x18>
  10c:	00010433          	add	s0,sp,zero
  110:	00001517          	auipc	a0,0x1
- 114:	c3c52503          	lw	a0,-964(a0) # d4c <_GLOBAL_OFFSET_TABLE_+0x1c>
+ 114:	c2c52503          	lw	a0,-980(a0) # d3c <_GLOBAL_OFFSET_TABLE_+0x1c>
  118:	00001617          	auipc	a2,0x1
- 11c:	c3c62603          	lw	a2,-964(a2) # d54 <_GLOBAL_OFFSET_TABLE_+0x24>
+ 11c:	c2c62603          	lw	a2,-980(a2) # d44 <_GLOBAL_OFFSET_TABLE_+0x24>
  120:	40a60633          	sub	a2,a2,a0
  124:	00000593          	li	a1,0
  128:	160000ef          	jal	ra,288 <memset>
  12c:	00001517          	auipc	a0,0x1
- 130:	c2452503          	lw	a0,-988(a0) # d50 <_GLOBAL_OFFSET_TABLE_+0x20>
+ 130:	c1452503          	lw	a0,-1004(a0) # d40 <_GLOBAL_OFFSET_TABLE_+0x20>
  134:	00050a63          	beqz	a0,148 <noatexitfound>
  138:	00001517          	auipc	a0,0x1
  13c:	00001517          	auipc	a0,0x1
- 140:	c0852503          	lw	a0,-1016(a0) # d44 <_GLOBAL_OFFSET_TABLE_+0x14>
+ 140:	bf852503          	lw	a0,-1032(a0) # d34 <_GLOBAL_OFFSET_TABLE_+0x14>
  144:	038000ef          	jal	ra,17c <_boot>
 
 00000148 <noatexitfound>:
@@ -93,7 +160,7 @@ Disassembly of section .boot:
  14c:	00012503          	lw	a0,0(sp)
  150:	00410593          	addi	a1,sp,4
  154:	00000613          	li	a2,0
- 158:	3e80006f          	j	540 <main>
+ 158:	3d80006f          	j	530 <main>
 
 0000015c <_exit>:
  15c:	00000593          	li	a1,0
@@ -119,8 +186,8 @@ Disassembly of section .text:
  194:	00812423          	sw	s0,8(sp)
  198:	000017b7          	lui	a5,0x1
  19c:	00001437          	lui	s0,0x1
- 1a0:	83d40413          	addi	s0,s0,-1987 # 83d <_etext>
- 1a4:	83d78793          	addi	a5,a5,-1987 # 83d <_etext>
+ 1a0:	82d40413          	addi	s0,s0,-2003 # 82d <_etext>
+ 1a4:	82d78793          	addi	a5,a5,-2003 # 82d <_etext>
  1a8:	408787b3          	sub	a5,a5,s0
  1ac:	00912223          	sw	s1,4(sp)
  1b0:	00112623          	sw	ra,12(sp)
@@ -145,14 +212,14 @@ Disassembly of section .text:
  1f4:	01212023          	sw	s2,0(sp)
  1f8:	00001437          	lui	s0,0x1
  1fc:	00001937          	lui	s2,0x1
- 200:	83d40793          	addi	a5,s0,-1987 # 83d <_etext>
- 204:	83d90913          	addi	s2,s2,-1987 # 83d <_etext>
+ 200:	82d40793          	addi	a5,s0,-2003 # 82d <_etext>
+ 204:	82d90913          	addi	s2,s2,-2003 # 82d <_etext>
  208:	40f90933          	sub	s2,s2,a5
  20c:	00112623          	sw	ra,12(sp)
  210:	00912223          	sw	s1,4(sp)
  214:	40295913          	srai	s2,s2,0x2
  218:	02090063          	beqz	s2,238 <__libc_init_array+0x4c>
- 21c:	83d40413          	addi	s0,s0,-1987
+ 21c:	82d40413          	addi	s0,s0,-2003
  220:	00000493          	li	s1,0
  224:	00042783          	lw	a5,0(s0)
  228:	00148493          	addi	s1,s1,1
@@ -161,12 +228,12 @@ Disassembly of section .text:
  234:	fe9918e3          	bne	s2,s1,224 <__libc_init_array+0x38>
  238:	00001437          	lui	s0,0x1
  23c:	00001937          	lui	s2,0x1
- 240:	83d40793          	addi	a5,s0,-1987 # 83d <_etext>
- 244:	83d90913          	addi	s2,s2,-1987 # 83d <_etext>
+ 240:	82d40793          	addi	a5,s0,-2003 # 82d <_etext>
+ 244:	82d90913          	addi	s2,s2,-2003 # 82d <_etext>
  248:	40f90933          	sub	s2,s2,a5
  24c:	40295913          	srai	s2,s2,0x2
  250:	02090063          	beqz	s2,270 <__libc_init_array+0x84>
- 254:	83d40413          	addi	s0,s0,-1987
+ 254:	82d40413          	addi	s0,s0,-2003
  258:	00000493          	li	s1,0
  25c:	00042783          	lw	a5,0(s0)
  260:	00148493          	addi	s1,s1,1
@@ -239,7 +306,7 @@ Disassembly of section .text:
 
 00000364 <__register_exitproc>:
  364:	000017b7          	lui	a5,0x1
- 368:	8407a703          	lw	a4,-1984(a5) # 840 <_global_impure_ptr>
+ 368:	8307a703          	lw	a4,-2000(a5) # 830 <_global_impure_ptr>
  36c:	14872783          	lw	a5,328(a4)
  370:	04078c63          	beqz	a5,3c8 <__register_exitproc+0x64>
  374:	0047a703          	lw	a4,4(a5)
@@ -280,9 +347,9 @@ Disassembly of section .text:
 
 00000400 <_Z14loadbinaryblobv>:
  400:	00001597          	auipc	a1,0x1
- 404:	9385a583          	lw	a1,-1736(a1) # d38 <_GLOBAL_OFFSET_TABLE_+0x8>
+ 404:	9285a583          	lw	a1,-1752(a1) # d28 <_GLOBAL_OFFSET_TABLE_+0x8>
  408:	00001517          	auipc	a0,0x1
- 40c:	93852503          	lw	a0,-1736(a0) # d40 <_GLOBAL_OFFSET_TABLE_+0x10>
+ 40c:	92852503          	lw	a0,-1752(a0) # d30 <_GLOBAL_OFFSET_TABLE_+0x10>
  410:	fe010113          	addi	sp,sp,-32
  414:	0005a783          	lw	a5,0(a1)
  418:	00052803          	lw	a6,0(a0)
@@ -324,11 +391,11 @@ Disassembly of section .text:
 
 000004a8 <_Z9runbinaryv>:
  4a8:	00001797          	auipc	a5,0x1
- 4ac:	8907a783          	lw	a5,-1904(a5) # d38 <_GLOBAL_OFFSET_TABLE_+0x8>
+ 4ac:	8807a783          	lw	a5,-1920(a5) # d28 <_GLOBAL_OFFSET_TABLE_+0x8>
  4b0:	fe010113          	addi	sp,sp,-32
  4b4:	0007a703          	lw	a4,0(a5)
  4b8:	00001797          	auipc	a5,0x1
- 4bc:	8887a783          	lw	a5,-1912(a5) # d40 <_GLOBAL_OFFSET_TABLE_+0x10>
+ 4bc:	8787a783          	lw	a5,-1928(a5) # d30 <_GLOBAL_OFFSET_TABLE_+0x10>
  4c0:	0007a603          	lw	a2,0(a5)
  4c4:	02010793          	addi	a5,sp,32
  4c8:	00012e23          	sw	zero,28(sp)
@@ -341,235 +408,340 @@ Disassembly of section .text:
  4e4:	fef68fa3          	sb	a5,-1(a3)
  4e8:	00c12783          	lw	a5,12(sp)
  4ec:	fed794e3          	bne	a5,a3,4d4 <_Z9runbinaryv+0x2c>
- 4f0:	01c12083          	lw	ra,28(sp)
- 4f4:	00020637          	lui	a2,0x20
- 4f8:	ff060613          	addi	a2,a2,-16 # 1fff0 <__stack+0x1e280>
- 4fc:	00060113          	mv	sp,a2
- 500:	00008067          	ret
- 504:	02010113          	addi	sp,sp,32
- 508:	00008067          	ret
+ 4f0:	01c12783          	lw	a5,28(sp)
+ 4f4:	02010113          	addi	sp,sp,32
+ 4f8:	00078067          	jr	a5
 
-0000050c <_Z8echotermPKc>:
- 50c:	00054683          	lbu	a3,0(a0)
- 510:	02068663          	beqz	a3,53c <_Z8echotermPKc+0x30>
- 514:	00000793          	li	a5,0
- 518:	00001617          	auipc	a2,0x1
- 51c:	84062603          	lw	a2,-1984(a2) # d58 <_GLOBAL_OFFSET_TABLE_+0x28>
- 520:	00062703          	lw	a4,0(a2)
- 524:	00f70733          	add	a4,a4,a5
- 528:	00178793          	addi	a5,a5,1
- 52c:	00d70023          	sb	a3,0(a4)
- 530:	00f50733          	add	a4,a0,a5
- 534:	00074683          	lbu	a3,0(a4)
- 538:	fe0694e3          	bnez	a3,520 <_Z8echotermPKc+0x14>
- 53c:	00008067          	ret
+000004fc <_Z8echotermPKc>:
+ 4fc:	00054683          	lbu	a3,0(a0)
+ 500:	02068663          	beqz	a3,52c <_Z8echotermPKc+0x30>
+ 504:	00000793          	li	a5,0
+ 508:	00001617          	auipc	a2,0x1
+ 50c:	84062603          	lw	a2,-1984(a2) # d48 <_GLOBAL_OFFSET_TABLE_+0x28>
+ 510:	00062703          	lw	a4,0(a2)
+ 514:	00f70733          	add	a4,a4,a5
+ 518:	00178793          	addi	a5,a5,1
+ 51c:	00d70023          	sb	a3,0(a4)
+ 520:	00f50733          	add	a4,a0,a5
+ 524:	00074683          	lbu	a3,0(a4)
+ 528:	fe0694e3          	bnez	a3,510 <_Z8echotermPKc+0x14>
+ 52c:	00008067          	ret
 
-00000540 <main>:
- 540:	f9010113          	addi	sp,sp,-112
- 544:	00000517          	auipc	a0,0x0
- 548:	2d850513          	addi	a0,a0,728 # 81c <main+0x2dc>
- 54c:	06812423          	sw	s0,104(sp)
- 550:	06912223          	sw	s1,100(sp)
- 554:	07212023          	sw	s2,96(sp)
- 558:	05312e23          	sw	s3,92(sp)
- 55c:	05412c23          	sw	s4,88(sp)
- 560:	05512a23          	sw	s5,84(sp)
- 564:	05612823          	sw	s6,80(sp)
- 568:	05712623          	sw	s7,76(sp)
- 56c:	05812423          	sw	s8,72(sp)
- 570:	05912223          	sw	s9,68(sp)
- 574:	05a12023          	sw	s10,64(sp)
- 578:	03b12e23          	sw	s11,60(sp)
- 57c:	06112623          	sw	ra,108(sp)
- 580:	f8dff0ef          	jal	ra,50c <_Z8echotermPKc>
- 584:	00000e17          	auipc	t3,0x0
- 588:	7b8e2e03          	lw	t3,1976(t3) # d3c <_GLOBAL_OFFSET_TABLE_+0xc>
- 58c:	000e2783          	lw	a5,0(t3)
- 590:	08100713          	li	a4,129
- 594:	00000517          	auipc	a0,0x0
- 598:	7a452503          	lw	a0,1956(a0) # d38 <_GLOBAL_OFFSET_TABLE_+0x8>
- 59c:	00000d97          	auipc	s11,0x0
- 5a0:	7a4dad83          	lw	s11,1956(s11) # d40 <_GLOBAL_OFFSET_TABLE_+0x10>
- 5a4:	00e7a023          	sw	a4,0(a5)
- 5a8:	00052583          	lw	a1,0(a0)
- 5ac:	0e100713          	li	a4,225
- 5b0:	000daf03          	lw	t5,0(s11)
- 5b4:	00e7a223          	sw	a4,4(a5)
- 5b8:	00001337          	lui	t1,0x1
- 5bc:	01700713          	li	a4,23
- 5c0:	f1f1f8b7          	lui	a7,0xf1f1f
- 5c4:	0007c837          	lui	a6,0x7c
- 5c8:	00010b37          	lui	s6,0x10
- 5cc:	00e7a423          	sw	a4,8(a5)
- 5d0:	00000993          	li	s3,0
- 5d4:	00000413          	li	s0,0
- 5d8:	00000493          	li	s1,0
- 5dc:	00800e93          	li	t4,8
- 5e0:	00800a93          	li	s5,8
- 5e4:	00000c13          	li	s8,0
- 5e8:	00000913          	li	s2,0
- 5ec:	00000613          	li	a2,0
- 5f0:	00000a13          	li	s4,0
- 5f4:	00080cb7          	lui	s9,0x80
- 5f8:	00000d17          	auipc	s10,0x0
- 5fc:	760d2d03          	lw	s10,1888(s10) # d58 <_GLOBAL_OFFSET_TABLE_+0x28>
- 600:	fff30b93          	addi	s7,t1,-1 # fff <__BSS_END__$+0x28f>
- 604:	08188893          	addi	a7,a7,129 # f1f1f081 <__stack+0xf1f1d311>
- 608:	49180813          	addi	a6,a6,1169 # 7c491 <__stack+0x7a721>
- 60c:	fffb0b13          	addi	s6,s6,-1 # ffff <__stack+0xe28f>
- 610:	0005a783          	lw	a5,0(a1)
- 614:	04078063          	beqz	a5,654 <main+0x114>
- 618:	000f4783          	lbu	a5,0(t5)
- 61c:	03010713          	addi	a4,sp,48
- 620:	00c70733          	add	a4,a4,a2
- 624:	0ff7f793          	andi	a5,a5,255
- 628:	00d00693          	li	a3,13
- 62c:	fef70023          	sb	a5,-32(a4)
- 630:	12d78c63          	beq	a5,a3,768 <main+0x228>
- 634:	000d2683          	lw	a3,0(s10)
- 638:	00160613          	addi	a2,a2,1
- 63c:	01f00713          	li	a4,31
- 640:	00f68023          	sb	a5,0(a3)
- 644:	16c77263          	bgeu	a4,a2,7a8 <main+0x268>
- 648:	00052583          	lw	a1,0(a0)
- 64c:	000daf03          	lw	t5,0(s11)
- 650:	00000613          	li	a2,0
- 654:	00140413          	addi	s0,s0,1
- 658:	017477b3          	and	a5,s0,s7
- 65c:	fa079ae3          	bnez	a5,610 <main+0xd0>
- 660:	000e2783          	lw	a5,0(t3)
- 664:	01697fb3          	and	t6,s2,s6
- 668:	01fa62b3          	or	t0,s4,t6
- 66c:	0117a023          	sw	a7,0(a5)
- 670:	0107a223          	sw	a6,4(a5)
- 674:	016af733          	and	a4,s5,s6
- 678:	00a29693          	slli	a3,t0,0xa
- 67c:	01300393          	li	t2,19
- 680:	0162d293          	srli	t0,t0,0x16
- 684:	0077a423          	sw	t2,8(a5)
- 688:	01476733          	or	a4,a4,s4
- 68c:	0816e693          	ori	a3,a3,129
- 690:	00a29293          	slli	t0,t0,0xa
- 694:	00d7a023          	sw	a3,0(a5)
- 698:	00a71393          	slli	t2,a4,0xa
- 69c:	01675693          	srli	a3,a4,0x16
- 6a0:	0912e293          	ori	t0,t0,145
- 6a4:	0057a223          	sw	t0,4(a5)
- 6a8:	01fce733          	or	a4,s9,t6
- 6ac:	00a69693          	slli	a3,a3,0xa
- 6b0:	1013ef93          	ori	t6,t2,257
- 6b4:	01f7a023          	sw	t6,0(a5)
- 6b8:	1216e693          	ori	a3,a3,289
- 6bc:	00a71f93          	slli	t6,a4,0xa
- 6c0:	01675713          	srli	a4,a4,0x16
- 6c4:	00d7a223          	sw	a3,4(a5)
- 6c8:	00a71713          	slli	a4,a4,0xa
- 6cc:	181fe693          	ori	a3,t6,385
- 6d0:	00d7a423          	sw	a3,8(a5)
- 6d4:	1b176713          	ori	a4,a4,433
- 6d8:	00d49693          	slli	a3,s1,0xd
- 6dc:	d1530f93          	addi	t6,t1,-747
- 6e0:	00e7a623          	sw	a4,12(a5)
- 6e4:	01f6e733          	or	a4,a3,t6
- 6e8:	00e7a823          	sw	a4,16(a5)
- 6ec:	00890913          	addi	s2,s2,8
- 6f0:	0f800713          	li	a4,248
- 6f4:	008a8a93          	addi	s5,s5,8
- 6f8:	03275263          	bge	a4,s2,71c <main+0x1dc>
- 6fc:	008c0c13          	addi	s8,s8,8
- 700:	0b800713          	li	a4,184
- 704:	0b874863          	blt	a4,s8,7b4 <main+0x274>
- 708:	008e8e93          	addi	t4,t4,8
- 70c:	00800a93          	li	s5,8
- 710:	00000913          	li	s2,0
- 714:	010c1a13          	slli	s4,s8,0x10
- 718:	010e9c93          	slli	s9,t4,0x10
- 71c:	0019c993          	xori	s3,s3,1
- 720:	00a99713          	slli	a4,s3,0xa
- 724:	08176713          	ori	a4,a4,129
- 728:	00e7a023          	sw	a4,0(a5)
- 72c:	09100713          	li	a4,145
- 730:	00e7a223          	sw	a4,4(a5)
- 734:	01700713          	li	a4,23
- 738:	00e7a423          	sw	a4,8(a5)
- 73c:	0005a783          	lw	a5,0(a1)
- 740:	00148493          	addi	s1,s1,1
- 744:	0ff4f493          	andi	s1,s1,255
- 748:	f00786e3          	beqz	a5,654 <main+0x114>
- 74c:	000f4783          	lbu	a5,0(t5)
- 750:	03010713          	addi	a4,sp,48
- 754:	00c70733          	add	a4,a4,a2
- 758:	0ff7f793          	andi	a5,a5,255
- 75c:	00d00693          	li	a3,13
- 760:	fef70023          	sb	a5,-32(a4)
- 764:	ecd798e3          	bne	a5,a3,634 <main+0xf4>
- 768:	fe070023          	sb	zero,-32(a4)
- 76c:	01114783          	lbu	a5,17(sp)
- 770:	06900713          	li	a4,105
- 774:	04e78e63          	beq	a5,a4,7d0 <main+0x290>
- 778:	07500713          	li	a4,117
- 77c:	00e79863          	bne	a5,a4,78c <main+0x24c>
- 780:	01214703          	lbu	a4,18(sp)
- 784:	06e00793          	li	a5,110
- 788:	08f70463          	beq	a4,a5,810 <main+0x2d0>
+00000530 <main>:
+ 530:	f9010113          	addi	sp,sp,-112
+ 534:	00000517          	auipc	a0,0x0
+ 538:	2d850513          	addi	a0,a0,728 # 80c <main+0x2dc>
+ 53c:	06812423          	sw	s0,104(sp)
+ 540:	06912223          	sw	s1,100(sp)
+ 544:	07212023          	sw	s2,96(sp)
+ 548:	05312e23          	sw	s3,92(sp)
+ 54c:	05412c23          	sw	s4,88(sp)
+ 550:	05512a23          	sw	s5,84(sp)
+ 554:	05612823          	sw	s6,80(sp)
+ 558:	05712623          	sw	s7,76(sp)
+ 55c:	05812423          	sw	s8,72(sp)
+ 560:	05912223          	sw	s9,68(sp)
+ 564:	05a12023          	sw	s10,64(sp)
+ 568:	03b12e23          	sw	s11,60(sp)
+ 56c:	06112623          	sw	ra,108(sp)
+ 570:	f8dff0ef          	jal	ra,4fc <_Z8echotermPKc>
+ 574:	00000e17          	auipc	t3,0x0
+ 578:	7b8e2e03          	lw	t3,1976(t3) # d2c <_GLOBAL_OFFSET_TABLE_+0xc>
+ 57c:	000e2783          	lw	a5,0(t3)
+ 580:	08100713          	li	a4,129
+ 584:	00000517          	auipc	a0,0x0
+ 588:	7a452503          	lw	a0,1956(a0) # d28 <_GLOBAL_OFFSET_TABLE_+0x8>
+ 58c:	00000d97          	auipc	s11,0x0
+ 590:	7a4dad83          	lw	s11,1956(s11) # d30 <_GLOBAL_OFFSET_TABLE_+0x10>
+ 594:	00e7a023          	sw	a4,0(a5)
+ 598:	00052583          	lw	a1,0(a0)
+ 59c:	0e100713          	li	a4,225
+ 5a0:	000daf03          	lw	t5,0(s11)
+ 5a4:	00e7a223          	sw	a4,4(a5)
+ 5a8:	00001337          	lui	t1,0x1
+ 5ac:	01700713          	li	a4,23
+ 5b0:	f1f1f8b7          	lui	a7,0xf1f1f
+ 5b4:	0007c837          	lui	a6,0x7c
+ 5b8:	00010b37          	lui	s6,0x10
+ 5bc:	00e7a423          	sw	a4,8(a5)
+ 5c0:	00000993          	li	s3,0
+ 5c4:	00000413          	li	s0,0
+ 5c8:	00000493          	li	s1,0
+ 5cc:	00800e93          	li	t4,8
+ 5d0:	00800a93          	li	s5,8
+ 5d4:	00000c13          	li	s8,0
+ 5d8:	00000913          	li	s2,0
+ 5dc:	00000613          	li	a2,0
+ 5e0:	00000a13          	li	s4,0
+ 5e4:	00080cb7          	lui	s9,0x80
+ 5e8:	00000d17          	auipc	s10,0x0
+ 5ec:	760d2d03          	lw	s10,1888(s10) # d48 <_GLOBAL_OFFSET_TABLE_+0x28>
+ 5f0:	fff30b93          	addi	s7,t1,-1 # fff <__BSS_END__$+0x29f>
+ 5f4:	08188893          	addi	a7,a7,129 # f1f1f081 <__stack+0xf1f1d321>
+ 5f8:	49180813          	addi	a6,a6,1169 # 7c491 <__stack+0x7a731>
+ 5fc:	fffb0b13          	addi	s6,s6,-1 # ffff <__stack+0xe29f>
+ 600:	0005a783          	lw	a5,0(a1)
+ 604:	04078063          	beqz	a5,644 <main+0x114>
+ 608:	000f4783          	lbu	a5,0(t5)
+ 60c:	03010713          	addi	a4,sp,48
+ 610:	00c70733          	add	a4,a4,a2
+ 614:	0ff7f793          	andi	a5,a5,255
+ 618:	00d00693          	li	a3,13
+ 61c:	fef70023          	sb	a5,-32(a4)
+ 620:	12d78c63          	beq	a5,a3,758 <main+0x228>
+ 624:	000d2683          	lw	a3,0(s10)
+ 628:	00160613          	addi	a2,a2,1
+ 62c:	01f00713          	li	a4,31
+ 630:	00f68023          	sb	a5,0(a3)
+ 634:	16c77263          	bgeu	a4,a2,798 <main+0x268>
+ 638:	00052583          	lw	a1,0(a0)
+ 63c:	000daf03          	lw	t5,0(s11)
+ 640:	00000613          	li	a2,0
+ 644:	00140413          	addi	s0,s0,1
+ 648:	017477b3          	and	a5,s0,s7
+ 64c:	fa079ae3          	bnez	a5,600 <main+0xd0>
+ 650:	000e2783          	lw	a5,0(t3)
+ 654:	01697fb3          	and	t6,s2,s6
+ 658:	01fa62b3          	or	t0,s4,t6
+ 65c:	0117a023          	sw	a7,0(a5)
+ 660:	0107a223          	sw	a6,4(a5)
+ 664:	016af733          	and	a4,s5,s6
+ 668:	00a29693          	slli	a3,t0,0xa
+ 66c:	01300393          	li	t2,19
+ 670:	0162d293          	srli	t0,t0,0x16
+ 674:	0077a423          	sw	t2,8(a5)
+ 678:	01476733          	or	a4,a4,s4
+ 67c:	0816e693          	ori	a3,a3,129
+ 680:	00a29293          	slli	t0,t0,0xa
+ 684:	00d7a023          	sw	a3,0(a5)
+ 688:	00a71393          	slli	t2,a4,0xa
+ 68c:	01675693          	srli	a3,a4,0x16
+ 690:	0912e293          	ori	t0,t0,145
+ 694:	0057a223          	sw	t0,4(a5)
+ 698:	01fce733          	or	a4,s9,t6
+ 69c:	00a69693          	slli	a3,a3,0xa
+ 6a0:	1013ef93          	ori	t6,t2,257
+ 6a4:	01f7a023          	sw	t6,0(a5)
+ 6a8:	1216e693          	ori	a3,a3,289
+ 6ac:	00a71f93          	slli	t6,a4,0xa
+ 6b0:	01675713          	srli	a4,a4,0x16
+ 6b4:	00d7a223          	sw	a3,4(a5)
+ 6b8:	00a71713          	slli	a4,a4,0xa
+ 6bc:	181fe693          	ori	a3,t6,385
+ 6c0:	00d7a423          	sw	a3,8(a5)
+ 6c4:	1b176713          	ori	a4,a4,433
+ 6c8:	00d49693          	slli	a3,s1,0xd
+ 6cc:	d1530f93          	addi	t6,t1,-747
+ 6d0:	00e7a623          	sw	a4,12(a5)
+ 6d4:	01f6e733          	or	a4,a3,t6
+ 6d8:	00e7a823          	sw	a4,16(a5)
+ 6dc:	00890913          	addi	s2,s2,8
+ 6e0:	0f800713          	li	a4,248
+ 6e4:	008a8a93          	addi	s5,s5,8
+ 6e8:	03275263          	bge	a4,s2,70c <main+0x1dc>
+ 6ec:	008c0c13          	addi	s8,s8,8
+ 6f0:	0b800713          	li	a4,184
+ 6f4:	0b874863          	blt	a4,s8,7a4 <main+0x274>
+ 6f8:	008e8e93          	addi	t4,t4,8
+ 6fc:	00800a93          	li	s5,8
+ 700:	00000913          	li	s2,0
+ 704:	010c1a13          	slli	s4,s8,0x10
+ 708:	010e9c93          	slli	s9,t4,0x10
+ 70c:	0019c993          	xori	s3,s3,1
+ 710:	00a99713          	slli	a4,s3,0xa
+ 714:	08176713          	ori	a4,a4,129
+ 718:	00e7a023          	sw	a4,0(a5)
+ 71c:	09100713          	li	a4,145
+ 720:	00e7a223          	sw	a4,4(a5)
+ 724:	01700713          	li	a4,23
+ 728:	00e7a423          	sw	a4,8(a5)
+ 72c:	0005a783          	lw	a5,0(a1)
+ 730:	00148493          	addi	s1,s1,1
+ 734:	0ff4f493          	andi	s1,s1,255
+ 738:	f00786e3          	beqz	a5,644 <main+0x114>
+ 73c:	000f4783          	lbu	a5,0(t5)
+ 740:	03010713          	addi	a4,sp,48
+ 744:	00c70733          	add	a4,a4,a2
+ 748:	0ff7f793          	andi	a5,a5,255
+ 74c:	00d00693          	li	a3,13
+ 750:	fef70023          	sb	a5,-32(a4)
+ 754:	ecd798e3          	bne	a5,a3,624 <main+0xf4>
+ 758:	fe070023          	sb	zero,-32(a4)
+ 75c:	01114783          	lbu	a5,17(sp)
+ 760:	06900713          	li	a4,105
+ 764:	04e78e63          	beq	a5,a4,7c0 <main+0x290>
+ 768:	07500713          	li	a4,117
+ 76c:	00e79863          	bne	a5,a4,77c <main+0x24c>
+ 770:	01214703          	lbu	a4,18(sp)
+ 774:	06e00793          	li	a5,110
+ 778:	08f70463          	beq	a4,a5,800 <main+0x2d0>
+ 77c:	000d2783          	lw	a5,0(s10)
+ 780:	00d00713          	li	a4,13
+ 784:	00000613          	li	a2,0
+ 788:	00e78023          	sb	a4,0(a5)
  78c:	000d2783          	lw	a5,0(s10)
- 790:	00d00713          	li	a4,13
- 794:	00000613          	li	a2,0
- 798:	00e78023          	sb	a4,0(a5)
- 79c:	000d2783          	lw	a5,0(s10)
- 7a0:	00a00713          	li	a4,10
- 7a4:	00e780a3          	sb	a4,1(a5)
- 7a8:	00052583          	lw	a1,0(a0)
- 7ac:	000daf03          	lw	t5,0(s11)
- 7b0:	ea5ff06f          	j	654 <main+0x114>
- 7b4:	00800e93          	li	t4,8
- 7b8:	00800a93          	li	s5,8
- 7bc:	00000c13          	li	s8,0
- 7c0:	00000913          	li	s2,0
- 7c4:	00000a13          	li	s4,0
- 7c8:	00080cb7          	lui	s9,0x80
- 7cc:	f51ff06f          	j	71c <main+0x1dc>
- 7d0:	01214703          	lbu	a4,18(sp)
- 7d4:	06e00793          	li	a5,110
- 7d8:	faf71ae3          	bne	a4,a5,78c <main+0x24c>
- 7dc:	01d12623          	sw	t4,12(sp)
- 7e0:	c21ff0ef          	jal	ra,400 <_Z14loadbinaryblobv>
- 7e4:	f1f1f7b7          	lui	a5,0xf1f1f
- 7e8:	08178893          	addi	a7,a5,129 # f1f1f081 <__stack+0xf1f1d311>
- 7ec:	0007c7b7          	lui	a5,0x7c
- 7f0:	00c12e83          	lw	t4,12(sp)
- 7f4:	00001337          	lui	t1,0x1
- 7f8:	00000517          	auipc	a0,0x0
- 7fc:	54052503          	lw	a0,1344(a0) # d38 <_GLOBAL_OFFSET_TABLE_+0x8>
- 800:	00000e17          	auipc	t3,0x0
- 804:	53ce2e03          	lw	t3,1340(t3) # d3c <_GLOBAL_OFFSET_TABLE_+0xc>
- 808:	49178813          	addi	a6,a5,1169 # 7c491 <__stack+0x7a721>
- 80c:	f81ff06f          	j	78c <main+0x24c>
- 810:	01d12623          	sw	t4,12(sp)
- 814:	c95ff0ef          	jal	ra,4a8 <_Z9runbinaryv>
- 818:	fcdff06f          	j	7e4 <main+0x2a4>
-There are 16 section headers, starting at offset 0x248c:
+ 790:	00a00713          	li	a4,10
+ 794:	00e780a3          	sb	a4,1(a5)
+ 798:	00052583          	lw	a1,0(a0)
+ 79c:	000daf03          	lw	t5,0(s11)
+ 7a0:	ea5ff06f          	j	644 <main+0x114>
+ 7a4:	00800e93          	li	t4,8
+ 7a8:	00800a93          	li	s5,8
+ 7ac:	00000c13          	li	s8,0
+ 7b0:	00000913          	li	s2,0
+ 7b4:	00000a13          	li	s4,0
+ 7b8:	00080cb7          	lui	s9,0x80
+ 7bc:	f51ff06f          	j	70c <main+0x1dc>
+ 7c0:	01214703          	lbu	a4,18(sp)
+ 7c4:	06e00793          	li	a5,110
+ 7c8:	faf71ae3          	bne	a4,a5,77c <main+0x24c>
+ 7cc:	01d12623          	sw	t4,12(sp)
+ 7d0:	c31ff0ef          	jal	ra,400 <_Z14loadbinaryblobv>
+ 7d4:	f1f1f7b7          	lui	a5,0xf1f1f
+ 7d8:	08178893          	addi	a7,a5,129 # f1f1f081 <__stack+0xf1f1d321>
+ 7dc:	0007c7b7          	lui	a5,0x7c
+ 7e0:	00c12e83          	lw	t4,12(sp)
+ 7e4:	00001337          	lui	t1,0x1
+ 7e8:	00000517          	auipc	a0,0x0
+ 7ec:	54052503          	lw	a0,1344(a0) # d28 <_GLOBAL_OFFSET_TABLE_+0x8>
+ 7f0:	00000e17          	auipc	t3,0x0
+ 7f4:	53ce2e03          	lw	t3,1340(t3) # d2c <_GLOBAL_OFFSET_TABLE_+0xc>
+ 7f8:	49178813          	addi	a6,a5,1169 # 7c491 <__stack+0x7a731>
+ 7fc:	f81ff06f          	j	77c <main+0x24c>
+ 800:	01d12623          	sw	t4,12(sp)
+ 804:	ca5ff0ef          	jal	ra,4a8 <_Z9runbinaryv>
+ 808:	fcdff06f          	j	7d4 <main+0x2a4>
+ELF Header:
+  Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              EXEC (Executable file)
+  Machine:                           RISC-V
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          52 (bytes into file)
+  Start of section headers:          9340 (bytes into file)
+  Flags:                             0x2, single-float ABI
+  Size of this header:               52 (bytes)
+  Size of program headers:           32 (bytes)
+  Number of program headers:         1
+  Size of section headers:           40 (bytes)
+  Number of section headers:         16
+  Section header string table index: 15
 
 Section Headers:
   [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
   [ 0]                   NULL            00000000 000000 000000 00      0   0  0
   [ 1] .boot             PROGBITS        00000000 001000 00017c 00  AX  0   0  4
-  [ 2] .text             PROGBITS        0000017c 00117c 0006a0 00  AX  0   0  4
-  [ 3] .rodata           PROGBITS        0000081c 00181c 000021 01 AMS  0   0  4
-  [ 4] .srodata          PROGBITS        00000840 001840 000004 00   A  0   0  4
-  [ 5] .eh_frame         PROGBITS        00000844 001844 0000b0 00   A  0   0  4
-  [ 6] .data             PROGBITS        000008f8 0018f8 000438 00  WA  0   0  8
-  [ 7] .got              PROGBITS        00000d30 001d30 00002c 04  WA  0   0  4
-  [ 8] .got.plt          PROGBITS        00000d5c 001d5c 000008 04  WA  0   0  4
-  [ 9] .sbss             NOBITS          00000d64 001d64 00000c 00  WA  0   0  4
-  [10] .stack            NOBITS          00000d70 001d64 001000 00  WA  0   0  1
-  [11] .comment          PROGBITS        00000000 001d64 000012 01  MS  0   0  1
-  [12] .riscv.attributes RISCV_ATTRIBUTE 00000000 001d76 000026 00      0   0  1
-  [13] .symtab           SYMTAB          00000000 001d9c 000410 10     14  30  4
-  [14] .strtab           STRTAB          00000000 0021ac 000262 00      0   0  1
-  [15] .shstrtab         STRTAB          00000000 00240e 00007e 00      0   0  1
+  [ 2] .text             PROGBITS        0000017c 00117c 000690 00  AX  0   0  4
+  [ 3] .rodata           PROGBITS        0000080c 00180c 000021 01 AMS  0   0  4
+  [ 4] .srodata          PROGBITS        00000830 001830 000004 00   A  0   0  4
+  [ 5] .eh_frame         PROGBITS        00000834 001834 0000b0 00   A  0   0  4
+  [ 6] .data             PROGBITS        000008e8 0018e8 000438 00  WA  0   0  8
+  [ 7] .got              PROGBITS        00000d20 001d20 00002c 04  WA  0   0  4
+  [ 8] .got.plt          PROGBITS        00000d4c 001d4c 000008 04  WA  0   0  4
+  [ 9] .sbss             NOBITS          00000d54 001d54 00000c 00  WA  0   0  4
+  [10] .stack            NOBITS          00000d60 001d54 001000 00  WA  0   0  1
+  [11] .comment          PROGBITS        00000000 001d54 000012 01  MS  0   0  1
+  [12] .riscv.attributes RISCV_ATTRIBUTE 00000000 001d66 000026 00      0   0  1
+  [13] .symtab           SYMTAB          00000000 001d8c 000410 10     14  30  4
+  [14] .strtab           STRTAB          00000000 00219c 000262 00      0   0  1
+  [15] .shstrtab         STRTAB          00000000 0023fe 00007e 00      0   0  1
 Key to Flags:
   W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
   L (link order), O (extra OS processing required), G (group), T (TLS),
   C (compressed), x (unknown), o (OS specific), E (exclude),
   p (processor specific)
+
+There are no section groups in this file.
+
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  LOAD           0x001000 0x00000000 0x00000000 0x00d54 0x01d60 RWE 0x1000
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .boot .text .rodata .srodata .eh_frame .data .got .got.plt .sbss .stack 
+
+There is no dynamic section in this file.
+
+There are no relocations in this file.
+
+The decoding of unwind sections for machine type RISC-V is not currently supported.
+
+Symbol table '.symtab' contains 65 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 SECTION LOCAL  DEFAULT    1 
+     2: 0000017c     0 SECTION LOCAL  DEFAULT    2 
+     3: 0000080c     0 SECTION LOCAL  DEFAULT    3 
+     4: 00000830     0 SECTION LOCAL  DEFAULT    4 
+     5: 00000834     0 SECTION LOCAL  DEFAULT    5 
+     6: 000008e8     0 SECTION LOCAL  DEFAULT    6 
+     7: 00000d20     0 SECTION LOCAL  DEFAULT    7 
+     8: 00000d4c     0 SECTION LOCAL  DEFAULT    8 
+     9: 00000d54     0 SECTION LOCAL  DEFAULT    9 
+    10: 00000d60     0 SECTION LOCAL  DEFAULT   10 
+    11: 00000000     0 SECTION LOCAL  DEFAULT   11 
+    12: 00000000     0 SECTION LOCAL  DEFAULT   12 
+    13: 00000000     0 FILE    LOCAL  DEFAULT  ABS ROM_nekoichi.cpp
+    14: 00000148     0 NOTYPE  LOCAL  DEFAULT    1 noatexitfound
+    15: 00000000     0 FILE    LOCAL  DEFAULT  ABS atexit.c
+    16: 00000000     0 FILE    LOCAL  DEFAULT  ABS fini.c
+    17: 00000000     0 FILE    LOCAL  DEFAULT  ABS init.c
+    18: 00000000     0 FILE    LOCAL  DEFAULT  ABS __atexit.c
+    19: 00000000     0 FILE    LOCAL  DEFAULT  ABS impure.c
+    20: 000008e8  1064 OBJECT  LOCAL  DEFAULT    6 impure_data
+    21: 00000000     0 FILE    LOCAL  DEFAULT  ABS utils.cpp
+    22: 00000000     0 FILE    LOCAL  DEFAULT  ABS 
+    23: 0000082d     0 NOTYPE  LOCAL  DEFAULT    4 __fini_array_end
+    24: 0000082d     0 NOTYPE  LOCAL  DEFAULT    4 __fini_array_start
+    25: 0000082d     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_end
+    26: 0000082d     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_end
+    27: 00000d20     0 OBJECT  LOCAL  DEFAULT    7 _GLOBAL_OFFSET_TABLE_
+    28: 0000082d     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_start
+    29: 0000082d     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_start
+    30: 00001560     0 NOTYPE  GLOBAL DEFAULT  ABS __global_pointer$
+    31: 000008f0     0 NOTYPE  GLOBAL DEFAULT    6 _fdata
+    32: 0000082d     0 NOTYPE  GLOBAL DEFAULT    3 _etext
+    33: 00000d18     4 OBJECT  GLOBAL DEFAULT    6 UARTRXStatus
+    34: 00001560     0 NOTYPE  GLOBAL DEFAULT    9 _gp
+    35: 0000017c     0 NOTYPE  GLOBAL DEFAULT    1 _boot
+    36: 00000d10     4 OBJECT  GLOBAL DEFAULT    6 GPUFIFO
+    37: 00000d60     0 NOTYPE  GLOBAL DEFAULT   10 _bss_start
+    38: 00000d5c     4 OBJECT  GLOBAL DEFAULT    9 __malloc_top_pad
+    39: 00000d58     4 OBJECT  GLOBAL DEFAULT    9 __malloc_max_sbrked_mem
+    40: 00000830     4 OBJECT  GLOBAL DEFAULT    4 _global_impure_ptr
+    41: 000001ec   156 FUNC    GLOBAL DEFAULT    2 __libc_init_array
+    42: 00000d14     4 OBJECT  GLOBAL DEFAULT    6 UARTRX
+    43: 000004a8    84 FUNC    GLOBAL DEFAULT    2 _Z9runbinaryv
+    44: 00000d60     0 NOTYPE  GLOBAL DEFAULT   10 _bss_end
+    45: 00000190    92 FUNC    GLOBAL DEFAULT    2 __libc_fini_array
+    46: 000004fc    52 FUNC    GLOBAL DEFAULT    2 _Z8echotermPKc
+    47: 00001d60     0 NOTYPE  GLOBAL DEFAULT   10 __stack_top
+    48: 0000017c     0 NOTYPE  GLOBAL DEFAULT    1 _ftext
+    49: 00000000   348 FUNC    GLOBAL DEFAULT    1 _start
+    50: 00000364   156 FUNC    GLOBAL DEFAULT    2 __register_exitproc
+    51: 00001000     0 NOTYPE  GLOBAL DEFAULT  ABS _STACK_SIZE
+    52: 00000288   220 FUNC    GLOBAL DEFAULT    2 memset
+    53: 00000530   732 FUNC    GLOBAL DEFAULT    2 main
+    54: 00000d54     4 OBJECT  GLOBAL DEFAULT    9 __malloc_max_total_mem
+    55: 00000d60     0 NOTYPE  GLOBAL DEFAULT   10 _stack_end
+    56: 0000017c    20 FUNC    GLOBAL DEFAULT    2 atexit
+    57: 00000d60     0 NOTYPE  GLOBAL DEFAULT   10 __BSS_END__$
+    58: 00001d60     0 NOTYPE  GLOBAL DEFAULT   10 __stack
+    59: 00000d20     0 NOTYPE  GLOBAL DEFAULT    6 _edata
+    60: 00001d60     0 NOTYPE  GLOBAL DEFAULT   10 _end
+    61: 0000015c    32 FUNC    GLOBAL DEFAULT    1 _exit
+    62: 00000d1c     4 OBJECT  GLOBAL DEFAULT    6 UARTTX
+    63: 00000d60     0 NOTYPE  GLOBAL DEFAULT    9 _fbss
+    64: 00000400   168 FUNC    GLOBAL DEFAULT    2 _Z14loadbinaryblobv
+
+No version information found in this file.
+Attribute Section: riscv
+File Attributes
+  Tag_RISCV_stack_align: 16-bytes
+  Tag_RISCV_arch: "rv32i2p0_m2p0_f2p0"

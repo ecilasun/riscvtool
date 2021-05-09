@@ -72,6 +72,12 @@ int mandelbrotFloat(float ox, float oy, float sx)
 
 int main(int argc, char ** argv)
 {
+   // Set initial page
+   uint32_t page = 0;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
+   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+
    // Set register g1 with color data
    uint8_t bgcolor = 0x00;
    uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
@@ -127,7 +133,12 @@ int main(int argc, char ** argv)
       if (triggerzoom)
          R += 0.01f; // Zoom
 
-      // Stall GPU until vsync is reached (should probably be before the mandelbrot)
+      page = (page + 1)%2;
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
+      GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+
+      // Stall GPU until vsync is reached
       GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
    }
 

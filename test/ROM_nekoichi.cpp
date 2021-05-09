@@ -76,20 +76,56 @@ void runbinary()
       }
    }
 
+   // Old way: this doesn't set up anything before launching target executable
+   ((void (*)(void)) branchaddress)();
+
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
-   asm (
+   /*asm (
       "lw ra, %0; \n"
       : 
       : "m" (branchaddress)
       : 
    );
    asm (
-      "li x12, 0x0001FFF0;  \n"
-      "mv sp, x12;  \n"
-      "ret;  \n"
-   );
+      "fmv.w.x	f0, zero; \n"
+      "fmv.w.x	f1, zero; \n"
+      "fmv.w.x	f2, zero; \n"
+      "fmv.w.x	f3, zero; \n"
+      "fmv.w.x	f4, zero; \n"
+      "fmv.w.x	f5, zero; \n"
+      "fmv.w.x	f6, zero; \n"
+      "fmv.w.x	f7, zero; \n"
+      "fmv.w.x	f8, zero; \n"
+      "fmv.w.x	f9, zero; \n"
+      "fmv.w.x	f10, zero; \n"
+      "fmv.w.x	f11, zero; \n"
+      "fmv.w.x	f12, zero; \n"
+      "fmv.w.x	f13, zero; \n"
+      "fmv.w.x	f14, zero; \n"
+      "fmv.w.x	f15, zero; \n"
+      "fmv.w.x	f16, zero; \n"
+      "fmv.w.x	f17, zero; \n"
+      "fmv.w.x	f18, zero; \n"
+      "fmv.w.x	f19, zero; \n"
+      "fmv.w.x	f20, zero; \n"
+      "fmv.w.x	f21, zero; \n"
+      "fmv.w.x	f22, zero; \n"
+      "fmv.w.x	f23, zero; \n"
+      "fmv.w.x	f24, zero; \n"
+      "fmv.w.x	f25, zero; \n"
+      "fmv.w.x	f26, zero; \n"
+      "fmv.w.x	f27, zero; \n"
+      "fmv.w.x	f28, zero; \n"
+      "fmv.w.x	f29, zero; \n"
+      "fmv.w.x	f30, zero; \n"
+      "fmv.w.x	f31, zero; \n"
+      "li x12, 0x0001FFF0; \n"
+      "mv sp, x12; \n"
+      "ret; \n"
+   );*/
 
-   // Unfortunately, if I use 'noreturn' attribute it doesn't work, so there'll be a redundant stack op and a ret generated here
+   // Unfortunately, if I use 'noreturn' attribute with above code, it doesn't work
+   // and there'll be a redundant stack op and a ret generated here
 }
 
 void echoterm(const char *_message)

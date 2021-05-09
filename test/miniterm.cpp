@@ -79,10 +79,21 @@ int main()
    unsigned int cmdcounter = 23;
    //unsigned int oldcount = 0;
 
+   // Set output page
+   uint32_t page = 0;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
+   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+
    // Startup message
    clearchars();
    ClearScreenGPU(bgcolor);
    PrintDMA(0, 176, " MiniTerm (c)2021 Engin Cilasun ");
+
+   page = (page+1)%2;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
+   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
 
    // UART communication section
    while(1)
@@ -171,6 +182,11 @@ int main()
             PrintDMA(0, 8*cy, 32, &chartable[cy*32]);
          if (checkchar != 13)
             PrintDMA(0, 184, rcvcursor, incoming);
+
+         page = (page+1)%2;
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
+         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
 
          // Echo characters back to the terminal
          UARTTX[0] = checkchar;
