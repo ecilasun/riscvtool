@@ -6,7 +6,7 @@
 #include <cmath>
 #include "utils.h"
 #include "gpu.h"
-#include "rom_nekoichi_rvcrt0.h"
+//#include "rom_nekoichi_rvcrt0.h"
 
 #define MAX_PARTICLES 512
 
