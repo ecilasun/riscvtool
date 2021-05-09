@@ -76,10 +76,20 @@ void runbinary()
       }
    }
 
-   // Jump to entry point
-   ((void (*)(void)) branchaddress)();
+   // Set up stack pointer and branch to loaded executable's entry point (noreturn)
+   asm (
+      "lw ra, %0; \n"
+      : 
+      : "m" (branchaddress)
+      : 
+   );
+   asm (
+      "li x12, 0x0001FFF0;  \n"
+      "mv sp, x12;  \n"
+      "ret;  \n"
+   );
 
-   // Or alternatively, set 'ra' to branchaddress and 'ret' since we won't be exiting main()
+   // Unfortunately, if I use 'noreturn' attribute it doesn't work, so there'll be a redundant stack op and a ret generated here
 }
 
 void echoterm(const char *_message)

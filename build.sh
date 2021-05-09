@@ -24,11 +24,11 @@ riscv64-unknown-elf-g++ -o sdcardtest.elf test/sdcardtest.cpp test/utils.cpp tes
 riscv64-unknown-elf-g++ -o rastertest.elf test/rastertest.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc
 
 # Examples for nekoichi
-riscv64-unknown-elf-g++ -o gpupipetest.elf test/gpupipetest.cpp test/utils.cpp -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
+riscv64-unknown-elf-g++ -o gpupipetest.elf test/gpupipetest.cpp test/utils.cpp -fno-builtin -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
 #riscv64-unknown-elf-g++ -o gpupipetest.elf test/gpupipetest.cpp test/utils.cpp -mexplicit-relocs -std=c++11 -Wall -ffast-math -Ofast -march=rv32imf -mabi=ilp32f -static -mcmodel=medany -fvisibility=hidden -nostartfiles -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,--strip-debug -lc -lm -lgcc -lgloss -Wl,-Ttest/APP_nekoichi.lds
-riscv64-unknown-elf-g++ -o miniterm.elf test/miniterm.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
+riscv64-unknown-elf-g++ -o miniterm.elf test/miniterm.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp -fno-builtin -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
 #riscv64-unknown-elf-g++ -o mandelbrot.elf test/mandelbrot.cpp test/utils.cpp -std=c++11 -Wall -ffast-math -Ofast -march=rv32imf -mabi=ilp32f  -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc
-riscv64-unknown-elf-g++ -o mandelbrot.elf test/mandelbrot.cpp test/utils.cpp -mexplicit-relocs -std=c++11 -Wall -ffast-math -Ofast -march=rv32imf -mabi=ilp32f -static -mcmodel=medany -fvisibility=hidden -nostartfiles -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,--strip-debug -lc -lm -lgcc -lgloss -Wl,-Ttest/APP_nekoichi.lds
+riscv64-unknown-elf-g++ -o mandelbrot.elf test/mandelbrot.cpp test/utils.cpp -mexplicit-relocs -fno-builtin -std=c++11 -Wall -ffast-math -Ofast -march=rv32imf -mabi=ilp32f -static -mcmodel=medany -fvisibility=hidden -nostartfiles -fPIC -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,--strip-debug -lc -lm -lgcc -lgloss -Wl,-Ttest/APP_nekoichi.lds
 
 # ASM dumps
 riscv64-unknown-elf-objdump -d ROM.elf >> ROMasmdump.txt

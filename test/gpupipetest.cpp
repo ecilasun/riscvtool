@@ -331,7 +331,7 @@ int main(int argc, char ** argv)
 
          drawparticles(triparticles);
 
-         //drawrect(x, y, 0x7C);
+         drawrect(x, y, 0x7C);
 
          uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
