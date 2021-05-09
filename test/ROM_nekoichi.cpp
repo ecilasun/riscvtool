@@ -77,10 +77,10 @@ void runbinary()
    }
 
    // Old way: this doesn't set up anything before launching target executable
-   ((void (*)(void)) branchaddress)();
+   // ((void (*)(void)) branchaddress)();
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
-   /*asm (
+   asm (
       "lw ra, %0; \n"
       : 
       : "m" (branchaddress)
@@ -122,7 +122,7 @@ void runbinary()
       "li x12, 0x0001FFF0; \n"
       "mv sp, x12; \n"
       "ret; \n"
-   );*/
+   );
 
    // Unfortunately, if I use 'noreturn' attribute with above code, it doesn't work
    // and there'll be a redundant stack op and a ret generated here
