@@ -31,5 +31,5 @@
 // Write DWORD in rs onro SYSRAM address in rd, effectively signalling CPU from GPU side
 #define GPUSYSMEMOUT 0x6
 
-// Unused
-#define GPUUNUSED1 0x7
+// Set VRAM write page
+#define GPUSETVPAGE 0x7

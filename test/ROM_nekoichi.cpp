@@ -129,21 +129,21 @@ int main()
 
    echoterm("NekoIchi\r\nrv32imf@60Mhz\r\nv0001\r\n");
 
-   // Clear screen
+   // Clear color
    uint8_t bgcolor = 0x7C;
    uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-   GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
 
-   int x1 = 0;
-   int y1 = 0;
-   int x2 = 8;
-   int y2 = 0;
-   int x3 = 0;
-   int y3 = 8;
+   int x1 = 0, y1 = 0;
+   int x2 = 8, y2 = 0;
+   int x3 = 0, y3 = 8;
    uint8_t ncolor = 0;
    int counter = 0;
+
+   // Set page
+   uint32_t page = 0;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 1, GPU10BITIMM(page));
+   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
 
    // UART communication section
    while(1)
@@ -211,6 +211,12 @@ int main()
             }
          }
          ++ncolor;
+
+         // Swap page
+         page = (page+1)%2;
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
+         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
       }
    }
 

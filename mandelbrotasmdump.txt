@@ -265,10 +265,10 @@ Disassembly of section .text:
     23ac:	10f577d3          	fmul.s	fa5,fa0,fa5
     23b0:	e0078753          	fmv.x.w	a4,fa5
     23b4:	008005b7          	lui	a1,0x800
-    23b8:	fff58613          	addi	a2,a1,-1 # 7fffff <__stack+0x7ee35f>
+    23b8:	fff58613          	addi	a2,a1,-1 # 7fffff <__stack+0x7ed35f>
     23bc:	004b06b7          	lui	a3,0x4b0
     23c0:	00c77633          	and	a2,a4,a2
-    23c4:	b2068693          	addi	a3,a3,-1248 # 4afb20 <__stack+0x49de80>
+    23c4:	b2068693          	addi	a3,a3,-1248 # 4afb20 <__stack+0x49ce80>
     23c8:	00d606b3          	add	a3,a2,a3
     23cc:	00b6f6b3          	and	a3,a3,a1
     23d0:	3f8007b7          	lui	a5,0x3f800
@@ -304,8 +304,8 @@ Disassembly of section .text:
     2448:	0035c737          	lui	a4,0x35c
     244c:	ffcf67b7          	lui	a5,0xffcf6
     2450:	00e7f753          	fadd.s	fa4,fa5,fa4
-    2454:	28870713          	addi	a4,a4,648 # 35c288 <__stack+0x34a5e8>
-    2458:	c3078793          	addi	a5,a5,-976 # ffcf5c30 <__stack+0xffce3f90>
+    2454:	28870713          	addi	a4,a4,648 # 35c288 <__stack+0x3495e8>
+    2458:	c3078793          	addi	a5,a5,-976 # ffcf5c30 <__stack+0xffce2f90>
     245c:	00f607b3          	add	a5,a2,a5
     2460:	40c70633          	sub	a2,a4,a2
     2464:	18e7f553          	fdiv.s	fa0,fa5,fa4
@@ -760,7 +760,7 @@ Disassembly of section .text:
     2b48:	00758393          	addi	t2,a1,7
     2b4c:	0fc7a783          	lw	a5,252(a5) # 4c20 <GPUFIFO>
     2b50:	000015b7          	lui	a1,0x1
-    2b54:	ac458593          	addi	a1,a1,-1340 # ac4 <_STACK_SIZE-0x53c>
+    2b54:	ac458593          	addi	a1,a1,-1340 # ac4 <_start-0x153c>
     2b58:	01881813          	slli	a6,a6,0x18
     2b5c:	00829293          	slli	t0,t0,0x8
     2b60:	008f9f93          	slli	t6,t6,0x8
@@ -1012,7 +1012,7 @@ Section Headers:
   [ 9] .sdata            PROGBITS        00004c48 003c48 000048 00  WA  0   0  4
   [10] .sbss             NOBITS          00004c90 003c90 00000c 00  WA  0   0  4
   [11] .bss              NOBITS          00004c9c 003c90 00c004 00  WA  0   0  4
-  [12] .stack            NOBITS          00010ca0 003c90 001000 00  WA  0   0  1
+  [12] .stack            NOBITS          00010ca0 003c90 002000 00  WA  0   0  1
   [13] .comment          PROGBITS        00000000 003c90 000012 01  MS  0   0  1
   [14] .riscv.attributes RISCV_ATTRIBUTE 00000000 003ca2 000026 00      0   0  1
   [15] .symtab           SYMTAB          00000000 003cc8 0004b0 10     16  39  4
@@ -1028,7 +1028,7 @@ There are no section groups in this file.
 
 Program Headers:
   Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
-  LOAD           0x001000 0x00002000 0x00002000 0x02c90 0x0fca0 RWE 0x1000
+  LOAD           0x001000 0x00002000 0x00002000 0x02c90 0x10ca0 RWE 0x1000
 
  Section to Segment mapping:
   Segment Sections...
@@ -1099,11 +1099,11 @@ Symbol table '.symtab' contains 75 entries:
     54: 000020e4   156 FUNC    GLOBAL DEFAULT    2 __libc_init_array
     55: 00010ca0     0 NOTYPE  GLOBAL DEFAULT   11 _bss_end
     56: 00002088    92 FUNC    GLOBAL DEFAULT    2 __libc_fini_array
-    57: 00011ca0     0 NOTYPE  GLOBAL DEFAULT   12 __stack_top
+    57: 00012ca0     0 NOTYPE  GLOBAL DEFAULT   12 __stack_top
     58: 00002074     0 NOTYPE  GLOBAL DEFAULT    1 _ftext
     59: 00002000    84 FUNC    GLOBAL HIDDEN     1 _start
     60: 0000225c   156 FUNC    GLOBAL DEFAULT    2 __register_exitproc
-    61: 00001000     0 NOTYPE  GLOBAL DEFAULT  ABS _STACK_SIZE
+    61: 00002000     0 NOTYPE  GLOBAL DEFAULT  ABS _STACK_SIZE
     62: 00002180   220 FUNC    GLOBAL DEFAULT    2 memset
     63: 00002734  1000 FUNC    GLOBAL HIDDEN     2 main
     64: 00004c90     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_total_mem
@@ -1112,9 +1112,9 @@ Symbol table '.symtab' contains 75 entries:
     67: 00002574     8 FUNC    GLOBAL DEFAULT    2 nanf
     68: 00004c48     4 OBJECT  GLOBAL DEFAULT    9 _impure_ptr
     69: 00010ca0     0 NOTYPE  GLOBAL DEFAULT   11 __BSS_END__$
-    70: 00011ca0     0 NOTYPE  GLOBAL DEFAULT   12 __stack
+    70: 00012ca0     0 NOTYPE  GLOBAL DEFAULT   12 __stack
     71: 00004c24     0 NOTYPE  GLOBAL DEFAULT    6 _edata
-    72: 00011ca0     0 NOTYPE  GLOBAL DEFAULT   12 _end
+    72: 00012ca0     0 NOTYPE  GLOBAL DEFAULT   12 _end
     73: 00002054    32 FUNC    GLOBAL HIDDEN     1 _exit
     74: 00004c90     0 NOTYPE  GLOBAL DEFAULT   10 _fbss
 
