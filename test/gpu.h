@@ -20,7 +20,7 @@
 // Plots a single byte into given VRAM address (To be deprecated)
 #define GPUWRITEVRAM 0x2
 
-// Clears the whole VRAM to color in source register
+// Clears the whole VRAM to color in source register (at x12 speed of continuous DWORD writes)
 #define GPUCLEAR 0x3
 
 // Copies DWORD aligned SYSRAM address in rs to DWORD aligned VRAM address in rd, by given DWORDs

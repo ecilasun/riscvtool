@@ -227,6 +227,7 @@ void drawparticles(short *particles)
    short ry0 = sinf(proll)*3.f;
    short rx1 = cosf(proll+3.1415927f*0.5f)*3.f;
    short ry1 = sinf(proll+3.1415927f*0.5f)*3.f;
+   proll += 0.24f;
    for (int i=0;i<MAX_PARTICLES;++i)
    {
       if (particles[4*i+1] != -1)
@@ -258,7 +259,25 @@ void drawparticles(short *particles)
          //GPUFIFO[8] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (i&0xFF));
       }
    }
-   proll += 0.24f;
+}
+
+uint32_t ReadCycle()
+{
+   uint32_t cyclehigh, cyclelow;
+
+   asm (
+      "rdtimeh %0;"
+      : "=r" (cyclehigh)
+   );
+   asm (
+      "rdtime %0;"
+      : "=r" (cyclelow)
+   );
+
+   uint64_t clock = (uint64_t(cyclehigh)<<32) | cyclelow;
+   uint64_t seconds = clock / 10000;
+
+   return (uint32_t)seconds;
 }
 
 int main(int argc, char ** argv)
@@ -277,7 +296,7 @@ int main(int argc, char ** argv)
    volatile unsigned int gpustate = 0x00000000;
    unsigned int cnt = 0x00000000;
 
-   char msg[] = "xxxxxxxx";
+   char msg[] = "xxxxx.xxx";
    uint32_t page = 0;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
@@ -302,6 +321,8 @@ int main(int argc, char ** argv)
 
          ++cnt;
 
+         uint32_t cycle = ReadCycle();
+
          // CLS
          GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 7, 0, 0);  // clearvram g1
 
@@ -317,7 +338,7 @@ int main(int argc, char ** argv)
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorthree));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorthree));
 
-         for(int z=0;z<256;++z)
+         /*for(int z=0;z<256;++z)
          {
             int k = ssin(z*2+f)/173 + 96;
             uint32_t addrs = (k<<8)+z;
@@ -334,23 +355,24 @@ int main(int argc, char ** argv)
             uint32_t mask = addrs&0x3;
             mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
             GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 3, 0, mask, (wordaddrs&0x3FFF));
-         }
+         }*/
          f+=26;
 
          if ((cnt%60) == 0)
             m+=4;
          PrintDMA(m%60,96,"GPU PIPELINE TEST", false);
 
-         const char hexdigits[] = "0123456789ABCDEF";
+         const char digits[] = "0123456789";
 
-         msg[0] = hexdigits[((gpustate>>28)%16)];
-         msg[1] = hexdigits[((gpustate>>24)%16)];
-         msg[2] = hexdigits[((gpustate>>20)%16)];
-         msg[3] = hexdigits[((gpustate>>16)%16)];
-         msg[4] = hexdigits[((gpustate>>12)%16)];
-         msg[5] = hexdigits[((gpustate>>8)%16)];
-         msg[6] = hexdigits[((gpustate>>4)%16)];
-         msg[7] = hexdigits[(gpustate%16)];
+         msg[0] = digits[((cycle/10000000)%10)];
+         msg[1] = digits[((cycle/1000000)%10)];
+         msg[2] = digits[((cycle/100000)%10)];
+         msg[3] = digits[((cycle/10000)%10)];
+         msg[4] = digits[((cycle/1000)%10)];
+         msg[5] = '.';
+         msg[6] = digits[((cycle/100)%10)];
+         msg[7] = digits[((cycle/10)%10)];
+         msg[8] = digits[(cycle%10)];
          PrintDMA(16,160,msg);
 
          // Stall GPU until vsync is reached
