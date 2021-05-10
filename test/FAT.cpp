@@ -179,7 +179,7 @@ int fat_list_files(char *target)
 
             if (target==nullptr)
             {
-                Print(0,col,11,dir->name); // name:8 + ext:3
+                PrintDMA(0,col,11,dir->name); // name:8 + ext:3
                 col+=8;
             }
             else

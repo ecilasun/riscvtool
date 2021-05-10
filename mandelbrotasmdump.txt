@@ -13,6 +13,13 @@ SYMBOL TABLE:
 00011558 l    d  .bss	00000000 .bss
 00000000 l    d  .comment	00000000 .comment
 00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
+00000000 l    d  .debug_aranges	00000000 .debug_aranges
+00000000 l    d  .debug_info	00000000 .debug_info
+00000000 l    d  .debug_abbrev	00000000 .debug_abbrev
+00000000 l    d  .debug_line	00000000 .debug_line
+00000000 l    d  .debug_str	00000000 .debug_str
+00000000 l    d  .debug_loc	00000000 .debug_loc
+00000000 l    d  .debug_ranges	00000000 .debug_ranges
 00000000 l    df *ABS*	00000000 mandelbrot.cpp
 00011574 l     O .bss	00000004 _ZZ15mandelbrotFloatfffE3row
 00000000 l    df *ABS*	00000000 __call_atexit.c
@@ -40,6 +47,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 utils.cpp
 00000000 l    df *ABS*	00000000 impure.c
 000110d0 l     O .data	00000428 impure_data
+00000000 l    df *ABS*	00000000 libgcc2.c
 00000000 l    df *ABS*	00000000 
 000110c8 l       .fini_array	00000000 __fini_array_end
 000110c4 l       .fini_array	00000000 __fini_array_start
@@ -824,14 +832,14 @@ ELF Header:
   Version:                           0x1
   Entry point address:               0x101cc
   Start of program headers:          52 (bytes into file)
-  Start of section headers:          7604 (bytes into file)
+  Start of section headers:          16036 (bytes into file)
   Flags:                             0x2, single-float ABI
   Size of this header:               52 (bytes)
   Size of program headers:           32 (bytes)
   Number of program headers:         2
   Size of section headers:           40 (bytes)
-  Number of section headers:         15
-  Section header string table index: 14
+  Number of section headers:         22
+  Section header string table index: 21
 
 Section Headers:
   [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
@@ -847,9 +855,16 @@ Section Headers:
   [ 9] .bss              NOBITS          00011558 001558 00c020 00  WA  0   0  4
   [10] .comment          PROGBITS        00000000 001558 000012 01  MS  0   0  1
   [11] .riscv.attributes RISCV_ATTRIBUTE 00000000 00156a 000026 00      0   0  1
-  [12] .symtab           SYMTAB          00000000 001590 0004a0 10     13  47  4
-  [13] .strtab           STRTAB          00000000 001a30 000304 00      0   0  1
-  [14] .shstrtab         STRTAB          00000000 001d34 00007d 00      0   0  1
+  [12] .debug_aranges    PROGBITS        00000000 001590 000020 00      0   0  1
+  [13] .debug_info       PROGBITS        00000000 0015b0 0007b2 00      0   0  1
+  [14] .debug_abbrev     PROGBITS        00000000 001d62 00019d 00      0   0  1
+  [15] .debug_line       PROGBITS        00000000 001eff 00074f 00      0   0  1
+  [16] .debug_str        PROGBITS        00000000 00264e 00028d 01  MS  0   0  1
+  [17] .debug_loc        PROGBITS        00000000 0028db 000bcd 00      0   0  1
+  [18] .debug_ranges     PROGBITS        00000000 0034a8 0000f8 00      0   0  1
+  [19] .symtab           SYMTAB          00000000 0035a0 000520 10     20  55  4
+  [20] .strtab           STRTAB          00000000 003ac0 00030e 00      0   0  1
+  [21] .shstrtab         STRTAB          00000000 003dce 0000d6 00      0   0  1
 Key to Flags:
   W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
   L (link order), O (extra OS processing required), G (group), T (TLS),
@@ -874,7 +889,7 @@ There are no relocations in this file.
 
 The decoding of unwind sections for machine type RISC-V is not currently supported.
 
-Symbol table '.symtab' contains 74 entries:
+Symbol table '.symtab' contains 82 entries:
    Num:    Value  Size Type    Bind   Vis      Ndx Name
      0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
      1: 00010074     0 SECTION LOCAL  DEFAULT    1 
@@ -888,68 +903,76 @@ Symbol table '.symtab' contains 74 entries:
      9: 00011558     0 SECTION LOCAL  DEFAULT    9 
     10: 00000000     0 SECTION LOCAL  DEFAULT   10 
     11: 00000000     0 SECTION LOCAL  DEFAULT   11 
-    12: 00000000     0 FILE    LOCAL  DEFAULT  ABS mandelbrot.cpp
-    13: 00011574     4 OBJECT  LOCAL  DEFAULT    9 _ZZ15mandelbrotFloatfffE3
-    14: 00000000     0 FILE    LOCAL  DEFAULT  ABS __call_atexit.c
-    15: 000101b4    24 FUNC    LOCAL  DEFAULT    1 register_fini
-    16: 00000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
-    17: 00011000     0 OBJECT  LOCAL  DEFAULT    3 __EH_FRAME_BEGIN__
-    18: 0001021c     0 FUNC    LOCAL  DEFAULT    1 __do_global_dtors_aux
-    19: 00011558     1 OBJECT  LOCAL  DEFAULT    9 completed.1
-    20: 000110c4     0 OBJECT  LOCAL  DEFAULT    5 __do_global_dtors_aux_fin
-    21: 00010268     0 FUNC    LOCAL  DEFAULT    1 frame_dummy
-    22: 0001155c    24 OBJECT  LOCAL  DEFAULT    9 object.0
-    23: 000110c0     0 OBJECT  LOCAL  DEFAULT    4 __frame_dummy_init_array_
-    24: 00000000     0 FILE    LOCAL  DEFAULT  ABS wf_log.c
-    25: 00000000     0 FILE    LOCAL  DEFAULT  ABS ef_log.c
-    26: 00000000     0 FILE    LOCAL  DEFAULT  ABS sf_nan.c
-    27: 00000000     0 FILE    LOCAL  DEFAULT  ABS errno.c
-    28: 00000000     0 FILE    LOCAL  DEFAULT  ABS exit.c
-    29: 00000000     0 FILE    LOCAL  DEFAULT  ABS init.c
-    30: 00000000     0 FILE    LOCAL  DEFAULT  ABS fini.c
-    31: 00000000     0 FILE    LOCAL  DEFAULT  ABS atexit.c
-    32: 00000000     0 FILE    LOCAL  DEFAULT  ABS __atexit.c
-    33: 00000000     0 FILE    LOCAL  DEFAULT  ABS sys_exit.c
-    34: 00000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
-    35: 000110b8     0 OBJECT  LOCAL  DEFAULT    3 __FRAME_END__
-    36: 00000000     0 FILE    LOCAL  DEFAULT  ABS utils.cpp
-    37: 00000000     0 FILE    LOCAL  DEFAULT  ABS impure.c
-    38: 000110d0  1064 OBJECT  LOCAL  DEFAULT    6 impure_data
-    39: 00000000     0 FILE    LOCAL  DEFAULT  ABS 
-    40: 000110c8     0 NOTYPE  LOCAL  DEFAULT    5 __fini_array_end
-    41: 000110c4     0 NOTYPE  LOCAL  DEFAULT    5 __fini_array_start
-    42: 000110c4     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_end
-    43: 000110bc     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_end
-    44: 00011500     0 OBJECT  LOCAL  DEFAULT    7 _GLOBAL_OFFSET_TABLE_
-    45: 000110bc     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_start
-    46: 000110bc     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_start
-    47: 00011d0c     0 NOTYPE  GLOBAL DEFAULT  ABS __global_pointer$
-    48: 00010328   420 FUNC    GLOBAL DEFAULT    1 _Z15mandelbrotFloatfff
-    49: 00010748     8 FUNC    GLOBAL DEFAULT    1 __errno
-    50: 000104cc   120 FUNC    GLOBAL DEFAULT    1 logf
-    51: 0001150c     0 NOTYPE  GLOBAL DEFAULT    8 __SDATA_BEGIN__
-    52: 00010544   508 FUNC    GLOBAL DEFAULT    1 __ieee754_logf
-    53: 000110c8     4 OBJECT  GLOBAL DEFAULT    6 GPUFIFO
-    54: 00011578 49152 OBJECT  GLOBAL DEFAULT    9 mandelbuffer
-    55: 00011550     4 OBJECT  GLOBAL DEFAULT    8 _global_impure_ptr
-    56: 00010780   156 FUNC    GLOBAL DEFAULT    1 __libc_init_array
-    57: 00010288   160 FUNC    GLOBAL DEFAULT    1 _Z10evalMandeliiifff
-    58: 00010a18    92 FUNC    GLOBAL DEFAULT    1 __libc_fini_array
-    59: 000108f8   288 FUNC    GLOBAL DEFAULT    1 __call_exitprocs
-    60: 000101cc    80 FUNC    GLOBAL DEFAULT    1 _start
-    61: 00010a88   152 FUNC    GLOBAL DEFAULT    1 __register_exitproc
-    62: 0001d578     0 NOTYPE  GLOBAL DEFAULT    9 __BSS_END__
-    63: 00011558     0 NOTYPE  GLOBAL DEFAULT    9 __bss_start
-    64: 0001081c   220 FUNC    GLOBAL DEFAULT    1 memset
-    65: 00010074   320 FUNC    GLOBAL DEFAULT    1 main
-    66: 00010a74    20 FUNC    GLOBAL DEFAULT    1 atexit
-    67: 00010740     8 FUNC    GLOBAL DEFAULT    1 nanf
-    68: 00011554     4 OBJECT  GLOBAL DEFAULT    8 _impure_ptr
-    69: 000110c8     0 NOTYPE  GLOBAL DEFAULT    6 __DATA_BEGIN__
-    70: 00011558     0 NOTYPE  GLOBAL DEFAULT    8 _edata
-    71: 0001d578     0 NOTYPE  GLOBAL DEFAULT    9 _end
-    72: 00010750    48 FUNC    GLOBAL DEFAULT    1 exit
-    73: 00010b20    48 FUNC    GLOBAL DEFAULT    1 _exit
+    12: 00000000     0 SECTION LOCAL  DEFAULT   12 
+    13: 00000000     0 SECTION LOCAL  DEFAULT   13 
+    14: 00000000     0 SECTION LOCAL  DEFAULT   14 
+    15: 00000000     0 SECTION LOCAL  DEFAULT   15 
+    16: 00000000     0 SECTION LOCAL  DEFAULT   16 
+    17: 00000000     0 SECTION LOCAL  DEFAULT   17 
+    18: 00000000     0 SECTION LOCAL  DEFAULT   18 
+    19: 00000000     0 FILE    LOCAL  DEFAULT  ABS mandelbrot.cpp
+    20: 00011574     4 OBJECT  LOCAL  DEFAULT    9 _ZZ15mandelbrotFloatfffE3
+    21: 00000000     0 FILE    LOCAL  DEFAULT  ABS __call_atexit.c
+    22: 000101b4    24 FUNC    LOCAL  DEFAULT    1 register_fini
+    23: 00000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
+    24: 00011000     0 OBJECT  LOCAL  DEFAULT    3 __EH_FRAME_BEGIN__
+    25: 0001021c     0 FUNC    LOCAL  DEFAULT    1 __do_global_dtors_aux
+    26: 00011558     1 OBJECT  LOCAL  DEFAULT    9 completed.1
+    27: 000110c4     0 OBJECT  LOCAL  DEFAULT    5 __do_global_dtors_aux_fin
+    28: 00010268     0 FUNC    LOCAL  DEFAULT    1 frame_dummy
+    29: 0001155c    24 OBJECT  LOCAL  DEFAULT    9 object.0
+    30: 000110c0     0 OBJECT  LOCAL  DEFAULT    4 __frame_dummy_init_array_
+    31: 00000000     0 FILE    LOCAL  DEFAULT  ABS wf_log.c
+    32: 00000000     0 FILE    LOCAL  DEFAULT  ABS ef_log.c
+    33: 00000000     0 FILE    LOCAL  DEFAULT  ABS sf_nan.c
+    34: 00000000     0 FILE    LOCAL  DEFAULT  ABS errno.c
+    35: 00000000     0 FILE    LOCAL  DEFAULT  ABS exit.c
+    36: 00000000     0 FILE    LOCAL  DEFAULT  ABS init.c
+    37: 00000000     0 FILE    LOCAL  DEFAULT  ABS fini.c
+    38: 00000000     0 FILE    LOCAL  DEFAULT  ABS atexit.c
+    39: 00000000     0 FILE    LOCAL  DEFAULT  ABS __atexit.c
+    40: 00000000     0 FILE    LOCAL  DEFAULT  ABS sys_exit.c
+    41: 00000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
+    42: 000110b8     0 OBJECT  LOCAL  DEFAULT    3 __FRAME_END__
+    43: 00000000     0 FILE    LOCAL  DEFAULT  ABS utils.cpp
+    44: 00000000     0 FILE    LOCAL  DEFAULT  ABS impure.c
+    45: 000110d0  1064 OBJECT  LOCAL  DEFAULT    6 impure_data
+    46: 00000000     0 FILE    LOCAL  DEFAULT  ABS libgcc2.c
+    47: 00000000     0 FILE    LOCAL  DEFAULT  ABS 
+    48: 000110c8     0 NOTYPE  LOCAL  DEFAULT    5 __fini_array_end
+    49: 000110c4     0 NOTYPE  LOCAL  DEFAULT    5 __fini_array_start
+    50: 000110c4     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_end
+    51: 000110bc     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_end
+    52: 00011500     0 OBJECT  LOCAL  DEFAULT    7 _GLOBAL_OFFSET_TABLE_
+    53: 000110bc     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_start
+    54: 000110bc     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_start
+    55: 00011d0c     0 NOTYPE  GLOBAL DEFAULT  ABS __global_pointer$
+    56: 00010328   420 FUNC    GLOBAL DEFAULT    1 _Z15mandelbrotFloatfff
+    57: 00010748     8 FUNC    GLOBAL DEFAULT    1 __errno
+    58: 000104cc   120 FUNC    GLOBAL DEFAULT    1 logf
+    59: 0001150c     0 NOTYPE  GLOBAL DEFAULT    8 __SDATA_BEGIN__
+    60: 00010544   508 FUNC    GLOBAL DEFAULT    1 __ieee754_logf
+    61: 000110c8     4 OBJECT  GLOBAL DEFAULT    6 GPUFIFO
+    62: 00011578 49152 OBJECT  GLOBAL DEFAULT    9 mandelbuffer
+    63: 00011550     4 OBJECT  GLOBAL DEFAULT    8 _global_impure_ptr
+    64: 00010780   156 FUNC    GLOBAL DEFAULT    1 __libc_init_array
+    65: 00010288   160 FUNC    GLOBAL DEFAULT    1 _Z10evalMandeliiifff
+    66: 00010a18    92 FUNC    GLOBAL DEFAULT    1 __libc_fini_array
+    67: 000108f8   288 FUNC    GLOBAL DEFAULT    1 __call_exitprocs
+    68: 000101cc    80 FUNC    GLOBAL DEFAULT    1 _start
+    69: 00010a88   152 FUNC    GLOBAL DEFAULT    1 __register_exitproc
+    70: 0001d578     0 NOTYPE  GLOBAL DEFAULT    9 __BSS_END__
+    71: 00011558     0 NOTYPE  GLOBAL DEFAULT    9 __bss_start
+    72: 0001081c   220 FUNC    GLOBAL DEFAULT    1 memset
+    73: 00010074   320 FUNC    GLOBAL DEFAULT    1 main
+    74: 00010a74    20 FUNC    GLOBAL DEFAULT    1 atexit
+    75: 00010740     8 FUNC    GLOBAL DEFAULT    1 nanf
+    76: 00011554     4 OBJECT  GLOBAL DEFAULT    8 _impure_ptr
+    77: 000110c8     0 NOTYPE  GLOBAL DEFAULT    6 __DATA_BEGIN__
+    78: 00011558     0 NOTYPE  GLOBAL DEFAULT    8 _edata
+    79: 0001d578     0 NOTYPE  GLOBAL DEFAULT    9 _end
+    80: 00010750    48 FUNC    GLOBAL DEFAULT    1 exit
+    81: 00010b20    48 FUNC    GLOBAL DEFAULT    1 _exit
 
 No version information found in this file.
 Attribute Section: riscv

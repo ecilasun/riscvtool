@@ -146,20 +146,29 @@ int main()
 
    echoterm("NekoIchi\r\nrv32imf@60Mhz\r\nv0001\r\n");
 
-   // Clear color
-   uint8_t bgcolor = 0x7C;
-   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
-
-   int x1 = 0, y1 = 0;
-   int x2 = 8, y2 = 0;
-   int x3 = 0, y3 = 8;
-   uint8_t ncolor = 0;
    int counter = 0;
 
    // Set page
    uint32_t page = 0;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 1, GPU10BITIMM(page));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
+   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
+
+   // CLS
+   uint8_t bgcolor = 0x03;//0x7C;
+   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
+   GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
+
+   // Render text
+   PrintDMA(56, 8, "Please upload ELF");
+   PrintDMA(0, 16, "USB/UART @115200bps:8bit:1st:np");
+
+   // Swap to other page to reveal previous render
+   page = (page+1)%2;
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
    GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
 
    // UART communication section
@@ -199,45 +208,6 @@ int main()
       }
 
       ++counter;
-
-      // Wait a long while before pushing a new triangle
-      if ((counter%4096) == 0)
-      {
-         // CLS
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-         GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
-
-         // TRI
-         uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
-         uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
-         uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
-         GPUFIFO[4] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, ncolor);
-
-         x1 += 8; x2 += 8; x3 += 8;
-         if (x1 > 248)
-         {
-            x1 = 0; x2 = 8; x3 = 0;
-            y1 = y1+8; y2 = y2+8; y3 = y3+8;
-            if (y1 > 184)
-            {
-               y1 = 0; y2 = 0; y3 = 8;
-            }
-         }
-         ++ncolor;
-
-         // Swap page
-         page = (page+1)%2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
-         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
-      }
    }
 
    return 0;

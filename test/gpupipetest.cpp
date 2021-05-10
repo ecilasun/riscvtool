@@ -185,7 +185,7 @@ void drawrect(const float ox, const float oy, uint8_t ncolor)
    GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (ncolor));
    GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (ncolor^0xFF));
 
-   roll += 0.03f;
+   roll += 0.01f;
 }
 
 void resetparticles(short *particles)
@@ -261,25 +261,6 @@ void drawparticles(short *particles)
    }
 }
 
-uint32_t ReadCycle()
-{
-   uint32_t cyclehigh, cyclelow;
-
-   asm (
-      "rdtimeh %0;"
-      : "=r" (cyclehigh)
-   );
-   asm (
-      "rdtime %0;"
-      : "=r" (cyclelow)
-   );
-
-   uint64_t clock = (uint64_t(cyclehigh)<<32) | cyclelow;
-   uint64_t seconds = clock / 100000;
-
-   return (uint32_t)seconds;
-}
-
 int main(int argc, char ** argv)
 {
    // Set register g1 with color data
@@ -296,7 +277,6 @@ int main(int argc, char ** argv)
    volatile unsigned int gpustate = 0x00000000;
    unsigned int cnt = 0x00000000;
 
-   char msg[] = "xxxxxx.xx";
    uint32_t page = 0;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
@@ -305,6 +285,7 @@ int main(int argc, char ** argv)
    short triparticles[4*MAX_PARTICLES];
    resetparticles(triparticles);
 
+   uint32_t prevtime = 0;
    while(1)
    {
       uint8_t c1 = 0xFF;//cnt&0xFF;
@@ -316,8 +297,8 @@ int main(int argc, char ** argv)
             dx=-dx;
          if ((y>192.f) || (y<0.f))
             dy=-dy;
-         x+=dx;
-         y+=dy;
+         /*x+=dx;
+         y+=dy;*/
 
          ++cnt;
 
@@ -328,7 +309,7 @@ int main(int argc, char ** argv)
 
          drawrect(x, y, 0x7C);
 
-         uint32_t cputime = ReadCycle();
+         uint32_t cputime = ReadClock();
 
          uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
@@ -340,6 +321,7 @@ int main(int argc, char ** argv)
 
          f = cputime*10;
          for(int z=0;z<256;++z)
+
          {
             int k = ssin(z*2+f)/173 + 96;
             uint32_t addrs = (k<<8)+z;
@@ -359,22 +341,13 @@ int main(int argc, char ** argv)
          }
 
          PrintDMA(m%60,96,"GPU PIPELINE TEST", false);
-
-         const char digits[] = "0123456789";
-
-         msg[0] = digits[((cputime/10000000)%10)];
-         msg[1] = digits[((cputime/1000000)%10)];
-         msg[2] = digits[((cputime/100000)%10)];
-         msg[3] = digits[((cputime/10000)%10)];
-         msg[4] = digits[((cputime/1000)%10)];
-         char old5 = msg[5];
-         msg[5] = digits[((cputime/100)%10)];
-         msg[6] = '.';
-         msg[7] = digits[((cputime/10)%10)];
-         msg[8] = digits[(cputime%10)];
-         if (msg[5]!=old5) // Move text every second
+         if (prevtime!=cputime/100)
+         {
+            prevtime = cputime/100;
             m+=4;
-         PrintDMA(16,160,msg);
+         }
+
+         PrintDMADecimal(16,160,cputime);
 
          // Stall GPU until vsync is reached
          GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);

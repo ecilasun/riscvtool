@@ -112,36 +112,7 @@ void PrintDMA(const int col, const int row, const int maxlen, const char *messag
    }
 }
 
-void Print(const int ox, const int oy, const char *message)
-{
-   int i=0;
-   int charbyte, charrow, charcol, fontbyte;
-   // Loop until we hit a null-terminator
-   while (message[i] != 0)
-   {
-      charbyte = message[i]-32;
-      charrow = (charbyte>>5)*8;
-      charcol = (charbyte%32)*8;
-      if(charbyte<0) // Skip non-printables
-      {
-         ++i;
-         continue;
-      }
-      for (int y=0;y<8;++y)
-      {
-            int py = ((y+oy)<<8);
-            for (int x=0;x<8;++x)
-            {
-               fontbyte = font[charcol+x + ((charrow+y)<<8)];
-               //if (fontbyte)
-                  VRAM[i*8+x+ox+py] = fontbyte;//0x00;
-            }
-      }
-      ++i;
-   }
-}
-
-void PrintHex(const int ox, const int oy, const uint32_t i)
+void PrintDMAHex(const int ox, const int oy, const uint32_t i)
 {
    const char hexdigits[] = "0123456789ABCDEF";
    char msg[] = "        .";
@@ -154,94 +125,23 @@ void PrintHex(const int ox, const int oy, const uint32_t i)
    msg[6] = hexdigits[((i>>4)%16)];
    msg[7] = hexdigits[(i%16)];
    msg[8] = 0;
-   Print(ox,oy,msg);
+   PrintDMA(ox, oy, msg);
 }
 
-void PrintMasked(const int ox, const int oy, const char *message)
+void PrintDMADecimal(const int ox, const int oy, const uint32_t i)
 {
-   int i=0;
-   int charbyte, charrow, charcol, fontbyte;
-   // Loop until we hit a null-terminator
-   while (message[i] != 0)
-   {
-      charbyte = message[i]-32;
-      charrow = (charbyte>>5)*8;
-      charcol = (charbyte%32)*8;
-      if(charbyte<0) // Skip non-printables
-      {
-         ++i;
-         continue;
-      }
-      for (int y=0;y<8;++y)
-      {
-            int py = ((y+oy)<<8);
-            for (int x=0;x<8;++x)
-            {
-               fontbyte = font[charcol+x + ((charrow+y)<<8)];
-               if (fontbyte)
-                  VRAM[i*8+x+ox+py] = 0x00;
-            }
-      }
-      ++i;
-   }
-}
+   const char digits[] = "0123456789";
+   char msg[] = "        ";
 
-void Print(const int ox, const int oy, const int maxlen, const char *message)
-{
-   int i=0;
-   int charbyte, charrow, charcol, fontbyte;
-   // Loop until we hit a null-terminator
-   while (i<maxlen && message[i] != 0)
-   {
-      charbyte = message[i]-32;
-      charrow = (charbyte>>5)*8;
-      charcol = (charbyte%32)*8;
-      if(charbyte<0) // Skip non-printables
-      {
-         ++i;
-         continue;
-      }
-      for (int y=0;y<8;++y)
-      {
-            int py = ((y+oy)<<8);
-            for (int x=0;x<8;++x)
-            {
-               fontbyte = font[charcol+x + ((charrow+y)<<8)];
-               //if (fontbyte)
-                  VRAM[i*8+x+ox+py] = fontbyte;//0x00;
-            }
-      }
-      ++i;
-   }
-}
-
-void PrintMasked(const int ox, const int oy, const int maxlen, const char *message)
-{
-   int i=0;
-   int charbyte, charrow, charcol, fontbyte;
-   // Loop until we hit a null-terminator
-   while (i<maxlen && message[i] != 0)
-   {
-      charbyte = message[i]-32;
-      charrow = (charbyte>>5)*8;
-      charcol = (charbyte%32)*8;
-      if(charbyte<0) // Skip non-printables
-      {
-         ++i;
-         continue;
-      }
-      for (int y=0;y<8;++y)
-      {
-            int py = ((y+oy)<<8);
-            for (int x=0;x<8;++x)
-            {
-               fontbyte = font[charcol+x + ((charrow+y)<<8)];
-               if (fontbyte)
-                  VRAM[i*8+x+ox+py] = 0x00;
-            }
-      }
-      ++i;
-   }
+   msg[0] = digits[((i/1000000)%10)];
+   msg[1] = digits[((i/1000000)%10)];
+   msg[2] = digits[((i/100000)%10)];
+   msg[3] = digits[((i/10000)%10)];
+   msg[4] = digits[((i/1000)%10)];
+   msg[5] = digits[((i/100)%10)];
+   msg[6] = digits[((i/10)%10)];
+   msg[7] = digits[(i%10)];
+   PrintDMA(ox, oy, msg);
 }
 
 void EchoUART(const char *_message)
@@ -284,11 +184,30 @@ void ClearScreenGPU(const uint8_t color)
    GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
 }
 
-unsigned int seed = 7;
-unsigned int Random()
+uint32_t seed = 7;
+uint32_t Random()
 {
     seed = seed ^ (seed << 9);
     seed = seed ^ (seed >> 13);
     seed = seed ^ (seed << 1);
     return(seed);
+}
+
+uint32_t ReadClock()
+{
+   uint32_t cyclehigh, cyclelow;
+
+   asm (
+      "rdtimeh %0;"
+      : "=r" (cyclehigh)
+   );
+   asm (
+      "rdtime %0;"
+      : "=r" (cyclelow)
+   );
+
+   uint64_t clock = (uint64_t(cyclehigh)<<32) | cyclelow;
+   uint64_t seconds = clock / 100000;
+
+   return (uint32_t)seconds;
 }

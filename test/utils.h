@@ -52,13 +52,11 @@ enum cmdSupported {
 
 void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);
 void PrintDMA(const int col, const int row, const int maxlen, const char *message, bool masked=true);
-void Print(const int ox, const int oy, const char *message);
-void Print(const int ox, const int oy, const int maxlen, const char *message);
-void PrintHex(const int ox, const int oy, const uint32_t i);
-void PrintMasked(const int ox, const int oy, const char *message);
-void PrintMasked(const int ox, const int oy, const int maxlen, const char *message);
+void PrintDMAHex(const int ox, const int oy, const uint32_t i);
+void PrintDMADecimal(const int ox, const int oy, const uint32_t i);
 void EchoUART(const char *_message);
 void EchoInt(const uint32_t i);
 void ClearScreenGPU(const uint8_t color);
 void ClearScreen(const uint8_t color);
-unsigned int Random();
+uint32_t Random();
+uint32_t ReadClock();
