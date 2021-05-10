@@ -1,4 +1,4 @@
-This project contains a set of helper utilities and sample code, as well as the bootloader ROM image for ecrv32 RISC-V SoC found here: https://github.com/ecilasun/ecrv32
+This project contains a set of helper utilities and sample code, as well as the bootloader ROM image for ecrv32 RISC-V SoC found here: https://github.com/ecilasun/NekoIchi
 
 # Prerequisites
 
@@ -32,7 +32,7 @@ and the ROM_nekoichi.coe file will be generated. You can then copy this over the
 
 You can find NekoIchi SoC here: https://github.com/ecilasun/NekoIchi
 
-# Building the samples for ecrv32
+# Building the samples for NekoIchi
 
 Currently there's no 'make' file to build the sample executables. Please use the following to build them:
 
@@ -75,11 +75,11 @@ sending '.bss' @0x00004D8C len:00004F88 off:00003D8C...done (0x00004F94 bytes wr
 Branching to 0x00000336
 ```
 
-NOTE: Please make sure that the load address is 0x00000000 unless you really want to offset the binary for some reason. Take care to keep your binary short enough so that the running loader code at address 0x0000FA00 does not get overwritten.
+NOTE: Please make sure that the default load address is 0x00010000 unless you really want to offset the binary for some reason. Take care to keep your binary away from address range 0x00000000-0x00002000 so that the loader code does not get overwritten while loading your binary.
 
 You can send raw binaries to any address on the device. The video memory lives at address 0x80000000, therefore to displayed an image on screen, you could use the following command line with your raw 8 bit image file name (make sure it's 256x192 pixels long):
 ```
 sudo ./build/release/riscvtool my8bitimage.raw -sendraw 0x80000000
 ```
 
-NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknown-elf-g++) are missing from your system, please follow the instructions at https://github.com/riscv/riscv-gnu-toolchain (especially useful is the section with multilib, try to build rv32i / rv32ic / rv32imc / rv32imac libraries as there's no floating point support yet on ECRV32)
+NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknown-elf-g++) are missing from your system, please follow the instructions at https://github.com/riscv/riscv-gnu-toolchain (especially useful is the section with multilib, try to build rv32i / rv32if / rv32imf / rv32imaf libraries, as there's currently no compressed instruction support on NekoIchi)
