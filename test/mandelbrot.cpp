@@ -18,7 +18,7 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
    int iteration = 0;
 
    float c_re = (float(col) - 128.f) / 256.f * sx + ox;
-   float c_im = (float(row) - 96.f) / 192.f * sx + oy;
+   float c_im = (float(row) - 96.f) / 256.f * sx + oy;
    float x = 0.f, y = 0.f;
    float x2 = 0.f, y2 = 0.f;
    while (x2+y2 < 4.f && iteration < maxiter)
