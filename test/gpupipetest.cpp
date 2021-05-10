@@ -275,7 +275,7 @@ uint32_t ReadCycle()
    );
 
    uint64_t clock = (uint64_t(cyclehigh)<<32) | cyclelow;
-   uint64_t seconds = clock / 10000;
+   uint64_t seconds = clock / 100000;
 
    return (uint32_t)seconds;
 }
@@ -296,7 +296,7 @@ int main(int argc, char ** argv)
    volatile unsigned int gpustate = 0x00000000;
    unsigned int cnt = 0x00000000;
 
-   char msg[] = "xxxxx.xxx";
+   char msg[] = "xxxxxx.xx";
    uint32_t page = 0;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
@@ -369,8 +369,8 @@ int main(int argc, char ** argv)
          msg[2] = digits[((cycle/100000)%10)];
          msg[3] = digits[((cycle/10000)%10)];
          msg[4] = digits[((cycle/1000)%10)];
-         msg[5] = '.';
-         msg[6] = digits[((cycle/100)%10)];
+         msg[5] = digits[((cycle/100)%10)];
+         msg[6] = '.';
          msg[7] = digits[((cycle/10)%10)];
          msg[8] = digits[(cycle%10)];
          PrintDMA(16,160,msg);
