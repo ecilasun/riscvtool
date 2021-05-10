@@ -222,10 +222,11 @@ void drawparticles(short *particles)
    }
 
    // Draw the live particles
-   short rx0 = 2;//cosf(proll)*7.f;
-   short ry0 = 0;//sinf(proll)*7.f;
-   short rx1 = 0;//cosf(proll+3.1415927f*0.5f)*7.f;
-   short ry1 = 2;//sinf(proll+3.1415927f*0.5f)*7.f;
+   static float proll = 0.f;
+   short rx0 = cosf(proll)*3.f;
+   short ry0 = sinf(proll)*3.f;
+   short rx1 = cosf(proll+3.1415927f*0.5f)*3.f;
+   short ry1 = sinf(proll+3.1415927f*0.5f)*3.f;
    for (int i=0;i<MAX_PARTICLES;++i)
    {
       if (particles[4*i+1] != -1)
@@ -238,19 +239,26 @@ void drawparticles(short *particles)
          short y2 = oy + ( ry0 - ry1);
          short x3 = ox + ( rx0 + rx1);
          short y3 = oy + ( ry0 + ry1);
+         //short x4 = ox + (-rx0 + rx1);
+         //short y4 = oy + (-ry0 + ry1);
 
          uint32_t vertex0 = (y1<<16) | (x1);
          uint32_t vertex1 = (y2<<16) | (x2);
          uint32_t vertex2 = (y3<<16) | (x3);
+         //uint32_t vertex3 = (y4<<16) | (x4);
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
          GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
          GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
          GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
          GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
-         GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (i&0xFF));
+         //GPUFIFO[6] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex3)); // {0, frontcolor, v2.y, v2.x}
+         //GPUFIFO[7] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex3));
+         GPUFIFO[8] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (i&0xFF));
+         //GPUFIFO[8] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (i&0xFF));
       }
    }
+   proll += 0.24f;
 }
 
 int main(int argc, char ** argv)
@@ -296,38 +304,6 @@ int main(int argc, char ** argv)
 
          // CLS
          GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 7, 0, 0);  // clearvram g1
-
-         /*short x1 = 8; short y1 = 8;
-         short x2 = 121; short y2 = 96;
-         short x3 = 63; short y3 = 140;
-         uint32_t vertex0 = (y1<<16) | (x1);
-         uint32_t vertex1 = (y2<<16) | (x2);
-         uint32_t vertex2 = (y3<<16) | (x3);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
-         GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
-         GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
-         GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, 0xFF);*/
-
-         /*for (int T = 0; T<16; ++T)
-         {
-            short x1 = Random()%256; short y1 = Random()%192;
-            short x2 = Random()%256; short y2 = Random()%192;
-            short x3 = Random()%256; short y3 = Random()%192;
-
-            uint32_t vertex0 = (y1<<16) | (x1);
-            uint32_t vertex1 = (y2<<16) | (x2);
-            uint32_t vertex2 = (y3<<16) | (x3);
-            GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
-            GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
-            GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
-            GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
-            GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2)); // {0, frontcolor, v2.y, v2.x}
-            GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
-            GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (T&0xFF));
-         }*/
 
          drawparticles(triparticles);
 
@@ -377,14 +353,14 @@ int main(int argc, char ** argv)
          msg[7] = hexdigits[(gpustate%16)];
          PrintDMA(16,160,msg);
 
+         // Stall GPU until vsync is reached
+         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+
          // Swap video page
          page = (page+1)%2;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
          GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
-
-         // Stall GPU until vsync is reached
-         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
 
          // GPU status address in G1
          uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
