@@ -307,8 +307,8 @@ int main(int argc, char ** argv)
 
    while(1)
    {
-      uint8_t c1 = cnt&0xFF;
-      uint8_t c2 = cnt^0xFF;
+      uint8_t c1 = 0xFF;//cnt&0xFF;
+      uint8_t c2 = 0xC0;//cnt^0xFF;
 
       if (gpustate == cnt) // GPU work complete, push more
       {
@@ -321,14 +321,14 @@ int main(int argc, char ** argv)
 
          ++cnt;
 
-         uint32_t cycle = ReadCycle();
-
          // CLS
          GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 7, 0, 0);  // clearvram g1
 
          drawparticles(triparticles);
 
          drawrect(x, y, 0x7C);
+
+         uint32_t cputime = ReadCycle();
 
          uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
@@ -338,7 +338,8 @@ int main(int argc, char ** argv)
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorthree));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorthree));
 
-         /*for(int z=0;z<256;++z)
+         f = cputime*10;
+         for(int z=0;z<256;++z)
          {
             int k = ssin(z*2+f)/173 + 96;
             uint32_t addrs = (k<<8)+z;
@@ -355,24 +356,24 @@ int main(int argc, char ** argv)
             uint32_t mask = addrs&0x3;
             mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
             GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 3, 0, mask, (wordaddrs&0x3FFF));
-         }*/
-         f+=26;
+         }
 
-         if ((cnt%60) == 0)
-            m+=4;
          PrintDMA(m%60,96,"GPU PIPELINE TEST", false);
 
          const char digits[] = "0123456789";
 
-         msg[0] = digits[((cycle/10000000)%10)];
-         msg[1] = digits[((cycle/1000000)%10)];
-         msg[2] = digits[((cycle/100000)%10)];
-         msg[3] = digits[((cycle/10000)%10)];
-         msg[4] = digits[((cycle/1000)%10)];
-         msg[5] = digits[((cycle/100)%10)];
+         msg[0] = digits[((cputime/10000000)%10)];
+         msg[1] = digits[((cputime/1000000)%10)];
+         msg[2] = digits[((cputime/100000)%10)];
+         msg[3] = digits[((cputime/10000)%10)];
+         msg[4] = digits[((cputime/1000)%10)];
+         char old5 = msg[5];
+         msg[5] = digits[((cputime/100)%10)];
          msg[6] = '.';
-         msg[7] = digits[((cycle/10)%10)];
-         msg[8] = digits[(cycle%10)];
+         msg[7] = digits[((cputime/10)%10)];
+         msg[8] = digits[(cputime%10)];
+         if (msg[5]!=old5) // Move text every second
+            m+=4;
          PrintDMA(16,160,msg);
 
          // Stall GPU until vsync is reached
