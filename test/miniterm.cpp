@@ -36,27 +36,54 @@ void scroll()
       chartable[cx+23*32] = ' ';
 }
 
+int cursorx = 0;
+void EchoConsole(const char *echostring)
+{
+   EchoUART(echostring);
+
+   char *str = (char*)echostring;
+   while (*str != 0)
+   {
+      if (*str == '\r')
+      {
+         cursorx = 0;
+         scroll();
+      }
+      if (*str != '\n' && *str != '\r')
+      {
+         chartable[cursorx+23*32] = *str;
+         ++cursorx;
+         if (cursorx==32)
+         {
+            cursorx=0;
+            scroll();
+         }
+      }
+      ++str;
+   }
+}
+
 void loadelf(char *commandline)
 {
    FILEHANDLE fh;
    if (fat_openfile(&commandline[5], &fh))
    {
-      EchoUART("\r\nReading file...\r\n");
+      EchoConsole("\r\nReading file...\r\n");
       uint32_t fsz = fat_getfilesize(&fh);
       EchoInt(fsz);
       char buffer[4096]; // AT LEAST 4096! (spc(8)*bps(512)==4096)
       int readsize;
       fat_readfile(&fh, buffer, fsz>4096?4096:fsz, &readsize);
       buffer[fsz] = 0;
-      EchoUART(buffer);
+      EchoConsole(buffer);
       fat_closefile(&fh);
-      EchoUART("Done\r\n");
+      EchoConsole("Done\r\n");
    }
    else
    {
-      EchoUART("\r\nFile ");
-      EchoUART(&commandline[5]);
-      EchoUART(" not found\r\n");
+      EchoConsole("\r\nFile ");
+      EchoConsole(&commandline[5]);
+      EchoConsole(" not found\r\n");
    }
 }
 
@@ -88,7 +115,9 @@ int main()
    // Startup message
    clearchars();
    ClearScreenGPU(bgcolor);
-   PrintDMA(0, 176, " MiniTerm (c)2021 Engin Cilasun ");
+   EchoConsole(" MiniTerm (c)2021 Engin Cilasun\r\n Use 'help' for assistance\r\n");
+   for (int cy=0;cy<24;++cy)
+      PrintDMA(0, 8*cy, 32, &chartable[cy*32]);
 
    page = (page+1)%2;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
@@ -132,7 +161,7 @@ int main()
             }
             else if ((incoming[0]='h') && (incoming[1]=='e') && (incoming[2]=='l') && (incoming[3]=='p'))
             {
-               EchoUART("\n\rMiniTerm version 0.1\n\r(c)2021 Engin Cilasun\n\rdir: list files at root directory\r\nload filename: load and run ELF\n\rcls: clear screen\n\rhelp: help screen\n\rreset: reboot to loader\n\r");
+               EchoConsole("\r\nrMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\n");
             }
             else if ((incoming[0]='d') && (incoming[1]=='i') && (incoming[2]=='r'))
             {
@@ -150,23 +179,14 @@ int main()
                {
                   char target[512] = "\r\n";
                   fat_list_files(target);
-                  EchoUART(target);
+                  EchoConsole(target);
                }
                else
-                  EchoUART("\r\nFile system not ready\r\n");
+                  EchoConsole("\r\nFile system not ready\r\n");
             }
             else if ((incoming[0]='l') && (incoming[1]=='o') && (incoming[2]=='a') && (incoming[3]=='d'))
             {
                loadelf(incoming);
-            }
-            else if ((incoming[0]='r') && (incoming[1]=='e') && (incoming[2]=='s') && (incoming[3]=='e') && (incoming[4]=='t'))
-            {
-               return 0;
-               //((void (*)(void)) ROMResetVector)();
-               /*__asm(
-                  "la ra, __global_pointer$;"
-                  "ret;"
-               );*/
             }
 
             scroll();
@@ -176,12 +196,13 @@ int main()
          }
 
          // Show the char table
-         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
          ClearScreenGPU(bgcolor);
          for (int cy=0;cy<24;++cy)
             PrintDMA(0, 8*cy, 32, &chartable[cy*32]);
          if (checkchar != 13)
             PrintDMA(0, 184, rcvcursor, incoming);
+
+         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
 
          page = (page+1)%2;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));

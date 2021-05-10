@@ -10,7 +10,7 @@ volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;        //
 volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;        // UART send data (write)
 volatile unsigned char *SPIInput = (volatile unsigned char* )0x30000000;      // SPI receive data (read)
 volatile unsigned char *SPIOutput = (volatile unsigned char* )0x20000000;     // SPU send data (write)
-volatile unsigned int ROMResetVector = 0x001FA00;
+volatile unsigned int ROMResetVector = 0x0000000;
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t font[] __attribute__((aligned(4))) = {
