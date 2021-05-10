@@ -169,10 +169,10 @@ void drawrect(const float ox, const float oy, uint8_t ncolor)
    short x4 = short(ox - rx0 + rx1);
    short y4 = short(oy - ry0 + ry1);
 
-   uint32_t vertex0 = (y1<<16) | (x1);
-   uint32_t vertex1 = (y2<<16) | (x2);
-   uint32_t vertex2 = (y3<<16) | (x3);
-   uint32_t vertex3 = (y4<<16) | (x4);
+   uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
+   uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
+   uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
+   uint32_t vertex3 = ((y4&0xFFFF)<<16) | (x4&0xFFFF);
 
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0));
    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
@@ -242,10 +242,10 @@ void drawparticles(short *particles)
          //short x4 = ox + (-rx0 + rx1);
          //short y4 = oy + (-ry0 + ry1);
 
-         uint32_t vertex0 = (y1<<16) | (x1);
-         uint32_t vertex1 = (y2<<16) | (x2);
-         uint32_t vertex2 = (y3<<16) | (x3);
-         //uint32_t vertex3 = (y4<<16) | (x4);
+         uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
+         uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
+         uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
+         //uint32_t vertex3 = ((y4&0xFFFF)<<16) | (x4&0xFFFF);
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0)); // {v1.y, v1.x, v0.y, v0.x}
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
          GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1)); // {v1.y, v1.x, v0.y, v0.x}
