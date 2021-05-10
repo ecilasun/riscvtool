@@ -45,12 +45,10 @@ at the root level of this project. This will generate the following samples and 
 With the exception of the ROM image, you can use a reasonable amount of C++11 code at its basic level, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file.
 
 ```
-ROM - the device ROM file, also generates a .COE (coefficient) file for Vivado, compiled using base instruction set only
+ROM_nekoichi - the device ROM file, also generates a .COE (coefficient) file for Vivado
 miniterm - a small terminal program, connect to device serial port (usually at /dev/ttyUSB1) at 115200 baud, 1 stop bit, no xon/off and type help in the terminal window
-instructiontest - test the compressed instructions and math instructions
-sdcardtest - SD card FAT access demo, acts as memory mapped IO test
 mandelbrot - draws a mandelbrot figure on the video buffer
-rastertest - raster out flicker / tearing test using an offscreen draw target
+gpupipetest - tests the GPU rasterizer / synchronization mechanisms and the realtime clock
 ```
 
 As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use the following command line:
