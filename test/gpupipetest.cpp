@@ -348,9 +348,11 @@ int main(int argc, char ** argv)
             m+=4;
          }
 
-         PrintDMADecimal(8,100,seconds);
-         PrintDMADecimal(8+64+8,100,milliseconds);
+         PrintDMA(4,92,"CLOCK READ", false);
+         PrintDMADecimal(4,100,seconds);
+         PrintDMADecimal(4+64+8,100,milliseconds);
 
+         PrintDMA(4,112,"DDR3 DWORD READ", false);
          // DEADBEEF 01234567 89FEDCBA 00C03807
          volatile uint32_t *A0 = (uint32_t* )0x00020000;
          volatile uint32_t *A1 = (uint32_t* )0x00020004;
