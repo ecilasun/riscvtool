@@ -307,7 +307,8 @@ int main(int argc, char ** argv)
 
          drawparticles(triparticles);
 
-         uint32_t milliseconds = ReadClock();
+         uint64_t clk = ReadClock();
+         uint32_t milliseconds = ClockToMs(clk);
          uint32_t seconds = milliseconds/1000;
 
          float rate = (float)(milliseconds%0xFFFF)/360.f;
@@ -350,7 +351,7 @@ int main(int argc, char ** argv)
 
          PrintDMA(4,92,"CLOCK READ", false);
          PrintDMADecimal(4,100,seconds);
-         PrintDMADecimal(4+64+8,100,milliseconds);
+         PrintDMADecimal(4+64+8,100,(uint32_t)((uint32_t)(clk&0xFFFFFFFF)));
 
          PrintDMA(4,112,"DDR3 DWORD READ", false);
          // DEADBEEF 01234567 89FEDCBA 00C03807

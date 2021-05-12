@@ -136,7 +136,7 @@ void PrintDMADecimal(const int ox, const int oy, const uint32_t i)
    const char digits[] = "0123456789";
    char msg[] = "        ";
 
-   msg[0] = digits[((i/1000000)%10)];
+   msg[0] = digits[((i/10000000)%10)];
    msg[1] = digits[((i/1000000)%10)];
    msg[2] = digits[((i/100000)%10)];
    msg[3] = digits[((i/10000)%10)];
@@ -196,21 +196,25 @@ uint32_t Random()
     return(seed);
 }
 
-uint32_t ReadClock()
+uint64_t ReadClock()
 {
-   uint32_t cyclehigh, cyclelow;
+   uint32_t clockhigh, clocklow;
 
    asm (
       "rdtimeh %0;"
-      : "=r" (cyclehigh)
+      : "=r" (clockhigh)
    );
    asm (
       "rdtime %0;"
-      : "=r" (cyclelow)
+      : "=r" (clocklow)
    );
 
-   uint64_t clock = (uint64_t(cyclehigh)<<32) | cyclelow;
-   uint64_t msec = clock / 10000; // Milliseconds
+   uint64_t clock = (uint64_t(clockhigh)<<32) | clocklow;
 
-   return (uint32_t)msec;
+   return clock;
+}
+
+uint32_t ClockToMs(uint64_t clock)
+{
+   return clock / 10000;
 }

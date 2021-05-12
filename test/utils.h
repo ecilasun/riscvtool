@@ -63,4 +63,5 @@ void EchoInt(const uint32_t i);
 void ClearScreenGPU(const uint8_t color);
 void ClearScreen(const uint8_t color);
 uint32_t Random();
-uint32_t ReadClock();
+uint64_t ReadClock();
+uint32_t ClockToMs(uint64_t clock);
