@@ -8,9 +8,8 @@ GROUP( -lc -lgloss -lgcc )
 /* Using a 4Kbyte stack for now */
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x1000;
 
-/* ROM can cover up to fist 16Kbytes of RAM */
 MEMORY{
-   RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 0x03FFF
+   RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 0x05200
 }
 
 ENTRY(_start)

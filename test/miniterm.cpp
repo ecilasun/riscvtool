@@ -5,14 +5,10 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include "umm_malloc.h"
 #include "utils.h"
 #include "gpu.h"
 #include "SDCARD.h"
 #include "FAT.h"
-
-// #pragma GCC push_options
-// #pragma GCC optimize ("align-functions=16")
 
 static int s_filesystemready = 0;
 volatile unsigned int targetjumpaddress = 0x00000000;
@@ -223,5 +219,3 @@ int main()
 
    return 0;
 }
-
-// #pragma GCC pop_options

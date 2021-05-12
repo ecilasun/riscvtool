@@ -6,7 +6,6 @@
 #include <cmath>
 #include "utils.h"
 #include "gpu.h"
-//#include "rom_nekoichi_rvcrt0.h"
 
 #define MAX_PARTICLES 512
 
@@ -151,9 +150,10 @@ int scos(int s)
     return(sinewave[((s+512)%1024)]-16384);
 }
 
-void drawrect(const float ox, const float oy, uint8_t ncolor)
+void drawrect(const float ox, const float oy, float rate)
 {
-   static float roll = 1.8f;
+   const uint8_t ncolor = 0x7C;
+   float roll = rate; //1.8f;
 
    float rx0 = cosf(roll)*64.f;
    float ry0 = sinf(roll)*64.f;
@@ -185,7 +185,7 @@ void drawrect(const float ox, const float oy, uint8_t ncolor)
    GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (ncolor));
    GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (ncolor^0xFF));
 
-   roll += 0.01f;
+   //roll += 0.01f;
 }
 
 void resetparticles(short *particles)
@@ -307,9 +307,11 @@ int main(int argc, char ** argv)
 
          drawparticles(triparticles);
 
-         drawrect(x, y, 0x7C);
+         uint32_t milliseconds = ReadClock();
+         uint32_t seconds = milliseconds/1000;
 
-         uint32_t cputime = ReadClock();
+         float rate = (float)(milliseconds%0xFFFF)/360.f;
+         drawrect(x, y, rate);
 
          uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(colortwo));
@@ -319,9 +321,7 @@ int main(int argc, char ** argv)
          GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(colorthree));
          GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(colorthree));
 
-         f = cputime*10;
          for(int z=0;z<256;++z)
-
          {
             int k = ssin(z*2+f)/173 + 96;
             uint32_t addrs = (k<<8)+z;
@@ -339,15 +339,27 @@ int main(int argc, char ** argv)
             mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
             GPUFIFO[2] = GPUOPCODE2(GPUWRITEVRAM, 3, 0, mask, (wordaddrs&0x3FFF));
          }
+         f = milliseconds;
 
-         PrintDMA(m%60,96,"GPU PIPELINE TEST", false);
-         if (prevtime!=cputime/100)
+         PrintDMA(m%60,64,"GPU PIPELINE TEST", false);
+         if (prevtime!=seconds)
          {
-            prevtime = cputime/100;
+            prevtime = seconds;
             m+=4;
          }
 
-         PrintDMADecimal(16,160,cputime);
+         PrintDMADecimal(8,100,seconds);
+         PrintDMADecimal(8+64+8,100,milliseconds);
+
+         // DEADBEEF 01234567 89FEDCBA 00C03807
+         volatile uint32_t *A0 = (uint32_t* )0x00020000;
+         volatile uint32_t *A1 = (uint32_t* )0x00020004;
+         volatile uint32_t *A2 = (uint32_t* )0x00020008;
+         volatile uint32_t *A3 = (uint32_t* )0x0002000C;
+         PrintDMAHex(4, 120, *A0);
+         PrintDMAHex(4, 128, *A1);
+         PrintDMAHex(4, 136, *A2);
+         PrintDMAHex(4, 144, *A3);
 
          // Stall GPU until vsync is reached
          GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);

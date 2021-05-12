@@ -15,16 +15,16 @@
 void loadbinaryblob()
 {
    // Header data
-   unsigned int loadlen = 0;
-   unsigned int loadtarget = 0;
+   uint32_t loadlen = 0;
+   uint32_t loadtarget = 0;
    char *loadlenaschar = (char*)&loadlen;
    char *loadtargetaschar = (char*)&loadtarget;
 
    // Target address
-   unsigned int writecursor = 0;
+   uint32_t writecursor = 0;
    while(writecursor < 4)
    {
-      unsigned int bytecount = UARTRXStatus[0];
+      uint32_t bytecount = UARTRXStatus[0];
       if (bytecount != 0)
       {
          unsigned char readdata = UARTRX[0];
@@ -36,7 +36,7 @@ void loadbinaryblob()
    writecursor = 0;
    while(writecursor < 4)
    {
-      unsigned int bytecount = UARTRXStatus[0];
+      uint32_t bytecount = UARTRXStatus[0];
       if (bytecount != 0)
       {
          unsigned char readdata = UARTRX[0];
@@ -49,7 +49,7 @@ void loadbinaryblob()
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
    while(writecursor < loadlen)
    {
-      unsigned int bytecount = UARTRXStatus[0];
+      uint32_t bytecount = UARTRXStatus[0];
       if (bytecount != 0)
       {
          unsigned char readdata = UARTRX[0];
@@ -61,14 +61,14 @@ void loadbinaryblob()
 void runbinary()
 {
    // Header data
-   unsigned int branchaddress = 0;
+   uint32_t branchaddress = 0;
    char *branchaddressaschar = (char*)&branchaddress;
 
    // Data length
-   unsigned int writecursor = 0;
+   uint32_t writecursor = 0;
    while(writecursor < 4)
    {
-      unsigned int bytecount = UARTRXStatus[0];
+      uint32_t bytecount = UARTRXStatus[0];
       if (bytecount != 0)
       {
          unsigned char readdata = UARTRX[0];
@@ -138,44 +138,71 @@ void echoterm(const char *_message)
    }
 }
 
+void drawrect(const float ox, const float oy)
+{
+   static float roll = 1.8f;
+
+   float rx0 = cosf(roll)*12.f;
+   float ry0 = sinf(roll)*12.f;
+   float rx1 = cosf(roll+3.1415927f*0.5f)*12.f;
+   float ry1 = sinf(roll+3.1415927f*0.5f)*12.f;
+
+   short x1 = short(ox - rx0 - rx1);
+   short y1 = short(oy - ry0 - ry1);
+   short x2 = short(ox + rx0 - rx1);
+   short y2 = short(oy + ry0 - ry1);
+   short x3 = short(ox + rx0 + rx1);
+   short y3 = short(oy + ry0 + ry1);
+   short x4 = short(ox - rx0 + rx1);
+   short y4 = short(oy - ry0 + ry1);
+
+   uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
+   uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
+   uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
+   uint32_t vertex3 = ((y4&0xFFFF)<<16) | (x4&0xFFFF);
+
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
+   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1));
+   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
+   GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2));
+   GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
+   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex3));
+   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex3));
+   uint8_t ncolor = 0x37;
+   GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (ncolor));
+   GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (ncolor^0xFF));
+
+   roll += 0.01f;
+}
+
 int main()
 {
    // 128 bytes of incoming command space
    char incoming[32];
-   unsigned int rcvcursor = 0;
+   uint32_t rcvcursor = 0;
 
    echoterm("NekoIchi\r\nrv32imf@60Mhz\r\nv0001\r\n");
 
-   int counter = 0;
+   volatile uint32_t gpustate = 0x00000000;
+   uint32_t counter = 0;
+
+   uint8_t bgcolor = 0x03;//0x7C;
+   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
 
    // Set page
    uint32_t page = 0;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
-   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
+   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(page));
+   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(page));
+   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 2, 0, 0);
 
-   // CLS
-   uint8_t bgcolor = 0x03;//0x7C;
-   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-   GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
-
-   // Render text
-   PrintDMA(56, 8, "Please upload ELF");
-   PrintDMA(0, 16, "USB/UART @115200bps:8bit:1st:np");
-
-   // Swap to other page to reveal previous render
-   page = (page+1)%2;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(page));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(page));
-   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 1, 0, 0);
+   uint32_t enableGPUworker = 1;
 
    // UART communication section
    while(1)
    {
       // Step 1: Read UART FIFO byte count
-      unsigned int bytecount = UARTRXStatus[0];
+      uint32_t bytecount = UARTRXStatus[0];
 
       // Step 2: Check to see if we have something in the FIFO
       if (bytecount != 0)
@@ -205,9 +232,50 @@ int main()
          // Wrap around if we're overflowing
          if (rcvcursor>31)
             rcvcursor = 0;
+
+         // Stop rendering
+         enableGPUworker = 0;
       }
 
-      ++counter;
+      // Do this when idle
+      if (enableGPUworker && (gpustate == counter))
+      {
+         ++counter;
+
+         // CLS
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
+         GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
+
+         drawrect(128, 96);
+
+         // Render text
+         PrintDMA(56, 8, "Please upload ELF");
+         PrintDMA(0, 16, "USB/UART @115200bps:8bit:1st:np");
+
+         // Stall GPU until vsync is reached
+         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+
+         // Swap to other page to reveal previous render
+         page = (page+1)%2;
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(page));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(page));
+         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 2, 0, 0);
+
+         // GPU status address in G3
+         uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(gpustateDWORDaligned));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(gpustateDWORDaligned));
+
+         // Will write incremented counter in the future from GPU side
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(counter));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(counter));
+         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 2, 3, 0);
+
+         // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
+         gpustate = 0;
+      }
+
    }
 
    return 0;

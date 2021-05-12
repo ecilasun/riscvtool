@@ -11,6 +11,10 @@ extern volatile unsigned char *SPIInput;
 extern volatile unsigned char *SPIOutput;
 extern volatile unsigned int ROMResetVector;
 
+// Regular memory ranges
+extern volatile uint32_t *BRAMStart;
+extern volatile uint32_t *DDR3Start;
+
 enum cmdSupported {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */
     CMD0_GO_IDLE_STATE = 0,             /**< Resets the SD Memory Card */
