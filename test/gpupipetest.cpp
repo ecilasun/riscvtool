@@ -297,8 +297,8 @@ int main(int argc, char ** argv)
             dx=-dx;
          if ((y>192.f) || (y<0.f))
             dy=-dy;
-         /*x+=dx;
-         y+=dy;*/
+         x+=dx;
+         y+=dy;
 
          ++cnt;
 
