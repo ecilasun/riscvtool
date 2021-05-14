@@ -20,29 +20,19 @@ python waf build -v
 python waf clean
 ```
 
-# Building the ROM for NekoIchi
+# Building the ROM and samples for NekoIchi
 
-NekoIchi has a different architecture and currently doesn't have a UART loader. To build the ROM files, simply run:
-
-```
-./build.sh
-```
-
-and the ROM_nekoichi.coe file will be generated. You can then copy this over the BIOS.coe file in the source directory of NekoIchi.
-
-You can find NekoIchi SoC here: https://github.com/ecilasun/NekoIchi
-
-# Building the samples for NekoIchi
-
-Currently there's no 'make' file to build the sample executables. Please use the following to build them:
+To build the ROM file and the samples, simply run:
 
 ```
 ./build.sh
 ```
 
-at the root level of this project. This will generate the following samples and the ROM image (.COE) files for them in case you wish to paste them directly as ROM files into the memory initialization file of the Verilog source.
+This will create ROM_nekoichi.coe file which is the ROM image for NekoIchi, alognside with some samples that riscvtool can upload. You can copy the ROM_nekoichi.COE files contents over the BIOS.coe file in the source directory of NekoIchi HDL code, which you can find at https://github.com/ecilasun/NekoIchi
 
-With the exception of the ROM image, you can use a reasonable amount of C++11 code at its basic level, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file.
+With the exception of the ROM image, you can use a reasonable amount of C++11 code at some level, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file.
+
+Here is a list of the binary outputs after running the build command:
 
 ```
 ROM_nekoichi - the device ROM file, also generates a .COE (coefficient) file for Vivado
@@ -53,26 +43,33 @@ gpupipetest - tests the GPU rasterizer / synchronization mechanisms and the real
 
 As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use the following command line:
 ```
-sudo ./build/release/riscvtool miniterm.elf -sendelf 0x00000000
+./build/release/riscvtool miniterm.elf -sendelf 0x00010000
 ```
 
-If everything went well, you should be seeing an output similar to the following:
+P.S. Always use 0x00010000 as base address if you haven't used a custom linker script.
+
+P.P.S. If command line complains about accessing the COM port you may need to run the risctool using sudo.
+
+If everything went well, you should see an output similar to the following:
 ```
-Program PADDR 0x00010000 relocated to 0x00000000
-Executable entry point is at 0x00010336 (new relative entry point: 0x00000336)
+Program PADDR 0x00010000 relocated to 0x00010000
+Executable entry point is at 0x00010528 (new relative entry point: 0x00010528)
 Sending ELF binary over COM4 @115200 bps
-sending '.text' @0x00000074 len:00001AAC off:00000074...done (0x00001AB8 bytes written)
-sending '.rodata' @0x00001B20 len:0000197A off:00001B20...done (0x00001986 bytes written)
-sending '.eh_frame' @0x0000449C len:00000458 off:0000349C...done (0x00000464 bytes written)
-sending '.init_array' @0x000048F4 len:00000008 off:000038F4...done (0x00000014 bytes written)
-sending '.fini_array' @0x000048FC len:00000004 off:000038FC...done (0x00000010 bytes written)
-sending '.data' @0x00004900 len:00000448 off:00003900...done (0x00000454 bytes written)
-sending '.got' @0x00004D48 len:00000038 off:00003D48...done (0x00000044 bytes written)
-sending '.sdata' @0x00004D80 len:0000000C off:00003D80...done (0x00000018 bytes written)
-sending '.bss' @0x00004D8C len:00004F88 off:00003D8C...done (0x00004F94 bytes written)
-Branching to 0x00000336
+SEND: '.text' @0x00010074 len:0000311C off:00000074...done (0x0000311A+0xC bytes written)
+SEND: '.rodata' @0x00013190 len:00001AEC off:00003190...done (0x00001AEA+0xC bytes written)
+SEND: '.eh_frame' @0x00015000 len:000004DC off:00005000...done (0x000004DA+0xC bytes written)
+SEND: '.init_array' @0x000154DC len:00000008 off:000054DC...done (0x00000006+0xC bytes written)
+SEND: '.fini_array' @0x000154E4 len:00000004 off:000054E4...done (0x00000002+0xC bytes written)
+SEND: '.data' @0x000154E8 len:00000440 off:000054E8...done (0x0000043E+0xC bytes written)
+SEND: '.got' @0x00015928 len:0000002C off:00005928...done (0x0000002A+0xC bytes written)
+SEND: '.sdata' @0x00015954 len:00000008 off:00005954...done (0x00000006+0xC bytes written)
+SKIP: '.bss' @0x0001595C len:00004F8C off:0000595C
+Branching to 0x00010528
 ```
 
-NOTE: Please make sure that the default load address is 0x00010000 unless you really want to offset the binary for some reason. Take care to keep your binary away from address range 0x00000000-0x00002000 so that the loader code does not get overwritten while loading your binary.
+NOTE: Take care to keep your binary away from address range 0x00000000-0x00005000 so that the loader code does not get overwritten while loading your binary.
 
-NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknown-elf-g++) are missing from your system, please follow the instructions at https://github.com/riscv/riscv-gnu-toolchain (especially useful is the section with multilib, try to build rv32i / rv32if / rv32imf / rv32imaf libraries, as there's currently no compressed instruction support on NekoIchi)
+NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknown-elf-g++) are missing from your system, please follow the instructions at https://github.com/riscv/riscv-gnu-toolchain
+It is advised to build the rv32i / rv32if / rv32imf / rv32imaf libraries
+
+There's currently no compressed instruction support on NekoIchi, and there's no plan to do it in the near future.
