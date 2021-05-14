@@ -1,5 +1,6 @@
 // #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <fcntl.h>
@@ -431,9 +432,8 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             printf("SEND: '%s' @0x%.8X len:%.8X off:%.8X...", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size, sheader->m_Offset);
 
             char commandtosend[512];
-            int commandlength=0;
-            sprintf(commandtosend, "bin%c", 13);
-            commandlength = 4;
+            int commandlength=2;
+            sprintf(commandtosend, "B%c", 13);
 
             unsigned int blobheader[8]; // Space for the future
             ((unsigned int*)blobheader)[0] = (sheader->m_Addr-pheader->m_PAddr)+_target; // relative start address
@@ -441,7 +441,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
             uint32_t byteswritten = 0;
 
-            // Send the string "bin\r"
+            // Send the string "B\r"
             byteswritten += write(serial_port, commandtosend, commandlength);
             // Wait a bit for the receiving end to start accepting
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -464,9 +464,8 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     // Start the executable
     {
         char commandtosend[512];
-        int commandlength=0;
-        sprintf(commandtosend, "run%c", 13);
-        commandlength = 4;
+        int commandlength=2;
+        sprintf(commandtosend, "R%c", 13);
 
         unsigned int blobheader[8]; // Space for the future
         ((unsigned int*)blobheader)[0] = relativeStartAddress; // relative start address
@@ -475,7 +474,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
         uint32_t byteswritten = 0;
 
-        // Send the string "run\r"
+        // Send the string "R\r"
         byteswritten += write(serial_port, commandtosend, commandlength);
         // Wait a bit for the receiving end to start accepting
         std::this_thread::sleep_for(std::chrono::milliseconds(5));

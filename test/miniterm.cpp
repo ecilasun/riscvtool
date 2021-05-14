@@ -81,7 +81,8 @@ int main()
    {
       uint64_t clk = ReadClock();
       uint32_t milliseconds = ClockToMs(clk);
-      uint32_t seconds = milliseconds/1000;
+      uint32_t hours, minutes, seconds;
+      ClockMsToHMS(milliseconds, hours,minutes,seconds);
 
       // Step 1: Read UART FIFO byte count
       unsigned int bytecount = UARTRXStatus[0];
@@ -172,7 +173,7 @@ int main()
       DrawConsole();
 
       // Cursor blink
-      if (milliseconds-prevmilliseconds > 500)
+      if (milliseconds-prevmilliseconds > 530)
       {
          prevmilliseconds = milliseconds;
          ++cursorevenodd;
@@ -188,11 +189,11 @@ int main()
 
       if (toggletime)
       {
-         uint32_t offst = PrintDMADecimal(0, 0, seconds/(60*24));
+         uint32_t offst = PrintDMADecimal(0, 0, hours);
          PrintDMA(offst*8, 0, ":"); ++offst;
-         offst += PrintDMADecimal(offst*8,0,seconds/60);
+         offst += PrintDMADecimal(offst*8,0,minutes);
          PrintDMA(offst*8, 0, ":"); ++offst;
-         offst += PrintDMADecimal(offst*8,0,seconds%60);
+         offst += PrintDMADecimal(offst*8,0,seconds);
       }
 
       GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);

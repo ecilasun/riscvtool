@@ -64,3 +64,4 @@ void ClearScreen(const uint8_t color);
 uint32_t Random();
 uint64_t ReadClock();
 uint32_t ClockToMs(uint64_t clock);
+void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &seconds);

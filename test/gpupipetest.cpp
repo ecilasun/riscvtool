@@ -1605,7 +1605,8 @@ int main(int argc, char ** argv)
 
          uint64_t clk = ReadClock();
          uint32_t milliseconds = ClockToMs(clk);
-         uint32_t seconds = milliseconds/1000;
+         uint32_t hours, minutes, seconds;
+         ClockMsToHMS(milliseconds, hours,minutes,seconds);
 
          float rate = (float)(milliseconds%0xFFFF)/360.f;
          drawrect(x, y, rate);
@@ -1646,12 +1647,13 @@ int main(int argc, char ** argv)
          }
 
          SetConsoleCursor(0, 0);
+         ClearConsoleRow();
          EchoConsole("TIME: ");
-         EchoConsole(seconds/(60*24));
+         EchoConsole(hours);
          EchoConsole(":");
-         EchoConsole(seconds/60);
+         EchoConsole(minutes);
          EchoConsole(":");
-         EchoConsole(seconds%60);
+         EchoConsole(seconds);
 
          // Show some sprites
          //const float deltaTime = 13.333f;

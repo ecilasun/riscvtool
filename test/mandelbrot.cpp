@@ -34,21 +34,20 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
 }
 
 // http://blog.recursiveprocess.com/2014/04/05/mandelbrot-fractal-v2/
-int mandelbrotFloat(float ox, float oy, float sx)
+int mandelbrotFloat(float ox, float oy, float sx, int &row)
 {
    int retval = 0;
    //volatile uint32_t *VRAMDW = (uint32_t *)VRAM;
    int R = int(27.71f-5.156f*logf(sx));
 
    //for (int row = 64; row < 128; ++row)
-   static int row = 0;
    if (row>191)
    {
       retval = 1;
       row = 0;
    }
 
-      for (int col = 0; col < 256; ++col)
+      for (int col = 0; col < 256; col+=2)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          uint8_t c;
@@ -63,6 +62,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
          }
 
          mandelbuffer[col + (row<<8)] = c;
+         mandelbuffer[col+1 + (row<<8)] = c;
       }
    
    ++row;
@@ -91,9 +91,20 @@ int main(int argc, char ** argv)
    float X = -0.235125f;
    float Y = 0.827215f;
 
-   //char msg[] = "Zoom hex: xxxxxxxx";
+   int row = 0;
+   uint32_t ms = 0xFFFFFFFF;
    while(1)
    {
+      // Generate one line of mandelbrot into offscreen buffer
+      // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
+      //if (row==0)
+      uint64_t clkA = ReadClock();
+      int triggerzoom = mandelbrotFloat(X,Y,R, row);
+      uint64_t clkB = ReadClock();
+      ms = ClockToMs(clkB-clkA);
+      if (triggerzoom)
+         R += 0.01f; // Zoom
+
       // DMA
       // Copies mandebrot ofscreen buffer (256x192) from SYSRAM onto VRAM, one scanline at a time
       for (uint32_t mandelscanline = 0; mandelscanline<192; ++mandelscanline)
@@ -113,25 +124,7 @@ int main(int argc, char ** argv)
          GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
       }
 
-      /*{
-         const char hexdigits[] = "0123456789ABCDEF";
-         uint32_t framecnt = *(uint32_t*)(&R);
-         msg[10] = hexdigits[((framecnt>>28)%16)];
-         msg[11] = hexdigits[((framecnt>>24)%16)];
-         msg[12] = hexdigits[((framecnt>>20)%16)];
-         msg[13] = hexdigits[((framecnt>>16)%16)];
-         msg[14] = hexdigits[((framecnt>>12)%16)];
-         msg[15] = hexdigits[((framecnt>>8)%16)];
-         msg[16] = hexdigits[((framecnt>>4)%16)];
-         msg[17] = hexdigits[(framecnt%16)];
-         PrintDMA(24, 170, msg);
-      }*/
-
-      // Generate one line of mandelbrot into offscreen buffer
-      // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
-      int triggerzoom = mandelbrotFloat(X,Y,R);
-      if (triggerzoom)
-         R += 0.01f; // Zoom
+      PrintDMADecimal(4,4,ms);
 
       page = (page + 1)%2;
       GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));

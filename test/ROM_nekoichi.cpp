@@ -58,7 +58,7 @@ void loadbinaryblob()
    }
 }
 
-void runbinary()
+void runbinaryblob()
 {
    // Header data
    uint32_t branchaddress = 0;
@@ -173,15 +173,11 @@ void drawrect(const float ox, const float oy)
    GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (ncolor));
    GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (ncolor^0xFF));
 
-   roll += 0.01f;
+   roll += 0.04f;
 }
 
 int main()
 {
-   // 128 bytes of incoming command space
-   char incoming[32];
-   uint32_t rcvcursor = 0;
-
    echoterm("NekoIchi\r\nrv32imf@60Mhz\r\nv0001\r\n");
 
    volatile uint32_t gpustate = 0x00000000;
@@ -199,6 +195,7 @@ int main()
    uint32_t enableGPUworker = 1;
 
    // UART communication section
+   uint8_t prevchar = 0xFF;
    while(1)
    {
       // Step 1: Read UART FIFO byte count
@@ -208,30 +205,22 @@ int main()
       if (bytecount != 0)
       {
          // Step 3: Read the data on UARTRX memory location
-         char checkchar = incoming[rcvcursor++] = UARTRX[0];
+         char checkchar = UARTRX[0];
 
-         if (checkchar == 13) // Enter?
+         if (checkchar == 13) // Enter followed by B (binary blob) or R (run blob)
          {
-            // Terminate the string
-            incoming[rcvcursor-1] = 0;
-
             // Load the incoming binary
-            if ((incoming[0]='b') && (incoming[1]=='i') && (incoming[2]=='n'))
+            if (prevchar=='B')
                loadbinaryblob();
-            if ((incoming[0]='r') && (incoming[1]=='u') && (incoming[2]=='n'))
-               runbinary();
-            // Rewind read cursor
-            rcvcursor = 0;
+            if (prevchar=='R')
+               runbinaryblob();
          }
+         prevchar = checkchar;
 
          // Echo the character back to the sender
          UARTTX[0] = checkchar;
          if (checkchar==13)
             UARTTX[1] = 10;
-
-         // Wrap around if we're overflowing
-         if (rcvcursor>31)
-            rcvcursor = 0;
 
          // Stop rendering
          enableGPUworker = 0;
