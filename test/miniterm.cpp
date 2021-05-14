@@ -9,55 +9,10 @@
 #include "gpu.h"
 #include "SDCARD.h"
 #include "FAT.h"
+#include "console.h"
 
 static int s_filesystemready = 0;
 volatile unsigned int targetjumpaddress = 0x00000000;
-char chartable[32*24];
-
-void clearchars()
-{
-   for (int cy=0;cy<24;++cy)
-      for (int cx=0;cx<32;++cx)
-         chartable[cx+cy*32] = ' ';
-}
-
-void scroll()
-{
-   for (int cy=0;cy<23;++cy)
-      for (int cx=0;cx<32;++cx)
-         chartable[cx+cy*32] = chartable[cx+(cy+1)*32];
-
-   // Clear the last row
-   for (int cx=0;cx<32;++cx)
-      chartable[cx+23*32] = ' ';
-}
-
-int cursorx = 0;
-void EchoConsole(const char *echostring)
-{
-   EchoUART(echostring);
-
-   char *str = (char*)echostring;
-   while (*str != 0)
-   {
-      if (*str == '\r')
-      {
-         cursorx = 0;
-         scroll();
-      }
-      if (*str != '\n' && *str != '\r')
-      {
-         chartable[cursorx+23*32] = *str;
-         ++cursorx;
-         if (cursorx==32)
-         {
-            cursorx=0;
-            scroll();
-         }
-      }
-      ++str;
-   }
-}
 
 void loadelf(char *commandline)
 {
@@ -94,12 +49,10 @@ int main()
    const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    //const unsigned char editbgcolor = 0x00;
 
-   // 32 bytes of incoming command space
-   char incoming[32];
+   char incoming[36];
    //char *incoming = (char*)malloc(32);
 
    unsigned int rcvcursor = 0;
-   unsigned int cmdcounter = 23;
    //unsigned int oldcount = 0;
 
    // Set output page
@@ -109,11 +62,11 @@ int main()
    GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
 
    // Startup message
-   clearchars();
-   ClearScreenGPU(bgcolor);
+   ClearConsole();
+   ClearScreen(bgcolor);
    EchoConsole(" MiniTerm (c)2021 Engin Cilasun\r\n Use 'help' for assistance\r\n");
-   for (int cy=0;cy<24;++cy)
-      PrintDMA(0, 8*cy, 32, &chartable[cy*32]);
+   EchoUART(" MiniTerm (c)2021 Engin Cilasun\r\n UART echo is off\r\n");
+   DrawConsole();
 
    page = (page+1)%2;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
@@ -121,8 +74,15 @@ int main()
    GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
 
    // UART communication section
+   uint32_t prevmilliseconds = 0;
+   uint32_t cursorevenodd = 0;
+   uint32_t toggletime = 0;
    while(1)
    {
+      uint64_t clk = ReadClock();
+      uint32_t milliseconds = ClockToMs(clk);
+      uint32_t seconds = milliseconds/1000;
+
       // Step 1: Read UART FIFO byte count
       unsigned int bytecount = UARTRXStatus[0];
 
@@ -132,32 +92,31 @@ int main()
          // Step 3: Read the data on UARTRX memory location
          char checkchar = incoming[rcvcursor++] = UARTRX[0];
 
-         if (checkchar == 8 && rcvcursor!=1) // Backspace? (make sure your terminal uses ctrl+h for backspace)
+         if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
          {
-            --rcvcursor;
-            incoming[rcvcursor-1] = 0;
-            // Copy the string to the chartable
-            for (unsigned int i=0;i<rcvcursor;++i)
-               chartable[i+cmdcounter*32] = incoming[i];
-             --rcvcursor;
+            if (rcvcursor!=1)
+            {
+               --rcvcursor;
+               incoming[rcvcursor] = 0;
+               incoming[rcvcursor-1] = 0;
+               --rcvcursor;
+            }
+            ConsoleCursorStepBack();
+            EchoConsole(" ");
+            ConsoleCursorStepBack();
          }
          else if (checkchar == 13) // Enter?
          {
-            // Terminate the string
-            incoming[rcvcursor-1] = 0;
+            EchoConsole("\n"); // New line
 
-            // Copy the string to the chartable
-            for (unsigned int i=0;i<rcvcursor;++i)
-               chartable[i+cmdcounter*32] = incoming[i];
-            
             // Clear the whole screen
             if ((incoming[0]='c') && (incoming[1]=='l') && (incoming[2]=='s'))
             {
-               clearchars();
+               ClearConsole();
             }
             else if ((incoming[0]='h') && (incoming[1]=='e') && (incoming[2]=='l') && (incoming[3]=='p'))
             {
-               EchoConsole("\r\nrMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\n");
+               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\n");
             }
             else if ((incoming[0]='d') && (incoming[1]=='i') && (incoming[2]=='r'))
             {
@@ -184,26 +143,20 @@ int main()
             {
                loadelf(incoming);
             }
-
-            scroll();
+            else if ((incoming[0]='t') && (incoming[1]=='i') && (incoming[2]=='m') && (incoming[3]=='e'))
+               toggletime = (toggletime+1)%2;
 
             // Rewind read cursor
-            rcvcursor=0;
+            rcvcursor = 0;
          }
 
-         // Show the char table
-         ClearScreenGPU(bgcolor);
-         for (int cy=0;cy<24;++cy)
-            PrintDMA(0, 8*cy, 32, &chartable[cy*32]);
-         if (checkchar != 13)
-            PrintDMA(0, 184, rcvcursor, incoming);
-
-         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
-
-         page = (page+1)%2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+         if (checkchar != 8)
+         {
+            char shortstring[2];
+            shortstring[0]=checkchar;
+            shortstring[1]=0;
+            EchoConsole(shortstring);
+         }
 
          // Echo characters back to the terminal
          UARTTX[0] = checkchar;
@@ -213,6 +166,41 @@ int main()
          if (rcvcursor>31)
             rcvcursor = 0;
       }
+
+      // Show the char table
+      ClearScreen(bgcolor);
+      DrawConsole();
+
+      // Cursor blink
+      if (milliseconds-prevmilliseconds > 500)
+      {
+         prevmilliseconds = milliseconds;
+         ++cursorevenodd;
+      }
+
+      // Cursor overlay
+      if ((cursorevenodd%2) == 0)
+      {
+         int cx, cy;
+         GetConsoleCursor(cx, cy);
+         PrintDMA(cx*8, cy*8, "_");
+      }
+
+      if (toggletime)
+      {
+         uint32_t offst = PrintDMADecimal(0, 0, seconds/(60*24));
+         PrintDMA(offst*8, 0, ":"); ++offst;
+         offst += PrintDMADecimal(offst*8,0,seconds/60);
+         PrintDMA(offst*8, 0, ":"); ++offst;
+         offst += PrintDMADecimal(offst*8,0,seconds%60);
+      }
+
+      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+
+      page = (page+1)%2;
+      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
+      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
+      GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
    }
 
    //free(incoming);

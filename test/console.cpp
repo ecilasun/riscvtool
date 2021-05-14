@@ -1,0 +1,120 @@
+#include "utils.h"
+
+static char consoleText[32*24];
+static int cursorx = 0;
+static int cursory = 0;
+
+void ClearConsole()
+{
+    cursorx = 0;
+    cursory = 0;
+    for (int cy=0;cy<24;++cy)
+        for (int cx=0;cx<32;++cx)
+            consoleText[cx+cy*32] = ' ';
+}
+
+void ClearConsoleRow()
+{
+    // Clear the last row
+    for (int cx=0;cx<32;++cx)
+        consoleText[cx+cursory*32] = ' ';
+}
+
+void SetConsoleCursor(const int x, const int y)
+{
+    cursorx = x;
+    cursory = y;
+}
+
+void ScrollConsole()
+{
+    for (int cy=0;cy<23;++cy)
+        for (int cx=0;cx<32;++cx)
+            consoleText[cx+cy*32] = consoleText[cx+(cy+1)*32];
+    SetConsoleCursor(cursorx, 23);
+    ClearConsoleRow();
+}
+
+void GetConsoleCursor(int &x, int &y)
+{
+    x = cursorx;
+    y = cursory;
+}
+
+void ConsoleCursorStepBack()
+{
+    --cursorx;
+    if (cursorx<0)
+    {
+        cursorx = 31;
+        --cursory;
+    }
+    if (cursory<0)
+    {
+        cursorx = 0;
+        cursory = 0;
+    }
+}
+
+void EchoConsole(const char *echostring)
+{
+    char *str = (char*)echostring;
+    while (*str != 0)
+    {
+        if (*str == '\r' || *str == '\n')
+        {
+            if (*str == '\r') cursorx = 0;
+            if (*str == '\n') ++cursory;
+        }
+        else
+        {
+            consoleText[cursorx+cursory*32] = *str;
+            ++cursorx;
+        }
+
+        if (cursorx>31)
+        {
+            cursorx=0;
+            cursory++;
+        }
+        if (cursory>23)
+        {
+            cursory=23;
+            cursorx=0;
+            ScrollConsole();
+        }
+        ++str;
+    }
+}
+
+void EchoConsole(const int32_t i)
+{
+    const char digits[] = "0123456789";
+    char msg[] = "                ";
+
+    uint32_t d = 1000000000;
+    uint32_t enableappend = 0;
+    uint32_t m = 0;
+    if (i<0)
+        msg[m++] = '-';
+    for (int c=0;c<10;++c)
+    {
+        uint32_t r = (i/d)%10;
+        // Ignore preceeding zeros
+        if ((r!=0) || enableappend || d==1)
+        {
+            enableappend = 1; // Rest of the digits can be appended
+            msg[m++] = digits[r];
+        }
+        d = d/10;
+    }
+    msg[m] = 0;
+
+    EchoConsole(msg);
+}
+
+void DrawConsole()
+{
+    for (int cy=0;cy<24;++cy)
+        PrintDMA(0, 8*cy, 32, &consoleText[cy*32]);
+}

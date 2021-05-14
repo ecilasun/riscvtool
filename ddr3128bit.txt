@@ -1,0 +1,134 @@
+				if ((memaddress >= 32'h00020000) & (memaddress < 32'h10000000)) begin // 0x00020000-0x0FFFFFFF : DDR3
+					unique case (func3) // lb:000 lh:001 lw:010 lbu:100 lhu:101
+						3'b000: begin
+							// Byte - sign extended
+							unique case (memaddress[3:0])
+								4'b0000: begin registerdata <= {{24{ddr3dataout[7]}},ddr3dataout[7:0]}; end
+								4'b0001: begin registerdata <= {{24{ddr3dataout[15]}},ddr3dataout[15:8]}; end
+								4'b0010: begin registerdata <= {{24{ddr3dataout[23]}},ddr3dataout[23:16]}; end
+								4'b0011: begin registerdata <= {{24{ddr3dataout[31]}},ddr3dataout[31:24]}; end
+								4'b0100: begin registerdata <= {{24{ddr3dataout[39]}},ddr3dataout[39:32]}; end
+								4'b0101: begin registerdata <= {{24{ddr3dataout[47]}},ddr3dataout[47:40]}; end
+								4'b0110: begin registerdata <= {{24{ddr3dataout[55]}},ddr3dataout[55:48]}; end
+								4'b0111: begin registerdata <= {{24{ddr3dataout[63]}},ddr3dataout[63:56]}; end
+								4'b1000: begin registerdata <= {{24{ddr3dataout[71]}},ddr3dataout[71:64]}; end
+								4'b1001: begin registerdata <= {{24{ddr3dataout[79]}},ddr3dataout[79:72]}; end
+								4'b1010: begin registerdata <= {{24{ddr3dataout[87]}},ddr3dataout[87:80]}; end
+								4'b1011: begin registerdata <= {{24{ddr3dataout[95]}},ddr3dataout[95:88]}; end
+								4'b1100: begin registerdata <= {{24{ddr3dataout[103]}},ddr3dataout[103:96]}; end
+								4'b1101: begin registerdata <= {{24{ddr3dataout[111]}},ddr3dataout[111:104]}; end
+								4'b1110: begin registerdata <= {{24{ddr3dataout[119]}},ddr3dataout[119:112]}; end
+								4'b1111: begin registerdata <= {{24{ddr3dataout[127]}},ddr3dataout[127:120]}; end
+							endcase
+						end
+						3'b001: begin
+							// Word - sign extended
+							unique case (memaddress[3:1])
+								3'b000: begin registerdata <= {{16{ddr3dataout[15]}},ddr3dataout[15:0]}; end
+								3'b001: begin registerdata <= {{16{ddr3dataout[31]}},ddr3dataout[31:16]}; end
+								3'b010: begin registerdata <= {{16{ddr3dataout[47]}},ddr3dataout[47:32]}; end
+								3'b011: begin registerdata <= {{16{ddr3dataout[63]}},ddr3dataout[63:48]}; end
+								3'b100: begin registerdata <= {{16{ddr3dataout[79]}},ddr3dataout[79:64]}; end
+								3'b101: begin registerdata <= {{16{ddr3dataout[95]}},ddr3dataout[95:80]}; end
+								3'b110: begin registerdata <= {{16{ddr3dataout[111]}},ddr3dataout[111:96]}; end
+								3'b111: begin registerdata <= {{16{ddr3dataout[127]}},ddr3dataout[127:112]}; end
+							endcase
+						end
+						3'b010: begin
+							// Dword - regular
+							unique case (memaddress[3:2])
+								2'b00: begin registerdata <= ddr3dataout[31:0]; end
+								2'b01: begin registerdata <= ddr3dataout[63:32]; end
+								2'b10: begin registerdata <= ddr3dataout[95:64]; end
+								2'b11: begin registerdata <= ddr3dataout[127:96]; end
+							endcase
+						end
+						3'b100: begin
+							// Byte - regular
+							unique case (memaddress[3:0])
+								4'b0000: begin registerdata <= {24'd0, ddr3dataout[7:0]}; end
+								4'b0001: begin registerdata <= {24'd0, ddr3dataout[15:8]}; end
+								4'b0010: begin registerdata <= {24'd0, ddr3dataout[23:16]}; end
+								4'b0011: begin registerdata <= {24'd0, ddr3dataout[31:24]}; end
+								4'b0100: begin registerdata <= {24'd0, ddr3dataout[39:32]}; end
+								4'b0101: begin registerdata <= {24'd0, ddr3dataout[47:40]}; end
+								4'b0110: begin registerdata <= {24'd0, ddr3dataout[55:48]}; end
+								4'b0111: begin registerdata <= {24'd0, ddr3dataout[63:56]}; end
+								4'b1000: begin registerdata <= {24'd0, ddr3dataout[71:64]}; end
+								4'b1001: begin registerdata <= {24'd0, ddr3dataout[79:72]}; end
+								4'b1010: begin registerdata <= {24'd0, ddr3dataout[87:80]}; end
+								4'b1011: begin registerdata <= {24'd0, ddr3dataout[95:88]}; end
+								4'b1100: begin registerdata <= {24'd0, ddr3dataout[103:96]}; end
+								4'b1101: begin registerdata <= {24'd0, ddr3dataout[111:104]}; end
+								4'b1110: begin registerdata <= {24'd0, ddr3dataout[119:112]}; end
+								4'b1111: begin registerdata <= {24'd0, ddr3dataout[127:120]}; end
+							endcase
+						end
+						3'b101: begin
+							// Word - regular
+							unique case (memaddress[3:1])
+								3'b000: begin registerdata <= {16'd0, ddr3dataout[15:0]}; end
+								3'b001: begin registerdata <= {16'd0, ddr3dataout[31:16]}; end
+								3'b010: begin registerdata <= {16'd0, ddr3dataout[47:32]}; end
+								3'b011: begin registerdata <= {16'd0, ddr3dataout[63:48]}; end
+								3'b100: begin registerdata <= {16'd0, ddr3dataout[79:64]}; end
+								3'b101: begin registerdata <= {16'd0, ddr3dataout[95:80]}; end
+								3'b110: begin registerdata <= {16'd0, ddr3dataout[111:96]}; end
+								3'b111: begin registerdata <= {16'd0, ddr3dataout[127:112]}; end
+							endcase
+						end
+					endcase
+					cpustate[`CPURETIREINSTRUCTION] <= 1'b1;
+				end else 
+
+
+
+
+				if ((memaddress >= 32'h00020000) & (memaddress < 32'h10000000)) begin // 0x00020000-0x0FFFFFFF : DDR3
+					unique case (func3)
+						// Byte
+						3'b000: begin
+							unique case (memaddress[3:0])
+								4'b0000: begin ddr3datawe <= 16'b0000000000000001; ddr3datain <= {120'd0, registerdata[7:0]}; end
+								4'b0001: begin ddr3datawe <= 16'b0000000000000010; ddr3datain <= {112'd0, registerdata[7:0], 8'd0}; end
+								4'b0010: begin ddr3datawe <= 16'b0000000000000100; ddr3datain <= {104'd0, registerdata[7:0], 16'd0}; end
+								4'b0011: begin ddr3datawe <= 16'b0000000000001000; ddr3datain <= {96'd0, registerdata[7:0], 24'd0}; end
+								4'b0100: begin ddr3datawe <= 16'b0000000000010000; ddr3datain <= {88'd0, registerdata[7:0], 32'd0}; end
+								4'b0101: begin ddr3datawe <= 16'b0000000000100000; ddr3datain <= {80'd0, registerdata[7:0], 40'd0}; end
+								4'b0110: begin ddr3datawe <= 16'b0000000001000000; ddr3datain <= {72'd0, registerdata[7:0], 48'd0}; end
+								4'b0111: begin ddr3datawe <= 16'b0000000010000000; ddr3datain <= {64'd0, registerdata[7:0], 56'd0}; end
+								4'b1000: begin ddr3datawe <= 16'b0000000100000000; ddr3datain <= {56'd0, registerdata[7:0], 64'd0}; end
+								4'b1001: begin ddr3datawe <= 16'b0000001000000000; ddr3datain <= {48'd0, registerdata[7:0], 72'd0}; end
+								4'b1010: begin ddr3datawe <= 16'b0000010000000000; ddr3datain <= {40'd0, registerdata[7:0], 80'd0}; end
+								4'b1011: begin ddr3datawe <= 16'b0000100000000000; ddr3datain <= {32'd0, registerdata[7:0], 88'd0}; end
+								4'b1100: begin ddr3datawe <= 16'b0001000000000000; ddr3datain <= {24'd0, registerdata[7:0], 96'd0}; end
+								4'b1101: begin ddr3datawe <= 16'b0010000000000000; ddr3datain <= {16'd0, registerdata[7:0], 104'd0}; end
+								4'b1110: begin ddr3datawe <= 16'b0100000000000000; ddr3datain <= {8'd0, registerdata[7:0], 112'd0}; end
+								4'b1111: begin ddr3datawe <= 16'b1000000000000000; ddr3datain <= {registerdata[7:0], 120'd0}; end
+							endcase
+						end
+						// Word
+						3'b001: begin
+							unique case (memaddress[3:1])
+								3'b000: begin ddr3datawe <= 16'b0000000000000011; ddr3datain <= {112'd0, registerdata[15:0]}; end
+								3'b001: begin ddr3datawe <= 16'b0000000000001100; ddr3datain <= {96'd0, registerdata[15:0], 16'd0}; end
+								3'b010: begin ddr3datawe <= 16'b0000000000110000; ddr3datain <= {80'd0, registerdata[15:0], 32'd0}; end
+								3'b011: begin ddr3datawe <= 16'b0000000011000000; ddr3datain <= {64'd0, registerdata[15:0], 48'd0}; end
+								3'b100: begin ddr3datawe <= 16'b0000001100000000; ddr3datain <= {48'd0, registerdata[15:0], 64'd0}; end
+								3'b101: begin ddr3datawe <= 16'b0000110000000000; ddr3datain <= {32'd0, registerdata[15:0], 80'd0}; end
+								3'b110: begin ddr3datawe <= 16'b0011000000000000; ddr3datain <= {16'd0, registerdata[15:0], 96'd0}; end
+								3'b111: begin ddr3datawe <= 16'b1100000000000000; ddr3datain <= {registerdata[15:0], 112'd0}; end
+							endcase
+						end
+						// Dword
+						default: begin
+							unique case (memaddress[3:2])
+								2'b00: begin ddr3datawe <= 16'b0000000000001111; ddr3datain <= {96'd0, registerdata[31:0]}; end
+								2'b01: begin ddr3datawe <= 16'b0000000011110000; ddr3datain <= {64'd0, registerdata[31:0], 32'd0}; end
+								2'b10: begin ddr3datawe <= 16'b0000111100000000; ddr3datain <= {32'd0, registerdata[31:0], 64'd0}; end
+								2'b11: begin ddr3datawe <= 16'b1111000000000000; ddr3datain <= {registerdata[31:0], 96'd0}; end
+							endcase
+						end
+					endcase
+					cpustate[`CPURETIREINSTRUCTION] <= 1'b1;
+				end else 

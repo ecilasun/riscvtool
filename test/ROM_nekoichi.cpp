@@ -251,7 +251,7 @@ int main()
 
          // Render text
          PrintDMA(56, 8, "Please upload ELF");
-         PrintDMA(0, 16, "USB/UART @115200bps:8bit:1st:np");
+         PrintDMA(4, 16, "USB/UART @115200bps:8bit:1st:np");
 
          // Stall GPU until vsync is reached
          GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);

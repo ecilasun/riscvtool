@@ -131,20 +131,29 @@ void PrintDMAHex(const int ox, const int oy, const uint32_t i)
    PrintDMA(ox, oy, msg);
 }
 
-void PrintDMADecimal(const int ox, const int oy, const uint32_t i)
+uint32_t PrintDMADecimal(const int ox, const int oy, const uint32_t i)
 {
    const char digits[] = "0123456789";
-   char msg[] = "        ";
+   char msg[] = "           ";
 
-   msg[0] = digits[((i/10000000)%10)];
-   msg[1] = digits[((i/1000000)%10)];
-   msg[2] = digits[((i/100000)%10)];
-   msg[3] = digits[((i/10000)%10)];
-   msg[4] = digits[((i/1000)%10)];
-   msg[5] = digits[((i/100)%10)];
-   msg[6] = digits[((i/10)%10)];
-   msg[7] = digits[(i%10)];
+   uint32_t d = 1000000000;
+   uint32_t enableappend = 0;
+   uint32_t m = 0;
+   for (int c=0;c<10;++c)
+   {
+      uint32_t r = (i/d)%10;
+      // Ignore preceeding zeros
+      if ((r!=0) || (enableappend) || (d==1))
+      {
+         enableappend = 1; // Rest of the digits can be appended
+         msg[m++] = digits[r];
+      }
+      d = d/10;
+   }
+   msg[m] = 0;
+
    PrintDMA(ox, oy, msg);
+   return m;
 }
 
 void EchoUART(const char *_message)
@@ -173,13 +182,6 @@ void EchoInt(const uint32_t i)
 }
 
 void ClearScreen(const uint8_t color)
-{
-   volatile uint32_t *VRAMDW = (uint32_t *)VRAM;
-   uint32_t clearcolor = (color<<24) | (color<<16) | (color<<8) | color;
-   for(uint32_t i=0;i<192*64;++i) VRAMDW[i]=clearcolor;
-}
-
-void ClearScreenGPU(const uint8_t color)
 {
    uint32_t colorbits = (color<<24) | (color<<16) | (color<<8) | color;
    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
