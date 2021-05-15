@@ -77,6 +77,8 @@ int main()
    uint32_t prevmilliseconds = 0;
    uint32_t cursorevenodd = 0;
    uint32_t toggletime = 0;
+   volatile unsigned int gpustate = 0x00000000;
+   unsigned int cnt = 0x00000000;
    while(1)
    {
       uint64_t clk = ReadClock();
@@ -168,40 +170,56 @@ int main()
             rcvcursor = 0;
       }
 
-      // Show the char table
-      ClearScreen(bgcolor);
-      DrawConsole();
-
-      // Cursor blink
-      if (milliseconds-prevmilliseconds > 530)
+      if (gpustate == cnt) // GPU work complete, push more
       {
-         prevmilliseconds = milliseconds;
-         ++cursorevenodd;
+         ++cnt;
+         // Show the char table
+         ClearScreen(bgcolor);
+         DrawConsole();
+
+         // Cursor blink
+         if (milliseconds-prevmilliseconds > 530)
+         {
+            prevmilliseconds = milliseconds;
+            ++cursorevenodd;
+         }
+
+         // Cursor overlay
+         if ((cursorevenodd%2) == 0)
+         {
+            int cx, cy;
+            GetConsoleCursor(cx, cy);
+            PrintDMA(cx*8, cy*8, "_");
+         }
+
+         if (toggletime)
+         {
+            uint32_t offst = PrintDMADecimal(0, 0, hours);
+            PrintDMA(offst*8, 0, ":"); ++offst;
+            offst += PrintDMADecimal(offst*8,0,minutes);
+            PrintDMA(offst*8, 0, ":"); ++offst;
+            offst += PrintDMADecimal(offst*8,0,seconds);
+         }
+
+         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+
+         page = (page+1)%2;
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
+         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+
+         // GPU status address in G1
+         uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(gpustateDWORDaligned));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(gpustateDWORDaligned));
+
+         // Write 'end of processing' from GPU so that CPU can resume its work
+         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(cnt));
+         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(cnt));
+         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 2, 1, 0);
+
+         gpustate = 0;
       }
-
-      // Cursor overlay
-      if ((cursorevenodd%2) == 0)
-      {
-         int cx, cy;
-         GetConsoleCursor(cx, cy);
-         PrintDMA(cx*8, cy*8, "_");
-      }
-
-      if (toggletime)
-      {
-         uint32_t offst = PrintDMADecimal(0, 0, hours);
-         PrintDMA(offst*8, 0, ":"); ++offst;
-         offst += PrintDMADecimal(offst*8,0,minutes);
-         PrintDMA(offst*8, 0, ":"); ++offst;
-         offst += PrintDMADecimal(offst*8,0,seconds);
-      }
-
-      GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
-
-      page = (page+1)%2;
-      GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-      GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-      GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
    }
 
    //free(incoming);

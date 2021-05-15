@@ -1589,14 +1589,14 @@ int main(int argc, char ** argv)
 
       if (gpustate == cnt) // GPU work complete, push more
       {
+         ++cnt;
+
          if ((x>255.f) || (x<0.f))
             dx=-dx;
          if ((y>192.f) || (y<0.f))
             dy=-dy;
          x+=dx;
          y+=dy;
-
-         ++cnt;
 
          // CLS
          GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 7, 0, 0);  // clearvram g1

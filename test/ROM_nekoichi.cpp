@@ -32,6 +32,9 @@ void loadbinaryblob()
       }
    }
 
+   EchoUART("@");
+   EchoInt(loadtarget);
+
    // Data length
    writecursor = 0;
    while(writecursor < 4)
@@ -43,6 +46,9 @@ void loadbinaryblob()
          loadlenaschar[writecursor++] = readdata;
       }
    }
+
+   EchoUART("#");
+   EchoInt(loadlen);
 
    // Read binary blob
    writecursor = 0;
@@ -128,16 +134,6 @@ void runbinaryblob()
    // and there'll be a redundant stack op and a ret generated here
 }
 
-void echoterm(const char *_message)
-{
-   int i=0;
-   while (_message[i]!=0)
-   {
-      UARTTX[i] = _message[i];
-      ++i;
-   }
-}
-
 void drawrect(const float ox, const float oy)
 {
    static float roll = 1.8f;
@@ -178,7 +174,7 @@ void drawrect(const float ox, const float oy)
 
 int main()
 {
-   echoterm("NekoIchi\r\nrv32imf@60Mhz\r\nv0001\r\n");
+   EchoUART("NekoIchi [v002] [rv32imf] [GPU]\r\n");
 
    volatile uint32_t gpustate = 0x00000000;
    uint32_t counter = 0;
@@ -216,11 +212,6 @@ int main()
                runbinaryblob();
          }
          prevchar = checkchar;
-
-         // Echo the character back to the sender
-         UARTTX[0] = checkchar;
-         if (checkchar==13)
-            UARTTX[1] = 10;
 
          // Stop rendering
          enableGPUworker = 0;
