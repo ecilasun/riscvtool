@@ -178,7 +178,7 @@ Disassembly of section .text:
    10114:	36100713          	li	a4,865
    10118:	00e7a223          	sw	a4,4(a5)
    1011c:	06700713          	li	a4,103
-   10120:	00e7a423          	sw	a4,8(a5)
+   10120:	00e7a023          	sw	a4,0(a5)
    10124:	000a8513          	mv	a0,s5
    10128:	00080913          	mv	s2,a6
    1012c:	670000ef          	jal	ra,1079c <_Z14resetparticlesPs>
@@ -228,8 +228,8 @@ Disassembly of section .text:
    101dc:	000107b7          	lui	a5,0x10
    101e0:	fff78793          	addi	a5,a5,-1 # ffff <main-0x75>
    101e4:	00001a37          	lui	s4,0x1
-   101e8:	00012623          	sw	zero,12(sp)
-   101ec:	00012823          	sw	zero,16(sp)
+   101e8:	00012823          	sw	zero,16(sp)
+   101ec:	00012623          	sw	zero,12(sp)
    101f0:	00000b13          	li	s6,0
    101f4:	00000c13          	li	s8,0
    101f8:	00000413          	li	s0,0
@@ -249,7 +249,7 @@ Disassembly of section .text:
    10230:	a0f497d3          	flt.s	a5,fs1,fa5
    10234:	26079a63          	bnez	a5,104a8 <main+0x434>
    10238:	07300793          	li	a5,115
-   1023c:	00f72a23          	sw	a5,20(a4)
+   1023c:	00f72023          	sw	a5,0(a4)
    10240:	000a8513          	mv	a0,s5
    10244:	5cc000ef          	jal	ra,10810 <_Z13drawparticlesPs>
    10248:	574010ef          	jal	ra,117bc <_Z9ReadClockv>
@@ -311,7 +311,7 @@ Disassembly of section .text:
    10328:	000a0693          	mv	a3,s4
    1032c:	00d7e7b3          	or	a5,a5,a3
    10330:	0227e793          	ori	a5,a5,34
-   10334:	00f82423          	sw	a5,8(a6)
+   10334:	00f82023          	sw	a5,0(a6)
    10338:	f8ab9ee3          	bne	s7,a0,102d4 <main+0x260>
    1033c:	00000b93          	li	s7,0
    10340:	08200993          	li	s3,130
@@ -341,7 +341,7 @@ Disassembly of section .text:
    103a0:	000a0693          	mv	a3,s4
    103a4:	00d7e7b3          	or	a5,a5,a3
    103a8:	0327e793          	ori	a5,a5,50
-   103ac:	00f82423          	sw	a5,8(a6)
+   103ac:	00f82023          	sw	a5,0(a6)
    103b0:	fabb90e3          	bne	s7,a1,10350 <main+0x2dc>
    103b4:	03c00513          	li	a0,60
    103b8:	02ac6533          	rem	a0,s8,a0
@@ -352,7 +352,7 @@ Disassembly of section .text:
    103cc:	01412403          	lw	s0,20(sp)
    103d0:	004c0913          	addi	s2,s8,4
    103d4:	75c000ef          	jal	ra,10b30 <_Z8PrintDMAiiPKcb>
-   103d8:	00c12783          	lw	a5,12(sp)
+   103d8:	01012783          	lw	a5,16(sp)
    103dc:	ffcaa983          	lw	s3,-4(s5)
    103e0:	0cf98c63          	beq	s3,a5,104b8 <main+0x444>
    103e4:	00000593          	li	a1,0
@@ -362,11 +362,11 @@ Disassembly of section .text:
    103f4:	00003517          	auipc	a0,0x3
    103f8:	23050513          	addi	a0,a0,560 # 13624 <__errno+0x1c>
    103fc:	54c010ef          	jal	ra,11948 <_Z11EchoConsolePKc>
-   10400:	01012783          	lw	a5,16(sp)
+   10400:	00c12783          	lw	a5,12(sp)
    10404:	ff4aa503          	lw	a0,-12(s5)
-   10408:	01312623          	sw	s3,12(sp)
+   10408:	01312823          	sw	s3,16(sp)
    1040c:	0017cb93          	xori	s7,a5,1
-   10410:	01712823          	sw	s7,16(sp)
+   10410:	01712623          	sw	s7,12(sp)
    10414:	644010ef          	jal	ra,11a58 <_Z11EchoConsolel>
    10418:	00003517          	auipc	a0,0x3
    1041c:	21450513          	addi	a0,a0,532 # 1362c <__errno+0x24>
@@ -383,12 +383,12 @@ Disassembly of section .text:
    10448:	0004a703          	lw	a4,0(s1)
    1044c:	00ab9793          	slli	a5,s7,0xa
    10450:	0817e793          	ori	a5,a5,129
-   10454:	00072823          	sw	zero,16(a4)
+   10454:	00072023          	sw	zero,0(a4)
    10458:	00f72023          	sw	a5,0(a4)
    1045c:	09100793          	li	a5,145
    10460:	00f72223          	sw	a5,4(a4)
    10464:	01700793          	li	a5,23
-   10468:	00f72423          	sw	a5,8(a4)
+   10468:	00f72023          	sw	a5,0(a4)
    1046c:	01812783          	lw	a5,24(sp)
    10470:	01c12603          	lw	a2,28(sp)
    10474:	00ab1693          	slli	a3,s6,0xa
@@ -401,7 +401,7 @@ Disassembly of section .text:
    10490:	1217e793          	ori	a5,a5,289
    10494:	00f72223          	sw	a5,4(a4)
    10498:	0a600793          	li	a5,166
-   1049c:	00f72823          	sw	a5,16(a4)
+   1049c:	00f72023          	sw	a5,0(a4)
    104a0:	fe0aa823          	sw	zero,-16(s5)
    104a4:	d61ff06f          	j	10204 <main+0x190>
    104a8:	213999d3          	fneg.s	fs3,fs3
@@ -570,33 +570,33 @@ Disassembly of section .text:
    10704:	41065613          	srai	a2,a2,0x10
    10708:	10136813          	ori	a6,t1,257
    1070c:	00a69693          	slli	a3,a3,0xa
-   10710:	0105a423          	sw	a6,8(a1)
+   10710:	0105a023          	sw	a6,0(a1)
    10714:	00a67533          	and	a0,a2,a0
    10718:	1216e693          	ori	a3,a3,289
    1071c:	00a71613          	slli	a2,a4,0xa
    10720:	01079793          	slli	a5,a5,0x10
    10724:	01675713          	srli	a4,a4,0x16
-   10728:	00d5a623          	sw	a3,12(a1)
+   10728:	00d5a223          	sw	a3,4(a1)
    1072c:	00a7e7b3          	or	a5,a5,a0
    10730:	18166693          	ori	a3,a2,385
    10734:	00a71713          	slli	a4,a4,0xa
-   10738:	00d5a823          	sw	a3,16(a1)
+   10738:	00d5a023          	sw	a3,0(a1)
    1073c:	1b176713          	ori	a4,a4,433
    10740:	00a79693          	slli	a3,a5,0xa
    10744:	0167d793          	srli	a5,a5,0x16
-   10748:	00e5aa23          	sw	a4,20(a1)
+   10748:	00e5a223          	sw	a4,4(a1)
    1074c:	00a79793          	slli	a5,a5,0xa
    10750:	2016e713          	ori	a4,a3,513
-   10754:	00e5a423          	sw	a4,8(a1)
+   10754:	00e5a023          	sw	a4,0(a1)
    10758:	2417e793          	ori	a5,a5,577
-   1075c:	00f5a623          	sw	a5,12(a1)
+   1075c:	00f5a223          	sw	a5,4(a1)
    10760:	000f97b7          	lui	a5,0xf9
    10764:	d1578793          	addi	a5,a5,-747 # f8d15 <__BSS_END__+0xe0e3d>
-   10768:	00f5ac23          	sw	a5,24(a1)
+   10768:	00f5a023          	sw	a5,0(a1)
    1076c:	02c12083          	lw	ra,44(sp)
    10770:	001067b7          	lui	a5,0x106
    10774:	63578793          	addi	a5,a5,1589 # 106635 <__BSS_END__+0xee75d>
-   10778:	00f5ac23          	sw	a5,24(a1)
+   10778:	00f5a023          	sw	a5,0(a1)
    1077c:	01c12407          	flw	fs0,28(sp)
    10780:	01812487          	flw	fs1,24(sp)
    10784:	01412907          	flw	fs2,20(sp)
@@ -790,17 +790,17 @@ Disassembly of section .text:
    10a64:	00a71713          	slli	a4,a4,0xa
    10a68:	009967b3          	or	a5,s2,s1
    10a6c:	1019e493          	ori	s1,s3,257
-   10a70:	0096a423          	sw	s1,8(a3)
+   10a70:	0096a023          	sw	s1,0(a3)
    10a74:	12176713          	ori	a4,a4,289
    10a78:	00a79493          	slli	s1,a5,0xa
    10a7c:	0167d793          	srli	a5,a5,0x16
-   10a80:	00e6a623          	sw	a4,12(a3)
+   10a80:	00e6a223          	sw	a4,4(a3)
    10a84:	00a79793          	slli	a5,a5,0xa
    10a88:	1814e713          	ori	a4,s1,385
-   10a8c:	00e6a823          	sw	a4,16(a3)
+   10a8c:	00e6a023          	sw	a4,0(a3)
    10a90:	1b17e793          	ori	a5,a5,433
-   10a94:	00f6aa23          	sw	a5,20(a3)
-   10a98:	0276a023          	sw	t2,32(a3)
+   10a94:	00f6a223          	sw	a5,4(a3)
+   10a98:	0076a023          	sw	t2,0(a3)
    10a9c:	00840413          	addi	s0,s0,8
    10aa0:	f3c618e3          	bne	a2,t3,109d0 <_Z13drawparticlesPs+0x1c0>
    10aa4:	02c12083          	lw	ra,44(sp)
@@ -909,14 +909,14 @@ Disassembly of section .text:
    10c38:	00d60633          	add	a2,a2,a3
    10c3c:	28196413          	ori	s0,s2,641
    10c40:	00a49493          	slli	s1,s1,0xa
-   10c44:	0087a423          	sw	s0,8(a5)
+   10c44:	0087a023          	sw	s0,0(a5)
    10c48:	00a60633          	add	a2,a2,a0
    10c4c:	2d14e493          	ori	s1,s1,721
-   10c50:	0097a623          	sw	s1,12(a5)
+   10c50:	0097a223          	sw	s1,4(a5)
    10c54:	00a61913          	slli	s2,a2,0xa
    10c58:	00b384b3          	add	s1,t2,a1
    10c5c:	01665413          	srli	s0,a2,0x16
-   10c60:	0107a823          	sw	a6,16(a5)
+   10c60:	0107a023          	sw	a6,0(a5)
    10c64:	4024d493          	srai	s1,s1,0x2
    10c68:	20196913          	ori	s2,s2,513
    10c6c:	00270613          	addi	a2,a4,2
@@ -930,14 +930,14 @@ Disassembly of section .text:
    10c8c:	00d60633          	add	a2,a2,a3
    10c90:	28196413          	ori	s0,s2,641
    10c94:	00a49493          	slli	s1,s1,0xa
-   10c98:	0087a423          	sw	s0,8(a5)
+   10c98:	0087a023          	sw	s0,0(a5)
    10c9c:	00a60633          	add	a2,a2,a0
    10ca0:	2d14e493          	ori	s1,s1,721
-   10ca4:	0097a623          	sw	s1,12(a5)
+   10ca4:	0097a223          	sw	s1,4(a5)
    10ca8:	00a61913          	slli	s2,a2,0xa
    10cac:	00b284b3          	add	s1,t0,a1
    10cb0:	01665413          	srli	s0,a2,0x16
-   10cb4:	0107a823          	sw	a6,16(a5)
+   10cb4:	0107a023          	sw	a6,0(a5)
    10cb8:	4024d493          	srai	s1,s1,0x2
    10cbc:	20196913          	ori	s2,s2,513
    10cc0:	00370613          	addi	a2,a4,3
@@ -951,14 +951,14 @@ Disassembly of section .text:
    10ce0:	00d60633          	add	a2,a2,a3
    10ce4:	28196413          	ori	s0,s2,641
    10ce8:	00a49493          	slli	s1,s1,0xa
-   10cec:	0087a423          	sw	s0,8(a5)
+   10cec:	0087a023          	sw	s0,0(a5)
    10cf0:	00a60633          	add	a2,a2,a0
    10cf4:	2d14e493          	ori	s1,s1,721
-   10cf8:	0097a623          	sw	s1,12(a5)
+   10cf8:	0097a223          	sw	s1,4(a5)
    10cfc:	00a61913          	slli	s2,a2,0xa
    10d00:	00bf84b3          	add	s1,t6,a1
    10d04:	01665413          	srli	s0,a2,0x16
-   10d08:	0107a823          	sw	a6,16(a5)
+   10d08:	0107a023          	sw	a6,0(a5)
    10d0c:	4024d493          	srai	s1,s1,0x2
    10d10:	20196913          	ori	s2,s2,513
    10d14:	00470613          	addi	a2,a4,4
@@ -972,14 +972,14 @@ Disassembly of section .text:
    10d34:	00d60633          	add	a2,a2,a3
    10d38:	28196413          	ori	s0,s2,641
    10d3c:	00a49493          	slli	s1,s1,0xa
-   10d40:	0087a423          	sw	s0,8(a5)
+   10d40:	0087a023          	sw	s0,0(a5)
    10d44:	00a60633          	add	a2,a2,a0
    10d48:	2d14e493          	ori	s1,s1,721
-   10d4c:	0097a623          	sw	s1,12(a5)
+   10d4c:	0097a223          	sw	s1,4(a5)
    10d50:	00a61913          	slli	s2,a2,0xa
    10d54:	00bf04b3          	add	s1,t5,a1
    10d58:	01665413          	srli	s0,a2,0x16
-   10d5c:	0107a823          	sw	a6,16(a5)
+   10d5c:	0107a023          	sw	a6,0(a5)
    10d60:	4024d493          	srai	s1,s1,0x2
    10d64:	20196913          	ori	s2,s2,513
    10d68:	00570613          	addi	a2,a4,5
@@ -993,14 +993,14 @@ Disassembly of section .text:
    10d88:	00d60633          	add	a2,a2,a3
    10d8c:	28196413          	ori	s0,s2,641
    10d90:	00a49493          	slli	s1,s1,0xa
-   10d94:	0087a423          	sw	s0,8(a5)
+   10d94:	0087a023          	sw	s0,0(a5)
    10d98:	00a60633          	add	a2,a2,a0
    10d9c:	2d14e493          	ori	s1,s1,721
-   10da0:	0097a623          	sw	s1,12(a5)
+   10da0:	0097a223          	sw	s1,4(a5)
    10da4:	00a61913          	slli	s2,a2,0xa
    10da8:	00be84b3          	add	s1,t4,a1
    10dac:	01665413          	srli	s0,a2,0x16
-   10db0:	0107a823          	sw	a6,16(a5)
+   10db0:	0107a023          	sw	a6,0(a5)
    10db4:	4024d493          	srai	s1,s1,0x2
    10db8:	20196913          	ori	s2,s2,513
    10dbc:	00670613          	addi	a2,a4,6
@@ -1014,16 +1014,16 @@ Disassembly of section .text:
    10ddc:	00d60633          	add	a2,a2,a3
    10de0:	28196413          	ori	s0,s2,641
    10de4:	00a49493          	slli	s1,s1,0xa
-   10de8:	0087a423          	sw	s0,8(a5)
+   10de8:	0087a023          	sw	s0,0(a5)
    10dec:	00a60633          	add	a2,a2,a0
    10df0:	00be0433          	add	s0,t3,a1
    10df4:	2d14e493          	ori	s1,s1,721
-   10df8:	0097a623          	sw	s1,12(a5)
+   10df8:	0097a223          	sw	s1,4(a5)
    10dfc:	40245413          	srai	s0,s0,0x2
    10e00:	00a61913          	slli	s2,a2,0xa
    10e04:	00770713          	addi	a4,a4,7
    10e08:	01665613          	srli	a2,a2,0x16
-   10e0c:	0107a823          	sw	a6,16(a5)
+   10e0c:	0107a023          	sw	a6,0(a5)
    10e10:	01645493          	srli	s1,s0,0x16
    10e14:	20196913          	ori	s2,s2,513
    10e18:	00a61613          	slli	a2,a2,0xa
@@ -1037,12 +1037,12 @@ Disassembly of section .text:
    10e38:	00c7a223          	sw	a2,4(a5)
    10e3c:	28146413          	ori	s0,s0,641
    10e40:	2d14e613          	ori	a2,s1,721
-   10e44:	0087a423          	sw	s0,8(a5)
+   10e44:	0087a023          	sw	s0,0(a5)
    10e48:	00b306b3          	add	a3,t1,a1
-   10e4c:	00c7a623          	sw	a2,12(a5)
+   10e4c:	00c7a223          	sw	a2,4(a5)
    10e50:	00a71613          	slli	a2,a4,0xa
    10e54:	01675713          	srli	a4,a4,0x16
-   10e58:	0107a823          	sw	a6,16(a5)
+   10e58:	0107a023          	sw	a6,0(a5)
    10e5c:	4026d693          	srai	a3,a3,0x2
    10e60:	20166613          	ori	a2,a2,513
    10e64:	00a71713          	slli	a4,a4,0xa
@@ -1053,10 +1053,10 @@ Disassembly of section .text:
    10e78:	00e7a223          	sw	a4,4(a5)
    10e7c:	00a69693          	slli	a3,a3,0xa
    10e80:	28166713          	ori	a4,a2,641
-   10e84:	00e7a423          	sw	a4,8(a5)
+   10e84:	00e7a023          	sw	a4,0(a5)
    10e88:	2d16e693          	ori	a3,a3,721
-   10e8c:	00d7a623          	sw	a3,12(a5)
-   10e90:	0107a823          	sw	a6,16(a5)
+   10e8c:	00d7a223          	sw	a3,4(a5)
+   10e90:	0107a023          	sw	a6,0(a5)
    10e94:	0008c703          	lbu	a4,0(a7)
    10e98:	00858593          	addi	a1,a1,8
    10e9c:	00188893          	addi	a7,a7,1
@@ -1140,14 +1140,14 @@ Disassembly of section .text:
    10fcc:	00d60633          	add	a2,a2,a3
    10fd0:	2819e493          	ori	s1,s3,641
    10fd4:	00a91913          	slli	s2,s2,0xa
-   10fd8:	0097a423          	sw	s1,8(a5)
+   10fd8:	0097a023          	sw	s1,0(a5)
    10fdc:	00a60633          	add	a2,a2,a0
    10fe0:	2d196913          	ori	s2,s2,721
-   10fe4:	0127a623          	sw	s2,12(a5)
+   10fe4:	0127a223          	sw	s2,4(a5)
    10fe8:	00a61993          	slli	s3,a2,0xa
    10fec:	01665493          	srli	s1,a2,0x16
    10ff0:	00b40933          	add	s2,s0,a1
-   10ff4:	0107a823          	sw	a6,16(a5)
+   10ff4:	0107a023          	sw	a6,0(a5)
    10ff8:	40295913          	srai	s2,s2,0x2
    10ffc:	2019e993          	ori	s3,s3,513
    11000:	00270613          	addi	a2,a4,2
@@ -1161,14 +1161,14 @@ Disassembly of section .text:
    11020:	00d60633          	add	a2,a2,a3
    11024:	2819e493          	ori	s1,s3,641
    11028:	00a91913          	slli	s2,s2,0xa
-   1102c:	0097a423          	sw	s1,8(a5)
+   1102c:	0097a023          	sw	s1,0(a5)
    11030:	00a60633          	add	a2,a2,a0
    11034:	2d196913          	ori	s2,s2,721
-   11038:	0127a623          	sw	s2,12(a5)
+   11038:	0127a223          	sw	s2,4(a5)
    1103c:	00a61993          	slli	s3,a2,0xa
    11040:	01665493          	srli	s1,a2,0x16
    11044:	00b38933          	add	s2,t2,a1
-   11048:	0107a823          	sw	a6,16(a5)
+   11048:	0107a023          	sw	a6,0(a5)
    1104c:	40295913          	srai	s2,s2,0x2
    11050:	2019e993          	ori	s3,s3,513
    11054:	00370613          	addi	a2,a4,3
@@ -1182,14 +1182,14 @@ Disassembly of section .text:
    11074:	00d60633          	add	a2,a2,a3
    11078:	2819e493          	ori	s1,s3,641
    1107c:	00a91913          	slli	s2,s2,0xa
-   11080:	0097a423          	sw	s1,8(a5)
+   11080:	0097a023          	sw	s1,0(a5)
    11084:	00a60633          	add	a2,a2,a0
    11088:	2d196913          	ori	s2,s2,721
-   1108c:	0127a623          	sw	s2,12(a5)
+   1108c:	0127a223          	sw	s2,4(a5)
    11090:	00a61993          	slli	s3,a2,0xa
    11094:	01665493          	srli	s1,a2,0x16
    11098:	00b28933          	add	s2,t0,a1
-   1109c:	0107a823          	sw	a6,16(a5)
+   1109c:	0107a023          	sw	a6,0(a5)
    110a0:	40295913          	srai	s2,s2,0x2
    110a4:	2019e993          	ori	s3,s3,513
    110a8:	00470613          	addi	a2,a4,4
@@ -1203,14 +1203,14 @@ Disassembly of section .text:
    110c8:	00d60633          	add	a2,a2,a3
    110cc:	2819e493          	ori	s1,s3,641
    110d0:	00a91913          	slli	s2,s2,0xa
-   110d4:	0097a423          	sw	s1,8(a5)
+   110d4:	0097a023          	sw	s1,0(a5)
    110d8:	00a60633          	add	a2,a2,a0
    110dc:	2d196913          	ori	s2,s2,721
-   110e0:	0127a623          	sw	s2,12(a5)
+   110e0:	0127a223          	sw	s2,4(a5)
    110e4:	00a61993          	slli	s3,a2,0xa
    110e8:	01665493          	srli	s1,a2,0x16
    110ec:	00bf8933          	add	s2,t6,a1
-   110f0:	0107a823          	sw	a6,16(a5)
+   110f0:	0107a023          	sw	a6,0(a5)
    110f4:	40295913          	srai	s2,s2,0x2
    110f8:	2019e993          	ori	s3,s3,513
    110fc:	00570613          	addi	a2,a4,5
@@ -1224,14 +1224,14 @@ Disassembly of section .text:
    1111c:	00d60633          	add	a2,a2,a3
    11120:	2819e493          	ori	s1,s3,641
    11124:	00a91913          	slli	s2,s2,0xa
-   11128:	0097a423          	sw	s1,8(a5)
+   11128:	0097a023          	sw	s1,0(a5)
    1112c:	00a60633          	add	a2,a2,a0
    11130:	2d196913          	ori	s2,s2,721
-   11134:	0127a623          	sw	s2,12(a5)
+   11134:	0127a223          	sw	s2,4(a5)
    11138:	00a61993          	slli	s3,a2,0xa
    1113c:	01665493          	srli	s1,a2,0x16
    11140:	00bf0933          	add	s2,t5,a1
-   11144:	0107a823          	sw	a6,16(a5)
+   11144:	0107a023          	sw	a6,0(a5)
    11148:	40295913          	srai	s2,s2,0x2
    1114c:	2019e993          	ori	s3,s3,513
    11150:	00670613          	addi	a2,a4,6
@@ -1245,16 +1245,16 @@ Disassembly of section .text:
    11170:	00d60633          	add	a2,a2,a3
    11174:	2819e493          	ori	s1,s3,641
    11178:	00a91913          	slli	s2,s2,0xa
-   1117c:	0097a423          	sw	s1,8(a5)
+   1117c:	0097a023          	sw	s1,0(a5)
    11180:	00a60633          	add	a2,a2,a0
    11184:	2d196913          	ori	s2,s2,721
    11188:	00be84b3          	add	s1,t4,a1
-   1118c:	0127a623          	sw	s2,12(a5)
+   1118c:	0127a223          	sw	s2,4(a5)
    11190:	4024d493          	srai	s1,s1,0x2
    11194:	00a61993          	slli	s3,a2,0xa
    11198:	00770713          	addi	a4,a4,7
    1119c:	01665613          	srli	a2,a2,0x16
-   111a0:	0107a823          	sw	a6,16(a5)
+   111a0:	0107a023          	sw	a6,0(a5)
    111a4:	0164d913          	srli	s2,s1,0x16
    111a8:	2019e993          	ori	s3,s3,513
    111ac:	00a61613          	slli	a2,a2,0xa
@@ -1268,12 +1268,12 @@ Disassembly of section .text:
    111cc:	00c7a223          	sw	a2,4(a5)
    111d0:	2d196693          	ori	a3,s2,721
    111d4:	2814e493          	ori	s1,s1,641
-   111d8:	0097a423          	sw	s1,8(a5)
+   111d8:	0097a023          	sw	s1,0(a5)
    111dc:	00a71613          	slli	a2,a4,0xa
-   111e0:	00d7a623          	sw	a3,12(a5)
+   111e0:	00d7a223          	sw	a3,4(a5)
    111e4:	01675713          	srli	a4,a4,0x16
    111e8:	00be06b3          	add	a3,t3,a1
-   111ec:	0107a823          	sw	a6,16(a5)
+   111ec:	0107a023          	sw	a6,0(a5)
    111f0:	4026d693          	srai	a3,a3,0x2
    111f4:	20166613          	ori	a2,a2,513
    111f8:	00a71713          	slli	a4,a4,0xa
@@ -1284,10 +1284,10 @@ Disassembly of section .text:
    1120c:	00e7a223          	sw	a4,4(a5)
    11210:	00a69693          	slli	a3,a3,0xa
    11214:	28166713          	ori	a4,a2,641
-   11218:	00e7a423          	sw	a4,8(a5)
+   11218:	00e7a023          	sw	a4,0(a5)
    1121c:	2d16e693          	ori	a3,a3,721
-   11220:	00d7a623          	sw	a3,12(a5)
-   11224:	0107a823          	sw	a6,16(a5)
+   11220:	00d7a223          	sw	a3,4(a5)
+   11224:	0107a023          	sw	a6,0(a5)
    11228:	00188893          	addi	a7,a7,1
    1122c:	00858593          	addi	a1,a1,8
    11230:	01130663          	beq	t1,a7,1123c <_Z8PrintDMAiiiPKcb+0x36c>

@@ -34,3 +34,43 @@
 
 // Set VRAM write page
 #define GPUSETVPAGE 0x7
+
+inline void GPUSetRegister(const uint8_t reg, uint32_t val) {
+    GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, reg, GPU22BITIMM(val));
+    GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, reg, reg, GPU10BITIMM(val));
+}
+
+inline void GPUSetVideoPage(const uint8_t videoPageRegister)
+{
+    GPUFIFO[0] = GPUOPCODE(GPUSETVPAGE, videoPageRegister, 0, 0);
+}
+
+inline void GPUWriteSystemMemory(const uint8_t countRegister, const uint8_t statePointerReg)
+{
+    GPUFIFO[0] = GPUOPCODE(GPUSYSMEMOUT, countRegister, statePointerReg, 0);
+}
+
+inline void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAlignedTargetReg, const uint16_t DMALengthInDWORDs, const uint8_t masked)
+{
+    GPUFIFO[0] = GPUOPCODE(GPUSYSDMA, SYSRAMSourceReg, VRAMDWORDAlignedTargetReg, ((DMALengthInDWORDs&0x3FFF) | (masked ? 0x4000 : 0x0000)));
+}
+
+inline void GPUWaitForVsync()
+{
+    GPUFIFO[0] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+}
+
+inline void GPUClearVRAMPage(const uint8_t clearColorRegister)
+{
+    GPUFIFO[0] = GPUOPCODE(GPUCLEAR, clearColorRegister, 0, 0);
+}
+
+inline void GPURasterizeTriangle(const uint8_t vertex0Register, const uint8_t vertex1Register, const uint8_t vertex2Register, const uint8_t fillColor)
+{
+    GPUFIFO[0] = GPUOPCODE3(GPURASTERIZE, vertex0Register, vertex1Register, vertex2Register, fillColor);
+}
+
+inline void GPUWriteVideoMemory(const uint8_t writeValueRegister, const uint8_t writeMask, const uint32_t DWORDAlignedVideoMemoryAddress)
+{
+    GPUFIFO[0] = GPUOPCODE2(GPUWRITEVRAM, writeValueRegister, 0, writeMask, (DWORDAlignedVideoMemoryAddress&0x3FFF));
+}

@@ -157,17 +157,13 @@ void drawrect(const float ox, const float oy)
    uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
    uint32_t vertex3 = ((y4&0xFFFF)<<16) | (x4&0xFFFF);
 
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(vertex0));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(vertex0));
-   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(vertex1));
-   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(vertex1));
-   GPUFIFO[4] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(vertex2));
-   GPUFIFO[5] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(vertex2));
-   GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(vertex3));
-   GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(vertex3));
+   GPUSetRegister(1, vertex0);
+   GPUSetRegister(2, vertex1);
+   GPUSetRegister(3, vertex2);
+   GPUSetRegister(4, vertex3);
    uint8_t ncolor = 0x37;
-   GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 1, 2, 3, (ncolor));
-   GPUFIFO[6] = GPUOPCODE3(GPURASTERIZE, 3, 4, 1, (ncolor^0xFF));
+   GPURasterizeTriangle(1,2,3,ncolor);
+   GPURasterizeTriangle(3,4,1,ncolor^0xFF);
 
    roll += 0.04f;
 }
@@ -184,9 +180,8 @@ int main()
 
    // Set page
    uint32_t page = 0;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(page));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(page));
-   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 2, 0, 0);
+   GPUSetRegister(2, page);
+   GPUSetVideoPage(2);
 
    uint32_t enableGPUworker = 1;
 
@@ -223,9 +218,8 @@ int main()
          ++counter;
 
          // CLS
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-         GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
+         GPUSetRegister(1, colorbits);
+         GPUClearVRAMPage(1);
 
          drawrect(128, 96);
 
@@ -234,23 +228,20 @@ int main()
          PrintDMA(4, 16, "USB/UART @115200bps:8bit:1st:np");
 
          // Stall GPU until vsync is reached
-         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+         GPUWaitForVsync();
 
          // Swap to other page to reveal previous render
          page = (page+1)%2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(page));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(page));
-         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 2, 0, 0);
+         GPUSetRegister(2, page);
+         GPUSetVideoPage(2);
 
          // GPU status address in G3
          uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 3, GPU22BITIMM(gpustateDWORDaligned));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 3, 3, GPU10BITIMM(gpustateDWORDaligned));
+         GPUSetRegister(3, gpustateDWORDaligned);
 
          // Will write incremented counter in the future from GPU side
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(counter));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(counter));
-         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 2, 3, 0);
+         GPUSetRegister(2, counter);
+         GPUWriteSystemMemory(2, 3);
 
          // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
          gpustate = 0;

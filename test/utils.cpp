@@ -62,18 +62,16 @@ void PrintDMA(const int col, const int row, const char *message, bool masked)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
          uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)));
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
+         GPUSetRegister(4, sysramsource);
 
          // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
          int py = ((y+row)<<8);
          uint32_t vramramtarget = (i*8+0+col+py)>>2;
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vramramtarget));
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vramramtarget));
+         GPUSetRegister(5, vramramtarget);
 
          // Length of copy in DWORDs
          uint32_t dmacount = 2;
-         GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, ((dmacount&0x3FFF) | (masked ? 0x4000 : 0x0))); // Zero-masked
+         GPUKickDMA(4, 5, dmacount, masked);
       }
       ++i;
    }
@@ -98,18 +96,16 @@ void PrintDMA(const int col, const int row, const int maxlen, const char *messag
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
          uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)));
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
+         GPUSetRegister(4, sysramsource);
 
          // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
          int py = ((y+row)<<8);
          uint32_t vramramtarget = (i*8+0+col+py)>>2;
-         GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vramramtarget));
-         GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vramramtarget));
+         GPUSetRegister(5, vramramtarget);
 
          // Length of copy in DWORDs
          uint32_t dmacount = 2;
-         GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, ((dmacount&0x3FFF) | (masked ? 0x4000 : 0x0)));
+         GPUKickDMA(4, 5, dmacount, masked);
       }
       ++i;
    }
@@ -184,9 +180,8 @@ void EchoInt(const uint32_t i)
 void ClearScreen(const uint8_t color)
 {
    uint32_t colorbits = (color<<24) | (color<<16) | (color<<8) | color;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-   GPUFIFO[2] = GPUOPCODE(GPUCLEAR, 1, 0, 0);
+   GPUSetRegister(1, colorbits);
+   GPUClearVRAMPage(1);
 }
 
 uint32_t seed = 7;

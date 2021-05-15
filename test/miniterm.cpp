@@ -57,9 +57,8 @@ int main()
 
    // Set output page
    uint32_t page = 0;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+   GPUSetRegister(6, page);
+   GPUSetVideoPage(6);
 
    // Startup message
    ClearConsole();
@@ -69,9 +68,8 @@ int main()
    DrawConsole();
 
    page = (page+1)%2;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+   GPUSetRegister(6, page);
+   GPUSetVideoPage(6);
 
    // UART communication section
    uint32_t prevmilliseconds = 0;
@@ -201,22 +199,19 @@ int main()
             offst += PrintDMADecimal(offst*8,0,seconds);
          }
 
-         GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+         GPUWaitForVsync();
 
          page = (page+1)%2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+         GPUSetRegister(6, page);
+         GPUSetVideoPage(6);
 
          // GPU status address in G1
          uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(gpustateDWORDaligned));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(gpustateDWORDaligned));
+         GPUSetRegister(1, gpustateDWORDaligned);
 
          // Write 'end of processing' from GPU so that CPU can resume its work
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(cnt));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(cnt));
-         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 2, 1, 0);
+         GPUSetRegister(2, cnt);
+         GPUWriteSystemMemory(2, 1);
 
          gpustate = 0;
       }

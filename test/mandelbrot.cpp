@@ -63,18 +63,8 @@ int main(int argc, char ** argv)
 {
    // Set initial page
    uint32_t page = 0;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-   GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
-
-   // Set register g1 with color data
-   uint8_t bgcolor = 0x00;
-   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
-   GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(colorbits));
-   GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(colorbits));
-
-   // CLS
-   //GPUFIFO[5] = GPUOPCODE(GPUCLEAR, 1, 0, 0);  // clearvram g1
+   GPUSetRegister(6, page);
+   GPUSetVideoPage(6);
 
    float R = 0.399999976158f;///4.0E-5f;
    float X = -0.235125f;
@@ -99,36 +89,31 @@ int main(int argc, char ** argv)
          {
             // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
             uint32_t sysramsource = uint32_t(mandelbuffer+mandelscanline*256);
-            GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 4, GPU22BITIMM(sysramsource));
-            GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 4, 4, GPU10BITIMM(sysramsource));
+            GPUSetRegister(4, sysramsource);
 
             // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
             uint32_t vramramtarget = (0 + (0+mandelscanline)*256)>>2;
-            GPUFIFO[2] = GPUOPCODE(GPUSETREGISTER, 0, 5, GPU22BITIMM(vramramtarget));
-            GPUFIFO[3] = GPUOPCODE(GPUSETREGISTER, 5, 5, GPU10BITIMM(vramramtarget));
+            GPUSetRegister(5, vramramtarget);
 
             // Length of copy in DWORDs
             uint32_t dmacount = 256>>2;
-            GPUFIFO[4] = GPUOPCODE(GPUSYSDMA, 4, 5, (dmacount&0x3FFF)); // sysdma g2, g3, dmacount
+            GPUKickDMA(4, 5, dmacount, 0);
          }
 
          // Stall GPU until vsync is reached
-         //GPUFIFO[4] = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+         //GPUWaitForVsync();
 
          page = (page + 1)%2;
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 6, GPU22BITIMM(page));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 6, 6, GPU10BITIMM(page));
-         GPUFIFO[2] = GPUOPCODE(GPUSETVPAGE, 6, 0, 0);
+         GPUSetRegister(6, page);
+         GPUSetVideoPage(6);
 
          // GPU status address in G1
          uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 1, GPU22BITIMM(gpustateDWORDaligned));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 1, 1, GPU10BITIMM(gpustateDWORDaligned));
+         GPUSetRegister(1, gpustateDWORDaligned);
 
          // Write 'end of processing' from GPU so that CPU can resume its work
-         GPUFIFO[0] = GPUOPCODE(GPUSETREGISTER, 0, 2, GPU22BITIMM(cnt));
-         GPUFIFO[1] = GPUOPCODE(GPUSETREGISTER, 2, 2, GPU10BITIMM(cnt));
-         GPUFIFO[4] = GPUOPCODE(GPUSYSMEMOUT, 2, 1, 0);
+         GPUSetRegister(2, cnt);
+         GPUWriteSystemMemory(2, 1);
 
          gpustate = 0;
       }
