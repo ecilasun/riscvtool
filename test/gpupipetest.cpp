@@ -1443,7 +1443,7 @@ void resetparticles(short *particles)
 {
    for (int i=0;i<MAX_PARTICLES;++i)
    {
-      particles[4*i+0] = 16 + (Random()%232); // X position
+      particles[4*i+0] = Random()%256; // X position
       particles[4*i+1] = -32; // Y position, <-30 if dead
       particles[4*i+2] = 2 + (Random()%8); // Speed
       particles[4*i+3] = 192 + (Random()%32); // Barrier
@@ -1466,7 +1466,7 @@ void drawparticles(short *particles)
    spawnerindex = (spawnerindex + 1)%MAX_PARTICLES;
    if (particles[3*spawnerindex+1] < -32) // Dead
    {
-      particles[3*spawnerindex+0] = 16 + (Random()%232);
+      particles[3*spawnerindex+0] = Random()%256;
       //particles[3*spawnerindex+1] = (Random()%24)-24;
       particles[3*spawnerindex+2] = 2 + (Random()%4);
       particles[4*spawnerindex+3] = 192 + (Random()%32); // Barrier
