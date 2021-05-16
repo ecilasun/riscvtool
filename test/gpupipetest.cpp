@@ -8,7 +8,7 @@
 #include "gpu.h"
 #include "console.h"
 
-#define MAX_PARTICLES 512
+#define MAX_PARTICLES 1024
 
 int sinewave[1024] = {
     0x4000,0x4065,0x40c9,0x412e,0x4192,0x41f7,0x425b,0x42c0,
@@ -279,6 +279,8 @@ int main(int argc, char ** argv)
    resetparticles(triparticles);
 
    uint32_t prevtime = 0;
+   uint64_t prevreti = ReadRetiredInstructions();
+   uint32_t ips = 0;
    while(1)
    {
       uint8_t c1 = 0xFF;//cnt&0xFF;
@@ -332,12 +334,17 @@ int main(int argc, char ** argv)
             mask = mask == 3 ? 0x8 : (mask == 2 ? 0x4 : (mask == 1 ? 0x2 : 0x1));
             GPUWriteVideoMemory(3, mask, wordaddrs);
          }
-         f = milliseconds;
+         f += 11;//milliseconds;
 
          PrintDMA(m%60,64,"GPU PIPELINE TEST", false);
          if (prevtime!=seconds)
          {
             prevtime = seconds;
+
+            uint64_t reti = ReadRetiredInstructions();
+            ips = (reti-prevreti);
+            prevreti = reti;
+
             m+=4;
          }
 
@@ -350,14 +357,15 @@ int main(int argc, char ** argv)
          EchoConsole(":");
          EchoConsole(seconds);
 
-         // Show some sprites
-         //const float deltaTime = 13.333f;
-         //spritedemo(deltaTime);
+         SetConsoleCursor(0, 1);
+         ClearConsoleRow();
+         EchoConsole("IPS: ");
+         EchoConsole(ips);
 
          DrawConsole();
 
          // Stall GPU until vsync is reached
-         GPUWaitForVsync();
+         //GPUWaitForVsync();
 
          // Swap video page
          page = (page+1)%2;

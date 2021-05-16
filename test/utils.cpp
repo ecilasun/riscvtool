@@ -1,5 +1,6 @@
 // Embedded utils
 
+#include <stdlib.h>
 #include "utils.h"
 #include "gpu.h"
 
@@ -49,6 +50,11 @@ void PrintDMA(const int col, const int row, const char *message, bool masked)
    while (message[i] != 0)
    {
       int currentchar = message[i]-32;
+      if (masked && (currentchar==0))
+      {
+         ++i;
+         continue;
+      }
       if (currentchar<0)
       {
          ++i;
@@ -83,6 +89,11 @@ void PrintDMA(const int col, const int row, const int maxlen, const char *messag
    while (i<maxlen && message[i] != 0)
    {
       int currentchar = message[i]-32;
+      if (masked && (currentchar==0))
+      {
+         ++i;
+         continue;
+      }
       if (currentchar<0)
       {
          ++i;
@@ -127,17 +138,19 @@ void PrintDMAHex(const int ox, const int oy, const uint32_t i)
    PrintDMA(ox, oy, msg);
 }
 
-uint32_t PrintDMADecimal(const int ox, const int oy, const uint32_t i)
+uint32_t PrintDMADecimal(const int ox, const int oy, const int i)
 {
    const char digits[] = "0123456789";
-   char msg[] = "           ";
+   char msg[] = "                   ";
 
-   uint32_t d = 1000000000;
+   int d = 1000000000;
    uint32_t enableappend = 0;
    uint32_t m = 0;
+    if (i<0)
+        msg[m++] = '-';
    for (int c=0;c<10;++c)
    {
-      uint32_t r = (i/d)%10;
+      uint32_t r = abs(i/d)%10;
       // Ignore preceeding zeros
       if ((r!=0) || (enableappend) || (d==1))
       {
@@ -209,6 +222,24 @@ uint64_t ReadClock()
    uint64_t clock = (uint64_t(clockhigh)<<32) | clocklow;
 
    return clock;
+}
+
+uint64_t ReadRetiredInstructions()
+{
+   uint32_t retihigh, retilow;
+
+   asm (
+      "rdinstreth %0;"
+      : "=r" (retihigh)
+   );
+   asm (
+      "rdinstret %0;"
+      : "=r" (retilow)
+   );
+
+   uint64_t reti = (uint64_t(retihigh)<<32) | retilow;
+
+   return reti;
 }
 
 uint32_t ClockToMs(uint64_t clock)

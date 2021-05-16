@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "utils.h"
 
 static char consoleText[32*24];
@@ -90,16 +91,16 @@ void EchoConsole(const char *echostring)
 void EchoConsole(const int32_t i)
 {
     const char digits[] = "0123456789";
-    char msg[] = "                ";
+    char msg[] = "                   ";
 
-    uint32_t d = 1000000000;
+    int d = 1000000000;
     uint32_t enableappend = 0;
     uint32_t m = 0;
     if (i<0)
         msg[m++] = '-';
     for (int c=0;c<10;++c)
     {
-        uint32_t r = (i/d)%10;
+        uint32_t r = abs(i/d)%10;
         // Ignore preceeding zeros
         if ((r!=0) || enableappend || d==1)
         {

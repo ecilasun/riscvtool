@@ -74,6 +74,8 @@ int main(int argc, char ** argv)
    unsigned int cnt = 0x00000000;
    while(1)
    {
+      //uint64_t clkA = ReadClock();
+
       // Generate one line of mandelbrot into offscreen buffer
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
       mandelbrotFloat(X,Y,R);
@@ -101,7 +103,7 @@ int main(int argc, char ** argv)
          }
 
          // Stall GPU until vsync is reached
-         //GPUWaitForVsync();
+         GPUWaitForVsync();
 
          page = (page + 1)%2;
          GPUSetRegister(6, page);

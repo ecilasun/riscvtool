@@ -57,11 +57,12 @@ enum cmdSupported {
 void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);
 void PrintDMA(const int col, const int row, const int maxlen, const char *message, bool masked=true);
 void PrintDMAHex(const int ox, const int oy, const uint32_t i);
-uint32_t PrintDMADecimal(const int ox, const int oy, const uint32_t i);
+uint32_t PrintDMADecimal(const int ox, const int oy, const int i);
 void EchoUART(const char *_message);
 void EchoInt(const uint32_t i);
 void ClearScreen(const uint8_t color);
 uint32_t Random();
 uint64_t ReadClock();
+uint64_t ReadRetiredInstructions();
 uint32_t ClockToMs(uint64_t clock);
 void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &seconds);
