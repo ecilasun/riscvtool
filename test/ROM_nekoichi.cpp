@@ -12,6 +12,79 @@
 #include "utils.h"
 #include "gpu.h"
 
+#include "SDCARD.h"
+
+volatile uint32_t gpuSideSubmitCounter = 0x00000000;
+uint32_t gpuSubmitCounter = 0;
+uint32_t vramPage = 0;
+
+void DrawRotatingRect(const float ox, const float oy)
+{
+   static float roll = 1.8f;
+
+   float rx0 = cosf(roll)*12.f;
+   float ry0 = sinf(roll)*12.f;
+   float rx1 = cosf(roll+3.1415927f*0.5f)*12.f;
+   float ry1 = sinf(roll+3.1415927f*0.5f)*12.f;
+
+   short x1 = short(ox - rx0 - rx1);
+   short y1 = short(oy - ry0 - ry1);
+   short x2 = short(ox + rx0 - rx1);
+   short y2 = short(oy + ry0 - ry1);
+   short x3 = short(ox + rx0 + rx1);
+   short y3 = short(oy + ry0 + ry1);
+   short x4 = short(ox - rx0 + rx1);
+   short y4 = short(oy - ry0 + ry1);
+
+   uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
+   uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
+   uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
+   uint32_t vertex3 = ((y4&0xFFFF)<<16) | (x4&0xFFFF);
+
+   GPUSetRegister(1, vertex0);
+   GPUSetRegister(2, vertex1);
+   GPUSetRegister(3, vertex2);
+   GPUSetRegister(4, vertex3);
+   uint8_t ncolor = 0x37;
+   GPURasterizeTriangle(1,2,3,ncolor);
+   GPURasterizeTriangle(3,4,1,ncolor^0xFF);
+
+   roll += 0.055f;
+}
+
+void SubmitGPUFrame()
+{
+   const uint8_t bgcolor = 0x03;//0x7C;
+   const uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
+
+   if (gpuSideSubmitCounter == gpuSubmitCounter)
+   {
+      ++gpuSubmitCounter;
+
+      // CLS
+      GPUSetRegister(1, colorbits);
+      GPUClearVRAMPage(1);
+
+      DrawRotatingRect(128, 96);
+
+      // Stall GPU until vsync is reached
+      GPUWaitForVsync();
+
+      // Swap to other page to reveal previous render
+      vramPage = (vramPage+1)%2;
+      GPUSetRegister(2, vramPage);
+      GPUSetVideoPage(2);
+
+      // GPU will write value in G2 to address in G3 in the future
+      GPUSetRegister(3, uint32_t(&gpuSideSubmitCounter));
+      GPUSetRegister(2, gpuSubmitCounter);
+      GPUWriteSystemMemory(2, 3);
+
+      // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
+      gpuSideSubmitCounter = 0;
+   }
+}
+
 void loadbinaryblob()
 {
    // Header data
@@ -32,9 +105,6 @@ void loadbinaryblob()
       }
    }
 
-   EchoUART("@");
-   EchoInt(loadtarget);
-
    // Data length
    writecursor = 0;
    while(writecursor < 4)
@@ -46,9 +116,6 @@ void loadbinaryblob()
          loadlenaschar[writecursor++] = readdata;
       }
    }
-
-   EchoUART("#");
-   EchoInt(loadlen);
 
    // Read binary blob
    writecursor = 0;
@@ -82,108 +149,64 @@ void runbinaryblob()
       }
    }
 
-   // Old way: this doesn't set up anything before launching target executable
-   // ((void (*)(void)) branchaddress)();
+   EchoUART("Starting...\r\n");
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
+   // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
    asm (
-      "lw ra, %0; \n"
+      "lw ra, %0 \n"
+      "fmv.w.x	f0, zero \n"
+      "fmv.w.x	f1, zero \n"
+      "fmv.w.x	f2, zero \n"
+      "fmv.w.x	f3, zero \n"
+      "fmv.w.x	f4, zero \n"
+      "fmv.w.x	f5, zero \n"
+      "fmv.w.x	f6, zero \n"
+      "fmv.w.x	f7, zero \n"
+      "fmv.w.x	f8, zero \n"
+      "fmv.w.x	f9, zero \n"
+      "fmv.w.x	f10, zero \n"
+      "fmv.w.x	f11, zero \n"
+      "fmv.w.x	f12, zero \n"
+      "fmv.w.x	f13, zero \n"
+      "fmv.w.x	f14, zero \n"
+      "fmv.w.x	f15, zero \n"
+      "fmv.w.x	f16, zero \n"
+      "fmv.w.x	f17, zero \n"
+      "fmv.w.x	f18, zero \n"
+      "fmv.w.x	f19, zero \n"
+      "fmv.w.x	f20, zero \n"
+      "fmv.w.x	f21, zero \n"
+      "fmv.w.x	f22, zero \n"
+      "fmv.w.x	f23, zero \n"
+      "fmv.w.x	f24, zero \n"
+      "fmv.w.x	f25, zero \n"
+      "fmv.w.x	f26, zero \n"
+      "fmv.w.x	f27, zero \n"
+      "fmv.w.x	f28, zero \n"
+      "fmv.w.x	f29, zero \n"
+      "fmv.w.x	f30, zero \n"
+      "fmv.w.x	f31, zero \n"
+      "li x12, 0x0001FFF0 \n"
+      "mv sp, x12 \n"
+      "ret \n"
       : 
       : "m" (branchaddress)
       : 
-   );
-   asm (
-      "fmv.w.x	f0, zero; \n"
-      "fmv.w.x	f1, zero; \n"
-      "fmv.w.x	f2, zero; \n"
-      "fmv.w.x	f3, zero; \n"
-      "fmv.w.x	f4, zero; \n"
-      "fmv.w.x	f5, zero; \n"
-      "fmv.w.x	f6, zero; \n"
-      "fmv.w.x	f7, zero; \n"
-      "fmv.w.x	f8, zero; \n"
-      "fmv.w.x	f9, zero; \n"
-      "fmv.w.x	f10, zero; \n"
-      "fmv.w.x	f11, zero; \n"
-      "fmv.w.x	f12, zero; \n"
-      "fmv.w.x	f13, zero; \n"
-      "fmv.w.x	f14, zero; \n"
-      "fmv.w.x	f15, zero; \n"
-      "fmv.w.x	f16, zero; \n"
-      "fmv.w.x	f17, zero; \n"
-      "fmv.w.x	f18, zero; \n"
-      "fmv.w.x	f19, zero; \n"
-      "fmv.w.x	f20, zero; \n"
-      "fmv.w.x	f21, zero; \n"
-      "fmv.w.x	f22, zero; \n"
-      "fmv.w.x	f23, zero; \n"
-      "fmv.w.x	f24, zero; \n"
-      "fmv.w.x	f25, zero; \n"
-      "fmv.w.x	f26, zero; \n"
-      "fmv.w.x	f27, zero; \n"
-      "fmv.w.x	f28, zero; \n"
-      "fmv.w.x	f29, zero; \n"
-      "fmv.w.x	f30, zero; \n"
-      "fmv.w.x	f31, zero; \n"
-      "li x12, 0x0001FFF0; \n"
-      "mv sp, x12; \n"
-      "ret; \n"
    );
 
    // Unfortunately, if I use 'noreturn' attribute with above code, it doesn't work
    // and there'll be a redundant stack op and a ret generated here
 }
 
-void drawrect(const float ox, const float oy)
-{
-   static float roll = 1.8f;
-
-   float rx0 = cosf(roll)*12.f;
-   float ry0 = sinf(roll)*12.f;
-   float rx1 = cosf(roll+3.1415927f*0.5f)*12.f;
-   float ry1 = sinf(roll+3.1415927f*0.5f)*12.f;
-
-   short x1 = short(ox - rx0 - rx1);
-   short y1 = short(oy - ry0 - ry1);
-   short x2 = short(ox + rx0 - rx1);
-   short y2 = short(oy + ry0 - ry1);
-   short x3 = short(ox + rx0 + rx1);
-   short y3 = short(oy + ry0 + ry1);
-   short x4 = short(ox - rx0 + rx1);
-   short y4 = short(oy - ry0 + ry1);
-
-   uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
-   uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
-   uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
-   uint32_t vertex3 = ((y4&0xFFFF)<<16) | (x4&0xFFFF);
-
-   GPUSetRegister(1, vertex0);
-   GPUSetRegister(2, vertex1);
-   GPUSetRegister(3, vertex2);
-   GPUSetRegister(4, vertex3);
-   uint8_t ncolor = 0x37;
-   GPURasterizeTriangle(1,2,3,ncolor);
-   GPURasterizeTriangle(3,4,1,ncolor^0xFF);
-
-   roll += 0.04f;
-}
-
 int main()
 {
    EchoUART("NekoIchi [v002] [rv32imf] [GPU]\r\n");
-
-   volatile uint32_t gpustate = 0x00000000;
-   uint32_t counter = 0;
-
-   uint8_t bgcolor = 0x03;//0x7C;
-   uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
+   EchoUART("Awaiting ELF upload...\r\n");
 
    // Set page
-   uint32_t page = 0;
-   GPUSetRegister(2, page);
+   GPUSetRegister(2, vramPage);
    GPUSetVideoPage(2);
-
-   uint32_t enableGPUworker = 1;
 
    // UART communication section
    uint8_t prevchar = 0xFF;
@@ -207,46 +230,9 @@ int main()
                runbinaryblob();
          }
          prevchar = checkchar;
-
-         // Stop rendering
-         enableGPUworker = 0;
       }
 
-      // Do this when idle
-      if (enableGPUworker && (gpustate == counter))
-      {
-         ++counter;
-
-         // CLS
-         GPUSetRegister(1, colorbits);
-         GPUClearVRAMPage(1);
-
-         drawrect(128, 96);
-
-         // Render text
-         PrintDMA(56, 8, "Please upload ELF");
-         PrintDMA(4, 16, "USB/UART @115200bps:8bit:1st:np");
-
-         // Stall GPU until vsync is reached
-         GPUWaitForVsync();
-
-         // Swap to other page to reveal previous render
-         page = (page+1)%2;
-         GPUSetRegister(2, page);
-         GPUSetVideoPage(2);
-
-         // GPU status address in G3
-         uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
-         GPUSetRegister(3, gpustateDWORDaligned);
-
-         // Will write incremented counter in the future from GPU side
-         GPUSetRegister(2, counter);
-         GPUWriteSystemMemory(2, 3);
-
-         // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
-         gpustate = 0;
-      }
-
+      SubmitGPUFrame();
    }
 
    return 0;

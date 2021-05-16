@@ -30,14 +30,14 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
 }
 
 // http://blog.recursiveprocess.com/2014/04/05/mandelbrot-fractal-v2/
-void mandelbrotFloat(float ox, float oy, float sx)
+int mandelbrotFloat(float ox, float oy, float sx)
 {
-   //volatile uint32_t *VRAMDW = (uint32_t *)VRAM;
    int R = int(27.71f-5.156f*logf(sx));
 
-   for (int row = 0; row < 192; row+=2)
+   static int row = 0;
+   //for (int row = 0; row < 192; ++row)
    {
-      for (int col = 0; col < 256; col+=2)
+      for (int col = 0; col < 256; ++col)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          uint8_t c;
@@ -52,11 +52,13 @@ void mandelbrotFloat(float ox, float oy, float sx)
          }
 
          mandelbuffer[col + (row<<8)] = c;
-         mandelbuffer[col+1 + (row<<8)] = c;
-         mandelbuffer[col + ((row+1)<<8)] = c;
-         mandelbuffer[col+1 + ((row+1)<<8)] = c;
       }
    }
+   int retVal = 0;
+   if (row>=191)
+      retVal = 1;
+   row = (row+1)%192;
+   return retVal;
 }
 
 int main(int argc, char ** argv)
@@ -66,20 +68,32 @@ int main(int argc, char ** argv)
    GPUSetRegister(6, page);
    GPUSetVideoPage(6);
 
-   float R = 0.399999976158f;///4.0E-5f;
+   float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
    float X = -0.235125f;
    float Y = 0.827215f;
 
    volatile unsigned int gpustate = 0x00000000;
    unsigned int cnt = 0x00000000;
+
+   uint64_t prevreti = ReadRetiredInstructions();
+   uint32_t prevms = ClockToMs(ReadClock());
+   uint32_t ips = 0;
    while(1)
    {
-      //uint64_t clkA = ReadClock();
-
       // Generate one line of mandelbrot into offscreen buffer
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
-      mandelbrotFloat(X,Y,R);
-      R += 0.01f; // Zoom
+      if (mandelbrotFloat(X,Y,R) != 0)
+         R += 0.01f; // Zoom
+
+      uint32_t ms = ClockToMs(ReadClock());
+
+      if (ms-prevms > 1000)
+      {
+         prevms += 1000; // So that we have the leftover time carried over
+         uint64_t reti = ReadRetiredInstructions();
+         ips = (reti-prevreti);
+         prevreti = reti;
+      }
 
       if (gpustate == cnt) // GPU work complete, push more
       {
@@ -102,8 +116,11 @@ int main(int argc, char ** argv)
             GPUKickDMA(4, 5, dmacount, 0);
          }
 
+         PrintDMA(0, 0, "IPS: ");
+         PrintDMADecimal(5*8, 0, ips);
+
          // Stall GPU until vsync is reached
-         GPUWaitForVsync();
+         //GPUWaitForVsync();
 
          page = (page + 1)%2;
          GPUSetRegister(6, page);

@@ -147,7 +147,8 @@ int main()
             else if ((incoming[0]='t') && (incoming[1]=='i') && (incoming[2]=='m') && (incoming[3]=='e'))
                toggletime = (toggletime+1)%2;
 
-            // Rewind read cursor
+            // Rewind read cursor and clear the input
+            memset(incoming, 0, 36);
             rcvcursor = 0;
          }
 

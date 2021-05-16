@@ -45,9 +45,9 @@ inline void GPUSetVideoPage(const uint8_t videoPageRegister)
     GPUFIFO[0] = GPUOPCODE(GPUSETVPAGE, videoPageRegister, 0, 0);
 }
 
-inline void GPUWriteSystemMemory(const uint8_t countRegister, const uint8_t statePointerReg)
+inline void GPUWriteSystemMemory(const uint8_t countRegister, const uint8_t sysramPointerReg)
 {
-    GPUFIFO[0] = GPUOPCODE(GPUSYSMEMOUT, countRegister, statePointerReg, 0);
+    GPUFIFO[0] = GPUOPCODE(GPUSYSMEMOUT, countRegister, sysramPointerReg, 0);
 }
 
 inline void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAlignedTargetReg, const uint16_t DMALengthInDWORDs, const uint8_t masked)

@@ -279,8 +279,6 @@ int main(int argc, char ** argv)
    resetparticles(triparticles);
 
    uint32_t prevtime = 0;
-   uint64_t prevreti = ReadRetiredInstructions();
-   uint32_t ips = 0;
    while(1)
    {
       uint8_t c1 = 0xFF;//cnt&0xFF;
@@ -340,11 +338,6 @@ int main(int argc, char ** argv)
          if (prevtime!=seconds)
          {
             prevtime = seconds;
-
-            uint64_t reti = ReadRetiredInstructions();
-            ips = (reti-prevreti);
-            prevreti = reti;
-
             m+=4;
          }
 
@@ -357,15 +350,10 @@ int main(int argc, char ** argv)
          EchoConsole(":");
          EchoConsole(seconds);
 
-         SetConsoleCursor(0, 1);
-         ClearConsoleRow();
-         EchoConsole("IPS: ");
-         EchoConsole(ips);
-
          DrawConsole();
 
          // Stall GPU until vsync is reached
-         //GPUWaitForVsync();
+         GPUWaitForVsync();
 
          // Swap video page
          page = (page+1)%2;
