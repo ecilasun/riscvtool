@@ -208,15 +208,15 @@ uint32_t Random()
 
 uint64_t ReadClock()
 {
-   uint32_t clockhigh, clocklow;
+   uint32_t clockhigh, clocklow, tmp;
 
    asm (
-      "rdtimeh %0;"
-      : "=r" (clockhigh)
-   );
-   asm (
-      "rdtime %0;"
-      : "=r" (clocklow)
+      "1:\n"
+      "rdtimeh %0\n"
+      "rdtime %1\n"
+      "rdtimeh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
 
    uint64_t clock = (uint64_t(clockhigh)<<32) | clocklow;
@@ -230,11 +230,8 @@ uint64_t ReadRetiredInstructions()
 
    asm (
       "rdinstreth %0;"
-      : "=r" (retihigh)
-   );
-   asm (
-      "rdinstret %0;"
-      : "=r" (retilow)
+      "rdinstret %1;"
+      : "=&r" (retihigh), "=&r" (retilow)
    );
 
    uint64_t reti = (uint64_t(retihigh)<<32) | retilow;
