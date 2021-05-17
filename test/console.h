@@ -9,3 +9,4 @@ void DrawConsole();
 void GetConsoleCursor(int &x, int &y);
 void ClearConsoleRow();
 void ConsoleCursorStepBack();
+void ConsoleStringAtRow(char *target);

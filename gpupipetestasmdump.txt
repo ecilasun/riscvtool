@@ -138,7 +138,7 @@ Disassembly of section .text:
 
 00010074 <main>:
    10074:	f6010113          	addi	sp,sp,-160
-   10078:	ffffe337          	lui	t1,0xffffe
+   10078:	fffff337          	lui	t1,0xfffff
    1007c:	08112e23          	sw	ra,156(sp)
    10080:	08812c23          	sw	s0,152(sp)
    10084:	08912a23          	sw	s1,148(sp)
@@ -165,13 +165,13 @@ Disassembly of section .text:
    100d8:	9f84a483          	lw	s1,-1544(s1) # 17acc <_GLOBAL_OFFSET_TABLE_+0x4>
    100dc:	0004a783          	lw	a5,0(s1)
    100e0:	38100713          	li	a4,897
-   100e4:	00002537          	lui	a0,0x2
+   100e4:	00001537          	lui	a0,0x1
    100e8:	00e7a023          	sw	a4,0(a5)
    100ec:	3f100713          	li	a4,1009
    100f0:	00e7a223          	sw	a4,4(a5)
    100f4:	03010693          	addi	a3,sp,48
-   100f8:	01050713          	addi	a4,a0,16 # 2010 <main-0xe064>
-   100fc:	ffffe437          	lui	s0,0xffffe
+   100f8:	01050713          	addi	a4,a0,16 # 1010 <main-0xf064>
+   100fc:	fffff437          	lui	s0,0xfffff
    10100:	00d70733          	add	a4,a4,a3
    10104:	00870ab3          	add	s5,a4,s0
    10108:	fe0aa823          	sw	zero,-16(s5)
@@ -187,7 +187,7 @@ Disassembly of section .text:
    10130:	03010693          	addi	a3,sp,48
    10134:	01090713          	addi	a4,s2,16
    10138:	00d70733          	add	a4,a4,a3
-   1013c:	ff040793          	addi	a5,s0,-16 # ffffdff0 <__BSS_END__+0xfffe6158>
+   1013c:	ff040793          	addi	a5,s0,-16 # ffffeff0 <__BSS_END__+0xfffe7158>
    10140:	00f707b3          	add	a5,a4,a5
    10144:	0167d693          	srli	a3,a5,0x16
    10148:	00a79793          	slli	a5,a5,0xa
@@ -612,7 +612,7 @@ Disassembly of section .text:
 000107a0 <_Z14resetparticlesPs>:
    107a0:	ff010113          	addi	sp,sp,-16
    107a4:	00912223          	sw	s1,4(sp)
-   107a8:	000024b7          	lui	s1,0x2
+   107a8:	000014b7          	lui	s1,0x1
    107ac:	00812423          	sw	s0,8(sp)
    107b0:	01212023          	sw	s2,0(sp)
    107b4:	00112623          	sw	ra,12(sp)
@@ -643,9 +643,9 @@ Disassembly of section .text:
 00010814 <_Z13drawparticlesPs>:
    10814:	fd010113          	addi	sp,sp,-48
    10818:	01412c23          	sw	s4,24(sp)
-   1081c:	00002a37          	lui	s4,0x2
+   1081c:	00001a37          	lui	s4,0x1
    10820:	02812423          	sw	s0,40(sp)
-   10824:	002a0a13          	addi	s4,s4,2 # 2002 <main-0xe072>
+   10824:	002a0a13          	addi	s4,s4,2 # 1002 <main-0xf072>
    10828:	00250413          	addi	s0,a0,2
    1082c:	02912223          	sw	s1,36(sp)
    10830:	03212023          	sw	s2,32(sp)
@@ -658,7 +658,7 @@ Disassembly of section .text:
    1084c:	00040493          	mv	s1,s0
    10850:	01800913          	li	s2,24
    10854:	00c0006f          	j	10860 <_Z13drawparticlesPs+0x4c>
-   10858:	00848493          	addi	s1,s1,8 # 2008 <main-0xe06c>
+   10858:	00848493          	addi	s1,s1,8 # 1008 <main-0xf06c>
    1085c:	029a0e63          	beq	s4,s1,10898 <_Z13drawparticlesPs+0x84>
    10860:	0004d783          	lhu	a5,0(s1)
    10864:	0024d683          	lhu	a3,2(s1)
@@ -679,9 +679,9 @@ Disassembly of section .text:
    108a0:	fe000693          	li	a3,-32
    108a4:	00178793          	addi	a5,a5,1
    108a8:	41f7d713          	srai	a4,a5,0x1f
-   108ac:	01675713          	srli	a4,a4,0x16
+   108ac:	01775713          	srli	a4,a4,0x17
    108b0:	00e787b3          	add	a5,a5,a4
-   108b4:	3ff7f793          	andi	a5,a5,1023
+   108b4:	1ff7f793          	andi	a5,a5,511
    108b8:	40e787b3          	sub	a5,a5,a4
    108bc:	00179713          	slli	a4,a5,0x1
    108c0:	00f70733          	add	a4,a4,a5
@@ -752,7 +752,7 @@ Disassembly of section .text:
    109c4:	001fef37          	lui	t5,0x1fe
    109c8:	d1530313          	addi	t1,t1,-747 # d15 <main-0xf35f>
    109cc:	00002eb7          	lui	t4,0x2
-   109d0:	00800e37          	lui	t3,0x800
+   109d0:	00400e37          	lui	t3,0x400
    109d4:	00041983          	lh	s3,0(s0)
    109d8:	01e673b3          	and	t2,a2,t5
    109dc:	0063e3b3          	or	t2,t2,t1

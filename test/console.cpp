@@ -119,3 +119,11 @@ void DrawConsole()
     for (int cy=0;cy<24;++cy)
         PrintDMA(0, 8*cy, 32, &consoleText[cy*32]);
 }
+
+void ConsoleStringAtRow(char *target)
+{
+    // NOTE: Input string must be >32 bytes long to accomodate the null terminator
+    for (int cx=0; cx<32; ++cx)
+        target[cx] = consoleText[cursory*32+cx];
+    target[32] = 0;
+}

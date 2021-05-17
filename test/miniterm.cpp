@@ -49,11 +49,7 @@ int main()
    const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    //const unsigned char editbgcolor = 0x00;
 
-   char incoming[36];
-   //char *incoming = (char*)malloc(32);
-
-   unsigned int rcvcursor = 0;
-   //unsigned int oldcount = 0;
+   char cmdbuffer[33*25];
 
    // Set output page
    uint32_t page = 0;
@@ -91,35 +87,31 @@ int main()
       if (bytecount != 0)
       {
          // Step 3: Read the data on UARTRX memory location
-         char checkchar = incoming[rcvcursor++] = UARTRX[0];
+         char checkchar = UARTRX[0];
 
          if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
          {
-            if (rcvcursor!=1)
-            {
-               --rcvcursor;
-               incoming[rcvcursor] = 0;
-               incoming[rcvcursor-1] = 0;
-               --rcvcursor;
-            }
             ConsoleCursorStepBack();
             EchoConsole(" ");
             ConsoleCursorStepBack();
          }
          else if (checkchar == 13) // Enter?
          {
-            EchoConsole("\n"); // New line
+            // First, copy current row
+            ConsoleStringAtRow(cmdbuffer);
+            // Next, send a newline to go down one
+            EchoConsole("\n");
 
             // Clear the whole screen
-            if ((incoming[0]='c') && (incoming[1]=='l') && (incoming[2]=='s'))
+            if ((cmdbuffer[0]='c') && (cmdbuffer[1]=='l') && (cmdbuffer[2]=='s'))
             {
                ClearConsole();
             }
-            else if ((incoming[0]='h') && (incoming[1]=='e') && (incoming[2]=='l') && (incoming[3]=='p'))
+            else if ((cmdbuffer[0]='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
             {
                EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\n");
             }
-            else if ((incoming[0]='d') && (incoming[1]=='i') && (incoming[2]=='r'))
+            else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
             {
                // Attempt to re-start file system if not ready
                if (!s_filesystemready)
@@ -140,16 +132,12 @@ int main()
                else
                   EchoConsole("\r\nFile system not ready\r\n");
             }
-            else if ((incoming[0]='l') && (incoming[1]=='o') && (incoming[2]=='a') && (incoming[3]=='d'))
+            else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
             {
-               loadelf(incoming);
+               loadelf(cmdbuffer);
             }
-            else if ((incoming[0]='t') && (incoming[1]=='i') && (incoming[2]=='m') && (incoming[3]=='e'))
+            else if ((cmdbuffer[0]='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
                toggletime = (toggletime+1)%2;
-
-            // Rewind read cursor and clear the input
-            memset(incoming, 0, 36);
-            rcvcursor = 0;
          }
 
          if (checkchar != 8)
@@ -163,10 +151,7 @@ int main()
          // Echo characters back to the terminal
          UARTTX[0] = checkchar;
          if (checkchar == 13)
-            UARTTX[0] = 10; // Echo a linefeed
-
-         if (rcvcursor>31)
-            rcvcursor = 0;
+            UARTTX[0] = 10; // Echo extra linefeed
       }
 
       if (gpustate == cnt) // GPU work complete, push more
@@ -217,8 +202,6 @@ int main()
          gpustate = 0;
       }
    }
-
-   //free(incoming);
 
    return 0;
 }
