@@ -73,6 +73,7 @@ int main()
    uint32_t toggletime = 0;
    volatile unsigned int gpustate = 0x00000000;
    unsigned int cnt = 0x00000000;
+   int escapemode = 0;
    while(1)
    {
       uint64_t clk = ReadClock();
@@ -94,6 +95,10 @@ int main()
             ConsoleCursorStepBack();
             EchoConsole(" ");
             ConsoleCursorStepBack();
+         }
+         else if (checkchar == 27) // ESC
+         {
+            escapemode = 1;
          }
          else if (checkchar == 13) // Enter?
          {
@@ -140,7 +145,25 @@ int main()
                toggletime = (toggletime+1)%2;
          }
 
-         if (checkchar != 8)
+         if (escapemode)
+         {
+            ++escapemode;
+            if (escapemode==4)
+            {
+               int cx,cy;
+               GetConsoleCursor(cx, cy);
+               if (checkchar == 'A')
+                  SetConsoleCursor(cx, cy-1);
+               if (checkchar == 'B')
+                  SetConsoleCursor(cx, cy+1);
+               if (checkchar == 'C')
+                  SetConsoleCursor(cx+1, cy);
+               if (checkchar == 'D')
+                  SetConsoleCursor(cx-1, cy);
+               escapemode = 0;
+            }
+         }
+         else if (checkchar != 8)
          {
             char shortstring[2];
             shortstring[0]=checkchar;

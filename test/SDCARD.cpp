@@ -4,8 +4,10 @@
 uint8_t SDIdle()
 {
    uint8_t response;
-   // Enter idle state
+
    SPIOutput[33] = 0xFF;
+
+   // Enter idle state
    SPIOutput[0] = SPI_CMD(CMD0_GO_IDLE_STATE);
    SPIOutput[1] = 0x00;
    SPIOutput[2] = 0x00;
@@ -29,6 +31,7 @@ uint8_t SDCheckVoltageRange(uint32_t &databack)
    uint8_t response;
 
    SPIOutput[35] = 0xFF;
+
    SPIOutput[0] = SPI_CMD(CMD8_SEND_IF_COND);
    SPIOutput[1] = 0x00;
    SPIOutput[2] = 0x00;
@@ -62,8 +65,9 @@ uint8_t SDCardInit()
 {
    uint8_t response;
 
-   // ACMD header
    SPIOutput[37] = 0xFF;
+
+   // ACMD header
    SPIOutput[0] = SPI_CMD(CMD55_APP_CMD);
    SPIOutput[1] = 0x00;
    SPIOutput[2] = 0x00;
@@ -118,8 +122,10 @@ uint8_t SDCardInit()
 uint8_t SDSetBlockSize512()
 {
    uint8_t response;
-   // Enter idle state
+
    SPIOutput[33] = 0xFF;
+
+   // Set block length
    SPIOutput[0] = SPI_CMD(CMD16_SET_BLOCKLEN);
    SPIOutput[1] = 0x00;
    SPIOutput[2] = 0x00;
@@ -141,8 +147,10 @@ uint8_t SDSetBlockSize512()
 uint8_t SDReadSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
 {
    uint8_t response;
-   // Enter idle state
+
    SPIOutput[33] = 0xFF;
+
+   // Read single block
    SPIOutput[0] = SPI_CMD(CMD17_READ_SINGLE_BLOCK);
    SPIOutput[1] = (uint8_t)((blockaddress&0xFF000000)>>24);
    SPIOutput[2] = (uint8_t)((blockaddress&0x00FF0000)>>16);
@@ -232,5 +240,7 @@ int SDCardStartup()
 
    // NOTE: Block size is already set to 512 for high speed and can't be changed
    //response[3] = SDSetBlockSize512();
+   //EchoUART("SDSetBlockSize512()");
+
    return 0;
 }

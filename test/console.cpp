@@ -25,6 +25,11 @@ void SetConsoleCursor(const int x, const int y)
 {
     cursorx = x;
     cursory = y;
+
+    cursorx = cursorx<0 ? 0:cursorx;
+    cursorx = cursorx>31 ? 31:cursorx;
+    cursory = cursory<0 ? 0:cursory;
+    cursory = cursory>23 ? 23:cursory;
 }
 
 void ScrollConsole()
