@@ -62,6 +62,7 @@ void loadelf(char *commandline)
       unsigned char *buffer = (unsigned char*)malloc(Fs.fsize);
       pf_read(buffer, Fs.fsize, &bytesread);
       parseelfheader((unsigned char*)buffer);
+      free(buffer);
    }
    else
    {
