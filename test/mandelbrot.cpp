@@ -37,7 +37,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
    static int row = 0;
    //for (int row = 0; row < 192; ++row)
    {
-      for (int col = 0; col < 256; ++col)
+      for (int col = 0; col < 256; col+=2)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          uint8_t c;
@@ -52,12 +52,15 @@ int mandelbrotFloat(float ox, float oy, float sx)
          }
 
          mandelbuffer[col + (row<<8)] = c;
+         mandelbuffer[col + 1 + (row<<8)] = c;
+         mandelbuffer[col + ((row+1)<<8)] = c;
+         mandelbuffer[col + 1 + ((row+1)<<8)] = c;
       }
    }
    int retVal = 0;
-   if (row>=191)
+   if (row>=190)
       retVal = 1;
-   row = (row+1)%192;
+   row = (row+2)%192;
    return retVal;
 }
 

@@ -46,21 +46,19 @@ int fat_getpartition()
     // Read the partition table
     if(SDReadMultipleBlocks(mbr,1,0) != -1)
     {
-        //printf(" block0 read\n");
         // check magic
-        if(mbr[510]!=0x55 || mbr[511]!=0xAA)
+        if(mbr[0x1FE]!=0x55 || mbr[0x1FF]!=0xAA)
         {
-            //printf("ERROR: Bad magic in MBR\n");
+            //EchoUART("ERROR: Bad magic in MBR\r\n");
             return 0;
         }
 
         // check partition type
         if(mbr[0x1C2]!=0xE/*FAT16 LBA*/ && mbr[0x1C2]!=0xC/*FAT32 LBA*/)
         {
-            //printf("ERROR: Wrong partition type\n");
+            //EchoUART("ERROR: Wrong partition type\r\n");
             return 0;
         }
-        //printf(" type OK\n");
 
         partitionlba = *((unsigned int*)((unsigned long)mbr + 0x1C6));
 
@@ -68,7 +66,7 @@ int fat_getpartition()
         //printf(" reading boot record at LBA %d\n", partitionlba);
         if(SDReadMultipleBlocks((unsigned char*)bpb, 1, partitionlba) == -1)
         {
-            //printf("ERROR: Unable to read boot record\n");
+            //EchoUART("ERROR: Unable to read boot record\r\n");
             return 0;
         }
         //printf(" partition boot record read\n");
@@ -76,17 +74,17 @@ int fat_getpartition()
         if( !(bpb->fst[0]=='F' && bpb->fst[1]=='A' && bpb->fst[2]=='T') &&
             !(bpb->fst2[0]=='F' && bpb->fst2[1]=='A' && bpb->fst2[2]=='T'))
         {
-            //printf("ERROR: Unknown file system type %c%c%c\n", bpb->fst[0], bpb->fst[1], bpb->fst[2]);
+            //EchoUART("ERROR: Unknown file system type\r\n");// %c%c%c\n", bpb->fst[0], bpb->fst[1], bpb->fst[2]);
             return 0;
         }
 
         // We do not load any FAT entry initially
         fatcontext.CachedFATPage = 0xFFFFFFFF;
 
-        //printf(" SUCCESS\n");
+        //EchoUART(" SUCCESS\r\n");
         return 1;
     }
-    //printf("ERROR: Could not read block\n");
+    //EchoUART("ERROR: Could not read block\r\n");
     return 0;
 }
 
@@ -267,7 +265,7 @@ void fat_closefile(struct FILEHANDLE *fh)
 /**
  * Read a file into memory
  */
-int fat_readfile(struct FILEHANDLE *fh, char *buffer, int read_bytes, int *total_read)
+int fat_readfile(struct FILEHANDLE *fh, unsigned char *buffer, int read_bytes, int *total_read)
 {
     *total_read = 0;
     unsigned int cluster = fh->file_first_cluster;

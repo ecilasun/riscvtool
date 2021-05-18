@@ -10,9 +10,47 @@
 #include "SDCARD.h"
 #include "FAT.h"
 #include "console.h"
+#include "elf.h"
 
 static int s_filesystemready = 0;
 volatile unsigned int targetjumpaddress = 0x00000000;
+
+void parseelfheader(unsigned char *_elfbinary)
+{
+    // Parse the header and check the magic word
+    SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
+
+    if (fheader->m_Magic != 0x464C457F)
+   {
+       EchoConsole("Failed: expecting 0x7F+'ELF'\n");
+       return;
+   }
+
+   unsigned int stringtableindex = fheader->m_SHStrndx;
+   SElfSectionHeader32 *stringtablesection = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
+   char *names = (char*)(_elfbinary+stringtablesection->m_Offset);
+
+   for(int i=0; i<fheader->m_SHNum; ++i)
+   {
+      SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*i);
+
+      char sectionname[128];
+      int n=0;
+      do
+      {
+         sectionname[n] = names[sheader->m_NameOffset+n];
+         ++n;
+      }
+      while(names[sheader->m_NameOffset+n]!='.' && sheader->m_NameOffset+n<stringtablesection->m_Size);
+      sectionname[n] = 0;
+
+      EchoConsole("Section ");
+      EchoConsole(i);
+      EchoConsole(" : '");
+      EchoConsole(sectionname);//, (sheader->m_Addr-pheader->m_PAddr), sheader->m_Size, sheader->m_Offset);
+      EchoConsole("'\n");
+   }
+}
 
 void loadelf(char *commandline)
 {
@@ -21,14 +59,11 @@ void loadelf(char *commandline)
    {
       EchoConsole("\r\nReading file...\r\n");
       uint32_t fsz = fat_getfilesize(&fh);
-      EchoInt(fsz);
-      char buffer[4096]; // AT LEAST 4096! (spc(8)*bps(512)==4096)
+      unsigned char buffer[8192]; // AT LEAST 4096! (spc(8)*bps(512)==4096)
       int readsize;
-      fat_readfile(&fh, buffer, fsz>4096?4096:fsz, &readsize);
-      buffer[fsz] = 0;
-      EchoConsole(buffer);
+      fat_readfile(&fh, buffer, fsz>8192 ? 8192 : fsz, &readsize);
+      parseelfheader((unsigned char*)buffer);
       fat_closefile(&fh);
-      EchoConsole("Done\r\n");
    }
    else
    {
@@ -59,8 +94,8 @@ int main()
    // Startup message
    ClearConsole();
    ClearScreen(bgcolor);
-   EchoConsole(" MiniTerm (c)2021 Engin Cilasun\r\n Use 'help' for assistance\r\n");
-   EchoUART(" MiniTerm (c)2021 Engin Cilasun\r\n UART echo is off\r\n");
+   EchoConsole("MiniTerm (c)2021 Engin Cilasun\r\n Use 'help' for assistance\r\n");
+   EchoUART("MiniTerm (c)2021 Engin Cilasun\r\n");
    DrawConsole();
 
    page = (page+1)%2;

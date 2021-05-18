@@ -13,8 +13,8 @@ volatile unsigned char *SPIInput = (volatile unsigned char* )0x30000000;      //
 volatile unsigned char *SPIOutput = (volatile unsigned char* )0x20000000;     // SPU send data (write)
 volatile unsigned int ROMResetVector = 0x0000000;
 
-volatile uint32_t *BRAMStart = (uint32_t* )0x00000000; // Start of BLOCK RAM region, 0x00000000 - 0x0001FFFF (128KBytes)
-volatile uint32_t *DDR3Start = (uint32_t* )0x00020000; // Start of DDR3 RAM region, 0x00020000 - 0x0x0FFFFFFF (256Mbytes?)
+volatile uint32_t *BRAMStart = (uint32_t* )0x00000000; // Start of BLOCK RAM region, 0x00000000 - 0x0003FFFF (256KBytes)
+volatile uint32_t *DDR3Start = (uint32_t* )0x00040000; // Start of DDR3 RAM region, 0x00040000 - 0x0x0FFFFFFF (256Mbytes?)
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t font[] __attribute__((aligned(4))) = {
