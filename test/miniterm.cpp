@@ -12,8 +12,9 @@
 #include "console.h"
 #include "elf.h"
 
-static int s_filesystemready = 0;
+//static int s_filesystemready = 0;
 volatile unsigned int targetjumpaddress = 0x00000000;
+FATFS Fs;
 
 void parseelfheader(unsigned char *_elfbinary)
 {
@@ -54,32 +55,35 @@ void parseelfheader(unsigned char *_elfbinary)
 
 void loadelf(char *commandline)
 {
-   FILEHANDLE fh;
-   if (fat_openfile(&commandline[5], &fh))
+   FRESULT fr = pf_open(&commandline[5]);
+   if (fr == FR_OK)
    {
-      EchoConsole("\r\nReading file...\r\n");
-      uint32_t fsz = fat_getfilesize(&fh);
-      unsigned char buffer[8192]; // AT LEAST 4096! (spc(8)*bps(512)==4096)
-      int readsize;
-      fat_readfile(&fh, buffer, fsz>8192 ? 8192 : fsz, &readsize);
+      WORD bytesread;
+      unsigned char *buffer = (unsigned char*)malloc(Fs.fsize);
+      pf_read(buffer, Fs.fsize, &bytesread);
       parseelfheader((unsigned char*)buffer);
-      fat_closefile(&fh);
    }
    else
    {
-      EchoConsole("\r\nFile ");
+      EchoConsole("\r\nNot found:");
       EchoConsole(&commandline[5]);
-      EchoConsole(" not found\r\n");
    }
 }
 
+const char *FRtoString[]={
+   "FR_OK",
+	"FR_DISK_ERR",
+	"FR_NOT_READY",
+	"FR_NO_FILE",
+	"FR_NO_PATH",
+	"FR_NOT_OPENED",
+	"FR_NOT_ENABLED",
+	"FR_NO_FILESYSTEM"
+};
+
 int main()
 {
-   if (SDCardStartup() != -1)
-   {
-      fat_getpartition();
-      s_filesystemready = 1;
-   }
+   pf_mount(&Fs);
 
    const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    //const unsigned char editbgcolor = 0x00;
@@ -153,24 +157,23 @@ int main()
             }
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
             {
-               // Attempt to re-start file system if not ready
-               if (!s_filesystemready)
+               EchoConsole("\r\n");
+               DIR dir;
+               FRESULT re = pf_opendir(&dir, " ");
+               if (re == FR_OK)
                {
-                  if (SDCardStartup() != -1)
-                  {
-                     fat_getpartition();
-                     s_filesystemready = 1;
-                  }
-               }
-
-               if (s_filesystemready)
-               {
-                  char target[512] = "\r\n";
-                  fat_list_files(target);
-                  EchoConsole(target);
+                  FILINFO finf;
+                  do{
+                     re = pf_readdir(&dir, &finf);
+                     if (re == FR_OK)
+                     {
+                        EchoConsole(finf.fname);
+                        EchoConsole("\r\n");
+                     }
+                  } while(re == FR_OK && dir.sect!=0);
                }
                else
-                  EchoConsole("\r\nFile system not ready\r\n");
+                  EchoUART(FRtoString[re]);
             }
             else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
             {

@@ -1,97 +1,192 @@
-/*
- * Copyright (C) 2018 bzt (bztsrc@github)
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy,
- * modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *
- */
+/*---------------------------------------------------------------------------/
+/  Petit FatFs - FAT file system module include file  R0.02a   (C)ChaN, 2010
+/----------------------------------------------------------------------------/
+/ Petit FatFs module is an open source software to implement FAT file system to
+/ small embedded systems. This is a free software and is opened for education,
+/ research and commercial developments under license policy of following trems.
+/
+/  Copyright (C) 2010, ChaN, all right reserved.
+/
+/ * The Petit FatFs module is a free software and there is NO WARRANTY.
+/ * No restriction on use. You can use, modify and redistribute it for
+/   personal, non-profit or commercial use UNDER YOUR RESPONSIBILITY.
+/ * Redistributions of source code must retain the above copyright notice.
+/
+/----------------------------------------------------------------------------*/
 
-// the BIOS Parameter Block (in Volume Boot Record)
-// See: http://www.ntfs.com/fat-partition-sector.htm
+#include "integer.h"
+
+/*---------------------------------------------------------------------------/
+/ Petit FatFs Configuration Options
+/
+/ CAUTION! Do not forget to make clean the project after any changes to
+/ the configuration options.
+/
+/----------------------------------------------------------------------------*/
+#ifndef _FATFS
+#define _FATFS
+
+#define	_USE_READ	1	/* 1:Enable pf_read() */
+
+#define	_USE_DIR	1	/* 1:Enable pf_opendir() and pf_readdir() */
+
+#define	_USE_LSEEK	1	/* 1:Enable pf_lseek() */
+
+#define	_USE_WRITE	0	/* 1:Enable pf_write() */
+
+#define _FS_FAT12	0	/* 1:Enable FAT12 support */
+#define _FS_FAT32	1	/* 1:Enable FAT32 support */
+
+
+#define	_CODE_PAGE	437
+/* Defines which code page is used for path name. Supported code pages are:
+/  932, 936, 949, 950, 437, 720, 737, 775, 850, 852, 855, 857, 858, 862, 866,
+/  874, 1250, 1251, 1252, 1253, 1254, 1255, 1257, 1258 and 1 (ASCII only).
+/  SBCS code pages except for 1 requiers a case conversion table. This
+/  might occupy 128 bytes on the RAM on some platforms, e.g. avr-gcc. */
+
+
+#define _WORD_ACCESS	1
+/* The _WORD_ACCESS option defines which access method is used to the word
+/  data in the FAT structure.
+/
+/   0: Byte-by-byte access. Always compatible with all platforms.
+/   1: Word access. Do not choose this unless following condition is met.
+/
+/  When the byte order on the memory is big-endian or address miss-aligned
+/  word access results incorrect behavior, the _WORD_ACCESS must be set to 0.
+/  If it is not the case, the value can also be set to 1 to improve the
+/  performance and code efficiency. */
+
+
+/* End of configuration options. Do not change followings without care.     */
+/*--------------------------------------------------------------------------*/
+
+
+
+#if _FS_FAT32
+#define	CLUST	DWORD
+#else
+#define	CLUST	WORD
+#endif
+
+
+/* File system object structure */
+
 typedef struct {
-    char            jmp[3]; // Jump instruction (EB 3C 90 for x86)
-    char            oem[8]; // Usually 'MSDOS5.0'
-    unsigned short  bps;    // Bytes per sector (should read 512, 1024, 2048, 4096)
-    unsigned char   spc;    // Sectors per cluster (1,2,4,8,16,32,64,128)
-    unsigned short  rsc;    // Number of reserved sectors (1 for FAT16, 32 for FAT32)
-    unsigned char   nf;     // File allocation table copies (usually 2)
-    unsigned short  nr;     // Root directory entry count (225 for FAT16, 0 for FAT32)
-    unsigned short  ts16;   // Num sectors (invalid for FAT32)
-    unsigned char   media;  // Media type (0xF8 == hdd)
-    unsigned short  spf16;  // Sectors per file allocation table (0 for FAT32)
-    unsigned short  spt;    // Sectors per track
-    unsigned short  nh;     // Number of heads
-    unsigned int    hs;     // Hidden sectors
-    unsigned int    ts32;   // Total sectors in filesystem
-    unsigned int    spf32;  // Sectors per FAT (FAT32)
-    unsigned int    flg;    // Mirror flags
-    unsigned int    rc;
-    char            vol[6];
-    char            fst[8];
-    char            dmy[20];
-    char            fst2[8];
-    // Bytes 510/511 read '0x55AA'
-    char            padding[512]; // Provide enough space so we can read a single block onto this buffer without overrun
-} __attribute__((packed)) bpb_t;
+	BYTE	fs_type;	/* FAT sub type */
+	BYTE	flag;		/* File status flags */
+	BYTE	csize;		/* Number of sectors per cluster */
+	BYTE	pad1;
+	WORD	n_rootdir;	/* Number of root directory entries (0 on FAT32) */
+	CLUST	n_fatent;	/* Number of FAT entries (= number of clusters + 2) */
+	DWORD	fatbase;	/* FAT start sector */
+	DWORD	dirbase;	/* Root directory start sector (Cluster# on FAT32) */
+	DWORD	database;	/* Data start sector */
+	DWORD	fptr;		/* File R/W pointer */
+	DWORD	fsize;		/* File size */
+	CLUST	org_clust;	/* File start cluster */
+	CLUST	curr_clust;	/* File current cluster */
+	DWORD	dsect;		/* File current data sector */
+} FATFS;
 
-// directory entry structure
+
+
+/* Directory object structure */
+
 typedef struct {
-    char            name[8];
-    char            ext[3];
-    char            attr[9];
-    unsigned short  ch;
-    unsigned int    attr2;
-    unsigned short  cl;
-    unsigned int    size;
-} __attribute__((packed)) fatdir_t;
+	WORD	index;		/* Current read/write index number */
+	BYTE*	fn;			/* Pointer to the SFN (in/out) {file[8],ext[3],status[1]} */
+	CLUST	sclust;		/* Table start cluster (0:Static table) */
+	CLUST	clust;		/* Current cluster */
+	DWORD	sect;		/* Current sector */
+} DIR;
 
-struct FATCONTEXT
-{
-    __attribute__((aligned(4))) unsigned int CachedFATPage; // Page number of cache FAT table
-    __attribute__((aligned(4))) bpb_t bpb;                  // BIOS parameter block
-    __attribute__((aligned(4))) unsigned char mbr[512];     // Master boot record
-    __attribute__((aligned(4))) fatdir_t dir[512];          // Root directory entries (should be more, this is only enough for FAT16)
-    __attribute__((aligned(4))) unsigned int FAT[512];      // Cached FAT table
-};
 
-struct FILEHANDLE
-{
-    unsigned int file_exists;
-    unsigned int file_first_cluster_backup;
-    unsigned int file_first_cluster;
-    unsigned int file_size;
-    unsigned int first_access;
-    unsigned int file_offset;
-    unsigned int file_open;
-    unsigned int data_sec;
-    unsigned int *fat32;
-    unsigned short *fat16;
-    bpb_t *bpb;
-    struct FATCONTEXT *ctx;
-};
 
-int fat_getpartition();
-int fat_getfilesize(struct FILEHANDLE *fh);
-int fat_find_file(const char *fn, struct FILEHANDLE *fh);
-int fat_list_files(char *target);
-int fat_readfile(struct FILEHANDLE *fh, unsigned char *buffer, int read_bytes, int *total_read);
-int fat_openfile(const char *fn, struct FILEHANDLE *fh);
-void fat_closefile(struct FILEHANDLE *fh);
+/* File status structure */
 
+typedef struct {
+	DWORD	fsize;		/* File size */
+	WORD	fdate;		/* Last modified date */
+	WORD	ftime;		/* Last modified time */
+	BYTE	fattrib;	/* Attribute */
+	char	fname[13];	/* File name */
+} FILINFO;
+
+
+
+/* File function return code (FRESULT) */
+
+typedef enum {
+	FR_OK = 0,			/* 0 */
+	FR_DISK_ERR,		/* 1 */
+	FR_NOT_READY,		/* 2 */
+	FR_NO_FILE,			/* 3 */
+	FR_NO_PATH,			/* 4 */
+	FR_NOT_OPENED,		/* 5 */
+	FR_NOT_ENABLED,		/* 6 */
+	FR_NO_FILESYSTEM	/* 7 */
+} FRESULT;
+
+
+
+/*--------------------------------------------------------------*/
+/* Petit FatFs module application interface                     */
+
+FRESULT pf_mount (FATFS*);						/* Mount/Unmount a logical drive */
+FRESULT pf_open (const char*);					/* Open a file */
+FRESULT pf_read (void*, WORD, WORD*);			/* Read data from the open file */
+FRESULT pf_write (const void*, WORD, WORD*);	/* Write data to the open file */
+FRESULT pf_lseek (DWORD);						/* Move file pointer of the open file */
+FRESULT pf_opendir (DIR*, const char*);			/* Open a directory */
+FRESULT pf_readdir (DIR*, FILINFO*);			/* Read a directory item from the open directory */
+
+
+
+/*--------------------------------------------------------------*/
+/* Flags and offset address                                     */
+
+/* File status flag (FATFS.flag) */
+
+#define	FA_OPENED	0x01
+#define	FA_WPRT		0x02
+#define	FA__WIP		0x40
+
+
+/* FAT sub type (FATFS.fs_type) */
+
+#define FS_FAT12	1
+#define FS_FAT16	2
+#define FS_FAT32	3
+
+
+/* File attribute bits for directory entry */
+
+#define	AM_RDO	0x01	/* Read only */
+#define	AM_HID	0x02	/* Hidden */
+#define	AM_SYS	0x04	/* System */
+#define	AM_VOL	0x08	/* Volume label */
+#define AM_LFN	0x0F	/* LFN entry */
+#define AM_DIR	0x10	/* Directory */
+#define AM_ARC	0x20	/* Archive */
+#define AM_MASK	0x3F	/* Mask of defined bits */
+
+
+/*--------------------------------*/
+/* Multi-byte word access macros  */
+
+#if _WORD_ACCESS == 1	/* Enable word access to the FAT structure */
+#define	LD_WORD(ptr)		(WORD)(*(WORD*)(BYTE*)(ptr))
+#define	LD_DWORD(ptr)		(DWORD)(*(DWORD*)(BYTE*)(ptr))
+#define	ST_WORD(ptr,val)	*(WORD*)(BYTE*)(ptr)=(WORD)(val)
+#define	ST_DWORD(ptr,val)	*(DWORD*)(BYTE*)(ptr)=(DWORD)(val)
+#else					/* Use byte-by-byte access to the FAT structure */
+#define	LD_WORD(ptr)		(WORD)(((WORD)*((BYTE*)(ptr)+1)<<8)|(WORD)*(BYTE*)(ptr))
+#define	LD_DWORD(ptr)		(DWORD)(((DWORD)*((BYTE*)(ptr)+3)<<24)|((DWORD)*((BYTE*)(ptr)+2)<<16)|((WORD)*((BYTE*)(ptr)+1)<<8)|*(BYTE*)(ptr))
+#define	ST_WORD(ptr,val)	*(BYTE*)(ptr)=(BYTE)(val); *((BYTE*)(ptr)+1)=(BYTE)((WORD)(val)>>8)
+#define	ST_DWORD(ptr,val)	*(BYTE*)(ptr)=(BYTE)(val); *((BYTE*)(ptr)+1)=(BYTE)((WORD)(val)>>8); *((BYTE*)(ptr)+2)=(BYTE)((DWORD)(val)>>16); *((BYTE*)(ptr)+3)=(BYTE)((DWORD)(val)>>24)
+#endif
+
+
+#endif /* _FATFS */
