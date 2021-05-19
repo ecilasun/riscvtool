@@ -119,6 +119,21 @@ void EchoConsole(const int32_t i)
     EchoConsole(msg);
 }
 
+void EchoConsoleHex(const int32_t i)
+{
+    const char hexdigits[] = "0123456789ABCDEF";
+    char msg[] = "        ";
+    msg[0] = hexdigits[((i>>28)%16)];
+    msg[1] = hexdigits[((i>>24)%16)];
+    msg[2] = hexdigits[((i>>20)%16)];
+    msg[3] = hexdigits[((i>>16)%16)];
+    msg[4] = hexdigits[((i>>12)%16)];
+    msg[5] = hexdigits[((i>>8)%16)];
+    msg[6] = hexdigits[((i>>4)%16)];
+    msg[7] = hexdigits[(i%16)];
+    EchoConsole(msg);
+}
+
 void DrawConsole()
 {
     for (int cy=0;cy<24;++cy)

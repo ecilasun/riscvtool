@@ -12,8 +12,6 @@
 #include "console.h"
 #include "elf.h"
 
-//static int s_filesystemready = 0;
-volatile unsigned int targetjumpaddress = 0x00000000;
 FATFS Fs;
 const char *FRtoString[]={
    "FR_OK\r\n",
@@ -40,7 +38,7 @@ void parseelfheader(SElfFileHeader32 *fheader)
    SElfProgramHeader32 pheader;
    pf_lseek(fheader->m_PHOff);
    pf_read(&pheader, sizeof(SElfProgramHeader32), &bytesread);
-   // Program entry point: pheader.m_PAddr
+   //uint32_t branchaddress = pheader.m_PAddr + 0x10000;
 
    // Read string table section header
    unsigned int stringtableindex = fheader->m_SHStrndx;
@@ -65,15 +63,19 @@ void parseelfheader(SElfFileHeader32 *fheader)
       if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
       {
          // TODO: Load this section to memory
+         /*uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
+         pf_lseek(sheader.m_Offset);
+         pf_read(elfsectionpointer, sheader.m_Size, &bytesread);*/
 
-         // Dump debug info about sections to load
+         // DEBUG: dump info about sections to load
          EchoConsole(&names[sheader.m_NameOffset]);
-         EchoConsole(" @");
-         EchoConsole(sheader.m_Addr);
-         EchoConsole(" #");
-         EchoConsole(sheader.m_Size);
-         EchoConsole(" +");
-         EchoConsole(sheader.m_Offset);
+         EchoConsole("\r\n");
+         EchoConsole(" ");
+         EchoConsoleHex(sheader.m_Addr);
+         EchoConsole(" ");
+         EchoConsoleHex(sheader.m_Size);
+         EchoConsole(" ");
+         EchoConsoleHex(sheader.m_Offset);
          EchoConsole("\r\n");
       }
    }
@@ -209,7 +211,7 @@ int main()
             else if ((cmdbuffer[0]='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
             {
                EchoConsole("\r\n");
-               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\n");
+               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to 0x10000\r\n");
             }
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
             {
@@ -223,6 +225,19 @@ int main()
             }
             else if ((cmdbuffer[0]='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
                toggletime = (toggletime+1)%2;
+            else if ((cmdbuffer[0]='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
+            {
+               uint32_t branchaddress = 0x0; // TODO: actually branch to 0x10000
+               asm (
+                  "lw ra, %0 \n"
+                  "li x12, 0x0001FFF0 \n"
+                  "mv sp, x12 \n"
+                  "ret \n"
+                  : 
+                  : "m" (branchaddress)
+                  : 
+               );
+            }
          }
 
          if (escapemode)
