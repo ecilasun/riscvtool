@@ -15,42 +15,70 @@
 //static int s_filesystemready = 0;
 volatile unsigned int targetjumpaddress = 0x00000000;
 FATFS Fs;
+const char *FRtoString[]={
+   "FR_OK\r\n",
+	"FR_DISK_ERR\r\n",
+	"FR_NOT_READY\r\n",
+	"FR_NO_FILE\r\n",
+	"FR_NO_PATH\r\n",
+	"FR_NOT_OPENED\r\n",
+	"FR_NOT_ENABLED\r\n",
+	"FR_NO_FILESYSTEM\r\n"
+};
 
-void parseelfheader(unsigned char *_elfbinary)
+void parseelfheader(SElfFileHeader32 *fheader)
 {
-    // Parse the header and check the magic word
-    SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
-
-    if (fheader->m_Magic != 0x464C457F)
+   if (fheader->m_Magic != 0x464C457F)
    {
        EchoConsole("Failed: expecting 0x7F+'ELF'\n");
        return;
    }
 
+   WORD bytesread;
+
+   // Read program header
+   SElfProgramHeader32 pheader;
+   pf_lseek(fheader->m_PHOff);
+   pf_read(&pheader, sizeof(SElfProgramHeader32), &bytesread);
+   // Program entry point: pheader.m_PAddr
+
+   // Read string table section header
    unsigned int stringtableindex = fheader->m_SHStrndx;
-   SElfSectionHeader32 *stringtablesection = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
-   char *names = (char*)(_elfbinary+stringtablesection->m_Offset);
+   SElfSectionHeader32 stringtablesection;
+   pf_lseek(fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
+   pf_read(&stringtablesection, sizeof(SElfSectionHeader32), &bytesread);
 
-   for(int i=0; i<fheader->m_SHNum; ++i)
+   // Allocate memory for and read string table
+   char *names = (char *)malloc(stringtablesection.m_Size);
+   pf_lseek(stringtablesection.m_Offset);
+   pf_read(names, stringtablesection.m_Size, &bytesread);
+
+   // Dump all section names and info
+   for(unsigned short i=0; i<fheader->m_SHNum; ++i)
    {
-      SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*i);
+      // Seek-load section headers as needed
+      SElfSectionHeader32 sheader;
+      pf_lseek(fheader->m_SHOff+fheader->m_SHEntSize*i);
+      pf_read(&sheader, sizeof(SElfSectionHeader32), &bytesread);
 
-      char sectionname[128];
-      int n=0;
-      do
+      // If this is a section worth loading...
+      if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
       {
-         sectionname[n] = names[sheader->m_NameOffset+n];
-         ++n;
-      }
-      while(names[sheader->m_NameOffset+n]!='.' && sheader->m_NameOffset+n<stringtablesection->m_Size);
-      sectionname[n] = 0;
+         // TODO: Load this section to memory
 
-      EchoConsole("Section ");
-      EchoConsole(i);
-      EchoConsole(" : '");
-      EchoConsole(sectionname);//, (sheader->m_Addr-pheader->m_PAddr), sheader->m_Size, sheader->m_Offset);
-      EchoConsole("'\n");
+         // Dump debug info about sections to load
+         EchoConsole(&names[sheader.m_NameOffset]);
+         EchoConsole(" @");
+         EchoConsole(sheader.m_Addr);
+         EchoConsole(" #");
+         EchoConsole(sheader.m_Size);
+         EchoConsole(" +");
+         EchoConsole(sheader.m_Offset);
+         EchoConsole("\r\n");
+      }
    }
+
+   free(names);
 }
 
 void loadelf(char *commandline)
@@ -58,11 +86,12 @@ void loadelf(char *commandline)
    FRESULT fr = pf_open(&commandline[5]);
    if (fr == FR_OK)
    {
+      // File size: Fs.fsize
       WORD bytesread;
-      unsigned char *buffer = (unsigned char*)malloc(Fs.fsize);
-      pf_read(buffer, Fs.fsize, &bytesread);
-      parseelfheader((unsigned char*)buffer);
-      free(buffer);
+      // Read header
+      SElfFileHeader32 fheader;
+      pf_read(&fheader, sizeof(fheader), &bytesread);
+      parseelfheader(&fheader);
    }
    else
    {
@@ -71,16 +100,41 @@ void loadelf(char *commandline)
    }
 }
 
-const char *FRtoString[]={
-   "FR_OK",
-	"FR_DISK_ERR",
-	"FR_NOT_READY",
-	"FR_NO_FILE",
-	"FR_NO_PATH",
-	"FR_NOT_OPENED",
-	"FR_NOT_ENABLED",
-	"FR_NO_FILESYSTEM"
-};
+void showdir()
+{
+   DIR dir;
+   FRESULT re = pf_opendir(&dir, " ");
+   if (re == FR_OK)
+   {
+      FILINFO finf;
+      do{
+         re = pf_readdir(&dir, &finf);
+         if (re == FR_OK && dir.sect!=0)
+         {
+            EchoConsole(finf.fname);
+            EchoConsole(" ");
+            EchoConsole(finf.fsize);
+            EchoConsole(" ");
+            /*EchoConsole(1944 + ((finf.ftime&0xFE00)>>9));
+            EchoConsole("/");
+            EchoConsole((finf.ftime&0x1E0)>>5);
+            EchoConsole("/");
+            EchoConsole(finf.ftime&0x1F);*/
+            if (finf.fattrib&0x01) EchoConsole("r");
+            if (finf.fattrib&0x02) EchoConsole("h");
+            if (finf.fattrib&0x04) EchoConsole("s");
+            if (finf.fattrib&0x08) EchoConsole("l");
+            if (finf.fattrib&0x0F) EchoConsole("L");
+            if (finf.fattrib&0x10) EchoConsole("d");
+            if (finf.fattrib&0x20) EchoConsole("a");
+            EchoConsole("\r\n");
+         }
+      } while(re == FR_OK && dir.sect!=0);
+   }
+   else
+      EchoUART(FRtoString[re]);
+
+}
 
 int main()
 {
@@ -154,30 +208,17 @@ int main()
             }
             else if ((cmdbuffer[0]='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
             {
+               EchoConsole("\r\n");
                EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\n");
             }
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
             {
                EchoConsole("\r\n");
-               DIR dir;
-               FRESULT re = pf_opendir(&dir, " ");
-               if (re == FR_OK)
-               {
-                  FILINFO finf;
-                  do{
-                     re = pf_readdir(&dir, &finf);
-                     if (re == FR_OK)
-                     {
-                        EchoConsole(finf.fname);
-                        EchoConsole("\r\n");
-                     }
-                  } while(re == FR_OK && dir.sect!=0);
-               }
-               else
-                  EchoUART(FRtoString[re]);
+               showdir();
             }
             else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
             {
+               EchoConsole("\r\n");
                loadelf(cmdbuffer);
             }
             else if ((cmdbuffer[0]='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))

@@ -203,48 +203,41 @@ int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numbytes, uint32_t offset,
    if (numbytes == 0)
       return -1;
 
-   // Multi-read 1000 bytes with offset 64:
-   // [           ] [           ] [           ] [           ]
-   //      ^             ^             ^             ^
-   // Offset tiles in each sector
-   // We need two numbers: headcount and tailcount
-
-   uint32_t tailcount = 512-offset;
+   uint32_t topblock = offset/512;
+   uint32_t bottomblock = (offset+numbytes)/512;
+   uint32_t leftover = (offset+numbytes)%512;
    uint32_t cursor = 0;
 
-   uint8_t checksum[2];
-   uint32_t numblocks = offset == 0 ? (numbytes/512) : (numbytes/512) + 1;
-   uint32_t leftovers = offset == 0 ? (numbytes%512) : ((numbytes+offset)%512);
-
    uint8_t tmp[512];
-   uint32_t i = 0;
-   for (i = 0; i<numblocks; ++i)
+   uint8_t checksum[2];
+
+   for(uint32_t b=topblock; b<=bottomblock; ++b)
    {
-      uint8_t response = SDReadSingleBlock(blockaddress+i, tmp, checksum);
+      uint8_t response = SDReadSingleBlock(b+blockaddress, tmp, checksum);
       if (response != 0xFE)
          return -1;
 
-      // For the first block read, if we have an offset, copy the 'tail' and move to next (presumably) full block
-      if (i==0)
+      if (b==topblock)
       {
-         __builtin_memcpy(datablock+cursor, &tmp[offset], tailcount<numbytes ? tailcount : numbytes);
-         cursor += tailcount;
+         uint32_t copycount = (topblock==bottomblock) ? numbytes : (512-offset);
+         __builtin_memcpy(datablock+cursor, &tmp[offset], copycount);
+         cursor += copycount;
       }
-      else // For the rest, copy the whole block
+      else if (b==bottomblock)
+      {
+         if (leftover)
+         {
+            __builtin_memcpy(datablock+cursor, tmp, leftover);
+            cursor += leftover;
+         }
+      }
+      else // Mid-blocks
       {
          __builtin_memcpy(datablock+cursor, tmp, 512);
          cursor += 512;
       }
    }
 
-   if (leftovers)
-   {
-      uint8_t response = SDReadSingleBlock(blockaddress+i, tmp, checksum);
-      if (response != 0xFE)
-         return -1;
-      __builtin_memcpy(datablock+cursor, &tmp, leftovers);
-      cursor += leftovers;
-   }
    return cursor;
 }
 
