@@ -8,7 +8,7 @@ GROUP( -lc -lgloss -lgcc )
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0xA00;
 
 MEMORY{
-   RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 0x09000
+   RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 0x0A000
 }
 
 ENTRY(_start)

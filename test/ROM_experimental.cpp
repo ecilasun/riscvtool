@@ -196,8 +196,43 @@ void showdir()
 
 }
 
+// NOTE: 'interrupt' will save/restore all integer and float registers
+void __attribute__((interrupt("machine"))) trap_handler()
+{
+  register uint32_t causedword;
+  asm volatile("csrr %0, mcause" : "=r"(causedword));
+  EchoUART("TRAP: ");
+  EchoInt(causedword);
+  EchoUART("\r\n");
+}
+
 int main()
 {
+  // Enable machine interrupts
+  int mstatus = 1 << 3;
+  asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
+
+  // Machine software interrupts enabled
+  int msie = 1 << 3;
+  asm volatile("csrrw zero,mie,%0" :: "r" (msie));
+
+  // Set trap handler address
+  asm volatile("csrrw zero, mtvec, %0" :: "r" (trap_handler));
+
+  // Generate a trap to fall into the trap handler
+  asm volatile("ebreak");
+
+  // Alternatively:
+
+  // Enable machine interrupts
+  //int mstatus = 1 << 3;
+  //asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
+
+  // Enable machine external interrupts
+  // Should this trigger trap handler or something else?
+  //int meie = 1 << 11;
+  //asm volatile("csrrw zero,mie,%0" :: "r" (meie));
+
    EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
    EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
    EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
@@ -220,7 +255,7 @@ int main()
    EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
    EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
 
-   EchoUART("\r\nNekoIchi [v003] [rv32imf] [GPU]\r\n");
+   EchoUART("\r\nNekoIchi [v003] [rv32imfN] [GPU]\r\n");
    EchoUART("(c)2021 Engin Cilasun\r\n");
 
    sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
