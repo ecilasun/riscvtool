@@ -16,6 +16,7 @@
 #include "rom_nekoichi_rvcrt0.h"
 
 FATFS Fs;
+uint32_t sdcardavailable = 0;
 volatile uint32_t branchaddress = 0x10000; // TODO: Branch to actual entry point
 const char *FRtoString[]={
    "FR_OK\r\n",
@@ -27,6 +28,53 @@ const char *FRtoString[]={
 	"FR_NOT_ENABLED\r\n",
 	"FR_NO_FILESYSTEM\r\n"
 };
+
+void runelf()
+{
+    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
+    // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
+    asm (
+        "lw ra, %0 \n"
+        "fmv.w.x	f0, zero \n"
+        "fmv.w.x	f1, zero \n"
+        "fmv.w.x	f2, zero \n"
+        "fmv.w.x	f3, zero \n"
+        "fmv.w.x	f4, zero \n"
+        "fmv.w.x	f5, zero \n"
+        "fmv.w.x	f6, zero \n"
+        "fmv.w.x	f7, zero \n"
+        "fmv.w.x	f8, zero \n"
+        "fmv.w.x	f9, zero \n"
+        "fmv.w.x	f10, zero \n"
+        "fmv.w.x	f11, zero \n"
+        "fmv.w.x	f12, zero \n"
+        "fmv.w.x	f13, zero \n"
+        "fmv.w.x	f14, zero \n"
+        "fmv.w.x	f15, zero \n"
+        "fmv.w.x	f16, zero \n"
+        "fmv.w.x	f17, zero \n"
+        "fmv.w.x	f18, zero \n"
+        "fmv.w.x	f19, zero \n"
+        "fmv.w.x	f20, zero \n"
+        "fmv.w.x	f21, zero \n"
+        "fmv.w.x	f22, zero \n"
+        "fmv.w.x	f23, zero \n"
+        "fmv.w.x	f24, zero \n"
+        "fmv.w.x	f25, zero \n"
+        "fmv.w.x	f26, zero \n"
+        "fmv.w.x	f27, zero \n"
+        "fmv.w.x	f28, zero \n"
+        "fmv.w.x	f29, zero \n"
+        "fmv.w.x	f30, zero \n"
+        "fmv.w.x	f31, zero \n"
+        "li x12, 0x0001FFF0 \n"
+        "mv sp, x12 \n"
+        "ret \n"
+        : 
+        : "m" (branchaddress)
+        : 
+    );
+}
 
 void parseelfheader(SElfFileHeader32 *fheader)
 {
@@ -91,9 +139,9 @@ void parseelfheader(SElfFileHeader32 *fheader)
    free(names);
 }
 
-void loadelf(char *commandline)
+int loadelf(const char *filename)
 {
-   FRESULT fr = pf_open(&commandline[5]);
+   FRESULT fr = pf_open(filename);
    if (fr == FR_OK)
    {
       // File size: Fs.fsize
@@ -102,11 +150,13 @@ void loadelf(char *commandline)
       SElfFileHeader32 fheader;
       pf_read(&fheader, sizeof(fheader), &bytesread);
       parseelfheader(&fheader);
+      return 0;
    }
    else
    {
       EchoConsole("\r\nNot found:");
-      EchoConsole(&commandline[5]);
+      EchoConsole(filename);
+      return -1;
    }
 }
 
@@ -173,7 +223,11 @@ int main()
    EchoUART("\r\nNekoIchi [v002] [rv32imf] [GPU]\r\n");
    EchoUART("(c)2021 Engin Cilasun\r\n");
 
-   pf_mount(&Fs);
+   sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
+
+   // Load and branch into the boot executable if one is found on the SDCard
+   if (loadelf("BOOT.ELF") != -1)
+       runelf();
 
    const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    //const unsigned char editbgcolor = 0x00;
@@ -254,7 +308,7 @@ int main()
             else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
             {
                EchoConsole("\r\n");
-               loadelf(cmdbuffer);
+               loadelf(&cmdbuffer[5]); // Skip 'load ' part
             }
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='p'))
             {
@@ -269,51 +323,7 @@ int main()
             else if ((cmdbuffer[0]='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
                toggletime = (toggletime+1)%2;
             else if ((cmdbuffer[0]='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
-            {
-               // Set up stack pointer and branch to loaded executable's entry point (noreturn)
-               // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
-               asm (
-                  "lw ra, %0 \n"
-                  "fmv.w.x	f0, zero \n"
-                  "fmv.w.x	f1, zero \n"
-                  "fmv.w.x	f2, zero \n"
-                  "fmv.w.x	f3, zero \n"
-                  "fmv.w.x	f4, zero \n"
-                  "fmv.w.x	f5, zero \n"
-                  "fmv.w.x	f6, zero \n"
-                  "fmv.w.x	f7, zero \n"
-                  "fmv.w.x	f8, zero \n"
-                  "fmv.w.x	f9, zero \n"
-                  "fmv.w.x	f10, zero \n"
-                  "fmv.w.x	f11, zero \n"
-                  "fmv.w.x	f12, zero \n"
-                  "fmv.w.x	f13, zero \n"
-                  "fmv.w.x	f14, zero \n"
-                  "fmv.w.x	f15, zero \n"
-                  "fmv.w.x	f16, zero \n"
-                  "fmv.w.x	f17, zero \n"
-                  "fmv.w.x	f18, zero \n"
-                  "fmv.w.x	f19, zero \n"
-                  "fmv.w.x	f20, zero \n"
-                  "fmv.w.x	f21, zero \n"
-                  "fmv.w.x	f22, zero \n"
-                  "fmv.w.x	f23, zero \n"
-                  "fmv.w.x	f24, zero \n"
-                  "fmv.w.x	f25, zero \n"
-                  "fmv.w.x	f26, zero \n"
-                  "fmv.w.x	f27, zero \n"
-                  "fmv.w.x	f28, zero \n"
-                  "fmv.w.x	f29, zero \n"
-                  "fmv.w.x	f30, zero \n"
-                  "fmv.w.x	f31, zero \n"
-                  "li x12, 0x0001FFF0 \n"
-                  "mv sp, x12 \n"
-                  "ret \n"
-                  : 
-                  : "m" (branchaddress)
-                  : 
-               );
-            }
+                runelf();
          }
 
          if (escapemode)
