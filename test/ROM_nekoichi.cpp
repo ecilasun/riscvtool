@@ -97,10 +97,10 @@ void loadbinaryblob()
    uint32_t writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t bytecount = UARTRXStatus[0];
+      uint32_t bytecount = *IO_UARTRXByteCount;
       if (bytecount != 0)
       {
-         unsigned char readdata = UARTRX[0];
+         unsigned char readdata = *IO_UARTRX;
          loadtargetaschar[writecursor++] = readdata;
       }
    }
@@ -109,10 +109,10 @@ void loadbinaryblob()
    writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t bytecount = UARTRXStatus[0];
+      uint32_t bytecount = *IO_UARTRXByteCount;
       if (bytecount != 0)
       {
-         unsigned char readdata = UARTRX[0];
+         unsigned char readdata = *IO_UARTRX;
          loadlenaschar[writecursor++] = readdata;
       }
    }
@@ -122,10 +122,10 @@ void loadbinaryblob()
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
    while(writecursor < loadlen)
    {
-      uint32_t bytecount = UARTRXStatus[0];
+      uint32_t bytecount = *IO_UARTRXByteCount;
       if (bytecount != 0)
       {
-         unsigned char readdata = UARTRX[0];
+         unsigned char readdata = *IO_UARTRX;
          target[writecursor++] = readdata;
       }
    }
@@ -141,10 +141,10 @@ void runbinaryblob()
    uint32_t writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t bytecount = UARTRXStatus[0];
+      uint32_t bytecount = *IO_UARTRXByteCount;
       if (bytecount != 0)
       {
-         unsigned char readdata = UARTRX[0];
+         unsigned char readdata = *IO_UARTRX;
          branchaddressaschar[writecursor++] = readdata;
       }
    }
@@ -235,13 +235,13 @@ int main()
    while(1)
    {
       // Step 1: Read UART FIFO byte count
-      uint32_t bytecount = UARTRXStatus[0];
+      uint32_t bytecount = *IO_UARTRXByteCount;
 
       // Step 2: Check to see if we have something in the FIFO
       if (bytecount != 0)
       {
          // Step 3: Read the data on UARTRX memory location
-         char checkchar = UARTRX[0];
+         char checkchar = *IO_UARTRX;
 
          if (checkchar == 13) // Enter followed by B (binary blob) or R (run blob)
          {

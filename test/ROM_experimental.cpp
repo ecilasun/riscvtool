@@ -220,7 +220,7 @@ int main()
    EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
    EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
 
-   EchoUART("\r\nNekoIchi [v002] [rv32imf] [GPU]\r\n");
+   EchoUART("\r\nNekoIchi [v003] [rv32imf] [GPU]\r\n");
    EchoUART("(c)2021 Engin Cilasun\r\n");
 
    sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
@@ -242,8 +242,6 @@ int main()
    // Startup message
    ClearConsole();
    ClearScreen(bgcolor);
-   EchoConsole("MiniTerm (c)2021 Engin Cilasun\r\n Use 'help' for assistance\r\n");
-   EchoUART("MiniTerm (c)2021 Engin Cilasun\r\n");
    DrawConsole();
 
    page = (page+1)%2;
@@ -265,13 +263,13 @@ int main()
       ClockMsToHMS(milliseconds, hours,minutes,seconds);
 
       // Step 1: Read UART FIFO byte count
-      unsigned int bytecount = UARTRXStatus[0];
+      unsigned int bytecount = *IO_UARTRXByteCount;
 
       // Step 2: Check to see if we have something in the FIFO
       if (bytecount != 0)
       {
          // Step 3: Read the data on UARTRX memory location
-         char checkchar = UARTRX[0];
+         char checkchar = *IO_UARTRX;
 
          if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
          {
@@ -353,9 +351,9 @@ int main()
          }
 
          // Echo characters back to the terminal
-         UARTTX[0] = checkchar;
+         *IO_UARTTX = checkchar;
          if (checkchar == 13)
-            UARTTX[0] = 10; // Echo extra linefeed
+            *IO_UARTTX = 10; // Echo extra linefeed
       }
 
       if (gpustate == cnt) // GPU work complete, push more

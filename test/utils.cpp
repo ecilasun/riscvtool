@@ -4,14 +4,12 @@
 #include "utils.h"
 #include "gpu.h"
 
-volatile unsigned int *GPUFIFO = (volatile unsigned int* )0x80000000;         // GPU control FIFO
-volatile unsigned char* VRAM = (volatile unsigned char* )0x80000000;          // Video Output: VRAM starts at 0, continues for 0xC000 bytes (256x192 8 bit packed color pixels, RGB[3:3:2] format)
-volatile unsigned int* UARTRXStatus = (volatile unsigned int* )0x60000000;    // UART input status (read)
-volatile unsigned char* UARTRX = (volatile unsigned char* )0x50000000;        // UART receive data (read)
-volatile unsigned char* UARTTX = (volatile unsigned char* )0x40000000;        // UART send data (write)
-volatile unsigned char *SPIInput = (volatile unsigned char* )0x30000000;      // SPI receive data (read)
-volatile unsigned char *SPIOutput = (volatile unsigned char* )0x20000000;     // SPU send data (write)
-volatile unsigned int ROMResetVector = 0x0000000;
+volatile uint8_t *IO_SPIOutput = (volatile uint8_t* )0x80000014;           // SPU send data (write)
+volatile uint8_t *IO_SPIInput = (volatile uint8_t* )0x80000010;            // SPI receive data (read)
+volatile uint8_t *IO_UARTTX = (volatile uint8_t* )0x8000000C;              // UART send data (write)
+volatile uint8_t *IO_UARTRX = (volatile uint8_t* )0x80000008;              // UART receive data (read)
+volatile uint32_t *IO_UARTRXByteCount = (volatile uint32_t* )0x80000004;   // UART input status (read)
+volatile uint32_t *IO_GPUFIFO = (volatile uint32_t* )0x80000000;           // GPU control FIFO
 
 volatile uint32_t *BRAMStart = (uint32_t* )0x00000000; // Start of BLOCK RAM region, 0x00000000 - 0x0003FFFF (256KBytes)
 volatile uint32_t *DDR3Start = (uint32_t* )0x00040000; // Start of DDR3 RAM region, 0x00040000 - 0x0x0FFFFFFF (256Mbytes?)
@@ -170,7 +168,7 @@ void EchoUART(const char *_message)
    int i=0;
    while (_message[i]!=0)
    {
-      UARTTX[i] = _message[i];
+      *IO_UARTTX = _message[i];
       ++i;
    }
 }

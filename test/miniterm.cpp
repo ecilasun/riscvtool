@@ -183,13 +183,13 @@ int main()
       ClockMsToHMS(milliseconds, hours,minutes,seconds);
 
       // Step 1: Read UART FIFO byte count
-      unsigned int bytecount = UARTRXStatus[0];
+      unsigned int bytecount = *IO_UARTRXByteCount;
 
       // Step 2: Check to see if we have something in the FIFO
       if (bytecount != 0)
       {
-         // Step 3: Read the data on UARTRX memory location
-         char checkchar = UARTRX[0];
+         // Step 3: Read the data on IO_UARTRX memory location
+         char checkchar = *IO_UARTRX;
 
          if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
          {
@@ -281,9 +281,9 @@ int main()
          }
 
          // Echo characters back to the terminal
-         UARTTX[0] = checkchar;
+         *IO_UARTTX = checkchar;
          if (checkchar == 13)
-            UARTTX[0] = 10; // Echo extra linefeed
+            *IO_UARTTX = 10; // Echo extra linefeed
       }
 
       if (gpustate == cnt) // GPU work complete, push more

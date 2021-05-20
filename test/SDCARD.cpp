@@ -5,19 +5,19 @@ uint8_t SDIdle()
 {
    uint8_t response;
 
-   SPIOutput[33] = 0xFF;
+   *IO_SPIOutput = 0xFF;
 
    // Enter idle state
-   SPIOutput[0] = SPI_CMD(CMD0_GO_IDLE_STATE);
-   SPIOutput[1] = 0x00;
-   SPIOutput[2] = 0x00;
-   SPIOutput[3] = 0x00;
-   SPIOutput[4] = 0x00;
-   SPIOutput[5] = 0x95; // Checksum
+   *IO_SPIOutput = SPI_CMD(CMD0_GO_IDLE_STATE);
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x95; // Checksum
    int timeout=65536;
    do {
-      SPIOutput[36] = 0xFF;
-      response = SPIInput[0];
+      *IO_SPIOutput = 0xFF;
+      response = *IO_SPIInput;
       if (response != 0xFF)
          break;
       --timeout;
@@ -30,18 +30,18 @@ uint8_t SDCheckVoltageRange(uint32_t &databack)
 {
    uint8_t response;
 
-   SPIOutput[35] = 0xFF;
+   *IO_SPIOutput = 0xFF;
 
-   SPIOutput[0] = SPI_CMD(CMD8_SEND_IF_COND);
-   SPIOutput[1] = 0x00;
-   SPIOutput[2] = 0x00;
-   SPIOutput[3] = 0x01;
-   SPIOutput[4] = 0xAA;
-   SPIOutput[5] = 0x87; // Checksum
+   *IO_SPIOutput = SPI_CMD(CMD8_SEND_IF_COND);
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x01;
+   *IO_SPIOutput = 0xAA;
+   *IO_SPIOutput = 0x87; // Checksum
    int timeout=65536;
    do {
-      SPIOutput[36] = 0xFF;
-      response = SPIInput[0];
+      *IO_SPIOutput = 0xFF;
+      response = *IO_SPIInput;
       if (response != 0xFF)
          break;
       --timeout;
@@ -49,14 +49,14 @@ uint8_t SDCheckVoltageRange(uint32_t &databack)
 
    // Read the 00 00 01 AA sequence back from the SD CARD
    databack = 0x00000000;
-   SPIOutput[36] = 0xFF;
-   databack |= SPIInput[0];
-   SPIOutput[36] = 0xFF;
-   databack |= (databack<<8)|SPIInput[1];
-   SPIOutput[36] = 0xFF;
-   databack |= (databack<<8)|SPIInput[2];
-   SPIOutput[36] = 0xFF;
-   databack |= (databack<<8)|SPIInput[3];
+   *IO_SPIOutput = 0xFF;
+   databack |= *IO_SPIInput;
+   *IO_SPIOutput = 0xFF;
+   databack |= (databack<<8)|(*IO_SPIInput);
+   *IO_SPIOutput = 0xFF;
+   databack |= (databack<<8)|(*IO_SPIInput);
+   *IO_SPIOutput = 0xFF;
+   databack |= (databack<<8)|(*IO_SPIInput);
 
    return response;
 }
@@ -65,53 +65,53 @@ uint8_t SDCardInit()
 {
    uint8_t response;
 
-   SPIOutput[37] = 0xFF;
+   *IO_SPIOutput = 0xFF;
 
    // ACMD header
-   SPIOutput[0] = SPI_CMD(CMD55_APP_CMD);
-   SPIOutput[1] = 0x00;
-   SPIOutput[2] = 0x00;
-   SPIOutput[3] = 0x00;
-   SPIOutput[4] = 0x00;
-   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+   *IO_SPIOutput = SPI_CMD(CMD55_APP_CMD);
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0xFF; // checksum is not necessary at this point
    int timeout=65536;
    do {
-      SPIOutput[38] = 0xFF;
-      response = SPIInput[0];
+      *IO_SPIOutput = 0xFF;
+      response = *IO_SPIInput;
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x00??
 
    // Set high capacity mode on
-   SPIOutput[37] = 0xFF;
-   SPIOutput[0] = SPI_CMD(ACMD41_SD_SEND_OP_COND);
-   SPIOutput[1] = 0x40;
-   SPIOutput[2] = 0x00;
-   SPIOutput[3] = 0x00;
-   SPIOutput[4] = 0x00;
-   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+   *IO_SPIOutput = 0xFF;
+   *IO_SPIOutput = SPI_CMD(ACMD41_SD_SEND_OP_COND);
+   *IO_SPIOutput = 0x40;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0xFF; // checksum is not necessary at this point
    timeout=65536;
    do {
-      SPIOutput[38] = 0xFF;
-      response = SPIInput[0];
+      *IO_SPIOutput = 0xFF;
+      response = *IO_SPIInput;
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x00 eventually, but will also get several 0x01 (idle)
 
    // Initialize
-   /*SPIOutput[37] = 0xFF;
-   SPIOutput[0] = SPI_CMD(CMD1_SEND_OP_COND);
-   SPIOutput[1] = 0x00;
-   SPIOutput[2] = 0x00;
-   SPIOutput[3] = 0x00;
-   SPIOutput[4] = 0x00;
-   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+   /**IO_SPIOutput = 0xFF;
+   *IO_SPIOutput = SPI_CMD(CMD1_SEND_OP_COND);
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0xFF; // checksum is not necessary at this point
 
    do {
-      SPIOutput[38] = 0xFF;
-      response = SPIInput[0];
+      *IO_SPIOutput = 0xFF;
+      response = *IO_SPIInput;
       if (response != 0xFF)
          break;
    } while(1); // Expected: 0x00*/
@@ -123,19 +123,19 @@ uint8_t SDSetBlockSize512()
 {
    uint8_t response;
 
-   SPIOutput[33] = 0xFF;
+   *IO_SPIOutput = 0xFF;
 
    // Set block length
-   SPIOutput[0] = SPI_CMD(CMD16_SET_BLOCKLEN);
-   SPIOutput[1] = 0x00;
-   SPIOutput[2] = 0x00;
-   SPIOutput[3] = 0x02;
-   SPIOutput[4] = 0x00;
-   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+   *IO_SPIOutput = SPI_CMD(CMD16_SET_BLOCKLEN);
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0x02;
+   *IO_SPIOutput = 0x00;
+   *IO_SPIOutput = 0xFF; // checksum is not necessary at this point
    int timeout=65536;
    do {
-      SPIOutput[36] = 0xFF;
-      response = SPIInput[0];
+      *IO_SPIOutput = 0xFF;
+      response = *IO_SPIInput;
       if (response != 0xFF)
          break;
       --timeout;
@@ -148,19 +148,19 @@ uint8_t SDReadSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t che
 {
    uint8_t response;
 
-   SPIOutput[33] = 0xFF;
+   *IO_SPIOutput = 0xFF;
 
    // Read single block
-   SPIOutput[0] = SPI_CMD(CMD17_READ_SINGLE_BLOCK);
-   SPIOutput[1] = (uint8_t)((blockaddress&0xFF000000)>>24);
-   SPIOutput[2] = (uint8_t)((blockaddress&0x00FF0000)>>16);
-   SPIOutput[3] = (uint8_t)((blockaddress&0x0000FF00)>>8);
-   SPIOutput[4] = (uint8_t)(blockaddress&0x000000FF);
-   SPIOutput[5] = 0xFF; // checksum is not necessary at this point
+   *IO_SPIOutput = SPI_CMD(CMD17_READ_SINGLE_BLOCK);
+   *IO_SPIOutput = (uint8_t)((blockaddress&0xFF000000)>>24);
+   *IO_SPIOutput = (uint8_t)((blockaddress&0x00FF0000)>>16);
+   *IO_SPIOutput = (uint8_t)((blockaddress&0x0000FF00)>>8);
+   *IO_SPIOutput = (uint8_t)(blockaddress&0x000000FF);
+   *IO_SPIOutput = 0xFF; // checksum is not necessary at this point
    int timeout=65536;
    do {
-      SPIOutput[36] = 0xFF;
-      response = SPIInput[0];
+      *IO_SPIOutput = 0xFF;
+      response = *IO_SPIInput;
       if (response != 0xFF)
          break;
       --timeout;
@@ -170,8 +170,8 @@ uint8_t SDReadSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t che
    {
       timeout=65536;
       do {
-         SPIOutput[36] = 0xFF;
-         response = SPIInput[0];
+         *IO_SPIOutput = 0xFF;
+         response = *IO_SPIInput;
          if (response != 0xFF)
             break;
          --timeout;
@@ -183,15 +183,15 @@ uint8_t SDReadSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t che
          // 512 bytes of data followed by 16 bit CRC, total of 514 bytes
          int x=0;
          do {
-            SPIOutput[36] = 0xFF;
-            datablock[x++] = SPIInput[0];
+            *IO_SPIOutput = 0xFF;
+            datablock[x++] = *IO_SPIInput;
          } while(x<512);
 
          // Checksum
-         SPIOutput[36] = 0xFF;
-         checksum[0] = SPIInput[0];
-         SPIOutput[36] = 0xFF;
-         checksum[1] = SPIInput[0];
+         *IO_SPIOutput = 0xFF;
+         checksum[0] = *IO_SPIInput;
+         *IO_SPIOutput = 0xFF;
+         checksum[1] = *IO_SPIInput;
       }
    }
 

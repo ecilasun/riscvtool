@@ -2,14 +2,12 @@
 
 #include <inttypes.h>
 
-extern volatile unsigned int *GPUFIFO;
-extern volatile unsigned char *VRAM;
-extern volatile unsigned char *UARTRX;
-extern volatile unsigned char *UARTTX;
-extern volatile unsigned int *UARTRXStatus;
-extern volatile unsigned char *SPIInput;
-extern volatile unsigned char *SPIOutput;
-extern volatile unsigned int ROMResetVector;
+extern volatile uint32_t *IO_GPUFIFO;
+extern volatile uint8_t *IO_UARTRX;
+extern volatile uint8_t *IO_UARTTX;
+extern volatile uint32_t *IO_UARTRXByteCount;
+extern volatile uint8_t *IO_SPIInput;
+extern volatile uint8_t *IO_SPIOutput;
 
 // Regular memory ranges
 extern volatile uint32_t *BRAMStart;

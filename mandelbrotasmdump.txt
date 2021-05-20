@@ -66,9 +66,9 @@ SYMBOL TABLE:
 00010abc g     F .text	00000078 logf
 000135d4 g       .sdata	00000000 __SDATA_BEGIN__
 00010b34 g     F .text	000001fc __ieee754_logf
-00013190 g     O .data	00000004 GPUFIFO
 00010a8c g     F .text	0000000c _Z23ReadRetiredInstructionsv
 00013640 g     O .bss	0000c000 mandelbuffer
+00013190 g     O .data	00000004 IO_GPUFIFO
 00013618 g     O .sdata	00000004 _global_impure_ptr
 000111b4 g     F .text	0000009c __libc_init_array
 00010a78 g     F .text	00000014 _Z9ReadClockv
@@ -103,7 +103,7 @@ Disassembly of section .text:
    10074:	f9010113          	addi	sp,sp,-112
    10078:	05412c23          	sw	s4,88(sp)
    1007c:	00003a17          	auipc	s4,0x3
-   10080:	550a2a03          	lw	s4,1360(s4) # 135cc <_GLOBAL_OFFSET_TABLE_+0x4>
+   10080:	554a2a03          	lw	s4,1364(s4) # 135d0 <_GLOBAL_OFFSET_TABLE_+0x8>
    10084:	000a2783          	lw	a5,0(s4)
    10088:	06112623          	sw	ra,108(sp)
    1008c:	06812423          	sw	s0,104(sp)
@@ -124,7 +124,7 @@ Disassembly of section .text:
    100c8:	30100713          	li	a4,769
    100cc:	00e7a023          	sw	a4,0(a5)
    100d0:	36100713          	li	a4,865
-   100d4:	00e7a223          	sw	a4,4(a5)
+   100d4:	00e7a023          	sw	a4,0(a5)
    100d8:	06700713          	li	a4,103
    100dc:	00e7a023          	sw	a4,0(a5)
    100e0:	00012e23          	sw	zero,28(sp)
@@ -147,7 +147,7 @@ Disassembly of section .text:
    10124:	4a47a987          	flw	fs3,1188(a5) # 115c4 <_exit+0x70>
    10128:	00ac1c13          	slli	s8,s8,0xa
    1012c:	00003897          	auipc	a7,0x3
-   10130:	4a48a883          	lw	a7,1188(a7) # 135d0 <_GLOBAL_OFFSET_TABLE_+0x8>
+   10130:	4a08a883          	lw	a7,1184(a7) # 135cc <_GLOBAL_OFFSET_TABLE_+0x4>
    10134:	0000c7b7          	lui	a5,0xc
    10138:	00010837          	lui	a6,0x10
    1013c:	00050493          	mv	s1,a0
@@ -175,7 +175,7 @@ Disassembly of section .text:
    10194:	fc879ae3          	bne	a5,s0,10168 <main+0xf4>
    10198:	000a2603          	lw	a2,0(s4)
    1019c:	00003697          	auipc	a3,0x3
-   101a0:	4346a683          	lw	a3,1076(a3) # 135d0 <_GLOBAL_OFFSET_TABLE_+0x8>
+   101a0:	4306a683          	lw	a3,1072(a3) # 135cc <_GLOBAL_OFFSET_TABLE_+0x4>
    101a4:	00000513          	li	a0,0
    101a8:	00a69593          	slli	a1,a3,0xa
    101ac:	0166d713          	srli	a4,a3,0x16
@@ -185,10 +185,10 @@ Disassembly of section .text:
    101bc:	00b62023          	sw	a1,0(a2)
    101c0:	24176713          	ori	a4,a4,577
    101c4:	00a79793          	slli	a5,a5,0xa
-   101c8:	00e62223          	sw	a4,4(a2)
+   101c8:	00e62023          	sw	a4,0(a2)
    101cc:	2817e793          	ori	a5,a5,641
    101d0:	00f62023          	sw	a5,0(a2)
-   101d4:	01962223          	sw	s9,4(a2)
+   101d4:	01962023          	sw	s9,0(a2)
    101d8:	01762023          	sw	s7,0(a2)
    101dc:	10068693          	addi	a3,a3,256
    101e0:	10050513          	addi	a0,a0,256
@@ -208,7 +208,7 @@ Disassembly of section .text:
    10218:	30176713          	ori	a4,a4,769
    1021c:	00e7a023          	sw	a4,0(a5) # c000 <main-0x4074>
    10220:	36100713          	li	a4,865
-   10224:	00e7a223          	sw	a4,4(a5)
+   10224:	00e7a023          	sw	a4,0(a5)
    10228:	06700713          	li	a4,103
    1022c:	00e7a023          	sw	a4,0(a5)
    10230:	00c12703          	lw	a4,12(sp)
@@ -216,12 +216,12 @@ Disassembly of section .text:
    10238:	00a41693          	slli	a3,s0,0xa
    1023c:	00e7a023          	sw	a4,0(a5)
    10240:	01645713          	srli	a4,s0,0x16
-   10244:	0187a223          	sw	s8,4(a5)
+   10244:	0187a023          	sw	s8,0(a5)
    10248:	1016e693          	ori	a3,a3,257
    1024c:	00a71713          	slli	a4,a4,0xa
    10250:	00d7a023          	sw	a3,0(a5)
    10254:	12176713          	ori	a4,a4,289
-   10258:	00e7a223          	sw	a4,4(a5)
+   10258:	00e7a023          	sw	a4,0(a5)
    1025c:	0a600713          	li	a4,166
    10260:	00e7a023          	sw	a4,0(a5)
    10264:	00012e23          	sw	zero,28(sp)
@@ -368,7 +368,7 @@ Disassembly of section .text:
    10468:	00000a13          	li	s4,0
    1046c:	c00794d3          	fcvt.w.s	s1,fa5,rtz
    10470:	00003a97          	auipc	s5,0x3
-   10474:	160aaa83          	lw	s5,352(s5) # 135d0 <_GLOBAL_OFFSET_TABLE_+0x8>
+   10474:	15caaa83          	lw	s5,348(s5) # 135cc <_GLOBAL_OFFSET_TABLE_+0x4>
    10478:	00100993          	li	s3,1
    1047c:	d004f7d3          	fcvt.s.w	fa5,s1
    10480:	00001797          	auipc	a5,0x1
@@ -444,7 +444,7 @@ Disassembly of section .text:
    10590:	38070063          	beqz	a4,10910 <_Z8PrintDMAiiPKcb+0x384>
    10594:	ff010113          	addi	sp,sp,-16
    10598:	00003797          	auipc	a5,0x3
-   1059c:	0347a783          	lw	a5,52(a5) # 135cc <_GLOBAL_OFFSET_TABLE_+0x4>
+   1059c:	0387a783          	lw	a5,56(a5) # 135d0 <_GLOBAL_OFFSET_TABLE_+0x8>
    105a0:	00258393          	addi	t2,a1,2
    105a4:	00358293          	addi	t0,a1,3
    105a8:	00458f93          	addi	t6,a1,4
@@ -503,14 +503,14 @@ Disassembly of section .text:
    1067c:	00a91993          	slli	s3,s2,0xa
    10680:	00859593          	slli	a1,a1,0x8
    10684:	01695913          	srli	s2,s2,0x16
-   10688:	0097a223          	sw	s1,4(a5)
+   10688:	0097a023          	sw	s1,0(a5)
    1068c:	00c585b3          	add	a1,a1,a2
    10690:	2819e493          	ori	s1,s3,641
    10694:	00a91913          	slli	s2,s2,0xa
    10698:	0097a023          	sw	s1,0(a5)
    1069c:	006585b3          	add	a1,a1,t1
    106a0:	2d196913          	ori	s2,s2,721
-   106a4:	0127a223          	sw	s2,4(a5)
+   106a4:	0127a023          	sw	s2,0(a5)
    106a8:	00a59993          	slli	s3,a1,0xa
    106ac:	0165d493          	srli	s1,a1,0x16
    106b0:	00a40933          	add	s2,s0,a0
@@ -524,14 +524,14 @@ Disassembly of section .text:
    106d0:	00a91993          	slli	s3,s2,0xa
    106d4:	00859593          	slli	a1,a1,0x8
    106d8:	01695913          	srli	s2,s2,0x16
-   106dc:	0097a223          	sw	s1,4(a5)
+   106dc:	0097a023          	sw	s1,0(a5)
    106e0:	00c585b3          	add	a1,a1,a2
    106e4:	2819e493          	ori	s1,s3,641
    106e8:	00a91913          	slli	s2,s2,0xa
    106ec:	0097a023          	sw	s1,0(a5)
    106f0:	006585b3          	add	a1,a1,t1
    106f4:	2d196913          	ori	s2,s2,721
-   106f8:	0127a223          	sw	s2,4(a5)
+   106f8:	0127a023          	sw	s2,0(a5)
    106fc:	00a59993          	slli	s3,a1,0xa
    10700:	0165d493          	srli	s1,a1,0x16
    10704:	00a38933          	add	s2,t2,a0
@@ -545,14 +545,14 @@ Disassembly of section .text:
    10724:	00a91993          	slli	s3,s2,0xa
    10728:	00859593          	slli	a1,a1,0x8
    1072c:	01695913          	srli	s2,s2,0x16
-   10730:	0097a223          	sw	s1,4(a5)
+   10730:	0097a023          	sw	s1,0(a5)
    10734:	00c585b3          	add	a1,a1,a2
    10738:	2819e493          	ori	s1,s3,641
    1073c:	00a91913          	slli	s2,s2,0xa
    10740:	0097a023          	sw	s1,0(a5)
    10744:	006585b3          	add	a1,a1,t1
    10748:	2d196913          	ori	s2,s2,721
-   1074c:	0127a223          	sw	s2,4(a5)
+   1074c:	0127a023          	sw	s2,0(a5)
    10750:	00a59993          	slli	s3,a1,0xa
    10754:	0165d493          	srli	s1,a1,0x16
    10758:	00a28933          	add	s2,t0,a0
@@ -566,14 +566,14 @@ Disassembly of section .text:
    10778:	00a91993          	slli	s3,s2,0xa
    1077c:	00859593          	slli	a1,a1,0x8
    10780:	01695913          	srli	s2,s2,0x16
-   10784:	0097a223          	sw	s1,4(a5)
+   10784:	0097a023          	sw	s1,0(a5)
    10788:	00c585b3          	add	a1,a1,a2
    1078c:	2819e493          	ori	s1,s3,641
    10790:	00a91913          	slli	s2,s2,0xa
    10794:	0097a023          	sw	s1,0(a5)
    10798:	006585b3          	add	a1,a1,t1
    1079c:	2d196913          	ori	s2,s2,721
-   107a0:	0127a223          	sw	s2,4(a5)
+   107a0:	0127a023          	sw	s2,0(a5)
    107a4:	00a59993          	slli	s3,a1,0xa
    107a8:	0165d493          	srli	s1,a1,0x16
    107ac:	00af8933          	add	s2,t6,a0
@@ -587,14 +587,14 @@ Disassembly of section .text:
    107cc:	00a91993          	slli	s3,s2,0xa
    107d0:	00859593          	slli	a1,a1,0x8
    107d4:	01695913          	srli	s2,s2,0x16
-   107d8:	0097a223          	sw	s1,4(a5)
+   107d8:	0097a023          	sw	s1,0(a5)
    107dc:	00c585b3          	add	a1,a1,a2
    107e0:	2819e493          	ori	s1,s3,641
    107e4:	00a91913          	slli	s2,s2,0xa
    107e8:	0097a023          	sw	s1,0(a5)
    107ec:	006585b3          	add	a1,a1,t1
    107f0:	2d196913          	ori	s2,s2,721
-   107f4:	0127a223          	sw	s2,4(a5)
+   107f4:	0127a023          	sw	s2,0(a5)
    107f8:	00a59993          	slli	s3,a1,0xa
    107fc:	0165d493          	srli	s1,a1,0x16
    10800:	00af0933          	add	s2,t5,a0
@@ -608,7 +608,7 @@ Disassembly of section .text:
    10820:	00a91993          	slli	s3,s2,0xa
    10824:	00859593          	slli	a1,a1,0x8
    10828:	01695913          	srli	s2,s2,0x16
-   1082c:	0097a223          	sw	s1,4(a5)
+   1082c:	0097a023          	sw	s1,0(a5)
    10830:	00c585b3          	add	a1,a1,a2
    10834:	2819e493          	ori	s1,s3,641
    10838:	00a91913          	slli	s2,s2,0xa
@@ -616,7 +616,7 @@ Disassembly of section .text:
    10840:	006585b3          	add	a1,a1,t1
    10844:	2d196913          	ori	s2,s2,721
    10848:	00ae84b3          	add	s1,t4,a0
-   1084c:	0127a223          	sw	s2,4(a5)
+   1084c:	0127a023          	sw	s2,0(a5)
    10850:	4024d493          	srai	s1,s1,0x2
    10854:	00a59993          	slli	s3,a1,0xa
    10858:	00770713          	addi	a4,a4,7
@@ -632,12 +632,12 @@ Disassembly of section .text:
    10880:	00a49493          	slli	s1,s1,0xa
    10884:	00a91913          	slli	s2,s2,0xa
    10888:	00670733          	add	a4,a4,t1
-   1088c:	00b7a223          	sw	a1,4(a5)
+   1088c:	00b7a023          	sw	a1,0(a5)
    10890:	2d196613          	ori	a2,s2,721
    10894:	2814e493          	ori	s1,s1,641
    10898:	0097a023          	sw	s1,0(a5)
    1089c:	00a71593          	slli	a1,a4,0xa
-   108a0:	00c7a223          	sw	a2,4(a5)
+   108a0:	00c7a023          	sw	a2,0(a5)
    108a4:	01675713          	srli	a4,a4,0x16
    108a8:	00ae0633          	add	a2,t3,a0
    108ac:	0107a023          	sw	a6,0(a5)
@@ -648,12 +648,12 @@ Disassembly of section .text:
    108c0:	24176713          	ori	a4,a4,577
    108c4:	00a61593          	slli	a1,a2,0xa
    108c8:	01665613          	srli	a2,a2,0x16
-   108cc:	00e7a223          	sw	a4,4(a5)
+   108cc:	00e7a023          	sw	a4,0(a5)
    108d0:	00a61613          	slli	a2,a2,0xa
    108d4:	2815e713          	ori	a4,a1,641
    108d8:	00e7a023          	sw	a4,0(a5)
    108dc:	2d166613          	ori	a2,a2,721
-   108e0:	00c7a223          	sw	a2,4(a5)
+   108e0:	00c7a023          	sw	a2,0(a5)
    108e4:	0107a023          	sw	a6,0(a5)
    108e8:	0008c703          	lbu	a4,0(a7)
    108ec:	00850513          	addi	a0,a0,8
@@ -1419,7 +1419,7 @@ Disassembly of section .text:
    11454:	000137b7          	lui	a5,0x13
    11458:	00013437          	lui	s0,0x13
    1145c:	18c40413          	addi	s0,s0,396 # 1318c <__do_global_dtors_aux_fini_array_entry>
-   11460:	19078793          	addi	a5,a5,400 # 13190 <GPUFIFO>
+   11460:	19078793          	addi	a5,a5,400 # 13190 <IO_GPUFIFO>
    11464:	408787b3          	sub	a5,a5,s0
    11468:	00912223          	sw	s1,4(sp)
    1146c:	00112623          	sw	ra,12(sp)
@@ -1541,8 +1541,8 @@ Section Headers:
   [17] .debug_loc        PROGBITS        00000000 004c0d 000bcd 00      0   0  1
   [18] .debug_ranges     PROGBITS        00000000 0057da 0000f8 00      0   0  1
   [19] .symtab           SYMTAB          00000000 0058d4 0005d0 10     20  58  4
-  [20] .strtab           STRTAB          00000000 005ea4 000397 00      0   0  1
-  [21] .shstrtab         STRTAB          00000000 00623b 0000d6 00      0   0  1
+  [20] .strtab           STRTAB          00000000 005ea4 00039a 00      0   0  1
+  [21] .shstrtab         STRTAB          00000000 00623e 0000d6 00      0   0  1
 Key to Flags:
   W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
   L (link order), O (extra OS processing required), G (group), T (TLS),
@@ -1634,9 +1634,9 @@ Symbol table '.symtab' contains 93 entries:
     62: 00010abc   120 FUNC    GLOBAL DEFAULT    1 logf
     63: 000135d4     0 NOTYPE  GLOBAL DEFAULT    8 __SDATA_BEGIN__
     64: 00010b34   508 FUNC    GLOBAL DEFAULT    1 __ieee754_logf
-    65: 00013190     4 OBJECT  GLOBAL DEFAULT    6 GPUFIFO
-    66: 00010a8c    12 FUNC    GLOBAL DEFAULT    1 _Z23ReadRetiredInstructio
-    67: 00013640 49152 OBJECT  GLOBAL DEFAULT    9 mandelbuffer
+    65: 00010a8c    12 FUNC    GLOBAL DEFAULT    1 _Z23ReadRetiredInstructio
+    66: 00013640 49152 OBJECT  GLOBAL DEFAULT    9 mandelbuffer
+    67: 00013190     4 OBJECT  GLOBAL DEFAULT    6 IO_GPUFIFO
     68: 00013618     4 OBJECT  GLOBAL DEFAULT    8 _global_impure_ptr
     69: 000111b4   156 FUNC    GLOBAL DEFAULT    1 __libc_init_array
     70: 00010a78    20 FUNC    GLOBAL DEFAULT    1 _Z9ReadClockv
