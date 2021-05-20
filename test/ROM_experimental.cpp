@@ -12,8 +12,11 @@
 #include "console.h"
 #include "elf.h"
 
+#define STARTUP_ROM
+#include "rom_nekoichi_rvcrt0.h"
+
 FATFS Fs;
-volatile uint32_t branchaddress = 0x10000;
+volatile uint32_t branchaddress = 0x10000; // TODO: Branch to actual entry point
 const char *FRtoString[]={
    "FR_OK\r\n",
 	"FR_DISK_ERR\r\n",
@@ -68,12 +71,12 @@ void parseelfheader(SElfFileHeader32 *fheader)
       if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
       {
          // TODO: Load this section to memory
-         /*uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
+         uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
          pf_lseek(sheader.m_Offset);
-         pf_read(elfsectionpointer, sheader.m_Size, &bytesread);*/
+         pf_read(elfsectionpointer, sheader.m_Size, &bytesread);
 
          // DEBUG: dump info about sections to load
-         EchoConsole(&names[sheader.m_NameOffset]);
+         /*EchoConsole(&names[sheader.m_NameOffset]);
          EchoConsole("\r\n");
          EchoConsole(" ");
          EchoConsoleHex(sheader.m_Addr);
@@ -81,7 +84,7 @@ void parseelfheader(SElfFileHeader32 *fheader)
          EchoConsoleHex(sheader.m_Size);
          EchoConsole(" ");
          EchoConsoleHex(sheader.m_Offset);
-         EchoConsole("\r\n");
+         EchoConsole("\r\n");*/
       }
    }
 
@@ -145,6 +148,31 @@ void showdir()
 
 int main()
 {
+   EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvv  \r\n");
+   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvv    \r\n");
+   EchoUART("rr                vvvvvvvvvvvvvvvvvvvvvv      \r\n");
+   EchoUART("rr            vvvvvvvvvvvvvvvvvvvvvvvv      rr\r\n");
+   EchoUART("rrrr      vvvvvvvvvvvvvvvvvvvvvvvvvv      rrrr\r\n");
+   EchoUART("rrrrrr      vvvvvvvvvvvvvvvvvvvvvv      rrrrrr\r\n");
+   EchoUART("rrrrrrrr      vvvvvvvvvvvvvvvvvv      rrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrr      vvvvvvvvvvvvvv      rrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrr      vvvvvvvvvv      rrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrr      vvvvvv      rrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrr      vv      rrrrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr          rrrrrrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
+
+   EchoUART("\r\nNekoIchi [v002] [rv32imf] [GPU]\r\n");
+   EchoUART("(c)2021 Engin Cilasun\r\n");
+
    pf_mount(&Fs);
 
    const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
@@ -216,7 +244,7 @@ int main()
             else if ((cmdbuffer[0]='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
             {
                EchoConsole("\r\n");
-               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
+               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to entrypoint\r\ndump:dump first 256 bytes of ELF\r\n");
             }
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
             {
@@ -242,8 +270,42 @@ int main()
                toggletime = (toggletime+1)%2;
             else if ((cmdbuffer[0]='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
             {
+               // Set up stack pointer and branch to loaded executable's entry point (noreturn)
+               // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
                asm (
                   "lw ra, %0 \n"
+                  "fmv.w.x	f0, zero \n"
+                  "fmv.w.x	f1, zero \n"
+                  "fmv.w.x	f2, zero \n"
+                  "fmv.w.x	f3, zero \n"
+                  "fmv.w.x	f4, zero \n"
+                  "fmv.w.x	f5, zero \n"
+                  "fmv.w.x	f6, zero \n"
+                  "fmv.w.x	f7, zero \n"
+                  "fmv.w.x	f8, zero \n"
+                  "fmv.w.x	f9, zero \n"
+                  "fmv.w.x	f10, zero \n"
+                  "fmv.w.x	f11, zero \n"
+                  "fmv.w.x	f12, zero \n"
+                  "fmv.w.x	f13, zero \n"
+                  "fmv.w.x	f14, zero \n"
+                  "fmv.w.x	f15, zero \n"
+                  "fmv.w.x	f16, zero \n"
+                  "fmv.w.x	f17, zero \n"
+                  "fmv.w.x	f18, zero \n"
+                  "fmv.w.x	f19, zero \n"
+                  "fmv.w.x	f20, zero \n"
+                  "fmv.w.x	f21, zero \n"
+                  "fmv.w.x	f22, zero \n"
+                  "fmv.w.x	f23, zero \n"
+                  "fmv.w.x	f24, zero \n"
+                  "fmv.w.x	f25, zero \n"
+                  "fmv.w.x	f26, zero \n"
+                  "fmv.w.x	f27, zero \n"
+                  "fmv.w.x	f28, zero \n"
+                  "fmv.w.x	f29, zero \n"
+                  "fmv.w.x	f30, zero \n"
+                  "fmv.w.x	f31, zero \n"
                   "li x12, 0x0001FFF0 \n"
                   "mv sp, x12 \n"
                   "ret \n"
