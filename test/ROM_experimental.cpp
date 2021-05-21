@@ -199,39 +199,70 @@ void showdir()
 // NOTE: 'interrupt' will save/restore all integer and float registers
 void __attribute__((interrupt("machine"))) trap_handler()
 {
-  register uint32_t causedword;
-  asm volatile("csrr %0, mcause" : "=r"(causedword));
-  EchoUART("TRAP: ");
-  EchoInt(causedword);
-  EchoUART("\r\n");
+   register uint32_t causedword;
+   register uint32_t positivedword=0xEFFFFFFF;
+   register uint32_t fulldword=0xFFFFFFFF;
+   asm volatile("csrr %0, mcause" : "=r"(causedword));
+   if (causedword==7) // Timer
+   {
+      // Clear timer interrupt (or re-set to a known future?)
+      // NOTE: ALWAYS set high part first to avoid false triggers
+      asm volatile("csrrw zero, 0x801, %0" :: "r" (positivedword));
+      asm volatile("csrrw zero, 0x800, %0" :: "r" (fulldword));
+      EchoUART("TRAP:TIMER\r\n");
+   }
+   else if (causedword==3) // Breakpoint
+      EchoUART("TRAP:BREAKPOINT\r\n");
+   else if (causedword==11) // External
+      EchoUART("TRAP:EXTERNAL\r\n");
 }
 
 int main()
 {
-  // Enable machine interrupts
-  int mstatus = 1 << 3;
-  asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
+   // Grab current clock
+   uint32_t clockhigh, clocklow, tmp;
+   asm (
+      "1:\n"
+      "rdtimeh %0\n"
+      "rdtime %1\n"
+      "rdtimeh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
+   );
 
-  // Machine software interrupts enabled
-  int msie = 1 << 3;
-  asm volatile("csrrw zero,mie,%0" :: "r" (msie));
+   // Set up once-only timer interrupt in future
+   // NOTE: timecmp register is a custom register on NekoIchi, not memory mapped
+   // which would not make sense since memory mapping would have delays and
+   // would interfere with how NekoIchi accesses memory
+   // NOTE: ALWAYS set high part first to avoid false triggers
+   asm volatile("csrrw zero, 0x801, %0" :: "r" (clockhigh));
+   asm volatile("csrrw zero, 0x800, %0" :: "r" (clocklow+4096));
 
-  // Set trap handler address
-  asm volatile("csrrw zero, mtvec, %0" :: "r" (trap_handler));
+   // Enable machine interrupts
+   int mstatus = 1 << 3;
+   asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
 
-  // Generate a trap to fall into the trap handler
-  asm volatile("ebreak");
+   // Machine timer interrupts enabled
+   int msie = 1 << 7;
+   asm volatile("csrrw zero,mie,%0" :: "r" (msie));
 
-  // Alternatively:
+   // Set trap handler address
+   asm volatile("csrrw zero, mtvec, %0" :: "r" (trap_handler));
 
-  // Enable machine interrupts
-  //int mstatus = 1 << 3;
-  //asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
+   // TEST: (if machine software int enabled(3))
+   // Generate a trap to fall into the trap handler
+   //asm volatile("ebreak");
 
-  // Enable machine external interrupts
-  // Should this trigger trap handler or something else?
-  //int meie = 1 << 11;
-  //asm volatile("csrrw zero,mie,%0" :: "r" (meie));
+   // Alternatively:
+
+   // Enable machine interrupts
+   //int mstatus = 1 << 3;
+   //asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
+
+   // Enable machine external interrupts
+   // Should this trigger trap handler or something else?
+   //int meie = 1 << 11;
+   //asm volatile("csrrw zero,mie,%0" :: "r" (meie));
 
    EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
    EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
