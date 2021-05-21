@@ -6,7 +6,7 @@ extern "C"
 {
    void __attribute__((naked, section (".boot"))) _start()
    {
-      asm (
+      asm volatile (
 #ifdef STARTUP_ROM
          "mv  x1, x0;"
          "mv  x2, x1;"

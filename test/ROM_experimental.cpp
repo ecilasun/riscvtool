@@ -200,15 +200,30 @@ void showdir()
 void __attribute__((interrupt("machine"))) trap_handler()
 {
    register uint32_t causedword;
-   register uint32_t positivedword=0xEFFFFFFF;
-   register uint32_t fulldword=0xFFFFFFFF;
+   //register uint32_t positivedword=0xEFFFFFFF;
+   //register uint32_t fulldword=0xFFFFFFFF;
    asm volatile("csrr %0, mcause" : "=r"(causedword));
    if (causedword==7) // Timer
    {
       // Clear timer interrupt (or re-set to a known future?)
       // NOTE: ALWAYS set high part first to avoid false triggers
-      asm volatile("csrrw zero, 0x801, %0" :: "r" (positivedword));
-      asm volatile("csrrw zero, 0x800, %0" :: "r" (fulldword));
+      /*asm volatile("csrrw zero, 0x801, %0" :: "r" (positivedword));
+      asm volatile("csrrw zero, 0x800, %0" :: "r" (fulldword));*/
+
+      // Re-set the timer again, one second into the future
+      uint32_t clockhigh, clocklow, tmp;
+      asm volatile(
+         "1:\n"
+         "rdtimeh %0\n"
+         "rdtime %1\n"
+         "rdtimeh %2\n"
+         "bne %0, %2, 1b\n"
+         : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
+      );
+      uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+      uint64_t future = now + 10000000; // 1 second
+      asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
+      asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
       EchoUART("TRAP:TIMER\r\n");
    }
    else if (causedword==3) // Breakpoint
@@ -217,11 +232,15 @@ void __attribute__((interrupt("machine"))) trap_handler()
       EchoUART("TRAP:EXTERNAL\r\n");
 }
 
-int main()
+void SetupTimerInterruptTest()
 {
-   // Grab current clock
+   // Set up timer interrupt one second into the future
+   // NOTE: timecmp register is a custom register on NekoIchi, not memory mapped
+   // which would not make sense since memory mapping would have delays and
+   // would interfere with how NekoIchi accesses memory
+   // NOTE: ALWAYS set high part first to avoid false triggers
    uint32_t clockhigh, clocklow, tmp;
-   asm (
+   asm volatile(
       "1:\n"
       "rdtimeh %0\n"
       "rdtime %1\n"
@@ -229,22 +248,18 @@ int main()
       "bne %0, %2, 1b\n"
       : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
-
-   // Set up once-only timer interrupt in future
-   // NOTE: timecmp register is a custom register on NekoIchi, not memory mapped
-   // which would not make sense since memory mapping would have delays and
-   // would interfere with how NekoIchi accesses memory
-   // NOTE: ALWAYS set high part first to avoid false triggers
-   asm volatile("csrrw zero, 0x801, %0" :: "r" (clockhigh));
-   asm volatile("csrrw zero, 0x800, %0" :: "r" (clocklow+4096));
+   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+   uint64_t future = now + 10000000; // 1 second
+   asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
+   asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 
    // Enable machine interrupts
    int mstatus = 1 << 3;
-   asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
+   asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
 
    // Machine timer interrupts enabled
    int msie = 1 << 7;
-   asm volatile("csrrw zero,mie,%0" :: "r" (msie));
+   asm volatile("csrrw zero, mie,%0" :: "r" (msie));
 
    // Set trap handler address
    asm volatile("csrrw zero, mtvec, %0" :: "r" (trap_handler));
@@ -255,15 +270,14 @@ int main()
 
    // Alternatively:
 
-   // Enable machine interrupts
-   //int mstatus = 1 << 3;
-   //asm volatile ("csrrw zero,mstatus,%0" :: "r" (mstatus));
-
-   // Enable machine external interrupts
+   // Enable machine external interrupts / timer interrupts and machine software interrupts
    // Should this trigger trap handler or something else?
-   //int meie = 1 << 11;
-   //asm volatile("csrrw zero,mie,%0" :: "r" (meie));
+   //int meie = (1 << 11) | (1 << 7) | (1 << 3);
+   //asm volatile("csrrw zero, mie, %0" :: "r" (meie));
+}
 
+int main()
+{
    EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
    EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
    EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
@@ -295,6 +309,9 @@ int main()
    if (loadelf("BOOT.ELF") != -1)
        runelf();
 
+   // Set up interrupt test
+   SetupTimerInterruptTest();
+
    const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    //const unsigned char editbgcolor = 0x00;
 
@@ -325,8 +342,6 @@ int main()
    {
       uint64_t clk = ReadClock();
       uint32_t milliseconds = ClockToMs(clk);
-      uint32_t hours, minutes, seconds;
-      ClockMsToHMS(milliseconds, hours,minutes,seconds);
 
       // Step 1: Read UART FIFO byte count
       unsigned int bytecount = *IO_UARTRXByteCount;
@@ -446,6 +461,8 @@ int main()
 
          if (toggletime)
          {
+            uint32_t hours, minutes, seconds;
+            ClockMsToHMS(milliseconds, hours,minutes,seconds);
             uint32_t offst = PrintDMADecimal(0, 0, hours);
             PrintDMA(offst*8, 0, ":"); ++offst;
             offst += PrintDMADecimal(offst*8,0,minutes);
