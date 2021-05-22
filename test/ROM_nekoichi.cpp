@@ -187,7 +187,7 @@ void runbinaryblob()
       "fmv.w.x	f29, zero \n"
       "fmv.w.x	f30, zero \n"
       "fmv.w.x	f31, zero \n"
-      "li x12, 0x0001FFF0 \n"
+      "li x12, 0x0003FFF0 \n" // we're not coming back to the loader, set SP to end of RAM
       "mv sp, x12 \n"
       "ret \n"
       : 

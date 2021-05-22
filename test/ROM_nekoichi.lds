@@ -169,14 +169,14 @@ SECTIONS
   PROVIDE ( __BSS_END__$ = . );
   _bss_end = .;
 
-   .stack :
+   /*.stack :
    {
     . = ALIGN(4);
     _stack_end = .;
     . += _STACK_SIZE;
     __stack_top = .;
     __stack = __stack_top;
-  }
+  }*/
 
   /* End of uninitialized data segment (used by syscalls.c for heap) */
   PROVIDE( end = . );

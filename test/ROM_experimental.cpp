@@ -1,4 +1,5 @@
-// MiniTerm
+// NekoIchi ROM
+// Experimental
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -12,8 +13,48 @@
 #include "console.h"
 #include "elf.h"
 
-#define STARTUP_ROM
-#include "rom_nekoichi_rvcrt0.h"
+// #define STARTUP_ROM
+// #include "rom_nekoichi_rvcrt0.h"
+
+// Wall clock runs at 10Mhz which is 10 million ticks per second
+#define ONE_SECOND_IN_TICKS 10000000
+
+// 10ms intervals for thread switching
+#define THREAD_TIMESLICE 100000
+
+// Currently supporting this many threads
+#define MAX_THREADS 16
+
+// Entry for a thread's state
+struct cpu_context
+{
+   // No need to save x0
+   uint32_t x[31];
+   uint32_t f[31];
+   uint32_t FP;
+   uint32_t SP;
+   uint32_t PC;
+};
+
+struct task_struct
+{
+   struct cpu_context ctx;
+   uint32_t state;
+   uint32_t counter; // task run length, when it reaches 0 another task is scheduled
+   uint32_t priority; // priority is copied to counter on schedule
+   uint32_t preemt_count; // non-zero when task is running non-interruptable critical work, can't switch
+};
+
+// Entry zero will always be main()
+uint32_t current_task = 0; // init_task
+cpu_context task_array[MAX_THREADS];
+uint32_t num_tasks = 1; // only one initially, which is the init_task
+
+/*int main()
+{
+   s_threadpool[0].PC = (uint32_t)Main;
+   s_numthreads = 1;
+}*/
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -30,6 +71,10 @@ const char *FRtoString[]={
 };
 
 uint32_t showtime = 0;
+uint32_t escapemode = 0;
+uint64_t clk;
+uint32_t milliseconds;
+uint32_t hours, minutes, seconds;
 
 void RunELF()
 {
@@ -69,8 +114,8 @@ void RunELF()
         "fmv.w.x	f29, zero \n"
         "fmv.w.x	f30, zero \n"
         "fmv.w.x	f31, zero \n"
-        "li x12, 0x0001FFF0 \n"
-        "mv sp, x12 \n"
+        //"li x12, 0x0003FFF0 \n" // NOTE: Keep the stack pointer as-is
+        //"mv sp, x12 \n"
         "ret \n"
         : 
         : "m" (branchaddress)
@@ -151,7 +196,7 @@ int LoadELF(const char *filename)
    }
 }
 
-void showdir()
+void ListDir()
 {
    DIR dir;
    FRESULT re = pf_opendir(&dir, " ");
@@ -184,16 +229,13 @@ void showdir()
    }
    else
       EchoUART(FRtoString[re]);
-
 }
 
 void ProcessUARTInputAsync()
 {
-   char cmdbuffer[33];
-   int escapemode = 0;
+   char cmdbuffer[36];
    while (*IO_UARTRXByteCount)
    {
-
       // Step 3: Read the data on UARTRX memory location
       char checkchar = *IO_UARTRX;
 
@@ -212,29 +254,32 @@ void ProcessUARTInputAsync()
          // First, copy current row
          ConsoleStringAtRow(cmdbuffer);
          // Next, send a newline to go down one
-         EchoConsole("\n");
+         EchoConsole("\r\n");
 
          // Clear the whole screen
-         if ((cmdbuffer[0]='c') && (cmdbuffer[1]=='l') && (cmdbuffer[2]=='s'))
+         if ((cmdbuffer[0]=='c') && (cmdbuffer[1]=='l') && (cmdbuffer[2]=='s'))
          {
             ClearConsole();
          }
-         else if ((cmdbuffer[0]='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
+         else if ((cmdbuffer[0]=='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
          {
-            EchoConsole("\r\n");
-            EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to entrypoint\r\ndump:dump first 256 bytes of ELF\r\n");
+            EchoConsole("dir: list files\r\n");
+            EchoConsole("load filename: load and run ELF\n\r");
+            EchoConsole("cls: clear screen\r\n");
+            EchoConsole("help: help screen\r\n");
+            EchoConsole("time: elapsed time\r\n");
+            EchoConsole("run: branch to entrypoint\r\n");
+            EchoConsole("dump: dump top 256 bytes\r\n");
          }
-         else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
+         else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
          {
-            EchoConsole("\r\n");
-            showdir();
+            ListDir();
          }
-         else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
+         else if ((cmdbuffer[0]=='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
          {
-            EchoConsole("\r\n");
             LoadELF(&cmdbuffer[5]); // Skip 'load ' part
          }
-         else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='p'))
+         else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='p'))
          {
                for (uint32_t i=branchaddress;i<branchaddress + 0x100;i+=4)
                {
@@ -244,10 +289,10 @@ void ProcessUARTInputAsync()
                   EchoUART("\r\n");
                }
          }
-         else if ((cmdbuffer[0]='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
+         else if ((cmdbuffer[0]=='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
             showtime = (showtime+1)%2;
-         else if ((cmdbuffer[0]='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
-               RunELF();
+         else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
+            RunELF();
       }
 
       if (escapemode)
@@ -286,19 +331,34 @@ void ProcessUARTInputAsync()
 // NOTE: 'interrupt' will save/restore all integer and float registers
 void __attribute__((interrupt("machine"))) trap_handler()
 {
+   // Ideally, copy out register here before we do anything else
+   /*asm volatile(
+      ""
+   );*/
+
    register uint32_t causedword;
-   register uint32_t positivedword=0xEFFFFFFF;
-   register uint32_t fulldword=0xFFFFFFFF;
    asm volatile("csrr %0, mcause" : "=r"(causedword));
    if (causedword==7) // Timer
    {
-      // Clear timer interrupt (or re-set to a known future?)
-      // NOTE: ALWAYS set high part first to avoid false triggers
-      asm volatile("csrrw zero, 0x801, %0" :: "r" (positivedword));
-      asm volatile("csrrw zero, 0x800, %0" :: "r" (fulldword));
+      // TEST - nothing should be done here that will break registers
+      clk = ReadClock();
+      milliseconds = ClockToMs(clk);
+      ClockMsToHMS(milliseconds, hours, minutes, seconds);
 
-      // Re-set the timer again, one second into the future
-      /*uint32_t clockhigh, clocklow, tmp;
+      // Main task scheduler, 10ms quantum size
+
+      // 1) Save current register set
+
+      // 2) Save current MRET address
+
+      // 3) Restore next thread's registers
+
+      // 4) Set MRET address to next thread's last known IP
+
+      // 5) Re-trigger timer for next quanta
+
+      // 6) Re-set the timer again
+      uint32_t clockhigh, clocklow, tmp;
       asm volatile(
          "1:\n"
          "rdtimeh %0\n"
@@ -308,10 +368,9 @@ void __attribute__((interrupt("machine"))) trap_handler()
          : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
       );
       uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-      uint64_t future = now + 10000000; // 1 second
+      uint64_t future = now + THREAD_TIMESLICE; // Thread switching frequency
       asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
-      asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));*/
-      EchoUART("TRAP:TMR\r\n");
+      asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
    }
    else if (causedword==3) // Breakpoint - no going back unless EBRK is restored to previous intstruction
    {
@@ -342,7 +401,7 @@ void SetupInterruptHandlers()
       : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
    uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-   uint64_t future = now + 10000000; // 1 second
+   uint64_t future = now + THREAD_TIMESLICE; // Thread switching frequency
    asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 
@@ -429,14 +488,12 @@ int main()
    unsigned int cnt = 0x00000000;
    while(1)
    {
-      uint64_t clk = ReadClock();
-      uint32_t milliseconds = ClockToMs(clk);
-
       // Hardware interrupt driven input processing happens async to this code
 
       if (gpustate == cnt) // GPU work complete, push more
       {
          ++cnt;
+
          // Show the char table
          ClearScreen(bgcolor);
          DrawConsole();
@@ -458,8 +515,6 @@ int main()
 
          if (showtime)
          {
-            uint32_t hours, minutes, seconds;
-            ClockMsToHMS(milliseconds, hours,minutes,seconds);
             uint32_t offst = PrintDMADecimal(0, 0, hours);
             PrintDMA(offst*8, 0, ":"); ++offst;
             offst += PrintDMADecimal(offst*8,0,minutes);
