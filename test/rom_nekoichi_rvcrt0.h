@@ -2,22 +2,6 @@
 #error ("HALT! The target SoC NekoIchi does not support compressed instruction set!")
 #endif
 
-#ifdef EXPERIMENTAL_ROM
-// Wall clock runs at 10Mhz which is 10 million ticks per second
-#define ONE_SECOND_IN_TICKS 10000000
-// 10ms intervals for task switching
-//#define TASK_TIMESLICE 100000
-// 1ms for rapid testing
-#define TASK_TIMESLICE 10000
-// Interrupt handlers
-extern "C"
-{
-   extern void timer_interrupt();
-   extern void breakpoint_interrupt();
-   extern void external_interrupt();
-}
-#endif // EXPERIMENTAL_ROM
-
 extern "C"
 {
    void __attribute__((naked, section (".boot"))) _start()
@@ -91,21 +75,6 @@ extern "C"
       );
 #endif
 
-#ifdef EXPERIMENTAL_ROM
-
-      uint32_t clockhigh, clocklow, tmp;
-      asm volatile(
-         "1:\n"
-         "rdtimeh %0\n"
-         "rdtime %1\n"
-         "rdtimeh %2\n"
-         "bne %0, %2, 1b\n"
-         : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
-      );
-      uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-      uint64_t future = now + TASK_TIMESLICE; // Task switching frequency
-#endif // EXPERIMENTAL_ROM
-
       asm volatile (
 
          //".cfi_startproc;"
@@ -150,128 +119,11 @@ extern "C"
          "addi	a1,sp,4;"
          "li a2,0;"
 
-#ifdef EXPERIMENTAL_ROM
-         // Set trap handler address
-         "la t0, trap_handler;"
-         "csrrw zero, mtvec, t0;"
-
-         "csrrw zero, 0x801, %0;" 
-         "csrrw zero, 0x800, %1;"
-
-         // Enable machine interrupts
-         "li t0, 8;" // (1 << 3)
-         "csrrw zero, mstatus, t0;"
-
-         // Enable machine timer interrupts and machine external interrupts
-         "li t0, 2176;" // (1 << 7) | (1 << 11)
-         "csrrw zero, mie, t0;"
-#endif // EXPERIMENTAL_ROM
          // Jump to main
          "j main;"
 
          // Stop at breakpoint / no return / _exit is useless
          "ebreak;"
-
-#ifdef EXPERIMENTAL_ROM
-     "trap_handler:\n"
-
-         "addi sp,sp,-144;"
-         "sw	ra,140(sp);"
-         "sw	t0,136(sp);"
-         "sw	t1,132(sp);"
-         "sw	t2,128(sp);"
-         "sw	a0,124(sp);"
-         "sw	a1,120(sp);"
-         "sw	a2,116(sp);"
-         "sw	a3,112(sp);"
-         "sw	a4,108(sp);"
-         "sw	a5,104(sp);"
-         "sw	a6,100(sp);"
-         "sw	a7,96(sp);"
-         "sw	t3,92(sp);"
-         "sw	t4,88(sp);"
-         "sw	t5,84(sp);"
-         "sw	t6,80(sp);"
-         "fsw	ft0,76(sp);"
-         "fsw	ft1,72(sp);"
-         "fsw	ft2,68(sp);"
-         "fsw	ft3,64(sp);"
-         "fsw	ft4,60(sp);"
-         "fsw	ft5,56(sp);"
-         "fsw	ft6,52(sp);"
-         "fsw	ft7,48(sp);"
-         "fsw	fa0,44(sp);"
-         "fsw	fa1,40(sp);"
-         "fsw	fa2,36(sp);"
-         "fsw	fa3,32(sp);"
-         "fsw	fa4,28(sp);"
-         "fsw	fa5,24(sp);"
-         "fsw	fa6,20(sp);"
-         "fsw	fa7,16(sp);"
-         "fsw	ft8,12(sp);"
-         "fsw	ft9,8(sp);"
-         "fsw	ft10,4(sp);"
-         "fsw	ft11,0(sp);"
-
-         "csrr t0, mcause;"
-         "li t1, 7;"
-         "bne	t0,t1,skiptimer;"
-         "jal ra, timer_interrupt;"
-         "j restoreregisters;"
-
-      "skiptimer:"
-         "li t1, 3;"
-         "bne	t0,t1,skipbreakpoint;"
-         "jal ra, breakpoint_interrupt;"
-         "j restoreregisters;"
-
-      "skipbreakpoint:"
-         "li t1, 11;"
-         "bne	t0,t1,restoreregisters;"
-         "jal ra, external_interrupt;"
-      
-      "restoreregisters:"
-         "lw	ra,140(sp);"
-         "lw	t0,136(sp);"
-         "lw	t1,132(sp);"
-         "lw	t2,128(sp);"
-         "lw	a0,124(sp);"
-         "lw	a1,120(sp);"
-         "lw	a2,116(sp);"
-         "lw	a3,112(sp);"
-         "lw	a4,108(sp);"
-         "lw	a5,104(sp);"
-         "lw	a6,100(sp);"
-         "lw	a7,96(sp);"
-         "lw	t3,92(sp);"
-         "lw	t4,88(sp);"
-         "lw	t5,84(sp);"
-         "lw	t6,80(sp);"
-         "flw	ft0,76(sp);"
-         "flw	ft1,72(sp);"
-         "flw	ft2,68(sp);"
-         "flw	ft3,64(sp);"
-         "flw	ft4,60(sp);"
-         "flw	ft5,56(sp);"
-         "flw	ft6,52(sp);"
-         "flw	ft7,48(sp);"
-         "flw	fa0,44(sp);"
-         "flw	fa1,40(sp);"
-         "flw	fa2,36(sp);"
-         "flw	fa3,32(sp);"
-         "flw	fa4,28(sp);"
-         "flw	fa5,24(sp);"
-         "flw	fa6,20(sp);"
-         "flw	fa7,16(sp);"
-         "flw	ft8,12(sp);"
-         "flw	ft9,8(sp);"
-         "flw	ft10,4(sp);"
-         "flw	ft11,0(sp);"
-         "addi	sp,sp,144;"
-         "mret;"
-
-         :: "r" ((future&0xFFFFFFFF00000000)>>32), "r" (uint32_t(future&0x00000000FFFFFFFF))
-#endif // EXPERIMENTAL_ROM
       );
    }
 

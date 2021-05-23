@@ -14,13 +14,10 @@
 #include "elf.h"
 
 //#define STARTUP_ROM
-//#define EXPERIMENTAL_ROM
 //#include "rom_nekoichi_rvcrt0.h"
 
-typedef int (*task_cb_t)();
-
-// 400ms task switch interval
-#define TASK_TIMESLICE 4000000
+// 10ms default task switch interval
+#define DEFAULT_TIMESLICE 100000
 
 // Currently supporting this many tasks
 #define MAX_TASKS 16
@@ -31,22 +28,14 @@ struct cpu_context
    uint32_t reg[33]{0};
    uint32_t SP{0};
    uint32_t PC{0};
-   uint32_t quantum{TASK_TIMESLICE};
+   uint32_t quantum{DEFAULT_TIMESLICE};
 };
-
-/*struct task_struct
-{
-   struct cpu_context ctx;
-   uint32_t state;
-   uint32_t counter; // task run length, when it reaches 0 another task is scheduled
-   uint32_t priority; // priority is copied to counter on schedule
-   uint32_t preemt_count; // non-zero when task is running non-interruptable critical work, can't switch
-};*/
 
 // Entry zero will always be main()
 uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
+uint32_t cursorevenodd = 0;
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -64,8 +53,8 @@ const char *FRtoString[]={
 
 uint32_t showtime = 0;
 uint32_t escapemode = 0;
-uint64_t clk;
-uint32_t milliseconds;
+uint64_t clk = 0;
+uint32_t milliseconds = 0;
 uint32_t hours, minutes, seconds;
 
 void RunELF()
@@ -358,7 +347,6 @@ int MainTask()
 
    // UART communication section
    uint32_t prevmilliseconds = 0;
-   uint32_t cursorevenodd = 0;
    volatile unsigned int gpustate = 0x00000000;
    unsigned int cnt = 0x00000000;
    while(1)
@@ -424,18 +412,18 @@ void SetupTasks()
    // since the first time around we arrive at the timer interrupt
    // the PC/SP and registers belong to main()'s infinite spin loop.
    task_array[0].PC = (uint32_t)SystemTaskPlaceholder;
-   asm volatile("sw sp, %0;" : "=m" (task_array[0].SP) );
-   task_array[0].quantum = 1000; // run for 0.1ms then switch
+   asm volatile("sw sp, %0;" : "=m" (task_array[0].SP) ); // Use current stack pointer
+   task_array[0].quantum = 500; // run for 0.05ms then switch
 
    // Main application body, will be time-sliced
    task_array[1].PC = (uint32_t)MainTask;
-   task_array[1].SP = 0x0002F000;
+   task_array[1].SP = 0x0003E000;
    task_array[1].quantum = 10000; // run for 1ms then switch
 
    // Further tasks
    task_array[2].PC = (uint32_t)ClockTask;
-   task_array[2].SP = 0x00030000;
-   task_array[2].quantum = 1000; // run for 0.1ms then switch
+   task_array[2].SP = 0x0003F000;
+   task_array[2].quantum = 2500; // run for 0.25ms then switch
 
    num_tasks = 3;
 }
@@ -536,7 +524,7 @@ void SetupTasks()
          : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
       );
       uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-      uint64_t future = now + task_array[current_task].quantum;//TASK_TIMESLICE; // Task switching frequency
+      uint64_t future = now + task_array[current_task].quantum; // Run time for next task minus tolerance
       asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
       asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
    }
@@ -696,7 +684,7 @@ void SetupInterruptHandlers()
       : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
    uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-   uint64_t future = now + TASK_TIMESLICE;
+   uint64_t future = now + DEFAULT_TIMESLICE; // Main thread spins for this amount initially
    asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 
@@ -748,6 +736,7 @@ int main()
    SetupTasks();
    SetupInterruptHandlers();
 
+   // This loop is a bit iffy, better not add code in here
    while (1) { }
 
    return 0;
