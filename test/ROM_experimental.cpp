@@ -424,20 +424,20 @@ void SetupTasks()
    // since the first time around we arrive at the timer interrupt
    // the PC/SP and registers belong to main()'s infinite spin loop.
    task_array[0].PC = (uint32_t)SystemTaskPlaceholder;
-   task_array[0].SP = 0x0003FFF0;
-   task_array[0].quantum = 3000; // run for 0.3ms then switch
+   asm volatile("sw sp, %0;" : "=m" (task_array[0].SP) );
+   task_array[0].quantum = 1000; // run for 0.1ms then switch
 
    // Main application body, will be time-sliced
    task_array[1].PC = (uint32_t)MainTask;
    task_array[1].SP = 0x0002F000;
-   task_array[1].quantum = 40000; // run for 4ms then switch
+   task_array[1].quantum = 10000; // run for 1ms then switch
 
    // Further tasks
-   //task_array[2].PC = (uint32_t)ClockTask;
-   //task_array[2].SP = 0x0003FFF0;
-   //task_array[2].quantum = 250000; // run for 25ms then switch
+   task_array[2].PC = (uint32_t)ClockTask;
+   task_array[2].SP = 0x00030000;
+   task_array[2].quantum = 1000; // run for 0.1ms then switch
 
-   num_tasks = 2;
+   num_tasks = 3;
 }
 
 /*extern "C"
@@ -476,15 +476,15 @@ void SetupTasks()
       asm volatile("lw tp, 36(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[26]) );
       asm volatile("lw tp, 32(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[27]) );
       asm volatile("lw tp, 28(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[28]) );
-      asm volatile("lw tp, 24(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[29]) );
-      asm volatile("lw tp, 20(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
-      asm volatile("lw tp, 16(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
-      asm volatile("lw tp, 12(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[32]) );
+      //asm volatile("lw tp, 24(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[29]) );
+      //asm volatile("lw tp, 20(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
+      //asm volatile("lw tp, 16(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
+      //asm volatile("lw tp, 12(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[32]) );
 
       // Save the mret address
       asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
 
-      current_task = (current_task+1)%num_tasks;
+      current_task= (current_task+1)%num_tasks;
 
       // Restore new task's registers
       asm volatile("lw tp, %0; sw tp, 144(sp);" : : "m" (task_array[current_task].SP) );
@@ -518,13 +518,13 @@ void SetupTasks()
       asm volatile("lw tp, %0; sw tp, 36(sp);" : : "m" (task_array[current_task].reg[26]) );
       asm volatile("lw tp, %0; sw tp, 32(sp);" : : "m" (task_array[current_task].reg[27]) );
       asm volatile("lw tp, %0; sw tp, 28(sp);" : : "m" (task_array[current_task].reg[28]) );
-      asm volatile("lw tp, %0; sw tp, 24(sp);" : : "m" (task_array[current_task].reg[29]) );
-      asm volatile("lw tp, %0; sw tp, 20(sp);" : : "m" (task_array[current_task].reg[30]) );
-      asm volatile("lw tp, %0; sw tp, 16(sp);" : : "m" (task_array[current_task].reg[31]) );
-      asm volatile("lw tp, %0; sw tp, 12(sp);" : : "m" (task_array[current_task].reg[32]) );
+      //asm volatile("lw tp, %0; sw tp, 24(sp);" : : "m" (task_array[current_task].reg[29]) );
+      //asm volatile("lw tp, %0; sw tp, 20(sp);" : : "m" (task_array[current_task].reg[30]) );
+      //asm volatile("lw tp, %0; sw tp, 16(sp);" : : "m" (task_array[current_task].reg[31]) );
+      //asm volatile("lw tp, %0; sw tp, 12(sp);" : : "m" (task_array[current_task].reg[32]) );
 
       // Set up new mret address
-      asm volatile("lw x31, %0; csrrw zero, mepc, x31;" : : "m" (task_array[current_task].PC) );
+      asm volatile("lw tp, %0; csrrw zero, mepc, tp;" : : "m" (task_array[current_task].PC) );
 
       uint32_t clockhigh, clocklow, tmp;
       asm volatile(
@@ -574,7 +574,22 @@ void __attribute__((naked)) interrupt_handler()
       "sw	t4,88(sp);"
       "sw	t5,84(sp);"
       "sw	t6,80(sp);"
-      "fsw	ft0,76(sp);"
+
+      //"sw	gp,76(sp);" // Do not save/restore this within same executable
+      "sw	s0,72(sp);"
+      "sw	s1,68(sp);"
+      "sw	s2,64(sp);"
+      "sw	s3,60(sp);"
+      "sw	s4,56(sp);"
+      "sw	s5,52(sp);"
+      "sw	s6,48(sp);"
+      "sw	s7,44(sp);"
+      "sw	s8,40(sp);"
+      "sw	s9,36(sp);"
+      "sw	s10,32(sp);"
+      "sw	s11,28(sp);"
+
+      /*"fsw	ft0,76(sp);" // TODO: FPU state later
       "fsw	ft1,72(sp);"
       "fsw	ft2,68(sp);"
       "fsw	ft3,64(sp);"
@@ -591,6 +606,9 @@ void __attribute__((naked)) interrupt_handler()
       "fsw	fa6,20(sp);"
       "fsw	fa7,16(sp);"
       "fsw	ft8,12(sp);"
+      "fsw	ft9,8(sp);"
+      "fsw	ft10,4(sp);"
+      "fsw	ft11,0(sp);"*/
    );
 
    register uint32_t causedword;
@@ -620,7 +638,22 @@ void __attribute__((naked)) interrupt_handler()
       "lw	t4,88(sp);"
       "lw	t5,84(sp);"
       "lw	t6,80(sp);"
-      "flw	ft0,76(sp);"
+
+      //"lw	gp,76(sp);"
+      "lw	s0,72(sp);"
+      "lw	s1,68(sp);"
+      "lw	s2,64(sp);"
+      "lw	s3,60(sp);"
+      "lw	s4,56(sp);"
+      "lw	s5,52(sp);"
+      "lw	s6,48(sp);"
+      "lw	s7,44(sp);"
+      "lw	s8,40(sp);"
+      "lw	s9,36(sp);"
+      "lw	s10,32(sp);"
+      "lw	s11,28(sp);"
+
+      /*"flw	ft0,76(sp);"
       "flw	ft1,72(sp);"
       "flw	ft2,68(sp);"
       "flw	ft3,64(sp);"
@@ -639,9 +672,9 @@ void __attribute__((naked)) interrupt_handler()
       "flw	ft8,12(sp);"
       "flw	ft9,8(sp);"
       "flw	ft10,4(sp);"
-      "flw	ft11,0(sp);"
+      "flw	ft11,0(sp);"*/
+      "mv	sp,tp;" // Use the 'restored' stack pointer (timer_interrupt might have modified it)
       //"addi	sp,sp,148;"
-      "mv sp, tp;" // Use the 'restored' stack pointer (timer_interrupt might have modified it)
       "mret;" // May return to a different call site if timer_interrupt switched tasks
    );
 }
@@ -667,6 +700,9 @@ void SetupInterruptHandlers()
    asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 
+   // Set trap handler address
+   asm volatile("csrrw zero, mtvec, %0" :: "r" (interrupt_handler));
+
    // Enable machine interrupts
    int mstatus = (1 << 3);
    asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
@@ -674,9 +710,6 @@ void SetupInterruptHandlers()
    // Enable machine timer interrupts and machine external interrupts
    int msie = (1 << 7) | (1 << 11);
    asm volatile("csrrw zero, mie,%0" :: "r" (msie));
-
-   // Set trap handler address
-   asm volatile("csrrw zero, mtvec, %0" :: "r" (interrupt_handler));
 }
 
 int main()
