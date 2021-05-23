@@ -8,17 +8,18 @@ rm ROMexperimentalasmdump.txt
 #rm mandelbrotasmdump.txt
 
 rm ROM_nekoichi.coe
-#rm ROM_experimental.coe
+rm ROM_experimental.coe
 
-# BIOS for nekoichi
-# BIOS has the UART loader which can accept and run binaries via riscvtool, and nothing much else
+# Production ROM for NekoIchi
+# ROM has the UART loader which can accept and run binaries via riscvtool, and nothing much else
 # Features being developed in ROM_experimental are gradually pulled into this ROM code
 riscv64-unknown-elf-g++ -o ROM_nekoichi.elf test/ROM_nekoichi.cpp test/utils.cpp -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -nostartfiles -Wl,-Ttest/ROM_nekoichi.lds
-#riscv64-unknown-elf-g++ -o ROM_experimental.elf test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -nostartfiles -Wl,-Ttest/ROM_nekoichi.lds
 
-# Experimental ROM is developed as a regular executable
-# It contains test code and is mainly used for kernel/library development
-riscv64-unknown-elf-g++ -o ROM_experimental.elf test/ROM_experimental.cpp test/utils.cpp test/console.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp -fno-builtin -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
+# Experimental ROM for NekoIchi
+# Experimental ROM contains test code and is mainly used for kernel/library development
+# Currently working on threading & interrupt handlers
+#riscv64-unknown-elf-g++ -o ROM_experimental.elf test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -nostartfiles -Wl,-Ttest/ROM_experimental.lds
+riscv64-unknown-elf-g++ -o ROM_experimental.elf test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -fno-builtin -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
 
 # Examples for nekoichi
 # Each one shows or test a certain functionality and serve as how-to examples
@@ -39,6 +40,6 @@ riscv64-unknown-elf-readelf -a ROM_experimental.elf >> ROMexperimentalasmdump.tx
 #riscv64-unknown-elf-objdump -d -t -r miniterm.elf >> minitermasmdump.txt
 #riscv64-unknown-elf-readelf -a miniterm.elf >> minitermasmdump.txt
 
-# Coefficient files for BIOS update
+# Coefficient files for ROM update and the exterimental ROM
 ./build/release/riscvtool ROM_nekoichi.elf -makerom >> ROM_nekoichi.coe
-#./build/release/riscvtool ROM_experimental.elf -makerom >> ROM_experimental.coe
+./build/release/riscvtool ROM_experimental.elf -makerom >> ROM_experimental.coe

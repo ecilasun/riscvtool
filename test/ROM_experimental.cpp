@@ -13,27 +13,25 @@
 #include "console.h"
 #include "elf.h"
 
-// #define STARTUP_ROM
-// #include "rom_nekoichi_rvcrt0.h"
+//#define STARTUP_ROM
+//#define EXPERIMENTAL_ROM
+//#include "rom_nekoichi_rvcrt0.h"
 
-// Wall clock runs at 10Mhz which is 10 million ticks per second
-#define ONE_SECOND_IN_TICKS 10000000
+typedef int (*task_cb_t)();
 
-// 10ms intervals for thread switching
-#define THREAD_TIMESLICE 100000
+// 4ms task switch interval
+#define TASK_TIMESLICE 40000
 
-// Currently supporting this many threads
-#define MAX_THREADS 16
+// Currently supporting this many tasks
+#define MAX_TASKS 16
 
-// Entry for a thread's state
+// Entry for a task's state
 struct cpu_context
 {
-   // No need to save x0
-   uint32_t x[31];
-   uint32_t f[31];
-   uint32_t FP;
-   uint32_t SP;
-   uint32_t PC;
+   uint32_t reg[32]{0};
+   uint32_t SP{0};
+   uint32_t PC{0};
+   //task_cb_t CB{nullptr};
 };
 
 struct task_struct
@@ -47,14 +45,8 @@ struct task_struct
 
 // Entry zero will always be main()
 uint32_t current_task = 0; // init_task
-cpu_context task_array[MAX_THREADS];
-uint32_t num_tasks = 1; // only one initially, which is the init_task
-
-/*int main()
-{
-   s_threadpool[0].PC = (uint32_t)Main;
-   s_numthreads = 1;
-}*/
+cpu_context task_array[MAX_TASKS];
+uint32_t num_tasks = 0; // only one initially, which is the init_task
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -80,7 +72,7 @@ void RunELF()
 {
     // Set up stack pointer and branch to loaded executable's entry point (noreturn)
     // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
-    asm (
+    asm volatile (
         "lw ra, %0 \n"
         "fmv.w.x	f0, zero \n"
         "fmv.w.x	f1, zero \n"
@@ -328,142 +320,26 @@ void ProcessUARTInputAsync()
    }
 }
 
-// NOTE: 'interrupt' will save/restore all integer and float registers
-void __attribute__((interrupt("machine"))) trap_handler()
+int SystemIdleTask()
 {
-   // Ideally, copy out register here before we do anything else
-   /*asm volatile(
-      ""
-   );*/
+   while(1) { }
+}
 
-   register uint32_t causedword;
-   asm volatile("csrr %0, mcause" : "=r"(causedword));
-   if (causedword==7) // Timer
+int ClockTask()
+{
+   while (1)
    {
-      // TEST - nothing should be done here that will break registers
       clk = ReadClock();
       milliseconds = ClockToMs(clk);
       ClockMsToHMS(milliseconds, hours, minutes, seconds);
-
-      // Main task scheduler, 10ms quantum size
-
-      // 1) Save current register set
-
-      // 2) Save current MRET address
-
-      // 3) Restore next thread's registers
-
-      // 4) Set MRET address to next thread's last known IP
-
-      // 5) Re-trigger timer for next quanta
-
-      // 6) Re-set the timer again
-      uint32_t clockhigh, clocklow, tmp;
-      asm volatile(
-         "1:\n"
-         "rdtimeh %0\n"
-         "rdtime %1\n"
-         "rdtimeh %2\n"
-         "bne %0, %2, 1b\n"
-         : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
-      );
-      uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-      uint64_t future = now + THREAD_TIMESLICE; // Thread switching frequency
-      asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
-      asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
    }
-   else if (causedword==3) // Breakpoint - no going back unless EBRK is restored to previous intstruction
-   {
-      // TODO: Respond to debugger stub here?
-      EchoUART("TRAP:BRK\r\n");
-   }
-   else if (causedword==11) // External
-   {
-      // TODO: Respond to debugger stub here?
-      ProcessUARTInputAsync();
-   }
+
+   return 0;
 }
 
-void SetupInterruptHandlers()
+int MainTask()
 {
-   // Set up timer interrupt one second into the future
-   // NOTE: timecmp register is a custom register on NekoIchi, not memory mapped
-   // which would not make sense since memory mapping would have delays and
-   // would interfere with how NekoIchi accesses memory
-   // NOTE: ALWAYS set high part first to avoid false triggers
-   uint32_t clockhigh, clocklow, tmp;
-   asm volatile(
-      "1:\n"
-      "rdtimeh %0\n"
-      "rdtime %1\n"
-      "rdtimeh %2\n"
-      "bne %0, %2, 1b\n"
-      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
-   );
-   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-   uint64_t future = now + THREAD_TIMESLICE; // Thread switching frequency
-   asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
-   asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
-
-   // Enable machine interrupts
-   int mstatus = (1 << 3);
-   asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
-
-   // Enable machine timer interrupts and machine external interrupts
-   int msie = (1 << 7) | (1 << 11);
-   asm volatile("csrrw zero, mie,%0" :: "r" (msie));
-
-   // Set trap handler address
-   asm volatile("csrrw zero, mtvec, %0" :: "r" (trap_handler));
-
-   // TEST: (if machine software int enabled(3))
-   // Generate a trap to fall into the trap handler
-   //asm volatile("ebreak");
-
-   // Alternatively:
-
-   // Enable machine external interrupts / timer interrupts and machine software interrupts
-   // Should this trigger trap handler or something else?
-   //int meie = (1 << 11) | (1 << 7) | (1 << 3);
-   //asm volatile("csrrw zero, mie, %0" :: "r" (meie));
-}
-
-int main()
-{
-   EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvv  \r\n");
-   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvv    \r\n");
-   EchoUART("rr                vvvvvvvvvvvvvvvvvvvvvv      \r\n");
-   EchoUART("rr            vvvvvvvvvvvvvvvvvvvvvvvv      rr\r\n");
-   EchoUART("rrrr      vvvvvvvvvvvvvvvvvvvvvvvvvv      rrrr\r\n");
-   EchoUART("rrrrrr      vvvvvvvvvvvvvvvvvvvvvv      rrrrrr\r\n");
-   EchoUART("rrrrrrrr      vvvvvvvvvvvvvvvvvv      rrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrr      vvvvvvvvvvvvvv      rrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrr      vvvvvvvvvv      rrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrr      vvvvvv      rrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vv      rrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr          rrrrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
-
-   EchoUART("\r\nNekoIchi [v003] [rv32imfN] [GPU]\r\n");
-   EchoUART("(c)2021 Engin Cilasun\r\n");
-
-   sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
-
-   // Load and branch into the boot executable if one is found on the SDCard
-   if (LoadELF("BOOT.ELF") != -1)
-       RunELF();
-
    const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
-   //const unsigned char editbgcolor = 0x00;
-
    // Set output page
    uint32_t page = 0;
    GPUSetRegister(6, page);
@@ -477,9 +353,6 @@ int main()
    page = (page+1)%2;
    GPUSetRegister(6, page);
    GPUSetVideoPage(6);
-
-   // Set up interrupt handlers
-   SetupInterruptHandlers();
 
    // UART communication section
    uint32_t prevmilliseconds = 0;
@@ -539,6 +412,302 @@ int main()
          gpustate = 0;
       }
    }
+
+   return 0;
+}
+
+void SetupTasks()
+{
+   task_array[0].PC = (uint32_t)SystemIdleTask;
+   task_array[0].SP = 0x0003F000;
+
+   task_array[1].PC = (uint32_t)MainTask;
+   task_array[1].SP = 0x0002F000;
+
+   //task_array[2].PC = (uint32_t)ClockTask;
+   //task_array[2].SP = 0x0002E000;
+
+   num_tasks = 2;
+}
+
+/*extern "C"
+{*/
+   void timer_interrupt()
+   {
+      // Save current task's registers
+      asm volatile("lw tp, 144(sp); sw tp, %0;" : "=m" (task_array[current_task].SP) );
+      asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[0]) );
+      asm volatile("lw tp, 136(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[1]) );
+      asm volatile("lw tp, 132(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[2]) );
+      asm volatile("lw tp, 128(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[3]) );
+      asm volatile("lw tp, 124(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[4]) );
+      asm volatile("lw tp, 120(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[5]) );
+      asm volatile("lw tp, 116(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[6]) );
+      asm volatile("lw tp, 112(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[7]) );
+      asm volatile("lw tp, 108(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[8]) );
+      asm volatile("lw tp, 104(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[9]) );
+      asm volatile("lw tp, 100(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[10]) );
+      asm volatile("lw tp, 96(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[11]) );
+      asm volatile("lw tp, 92(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[12]) );
+      asm volatile("lw tp, 88(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[13]) );
+      asm volatile("lw tp, 84(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[14]) );
+      asm volatile("lw tp, 80(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[15]) );
+
+      asm volatile("lw tp, 76(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[15]) );
+      asm volatile("lw tp, 72(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[16]) );
+      asm volatile("lw tp, 68(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[17]) );
+      asm volatile("lw tp, 64(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[18]) );
+      asm volatile("lw tp, 60(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[19]) );
+      asm volatile("lw tp, 56(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[20]) );
+      asm volatile("lw tp, 52(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[21]) );
+      asm volatile("lw tp, 48(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[22]) );
+      asm volatile("lw tp, 44(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[23]) );
+      asm volatile("lw tp, 40(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[24]) );
+      asm volatile("lw tp, 36(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[25]) );
+      asm volatile("lw tp, 32(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[26]) );
+      asm volatile("lw tp, 28(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[27]) );
+      asm volatile("lw tp, 24(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[28]) );
+      asm volatile("lw tp, 20(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[29]) );
+      asm volatile("lw tp, 16(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
+      asm volatile("lw tp, 12(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
+
+      // Save the mret address
+      asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
+
+      ++current_task;
+      current_task %= num_tasks;
+
+      // Restore new task's registers
+      asm volatile("lw tp, %0; sw tp, 144(sp);" : : "m" (task_array[current_task].SP) );
+      asm volatile("lw tp, %0; sw tp, 140(sp);" : : "m" (task_array[current_task].reg[0]) );
+      asm volatile("lw tp, %0; sw tp, 136(sp);" : : "m" (task_array[current_task].reg[1]) );
+      asm volatile("lw tp, %0; sw tp, 132(sp);" : : "m" (task_array[current_task].reg[2]) );
+      asm volatile("lw tp, %0; sw tp, 128(sp);" : : "m" (task_array[current_task].reg[3]) );
+      asm volatile("lw tp, %0; sw tp, 124(sp);" : : "m" (task_array[current_task].reg[4]) );
+      asm volatile("lw tp, %0; sw tp, 120(sp);" : : "m" (task_array[current_task].reg[5]) );
+      asm volatile("lw tp, %0; sw tp, 116(sp);" : : "m" (task_array[current_task].reg[6]) );
+      asm volatile("lw tp, %0; sw tp, 112(sp);" : : "m" (task_array[current_task].reg[7]) );
+      asm volatile("lw tp, %0; sw tp, 108(sp);" : : "m" (task_array[current_task].reg[8]) );
+      asm volatile("lw tp, %0; sw tp, 104(sp);" : : "m" (task_array[current_task].reg[9]) );
+      asm volatile("lw tp, %0; sw tp, 100(sp);" : : "m" (task_array[current_task].reg[10]) );
+      asm volatile("lw tp, %0; sw tp, 96(sp);" : : "m" (task_array[current_task].reg[11]) );
+      asm volatile("lw tp, %0; sw tp, 92(sp);" : : "m" (task_array[current_task].reg[12]) );
+      asm volatile("lw tp, %0; sw tp, 88(sp);" : : "m" (task_array[current_task].reg[13]) );
+      asm volatile("lw tp, %0; sw tp, 84(sp);" : : "m" (task_array[current_task].reg[14]) );
+      asm volatile("lw tp, %0; sw tp, 80(sp);" : : "m" (task_array[current_task].reg[15]) );
+
+      asm volatile("lw tp, %0; sw tp, 76(sp);" : : "m" (task_array[current_task].reg[15]) );
+      asm volatile("lw tp, %0; sw tp, 72(sp);" : : "m" (task_array[current_task].reg[16]) );
+      asm volatile("lw tp, %0; sw tp, 68(sp);" : : "m" (task_array[current_task].reg[17]) );
+      asm volatile("lw tp, %0; sw tp, 64(sp);" : : "m" (task_array[current_task].reg[18]) );
+      asm volatile("lw tp, %0; sw tp, 60(sp);" : : "m" (task_array[current_task].reg[19]) );
+      asm volatile("lw tp, %0; sw tp, 56(sp);" : : "m" (task_array[current_task].reg[20]) );
+      asm volatile("lw tp, %0; sw tp, 52(sp);" : : "m" (task_array[current_task].reg[21]) );
+      asm volatile("lw tp, %0; sw tp, 48(sp);" : : "m" (task_array[current_task].reg[22]) );
+      asm volatile("lw tp, %0; sw tp, 44(sp);" : : "m" (task_array[current_task].reg[23]) );
+      asm volatile("lw tp, %0; sw tp, 40(sp);" : : "m" (task_array[current_task].reg[24]) );
+      asm volatile("lw tp, %0; sw tp, 36(sp);" : : "m" (task_array[current_task].reg[25]) );
+      asm volatile("lw tp, %0; sw tp, 32(sp);" : : "m" (task_array[current_task].reg[26]) );
+      asm volatile("lw tp, %0; sw tp, 28(sp);" : : "m" (task_array[current_task].reg[27]) );
+      asm volatile("lw tp, %0; sw tp, 24(sp);" : : "m" (task_array[current_task].reg[28]) );
+      asm volatile("lw tp, %0; sw tp, 20(sp);" : : "m" (task_array[current_task].reg[29]) );
+      asm volatile("lw tp, %0; sw tp, 16(sp);" : : "m" (task_array[current_task].reg[30]) );
+      asm volatile("lw tp, %0; sw tp, 12(sp);" : : "m" (task_array[current_task].reg[31]) );
+
+      // Set up new mret address
+      asm volatile("lw x31, %0; csrrw zero, mepc, x31;" : : "m" (task_array[current_task].PC) );
+
+      uint32_t clockhigh, clocklow, tmp;
+      asm volatile(
+         "1:\n"
+         "rdtimeh %0\n"
+         "rdtime %1\n"
+         "rdtimeh %2\n"
+         "bne %0, %2, 1b\n"
+         : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
+      );
+      uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+      uint64_t future = now + TASK_TIMESLICE; // Task switching frequency
+      asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
+      asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
+   }
+
+   void breakpoint_interrupt()
+   {
+   }
+
+   void external_interrupt()
+   {
+      ProcessUARTInputAsync();
+   }
+//}
+
+//void __attribute__((interrupt("machine"))) interrupt_handler()
+void __attribute__((naked)) interrupt_handler()
+{
+   asm volatile (
+      "mv tp, sp;"
+      "addi	sp,sp,-148;"
+      "sw	tp,144(sp);"
+      "sw	ra,140(sp);"
+      "sw	t0,136(sp);"
+      "sw	t1,132(sp);"
+      "sw	t2,128(sp);"
+      "sw	a0,124(sp);"
+      "sw	a1,120(sp);"
+      "sw	a2,116(sp);"
+      "sw	a3,112(sp);"
+      "sw	a4,108(sp);"
+      "sw	a5,104(sp);"
+      "sw	a6,100(sp);"
+      "sw	a7,96(sp);"
+      "sw	t3,92(sp);"
+      "sw	t4,88(sp);"
+      "sw	t5,84(sp);"
+      "sw	t6,80(sp);"
+      "fsw	ft0,76(sp);"
+      "fsw	ft1,72(sp);"
+      "fsw	ft2,68(sp);"
+      "fsw	ft3,64(sp);"
+      "fsw	ft4,60(sp);"
+      "fsw	ft5,56(sp);"
+      "fsw	ft6,52(sp);"
+      "fsw	ft7,48(sp);"
+      "fsw	fa0,44(sp);"
+      "fsw	fa1,40(sp);"
+      "fsw	fa2,36(sp);"
+      "fsw	fa3,32(sp);"
+      "fsw	fa4,28(sp);"
+      "fsw	fa5,24(sp);"
+      "fsw	fa6,20(sp);"
+      "fsw	fa7,16(sp);"
+      "fsw	ft8,12(sp);"
+   );
+
+   register uint32_t causedword;
+   asm volatile("csrr %0, mcause" : "=r"(causedword));
+   if (causedword==7) // Timer
+      timer_interrupt();
+   else if (causedword==3) // Breakpoint
+      breakpoint_interrupt();
+   else if (causedword==11) // External
+      external_interrupt();
+
+   asm volatile(
+      "lw	tp,144(sp);"
+      "lw	ra,140(sp);"
+      "lw	t0,136(sp);"
+      "lw	t1,132(sp);"
+      "lw	t2,128(sp);"
+      "lw	a0,124(sp);"
+      "lw	a1,120(sp);"
+      "lw	a2,116(sp);"
+      "lw	a3,112(sp);"
+      "lw	a4,108(sp);"
+      "lw	a5,104(sp);"
+      "lw	a6,100(sp);"
+      "lw	a7,96(sp);"
+      "lw	t3,92(sp);"
+      "lw	t4,88(sp);"
+      "lw	t5,84(sp);"
+      "lw	t6,80(sp);"
+      "flw	ft0,76(sp);"
+      "flw	ft1,72(sp);"
+      "flw	ft2,68(sp);"
+      "flw	ft3,64(sp);"
+      "flw	ft4,60(sp);"
+      "flw	ft5,56(sp);"
+      "flw	ft6,52(sp);"
+      "flw	ft7,48(sp);"
+      "flw	fa0,44(sp);"
+      "flw	fa1,40(sp);"
+      "flw	fa2,36(sp);"
+      "flw	fa3,32(sp);"
+      "flw	fa4,28(sp);"
+      "flw	fa5,24(sp);"
+      "flw	fa6,20(sp);"
+      "flw	fa7,16(sp);"
+      "flw	ft8,12(sp);"
+      "flw	ft9,8(sp);"
+      "flw	ft10,4(sp);"
+      "flw	ft11,0(sp);"
+      "addi	sp,sp,148;"
+      //"mv sp, tp;"
+      // This will return to a different call site when timer interrupt is hit
+      "mret;"
+   );
+}
+
+void SetupInterruptHandlers()
+{
+   // Set up timer interrupt one second into the future
+   // NOTE: timecmp register is a custom register on NekoIchi, not memory mapped
+   // which would not make sense since memory mapping would have delays and
+   // would interfere with how NekoIchi accesses memory
+   // NOTE: ALWAYS set high part first to avoid false triggers
+   uint32_t clockhigh, clocklow, tmp;
+   asm volatile(
+      "1:\n"
+      "rdtimeh %0\n"
+      "rdtime %1\n"
+      "rdtimeh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
+   );
+   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+   uint64_t future = now + TASK_TIMESLICE;
+   asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
+   asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
+
+   // Enable machine interrupts
+   int mstatus = (1 << 3);
+   asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
+
+   // Enable machine timer interrupts and machine external interrupts
+   int msie = (1 << 7) | (1 << 11);
+   asm volatile("csrrw zero, mie,%0" :: "r" (msie));
+
+   // Set trap handler address
+   asm volatile("csrrw zero, mtvec, %0" :: "r" (interrupt_handler));
+}
+
+int main()
+{
+   EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvv  \r\n");
+   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvv    \r\n");
+   EchoUART("rr                vvvvvvvvvvvvvvvvvvvvvv      \r\n");
+   EchoUART("rr            vvvvvvvvvvvvvvvvvvvvvvvv      rr\r\n");
+   EchoUART("rrrr      vvvvvvvvvvvvvvvvvvvvvvvvvv      rrrr\r\n");
+   EchoUART("rrrrrr      vvvvvvvvvvvvvvvvvvvvvv      rrrrrr\r\n");
+   EchoUART("rrrrrrrr      vvvvvvvvvvvvvvvvvv      rrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrr      vvvvvvvvvvvvvv      rrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrr      vvvvvvvvvv      rrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrr      vvvvvv      rrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrr      vv      rrrrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrr          rrrrrrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
+
+   EchoUART("\r\nNekoIchi [v003] [rv32imf] [GPU]\r\n");
+   EchoUART("(c)2021 Engin Cilasun\r\n");
+
+   sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
+
+   // Load and branch into the boot executable if one is found on the SDCard
+   if (LoadELF("BOOT.ELF") != -1)
+       RunELF();
+
+   SetupTasks();
+   SetupInterruptHandlers();
+
+   while (1) { }
 
    return 0;
 }
