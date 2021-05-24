@@ -34,7 +34,7 @@ void exceptionHandler (int exception_number, void *exception_address)
 
 // ----------------------------------------------------------
 
-char packetbuffer[512]; // Report 255 just in case
+char packetbuffer[1200]; // Report 1024 but allocate more space just in case
 int packetcursor = 0;
 int checksumcounter = 0;
 int packetcomplete = 0;
@@ -111,12 +111,13 @@ void SendDebugPacket(const char *packetString)
     EchoUART("#");
     EchoUART(checksumstr);
 
-    EchoConsole("<");
+    // Debug dump
+    /*EchoConsole("<");
     EchoConsole("+$");
     EchoConsole(packetString);
     EchoConsole("#");
     EchoConsole(checksumstr);
-    EchoConsole("\r\n");
+    EchoConsole("\r\n");*/
 }
 
 void gdb_stub()
@@ -163,7 +164,7 @@ void gdb_stub()
         EchoConsole("\r\n");
 
         if (startswith(packetbuffer, "qSupported", 10))
-            SendDebugPacket("swbreak+;hwbreak+;multiprocess-;PacketSize=255");
+            SendDebugPacket("swbreak+;hwbreak+;multiprocess-;PacketSize=1024");
         else if (startswith(packetbuffer, "vMustReplyEmpty", 15))
             SendDebugPacket(""); // Have to reply empty
         else if (startswith(packetbuffer, "Hg0", 3)) // Future ops apply to thread 0
@@ -171,9 +172,13 @@ void gdb_stub()
         else if (startswith(packetbuffer, "qTStatus", 8))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "?", 1))
-            SendDebugPacket(""); // Not supported
+            SendDebugPacket("S05");
         else if (startswith(packetbuffer, "qfThreadInfo", 12))
-            SendDebugPacket(""); // Not supported
+            SendDebugPacket("l"); // Not supported
+        else if (startswith(packetbuffer, "vCont?", 6))
+            SendDebugPacket("OK"); // Continue
+        else if (startswith(packetbuffer, "vCont", 5))
+            SendDebugPacket(""); // Not sure what this is
         else if (startswith(packetbuffer, "qL", 2))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "Hc", 2))
@@ -183,6 +188,18 @@ void gdb_stub()
         else if (startswith(packetbuffer, "qAttached", 9))
             SendDebugPacket("1");
         else if (startswith(packetbuffer, "qOffsets", 8))
-            SendDebugPacket("Text=000;Data=000;Bss=000"); // No relocation
+            SendDebugPacket("Text=0;Data=0;Bss=0"); // No relocation
+        else if (startswith(packetbuffer, "g", 1)) // List registers
+            SendDebugPacket("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"); // Return register data
+        else if (startswith(packetbuffer, "p", 1)) // Print register, p??
+            SendDebugPacket("00000000"); // Return register data
+        else if (startswith(packetbuffer, "qSymbol", 7))
+            SendDebugPacket("OK"); // No symtable info required
+        else if (startswith(packetbuffer, "D", 1)) // Detach
+            SendDebugPacket("OK");
+        else if (startswith(packetbuffer, "m", 1)) // Read memory, maddr,count
+        {
+            SendDebugPacket("00000000");
+        }
     }
 }
