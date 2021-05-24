@@ -114,9 +114,9 @@ void ParseELFHeader(SElfFileHeader32 *fheader)
    }
 
    branchaddress = fheader->m_Entry;
-   EchoConsole("Program entry point: ");
-   EchoConsoleHex(branchaddress);
-   EchoConsole("\r\n");
+   EchoConsole("Program entry point: "); EchoUART("Program entry point: ");
+   EchoConsoleHex(branchaddress); EchoInt(branchaddress);
+   EchoConsole("\r\n"); EchoUART("\r\n");
 
    WORD bytesread;
 
@@ -172,8 +172,9 @@ int LoadELF(const char *filename)
    }
    else
    {
-      EchoConsole("\r\nNot found:");
-      EchoConsole(filename);
+      EchoConsole("\r\nNot found:"); EchoUART("\r\nNot found:");
+      EchoConsole(filename); EchoUART(filename);
+      EchoConsole("\r\n"); EchoUART("\r\n");
       return -1;
    }
 }
@@ -189,23 +190,23 @@ void ListDir()
          re = pf_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
-            EchoConsole(finf.fname);
-            EchoConsole(" ");
-            EchoConsole(finf.fsize);
-            EchoConsole(" ");
+            EchoConsole(finf.fname); EchoUART(finf.fname);
+            EchoConsole(" "); EchoUART(" ");
+            EchoConsole(finf.fsize); EchoInt(finf.fsize);
+            EchoConsole(" "); EchoUART(" ");
             /*EchoConsole(1944 + ((finf.ftime&0xFE00)>>9));
             EchoConsole("/");
             EchoConsole((finf.ftime&0x1E0)>>5);
             EchoConsole("/");
             EchoConsole(finf.ftime&0x1F);*/
-            if (finf.fattrib&0x01) EchoConsole("r");
-            if (finf.fattrib&0x02) EchoConsole("h");
-            if (finf.fattrib&0x04) EchoConsole("s");
-            if (finf.fattrib&0x08) EchoConsole("l");
-            if (finf.fattrib&0x0F) EchoConsole("L");
-            if (finf.fattrib&0x10) EchoConsole("d");
-            if (finf.fattrib&0x20) EchoConsole("a");
-            EchoConsole("\r\n");
+            if (finf.fattrib&0x01) { EchoConsole("r"); EchoUART("r"); }
+            if (finf.fattrib&0x02) { EchoConsole("h"); EchoUART("h"); }
+            if (finf.fattrib&0x04) { EchoConsole("s"); EchoUART("s"); }
+            if (finf.fattrib&0x08) { EchoConsole("l"); EchoUART("l"); }
+            if (finf.fattrib&0x0F) { EchoConsole("L"); EchoUART("L"); }
+            if (finf.fattrib&0x10) { EchoConsole("d"); EchoUART("d"); }
+            if (finf.fattrib&0x20) { EchoConsole("a"); EchoUART("a"); }
+            EchoConsole("\r\n"); EchoUART("\r\n");
          }
       } while(re == FR_OK && dir.sect!=0);
    }
@@ -213,99 +214,98 @@ void ListDir()
       EchoUART(FRtoString[re]);
 }
 
+void HandleDemoCommands(char checkchar)
+{
+   if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
+   {
+      ConsoleCursorStepBack();
+      EchoConsole(" ");
+      ConsoleCursorStepBack();
+   }
+   else if (checkchar == 27) // ESC
+   {
+      escapemode = 1;
+   }
+   else if (checkchar == 13) // Enter?
+   {
+      char cmdbuffer[36];
+
+      // First, copy current row
+      ConsoleStringAtRow(cmdbuffer);
+      // Next, send a newline to go down one
+      EchoConsole("\r\n");
+      EchoUART("\r\n");
+
+      // Clear the whole screen
+      if ((cmdbuffer[0]=='c') && (cmdbuffer[1]=='l') && (cmdbuffer[2]=='s'))
+      {
+         ClearConsole();
+      }
+      else if ((cmdbuffer[0]=='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
+      {
+         EchoConsole("dir: list files\r\n");
+         EchoConsole("load filename: load and run ELF\n\r");
+         EchoConsole("cls: clear screen\r\n");
+         EchoConsole("help: help screen\r\n");
+         EchoConsole("time: toggle time\r\n");
+         EchoConsole("run: branch to entrypoint\r\n");
+         EchoConsole("brk: test debug breakpoint\r\n");
+      }
+      else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
+      {
+         ListDir();
+      }
+      else if ((cmdbuffer[0]=='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
+      {
+         LoadELF(&cmdbuffer[5]); // Skip 'load ' part
+      }
+      else if ((cmdbuffer[0]=='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
+         showtime = (showtime+1)%2;
+      else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
+         RunELF();
+      else if ((cmdbuffer[0]=='b') && (cmdbuffer[1]=='r') && (cmdbuffer[2]=='k'))
+      {
+         EchoUART("DEBUGGER: Halting MainTask\r\n");
+         have_a_break = 1; // Trigger a future break event since it won't work here (see below)
+         //asm volatile("ebreak; "); // NOTE: Should not break since we're already in a external interrupt handler
+      }
+   }
+
+   if (escapemode)
+   {
+      ++escapemode;
+      if (escapemode==4)
+      {
+         int cx,cy;
+         GetConsoleCursor(cx, cy);
+         if (checkchar == 'A')
+            SetConsoleCursor(cx, cy-1);
+         if (checkchar == 'B')
+            SetConsoleCursor(cx, cy+1);
+         if (checkchar == 'C')
+            SetConsoleCursor(cx+1, cy);
+         if (checkchar == 'D')
+            SetConsoleCursor(cx-1, cy);
+         escapemode = 0;
+      }
+   }
+   else if (checkchar != 8)
+   {
+      char shortstring[2];
+      shortstring[0]=checkchar;
+      shortstring[1]=0;
+      EchoConsole(shortstring);
+   }
+}
+
 void ProcessUARTInputAsync()
 {
-   char cmdbuffer[36];
    while (*IO_UARTRXByteCount)
    {
       // Step 3: Read the data on UARTRX memory location
       char checkchar = *IO_UARTRX;
 
-      if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
-      {
-         ConsoleCursorStepBack();
-         EchoConsole(" ");
-         ConsoleCursorStepBack();
-      }
-      else if (checkchar == 27) // ESC
-      {
-         escapemode = 1;
-      }
-      else if (checkchar == 13) // Enter?
-      {
-         // First, copy current row
-         ConsoleStringAtRow(cmdbuffer);
-         // Next, send a newline to go down one
-         EchoConsole("\r\n");
-
-         // Clear the whole screen
-         if ((cmdbuffer[0]=='c') && (cmdbuffer[1]=='l') && (cmdbuffer[2]=='s'))
-         {
-            ClearConsole();
-         }
-         else if ((cmdbuffer[0]=='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
-         {
-            EchoConsole("dir: list files\r\n");
-            EchoConsole("load filename: load and run ELF\n\r");
-            EchoConsole("cls: clear screen\r\n");
-            EchoConsole("help: help screen\r\n");
-            EchoConsole("time: elapsed time\r\n");
-            EchoConsole("run: branch to entrypoint\r\n");
-            EchoConsole("dump: dump top 256 bytes\r\n");
-            EchoConsole("brk: debug brkpt in main task\r\n");
-         }
-         else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
-         {
-            ListDir();
-         }
-         else if ((cmdbuffer[0]=='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
-         {
-            LoadELF(&cmdbuffer[5]); // Skip 'load ' part
-         }
-         else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='p'))
-         {
-               for (uint32_t i=branchaddress;i<branchaddress + 0x100;i+=4)
-               {
-                  EchoInt(i);
-                  EchoUART(":");
-                  EchoInt(*((uint32_t*)i));
-                  EchoUART("\r\n");
-               }
-         }
-         else if ((cmdbuffer[0]=='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
-            showtime = (showtime+1)%2;
-         else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
-            RunELF();
-         else if ((cmdbuffer[0]=='b') && (cmdbuffer[1]=='r') && (cmdbuffer[2]=='k'))
-            have_a_break = 1; // Trigger a future break event since it won't work here (see below)
-            //asm volatile("ebreak; "); // NOTE: Should not break since we're already in a external interrupt handler
-      }
-
-      if (escapemode)
-      {
-         ++escapemode;
-         if (escapemode==4)
-         {
-            int cx,cy;
-            GetConsoleCursor(cx, cy);
-            if (checkchar == 'A')
-               SetConsoleCursor(cx, cy-1);
-            if (checkchar == 'B')
-               SetConsoleCursor(cx, cy+1);
-            if (checkchar == 'C')
-               SetConsoleCursor(cx+1, cy);
-            if (checkchar == 'D')
-               SetConsoleCursor(cx-1, cy);
-            escapemode = 0;
-         }
-      }
-      else if (checkchar != 8)
-      {
-         char shortstring[2];
-         shortstring[0]=checkchar;
-         shortstring[1]=0;
-         EchoConsole(shortstring);
-      }
+      HandleDemoCommands(checkchar);
 
       // Echo characters back to the terminal
       *IO_UARTTX = checkchar;
@@ -335,7 +335,7 @@ int ClockTask()
 
 int MainTask()
 {
-   const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
+   const uint8_t bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    // Set output page
    uint32_t page = 0;
    GPUSetRegister(6, page);
@@ -390,17 +390,21 @@ int MainTask()
             offst += PrintDMADecimal(offst*8,0,seconds);
          }
 
-         if (have_a_break)
-         {
-            have_a_break = 0;
-            asm volatile("ebreak;"); // NOTE: MIE[3] should be enabled for this to work
-         }
-
          GPUWaitForVsync();
 
          page = (page+1)%2;
          GPUSetRegister(6, page);
          GPUSetVideoPage(6);
+
+         // Test debug breakpoint
+         // Ideally a debugger will place one of these (copy old instruction, replace with ebreak, execution halts)
+         // After the breakpoint, UART interrupt handler still works, so it can respond to debugger commands,
+         // effectively being able to un-do the breakpoint and resuming, or modifying registers/memory etc.
+         if (have_a_break)
+         {
+            have_a_break = 0;
+            asm volatile("ebreak;"); // NOTE: MIE[3] should be enabled for this to work
+         }
 
          // GPU status address in G1
          uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
