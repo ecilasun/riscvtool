@@ -36,6 +36,7 @@ uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
 uint32_t cursorevenodd = 0;
+uint32_t have_a_break = 0;
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -251,6 +252,7 @@ void ProcessUARTInputAsync()
             EchoConsole("time: elapsed time\r\n");
             EchoConsole("run: branch to entrypoint\r\n");
             EchoConsole("dump: dump top 256 bytes\r\n");
+            EchoConsole("brk: debug brkpt in main task\r\n");
          }
          else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
          {
@@ -274,6 +276,9 @@ void ProcessUARTInputAsync()
             showtime = (showtime+1)%2;
          else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
             RunELF();
+         else if ((cmdbuffer[0]=='b') && (cmdbuffer[1]=='r') && (cmdbuffer[2]=='k'))
+            have_a_break = 1; // Trigger a future break event since it won't work here (see below)
+            //asm volatile("ebreak; "); // NOTE: Should not break since we're already in a external interrupt handler
       }
 
       if (escapemode)
@@ -383,6 +388,12 @@ int MainTask()
             offst += PrintDMADecimal(offst*8,0,minutes);
             PrintDMA(offst*8, 0, ":"); ++offst;
             offst += PrintDMADecimal(offst*8,0,seconds);
+         }
+
+         if (have_a_break)
+         {
+            have_a_break = 0;
+            asm volatile("ebreak;"); // NOTE: MIE[3] should be enabled for this to work
          }
 
          GPUWaitForVsync();
@@ -531,10 +542,13 @@ void SetupTasks()
 
    void breakpoint_interrupt()
    {
+      // This will stop the current task at the point where ebreak happens
+      //EchoUART("Breakpoint hit\r\n");
    }
 
    void external_interrupt()
    {
+      // TODO: GDB stub here
       ProcessUARTInputAsync();
    }
 //}
@@ -695,8 +709,8 @@ void SetupInterruptHandlers()
    int mstatus = (1 << 3);
    asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
 
-   // Enable machine timer interrupts and machine external interrupts
-   int msie = (1 << 7) | (1 << 11);
+   // Enable machine timer interrupts, machine external interrupts and debug interrupt
+   int msie = (1 << 7) | (1 << 11) | (1 << 3);
    asm volatile("csrrw zero, mie,%0" :: "r" (msie));
 }
 
