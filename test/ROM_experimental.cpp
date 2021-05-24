@@ -54,12 +54,13 @@ const char *FRtoString[]={
 
 // Demo book keeping storage
 uint32_t cursorevenodd = 0;
-uint32_t have_a_break = 0;
 uint32_t showtime = 0;
 uint32_t escapemode = 0;
 uint64_t clk = 0;
 uint32_t milliseconds = 0;
 uint32_t hours, minutes, seconds;
+uint32_t breakpoint_triggered = 0;
+uint32_t saved_instruction = 0;
 
 void RunELF()
 {
@@ -218,6 +219,7 @@ void ListDir()
       EchoUART(FRtoString[re]);
 }
 
+int MainTask(); // FUTURE
 void HandleDemoCommands(char checkchar)
 {
    if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
@@ -253,7 +255,7 @@ void HandleDemoCommands(char checkchar)
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
          EchoConsole("run: branch to entrypoint\r\n");
-         EchoConsole("brk: test debug breakpoint\r\n");
+         EchoConsole("brk: generate random breakpoint\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
@@ -269,8 +271,11 @@ void HandleDemoCommands(char checkchar)
          RunELF();
       else if ((cmdbuffer[0]=='b') && (cmdbuffer[1]=='r') && (cmdbuffer[2]=='k'))
       {
-         EchoUART("DEBUGGER: Halting MainTask\r\n");
-         have_a_break = 1; // Trigger a future break event since it won't work here (see below)
+         // Trigger a future break event at a random point in MainTask function's main loop body
+         // Since it may not always trigger due to code flow, might need to repeatedly send it.
+         uint32_t random_break_address = (uint32_t)MainTask + 0x64 + ((Random()%0x30)*4);
+         saved_instruction = *(uint32_t*)random_break_address;
+         *(uint32_t*)random_break_address = 0x00100073; // EBREAK;
          //asm volatile("ebreak; "); // NOTE: Should not break since we're already in a external interrupt handler
       }
    }
@@ -400,16 +405,6 @@ int MainTask()
          GPUSetRegister(6, page);
          GPUSetVideoPage(6);
 
-         // Test debug breakpoint
-         // Ideally a debugger will place one of these (copy old instruction, replace with ebreak, execution halts)
-         // After the breakpoint, UART interrupt handler still works, so it can respond to debugger commands,
-         // effectively being able to un-do the breakpoint and resuming, or modifying registers/memory etc.
-         if (have_a_break)
-         {
-            have_a_break = 0;
-            asm volatile("ebreak;"); // NOTE: MIE[3] should be enabled for this to work
-         }
-
          // GPU status address in G1
          uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
          GPUSetRegister(1, gpustateDWORDaligned);
@@ -452,7 +447,9 @@ void SetupTasks()
 {*/
    void timer_interrupt()
    {
-      // Save current task's registers
+      // TODO: Save/Restore float registers
+
+      // Save current task's registers (all except TP and GP)
       asm volatile("lw tp, 144(sp); sw tp, %0;" : "=m" (task_array[current_task].SP) );
       asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[0]) );
       asm volatile("lw tp, 136(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[1]) );
@@ -484,17 +481,13 @@ void SetupTasks()
       asm volatile("lw tp, 36(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[26]) );
       asm volatile("lw tp, 32(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[27]) );
       asm volatile("lw tp, 28(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[28]) );
-      //asm volatile("lw tp, 24(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[29]) );
-      //asm volatile("lw tp, 20(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
-      //asm volatile("lw tp, 16(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
-      //asm volatile("lw tp, 12(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[32]) );
 
-      // Save the mret address
+      // Save the mret address of incoming call site
       asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
 
       current_task= (current_task+1)%num_tasks;
 
-      // Restore new task's registers
+      // Restore new task's registers (all except TP and GP)
       asm volatile("lw tp, %0; sw tp, 144(sp);" : : "m" (task_array[current_task].SP) );
       asm volatile("lw tp, %0; sw tp, 140(sp);" : : "m" (task_array[current_task].reg[0]) );
       asm volatile("lw tp, %0; sw tp, 136(sp);" : : "m" (task_array[current_task].reg[1]) );
@@ -526,14 +519,11 @@ void SetupTasks()
       asm volatile("lw tp, %0; sw tp, 36(sp);" : : "m" (task_array[current_task].reg[26]) );
       asm volatile("lw tp, %0; sw tp, 32(sp);" : : "m" (task_array[current_task].reg[27]) );
       asm volatile("lw tp, %0; sw tp, 28(sp);" : : "m" (task_array[current_task].reg[28]) );
-      //asm volatile("lw tp, %0; sw tp, 24(sp);" : : "m" (task_array[current_task].reg[29]) );
-      //asm volatile("lw tp, %0; sw tp, 20(sp);" : : "m" (task_array[current_task].reg[30]) );
-      //asm volatile("lw tp, %0; sw tp, 16(sp);" : : "m" (task_array[current_task].reg[31]) );
-      //asm volatile("lw tp, %0; sw tp, 12(sp);" : : "m" (task_array[current_task].reg[32]) );
 
-      // Set up new mret address
+      // Set up new mret address to new tasks's saved (resume) PC
       asm volatile("lw tp, %0; csrrw zero, mepc, tp;" : : "m" (task_array[current_task].PC) );
 
+      // Re-trigger the timer interrupt to trigger after task's run time
       uint32_t clockhigh, clocklow, tmp;
       asm volatile(
          "1:\n"
@@ -551,8 +541,20 @@ void SetupTasks()
 
    void breakpoint_interrupt()
    {
-      // This will stop the current task at the point where ebreak happens
-      //EchoUART("Breakpoint hit\r\n");
+      // This will continually fire when an ebreak is hit from a task.
+      // Might be able to detect which call site the EBREAK is at and report it etc
+      if (breakpoint_triggered == 0)
+      {
+         breakpoint_triggered = 1;
+         uint32_t breakpointPC = 0;
+         asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (breakpointPC) );
+
+         EchoUART("Breakpoint triggered at ");
+         EchoInt(breakpointPC);
+         EchoUART(" instruction: ");
+         EchoInt(saved_instruction);
+         EchoUART("\r\n");
+      }
    }
 
    void external_interrupt()
