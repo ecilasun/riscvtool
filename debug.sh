@@ -1,7 +1,10 @@
-riscv64-unknown-elf-gdb -b 115200
+riscv64-unknown-elf-gdb -b 115200 ROM_experimental.elf
+
+# After GDB starts, attach with:
 # target remote /dev/ttyUSB1
-# file something.elf
-# load
+
+# NOTE: Use --tui for a graphical UI
+
 # b somebreakpoint
 # info reg
 

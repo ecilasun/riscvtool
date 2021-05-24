@@ -19,7 +19,7 @@ riscv64-unknown-elf-g++ -o ROM_nekoichi.elf test/ROM_nekoichi.cpp test/utils.cpp
 # Experimental ROM contains test code and is mainly used for kernel/library development
 # Currently working on threading & interrupt handlers
 #riscv64-unknown-elf-g++ -o ROM_experimental.elf test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -nostartfiles -Wl,-Ttest/ROM_experimental.lds
-riscv64-unknown-elf-g++ -o ROM_experimental.elf test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -fno-builtin -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
+riscv64-unknown-elf-g++ -o ROM_experimental.elf test/debugger.cpp test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -fno-builtin -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
 
 # Examples for nekoichi
 # Each one shows or test a certain functionality and serve as how-to examples

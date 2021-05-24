@@ -12,6 +12,7 @@
 #include "FAT.h"
 #include "console.h"
 #include "elf.h"
+#include "debugger.h"
 
 // NOTE: Uncomment when experimental ROM should be compiled as actual ROM image
 // Also need to swap the the ROM image compile command in build.sh file
@@ -37,6 +38,7 @@ struct cpu_context
 uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
+uint32_t have_a_break = 0;
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -219,7 +221,6 @@ void ListDir()
       EchoUART(FRtoString[re]);
 }
 
-int MainTask(); // FUTURE
 void HandleDemoCommands(char checkchar)
 {
    if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
@@ -255,7 +256,6 @@ void HandleDemoCommands(char checkchar)
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
          EchoConsole("run: branch to entrypoint\r\n");
-         EchoConsole("brk: generate random breakpoint\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
@@ -269,15 +269,6 @@ void HandleDemoCommands(char checkchar)
          showtime = (showtime+1)%2;
       else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
          RunELF();
-      else if ((cmdbuffer[0]=='b') && (cmdbuffer[1]=='r') && (cmdbuffer[2]=='k'))
-      {
-         // Trigger a future break event at a random point in MainTask function's main loop body
-         // Since it may not always trigger due to code flow, might need to repeatedly send it.
-         uint32_t random_break_address = (uint32_t)MainTask + 0x64 + ((Random()%0x30)*4);
-         saved_instruction = *(uint32_t*)random_break_address;
-         *(uint32_t*)random_break_address = 0x00100073; // EBREAK;
-         //asm volatile("ebreak; "); // NOTE: Should not break since we're already in a external interrupt handler
-      }
    }
 
    if (escapemode)
@@ -305,21 +296,19 @@ void HandleDemoCommands(char checkchar)
       shortstring[1]=0;
       EchoConsole(shortstring);
    }
+
+   // Echo characters back to the terminal
+   *IO_UARTTX = checkchar;
+   if (checkchar == 13)
+      *IO_UARTTX = 10; // Echo extra linefeed
 }
 
 void ProcessUARTInputAsync()
 {
    while (*IO_UARTRXByteCount)
    {
-      // Step 3: Read the data on UARTRX memory location
       char checkchar = *IO_UARTRX;
-
       HandleDemoCommands(checkchar);
-
-      // Echo characters back to the terminal
-      *IO_UARTTX = checkchar;
-      if (checkchar == 13)
-         *IO_UARTTX = 10; // Echo extra linefeed
    }
 }
 
@@ -366,6 +355,12 @@ int MainTask()
    while(1)
    {
       // Hardware interrupt driven input processing happens async to this code
+
+      if (have_a_break)
+      {
+         have_a_break = 0;
+         asm volatile("ebreak;");
+      }
 
       if (gpustate == cnt) // GPU work complete, push more
       {
@@ -541,9 +536,10 @@ void SetupTasks()
 
    void breakpoint_interrupt()
    {
+      gdb_stub();
       // This will continually fire when an ebreak is hit from a task.
       // Might be able to detect which call site the EBREAK is at and report it etc
-      if (breakpoint_triggered == 0)
+      /*if (breakpoint_triggered == 0)
       {
          breakpoint_triggered = 1;
          uint32_t breakpointPC = 0;
@@ -554,13 +550,14 @@ void SetupTasks()
          EchoUART(" instruction: ");
          EchoInt(saved_instruction);
          EchoUART("\r\n");
-      }
+      }*/
    }
 
    void external_interrupt()
    {
       // TODO: GDB stub here
-      ProcessUARTInputAsync();
+      //ProcessUARTInputAsync();
+      gdb_stub();
    }
 //}
 
@@ -760,6 +757,9 @@ int main()
 
    SetupTasks();
    SetupInterruptHandlers();
+
+   //set_debug_traps();
+   //breakpoint();
 
    // This loop is a bit iffy, better not add code in here
    while (1) { }

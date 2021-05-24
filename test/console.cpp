@@ -134,6 +134,15 @@ void EchoConsoleHex(const int32_t i)
     EchoConsole(msg);
 }
 
+void EchoConsoleHexByte(const int32_t i)
+{
+    const char hexdigits[] = "0123456789ABCDEF";
+    char msg[] = "  ";
+    msg[0] = hexdigits[((i>>4)%16)];
+    msg[1] = hexdigits[(i%16)];
+    EchoConsole(msg);
+}
+
 void DrawConsole()
 {
     for (int cy=0;cy<24;++cy)
