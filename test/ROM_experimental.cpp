@@ -13,6 +13,8 @@
 #include "console.h"
 #include "elf.h"
 
+// NOTE: Uncomment when experimental ROM should be compiled as actual ROM image
+// Also need to swap the the ROM image compile command in build.sh file
 //#define STARTUP_ROM
 //#include "rom_nekoichi_rvcrt0.h"
 
@@ -25,18 +27,16 @@
 // Entry for a task's state
 struct cpu_context
 {
-   uint32_t reg[33]{0};
-   uint32_t SP{0};
-   uint32_t PC{0};
-   uint32_t quantum{DEFAULT_TIMESLICE};
+   uint32_t reg[64]{0}; // Task's saved registers (not storing float registers yet)
+   uint32_t SP{0}; // Task's saved stack pointer
+   uint32_t PC{0}; // Task's saved program counter
+   uint32_t quantum{DEFAULT_TIMESLICE}; // Run time for this task
 };
 
 // Entry zero will always be main()
 uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
-uint32_t cursorevenodd = 0;
-uint32_t have_a_break = 0;
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -52,6 +52,9 @@ const char *FRtoString[]={
 	"FR_NO_FILESYSTEM\r\n"
 };
 
+// Demo book keeping storage
+uint32_t cursorevenodd = 0;
+uint32_t have_a_break = 0;
 uint32_t showtime = 0;
 uint32_t escapemode = 0;
 uint64_t clk = 0;
@@ -96,8 +99,9 @@ void RunELF()
         "fmv.w.x	f29, zero \n"
         "fmv.w.x	f30, zero \n"
         "fmv.w.x	f31, zero \n"
-        //"li x12, 0x0003FFF0 \n" // NOTE: Keep the stack pointer as-is
-        //"mv sp, x12 \n"
+        // NOTE: Since we have many stacks in this executable, choose the deepest in memory for new exec.
+        "li x12, 0x0003FFF0 \n"
+        "mv sp, x12 \n"
         "ret \n"
         : 
         : "m" (branchaddress)
@@ -172,7 +176,7 @@ int LoadELF(const char *filename)
    }
    else
    {
-      EchoConsole("\r\nNot found:"); EchoUART("\r\nNot found:");
+      EchoConsole("Not found:"); EchoUART("Not found:");
       EchoConsole(filename); EchoUART(filename);
       EchoConsole("\r\n"); EchoUART("\r\n");
       return -1;
@@ -426,18 +430,19 @@ void SetupTasks()
    // Task 0 is a placeholder for the main() function
    // since the first time around we arrive at the timer interrupt
    // the PC/SP and registers belong to main()'s infinite spin loop.
+   // Very short task (since it's a spinloop by default)
    task_array[0].PC = (uint32_t)SystemTaskPlaceholder;
-   asm volatile("sw sp, %0;" : "=m" (task_array[0].SP) ); // Use current stack pointer
-   task_array[0].quantum = 500; // run for 0.05ms then switch
+   asm volatile("sw sp, %0;" : "=m" (task_array[0].SP) ); // Use current stack pointer of incoming call site
+   task_array[0].quantum = 250; // run for 0.025ms then switch
 
-   // Main application body, will be time-sliced
+   // Main application body, will be time-sliced (medium size task)
    task_array[1].PC = (uint32_t)MainTask;
-   task_array[1].SP = 0x0003E000;
+   task_array[1].SP = 0x0003E000; // NOTE: Need a stack allocator for real addresses
    task_array[1].quantum = 10000; // run for 1ms then switch
 
-   // Further tasks
+   // Clock task (helps with time display and cursor blink, very short task)
    task_array[2].PC = (uint32_t)ClockTask;
-   task_array[2].SP = 0x0003F000;
+   task_array[2].SP = 0x0003F000; // NOTE: Need a stack allocator for real addresses
    task_array[2].quantum = 2500; // run for 0.25ms then switch
 
    num_tasks = 3;
@@ -702,7 +707,7 @@ void SetupInterruptHandlers()
       : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
    uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-   uint64_t future = now + DEFAULT_TIMESLICE; // Main thread spins for this amount initially
+   uint64_t future = now + DEFAULT_TIMESLICE; // Entry point spins for this amount initially before switching
    asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 
