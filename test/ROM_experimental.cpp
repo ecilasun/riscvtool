@@ -24,7 +24,7 @@
 uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
-uint32_t have_a_break = 0;
+//uint32_t debugger_mode = 0;
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -242,6 +242,7 @@ void HandleDemoCommands(char checkchar)
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
          EchoConsole("run: branch to entrypoint\r\n");
+         EchoConsole("gdb: go to debugger mode\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
@@ -255,6 +256,8 @@ void HandleDemoCommands(char checkchar)
          showtime = (showtime+1)%2;
       else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
          RunELF();
+//      else if ((cmdbuffer[0]=='g') && (cmdbuffer[1]=='d') && (cmdbuffer[2]=='b'))
+//         debugger_mode = 1; // Once here, I'm afraid the only way back is to reset this via debugger
    }
 
    if (escapemode)
@@ -341,12 +344,6 @@ int MainTask()
    while(1)
    {
       // Hardware interrupt driven input processing happens async to this code
-
-      if (have_a_break)
-      {
-         have_a_break = 0;
-         asm volatile("ebreak;");
-      }
 
       if (gpustate == cnt) // GPU work complete, push more
       {
@@ -521,14 +518,15 @@ void SetupTasks()
    void breakpoint_interrupt()
    {
       // This will get kicked if we hit a breakpoint
-      gdb_handler(task_array);
+      gdb_handler(task_array, 1);
    }
 
    void external_interrupt()
    {
-      //ProcessUARTInputAsync();
-      // This will get kicked every time we receive a byte from the UART port
-      gdb_handler(task_array);
+      //if (debugger_mode)
+         gdb_handler(task_array);
+      //else
+      //   ProcessUARTInputAsync();
    }
 //}
 

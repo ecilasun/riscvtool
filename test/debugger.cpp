@@ -42,11 +42,6 @@ int packetcomplete = 0;
 
 void processgdbpacket(char incoming)
 {
-    if (incoming == '\003')
-    {
-        EchoConsole("INTRQ\r\n");
-    }
-
     if (checksumcounter != 0)
     {
         packetbuffer[packetcursor++] = incoming;
@@ -178,7 +173,45 @@ uint32_t hex2int(char *hex)
     return val;
 }
 
-uint32_t gdb_handler(cpu_context tasks[])
+void RemoveBreakPoint(cpu_context &task, uint32_t breakaddress)
+{
+    for (uint32_t i=0; i<task.num_breakpoints; ++i)
+    {
+        if (task.breakpoints[i].address == breakaddress)
+        {
+            // Restore saved instruction
+            *(uint32_t*)(breakaddress) = task.breakpoints[i].originalinstruction;
+            
+            if (task.num_breakpoints-1 != i)
+            {
+                task.breakpoints[i].originalinstruction = task.breakpoints[task.num_breakpoints-1].originalinstruction;
+                task.breakpoints[i].address = task.breakpoints[task.num_breakpoints-1].address;
+            }
+
+            task.num_breakpoints--;
+            EchoConsole("RMV ");
+            EchoConsoleHex(breakaddress);
+            EchoConsole("\r\n");
+        }
+    }
+}
+
+void AddBreakPoint(cpu_context &task, uint32_t breakaddress)
+{
+    task.breakpoints[task.num_breakpoints].address = breakaddress;
+    // Save instruction
+    task.breakpoints[task.num_breakpoints].originalinstruction = *(uint32_t*)(breakaddress);
+    task.num_breakpoints++;
+
+    // Replace with EBREAK
+    *(uint32_t*)(breakaddress) = 0x00100073;
+
+    EchoConsole("BRK ");
+    EchoConsoleHex(breakaddress);
+    EchoConsole("\r\n");
+}
+
+uint32_t gdb_handler(cpu_context tasks[], uint32_t in_breakpoint)
 {
     // NOTES:
     // Checksum is computed as the modulo 256 sum of the packet info characters.
@@ -197,17 +230,21 @@ uint32_t gdb_handler(cpu_context tasks[])
     // ? report the most recent signal
     // T allows remote to send only the registers required for quick decisions (step/conditional breakpoints)
 
+    int has_break = 0;
     while (*IO_UARTRXByteCount)
     {
         char checkchar = *IO_UARTRX;
 
+        if (checkchar == '\003')
+            has_break = 1;
         processgdbpacket(checkchar);
-        //EchoConsoleHexByte(checkchar);
+    }
 
-        /*if (checkchar == 0x3) // CTRL+C
-        {
-            //have_a_break = 1; // Break the running program
-        }*/
+    if (has_break || in_breakpoint)
+    {
+        //tasks[1].ctrlc = 1;
+        SendDebugPacket("T02");
+        return 0x1;
     }
 
     // ACK
@@ -216,10 +253,6 @@ uint32_t gdb_handler(cpu_context tasks[])
         packetcomplete = 0;
 
         // qSupported: respond with 'hwbreak; swbreak'
-
-        //EchoConsole(">");
-        //EchoConsole(packetbuffer); // NOTE: Don't do this
-        //EchoConsole("\r\n");
 
         if (startswith(packetbuffer, "qSupported", 10))
             SendDebugPacket("swbreak+;hwbreak+;multiprocess-;PacketSize=1024");
@@ -230,23 +263,61 @@ uint32_t gdb_handler(cpu_context tasks[])
         else if (startswith(packetbuffer, "qTStatus", 8))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "?", 1))
-            SendDebugPacket("S05");
+            SendDebugPacket("S05"); // SIGTRAP==5 https://man7.org/linux/man-pages/man7/signal.7.html
         else if (startswith(packetbuffer, "qfThreadInfo", 12))
             SendDebugPacket("l"); // Not supported
+        else if (startswith(packetbuffer, "qSymbol", 7))
+            SendDebugPacket("OK"); // No symtable info required
+        else if (startswith(packetbuffer, "qAttached", 9))
+            SendDebugPacket("1");
+        else if (startswith(packetbuffer, "qOffsets", 8))
+            SendDebugPacket("Text=0;Data=0;Bss=0"); // No relocation
         else if (startswith(packetbuffer, "vCont?", 6))
-            SendDebugPacket("OK"); // Continue
+            SendDebugPacket("vCont;c;s;t"); // Continue/step/stop actions supported
         else if (startswith(packetbuffer, "vCont", 5))
+        {
+            if (packetbuffer[5]=='c') // Continue action
+                EchoConsole("cont\r\n");
+            if (packetbuffer[5]=='s') // Step action
+                EchoConsole("step\r\n");
+            if (packetbuffer[5]=='t') // Stop action
+                EchoConsole("stop\r\n");
             SendDebugPacket(""); // Not sure what this is
+        }
         else if (startswith(packetbuffer, "qL", 2))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "Hc", 2))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "qC", 2))
             SendDebugPacket(""); // Not supported
-        else if (startswith(packetbuffer, "qAttached", 9))
-            SendDebugPacket("1");
-        else if (startswith(packetbuffer, "qOffsets", 8))
-            SendDebugPacket("Text=0;Data=0;Bss=0"); // No relocation
+        else if (startswith(packetbuffer, "z0,", 3)) // remove breakpoint
+        {
+            uint32_t breakaddress;
+
+            char hexbuf[12];
+            int a=0,p=3;
+            while (packetbuffer[p]!=',')
+                hexbuf[a++] = packetbuffer[p++];
+            hexbuf[a]=0;
+            breakaddress = hex2int(hexbuf);
+
+            RemoveBreakPoint(tasks[1], breakaddress);
+            SendDebugPacket("OK");
+        }
+        else if (startswith(packetbuffer, "Z0,", 3)) // insert breakpoint
+        {
+            uint32_t breakaddress;
+
+            char hexbuf[12];
+            int a=0,p=3;
+            while (packetbuffer[p]!=',')
+                hexbuf[a++] = packetbuffer[p++];
+            hexbuf[a]=0;
+            breakaddress = hex2int(hexbuf); // KIND code is probably '4' after this (standard 32bit break)
+
+            AddBreakPoint(tasks[1], breakaddress);
+            SendDebugPacket("OK");
+        }
         else if (startswith(packetbuffer, "g", 1)) // List registers
         {
             SendDebugPacketRegisters(tasks[1]); // TODO: need to pick a task somehow
@@ -272,8 +343,6 @@ uint32_t gdb_handler(cpu_context tasks[])
 
             SendDebugPacket(regstring); // Return register data
         }
-        else if (startswith(packetbuffer, "qSymbol", 7))
-            SendDebugPacket("OK"); // No symtable info required
         else if (startswith(packetbuffer, "D", 1)) // Detach
             SendDebugPacket("");
         else if (startswith(packetbuffer, "m", 1)) // Read memory, maddr,count
@@ -302,6 +371,21 @@ uint32_t gdb_handler(cpu_context tasks[])
             regstring[8] = 0;
 
             SendDebugPacket(regstring);
+        }
+        else if (startswith(packetbuffer, "s", 1)) // Step
+        {
+            // TODO:
+            SendDebugPacket("OK");
+        }
+        else if (startswith(packetbuffer, "c", 1)) // Continue
+        {
+            SendDebugPacket("OK");
+        }
+        else // Unknown command
+        {
+            EchoConsole(">");
+            EchoConsole(packetbuffer); // NOTE: Don't do this
+            EchoConsole("\r\n");
         }
     }
 
