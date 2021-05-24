@@ -1,7 +1,10 @@
+# Make sure to compile with -ggdb to see source lines
+
 riscv64-unknown-elf-gdb -b 115200 --tui ROM_experimental.elf
 
-# After GDB starts, attach with:
+# After GDB starts, attach and test with:
 # target remote /dev/ttyUSB1
+# info registers
 
 # NOTE: Use --tui for a graphical UI
 

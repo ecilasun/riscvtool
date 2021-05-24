@@ -12,27 +12,13 @@
 #include "FAT.h"
 #include "console.h"
 #include "elf.h"
+#include "nekoichitask.h"
 #include "debugger.h"
 
 // NOTE: Uncomment when experimental ROM should be compiled as actual ROM image
 // Also need to swap the the ROM image compile command in build.sh file
 //#define STARTUP_ROM
 //#include "rom_nekoichi_rvcrt0.h"
-
-// 10ms default task switch interval
-#define DEFAULT_TIMESLICE 100000
-
-// Currently supporting this many tasks
-#define MAX_TASKS 16
-
-// Entry for a task's state
-struct cpu_context
-{
-   uint32_t reg[64]{0}; // Task's saved registers (not storing float registers yet)
-   uint32_t SP{0}; // Task's saved stack pointer
-   uint32_t PC{0}; // Task's saved program counter
-   uint32_t quantum{DEFAULT_TIMESLICE}; // Run time for this task
-};
 
 // Entry zero will always be main()
 uint32_t current_task = 0; // init_task
@@ -422,17 +408,17 @@ void SetupTasks()
    // the PC/SP and registers belong to main()'s infinite spin loop.
    // Very short task (since it's a spinloop by default)
    task_array[0].PC = (uint32_t)SystemTaskPlaceholder;
-   asm volatile("sw sp, %0;" : "=m" (task_array[0].SP) ); // Use current stack pointer of incoming call site
+   asm volatile("sw sp, %0;" : "=m" (task_array[0].reg[2]) ); // Use current stack pointer of incoming call site
    task_array[0].quantum = 250; // run for 0.025ms then switch
 
    // Main application body, will be time-sliced (medium size task)
    task_array[1].PC = (uint32_t)MainTask;
-   task_array[1].SP = 0x0003E000; // NOTE: Need a stack allocator for real addresses
+   task_array[1].reg[2] = 0x0003E000; // NOTE: Need a stack allocator for real addresses
    task_array[1].quantum = 10000; // run for 1ms then switch
 
    // Clock task (helps with time display and cursor blink, very short task)
    task_array[2].PC = (uint32_t)ClockTask;
-   task_array[2].SP = 0x0003F000; // NOTE: Need a stack allocator for real addresses
+   task_array[2].reg[2] = 0x0003F000; // NOTE: Need a stack allocator for real addresses
    task_array[2].quantum = 2500; // run for 0.25ms then switch
 
    num_tasks = 3;
@@ -445,37 +431,36 @@ void SetupTasks()
       // TODO: Save/Restore float registers
 
       // Save current task's registers (all except TP and GP)
-      asm volatile("lw tp, 144(sp); sw tp, %0;" : "=m" (task_array[current_task].SP) );
-      asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[0]) );
-      asm volatile("lw tp, 136(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[1]) );
-      asm volatile("lw tp, 132(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[2]) );
-      asm volatile("lw tp, 128(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[3]) );
-      asm volatile("lw tp, 124(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[4]) );
-      asm volatile("lw tp, 120(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[5]) );
-      asm volatile("lw tp, 116(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[6]) );
-      asm volatile("lw tp, 112(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[7]) );
-      asm volatile("lw tp, 108(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[8]) );
-      asm volatile("lw tp, 104(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[9]) );
-      asm volatile("lw tp, 100(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[10]) );
-      asm volatile("lw tp, 96(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[11]) );
-      asm volatile("lw tp, 92(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[12]) );
-      asm volatile("lw tp, 88(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[13]) );
-      asm volatile("lw tp, 84(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[14]) );
-      asm volatile("lw tp, 80(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[15]) );
-
-      asm volatile("lw tp, 76(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[16]) );
-      asm volatile("lw tp, 72(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[17]) );
-      asm volatile("lw tp, 68(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[18]) );
-      asm volatile("lw tp, 64(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[19]) );
-      asm volatile("lw tp, 60(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[20]) );
-      asm volatile("lw tp, 56(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[21]) );
-      asm volatile("lw tp, 52(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[22]) );
-      asm volatile("lw tp, 48(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[23]) );
-      asm volatile("lw tp, 44(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[24]) );
-      asm volatile("lw tp, 40(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[25]) );
-      asm volatile("lw tp, 36(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[26]) );
-      asm volatile("lw tp, 32(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[27]) );
-      asm volatile("lw tp, 28(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[28]) );
+      asm volatile("lw tp, 144(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[1]) );
+      asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[2]) );
+      asm volatile("lw tp, 136(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[5]) );
+      asm volatile("lw tp, 132(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[6]) );
+      asm volatile("lw tp, 128(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[7]) );
+      asm volatile("lw tp, 124(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[10]) );
+      asm volatile("lw tp, 120(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[11]) );
+      asm volatile("lw tp, 116(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[12]) );
+      asm volatile("lw tp, 112(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[13]) );
+      asm volatile("lw tp, 108(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[14]) );
+      asm volatile("lw tp, 104(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[15]) );
+      asm volatile("lw tp, 100(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[16]) );
+      asm volatile("lw tp, 96(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[17]) );
+      asm volatile("lw tp, 92(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[28]) );
+      asm volatile("lw tp, 88(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[29]) );
+      asm volatile("lw tp, 84(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
+      asm volatile("lw tp, 80(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
+      //asm volatile("lw tp, 76(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[3]) );
+      asm volatile("lw tp, 72(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[8]) );
+      asm volatile("lw tp, 68(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[9]) );
+      asm volatile("lw tp, 64(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[18]) );
+      asm volatile("lw tp, 60(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[19]) );
+      asm volatile("lw tp, 56(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[20]) );
+      asm volatile("lw tp, 52(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[21]) );
+      asm volatile("lw tp, 48(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[22]) );
+      asm volatile("lw tp, 44(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[23]) );
+      asm volatile("lw tp, 40(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[24]) );
+      asm volatile("lw tp, 36(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[25]) );
+      asm volatile("lw tp, 32(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[26]) );
+      asm volatile("lw tp, 28(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[27]) );
 
       // Save the mret address of incoming call site
       asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
@@ -483,37 +468,36 @@ void SetupTasks()
       current_task= (current_task+1)%num_tasks;
 
       // Restore new task's registers (all except TP and GP)
-      asm volatile("lw tp, %0; sw tp, 144(sp);" : : "m" (task_array[current_task].SP) );
-      asm volatile("lw tp, %0; sw tp, 140(sp);" : : "m" (task_array[current_task].reg[0]) );
-      asm volatile("lw tp, %0; sw tp, 136(sp);" : : "m" (task_array[current_task].reg[1]) );
-      asm volatile("lw tp, %0; sw tp, 132(sp);" : : "m" (task_array[current_task].reg[2]) );
-      asm volatile("lw tp, %0; sw tp, 128(sp);" : : "m" (task_array[current_task].reg[3]) );
-      asm volatile("lw tp, %0; sw tp, 124(sp);" : : "m" (task_array[current_task].reg[4]) );
-      asm volatile("lw tp, %0; sw tp, 120(sp);" : : "m" (task_array[current_task].reg[5]) );
-      asm volatile("lw tp, %0; sw tp, 116(sp);" : : "m" (task_array[current_task].reg[6]) );
-      asm volatile("lw tp, %0; sw tp, 112(sp);" : : "m" (task_array[current_task].reg[7]) );
-      asm volatile("lw tp, %0; sw tp, 108(sp);" : : "m" (task_array[current_task].reg[8]) );
-      asm volatile("lw tp, %0; sw tp, 104(sp);" : : "m" (task_array[current_task].reg[9]) );
-      asm volatile("lw tp, %0; sw tp, 100(sp);" : : "m" (task_array[current_task].reg[10]) );
-      asm volatile("lw tp, %0; sw tp, 96(sp);" : : "m" (task_array[current_task].reg[11]) );
-      asm volatile("lw tp, %0; sw tp, 92(sp);" : : "m" (task_array[current_task].reg[12]) );
-      asm volatile("lw tp, %0; sw tp, 88(sp);" : : "m" (task_array[current_task].reg[13]) );
-      asm volatile("lw tp, %0; sw tp, 84(sp);" : : "m" (task_array[current_task].reg[14]) );
-      asm volatile("lw tp, %0; sw tp, 80(sp);" : : "m" (task_array[current_task].reg[15]) );
-
-      asm volatile("lw tp, %0; sw tp, 76(sp);" : : "m" (task_array[current_task].reg[16]) );
-      asm volatile("lw tp, %0; sw tp, 72(sp);" : : "m" (task_array[current_task].reg[17]) );
-      asm volatile("lw tp, %0; sw tp, 68(sp);" : : "m" (task_array[current_task].reg[18]) );
-      asm volatile("lw tp, %0; sw tp, 64(sp);" : : "m" (task_array[current_task].reg[19]) );
-      asm volatile("lw tp, %0; sw tp, 60(sp);" : : "m" (task_array[current_task].reg[20]) );
-      asm volatile("lw tp, %0; sw tp, 56(sp);" : : "m" (task_array[current_task].reg[21]) );
-      asm volatile("lw tp, %0; sw tp, 52(sp);" : : "m" (task_array[current_task].reg[22]) );
-      asm volatile("lw tp, %0; sw tp, 48(sp);" : : "m" (task_array[current_task].reg[23]) );
-      asm volatile("lw tp, %0; sw tp, 44(sp);" : : "m" (task_array[current_task].reg[24]) );
-      asm volatile("lw tp, %0; sw tp, 40(sp);" : : "m" (task_array[current_task].reg[25]) );
-      asm volatile("lw tp, %0; sw tp, 36(sp);" : : "m" (task_array[current_task].reg[26]) );
-      asm volatile("lw tp, %0; sw tp, 32(sp);" : : "m" (task_array[current_task].reg[27]) );
-      asm volatile("lw tp, %0; sw tp, 28(sp);" : : "m" (task_array[current_task].reg[28]) );
+      asm volatile("lw tp, %0; sw tp, 144(sp);" : : "m" (task_array[current_task].reg[1]) );
+      asm volatile("lw tp, %0; sw tp, 140(sp);" : : "m" (task_array[current_task].reg[2]) );
+      asm volatile("lw tp, %0; sw tp, 136(sp);" : : "m" (task_array[current_task].reg[5]) );
+      asm volatile("lw tp, %0; sw tp, 132(sp);" : : "m" (task_array[current_task].reg[6]) );
+      asm volatile("lw tp, %0; sw tp, 128(sp);" : : "m" (task_array[current_task].reg[7]) );
+      asm volatile("lw tp, %0; sw tp, 124(sp);" : : "m" (task_array[current_task].reg[10]) );
+      asm volatile("lw tp, %0; sw tp, 120(sp);" : : "m" (task_array[current_task].reg[11]) );
+      asm volatile("lw tp, %0; sw tp, 116(sp);" : : "m" (task_array[current_task].reg[12]) );
+      asm volatile("lw tp, %0; sw tp, 112(sp);" : : "m" (task_array[current_task].reg[13]) );
+      asm volatile("lw tp, %0; sw tp, 108(sp);" : : "m" (task_array[current_task].reg[14]) );
+      asm volatile("lw tp, %0; sw tp, 104(sp);" : : "m" (task_array[current_task].reg[15]) );
+      asm volatile("lw tp, %0; sw tp, 100(sp);" : : "m" (task_array[current_task].reg[16]) );
+      asm volatile("lw tp, %0; sw tp, 96(sp);" : : "m" (task_array[current_task].reg[17]) );
+      asm volatile("lw tp, %0; sw tp, 92(sp);" : : "m" (task_array[current_task].reg[28]) );
+      asm volatile("lw tp, %0; sw tp, 88(sp);" : : "m" (task_array[current_task].reg[29]) );
+      asm volatile("lw tp, %0; sw tp, 84(sp);" : : "m" (task_array[current_task].reg[30]) );
+      asm volatile("lw tp, %0; sw tp, 80(sp);" : : "m" (task_array[current_task].reg[31]) );
+      //asm volatile("lw tp, %0; sw tp, 76(sp);" : : "m" (task_array[current_task].reg[3]) );
+      asm volatile("lw tp, %0; sw tp, 72(sp);" : : "m" (task_array[current_task].reg[8]) );
+      asm volatile("lw tp, %0; sw tp, 68(sp);" : : "m" (task_array[current_task].reg[9]) );
+      asm volatile("lw tp, %0; sw tp, 64(sp);" : : "m" (task_array[current_task].reg[18]) );
+      asm volatile("lw tp, %0; sw tp, 60(sp);" : : "m" (task_array[current_task].reg[19]) );
+      asm volatile("lw tp, %0; sw tp, 56(sp);" : : "m" (task_array[current_task].reg[20]) );
+      asm volatile("lw tp, %0; sw tp, 52(sp);" : : "m" (task_array[current_task].reg[21]) );
+      asm volatile("lw tp, %0; sw tp, 48(sp);" : : "m" (task_array[current_task].reg[22]) );
+      asm volatile("lw tp, %0; sw tp, 44(sp);" : : "m" (task_array[current_task].reg[23]) );
+      asm volatile("lw tp, %0; sw tp, 40(sp);" : : "m" (task_array[current_task].reg[24]) );
+      asm volatile("lw tp, %0; sw tp, 36(sp);" : : "m" (task_array[current_task].reg[25]) );
+      asm volatile("lw tp, %0; sw tp, 32(sp);" : : "m" (task_array[current_task].reg[26]) );
+      asm volatile("lw tp, %0; sw tp, 28(sp);" : : "m" (task_array[current_task].reg[27]) );
 
       // Set up new mret address to new tasks's saved (resume) PC
       asm volatile("lw tp, %0; csrrw zero, mepc, tp;" : : "m" (task_array[current_task].PC) );
@@ -536,28 +520,15 @@ void SetupTasks()
 
    void breakpoint_interrupt()
    {
-      gdb_stub();
-      // This will continually fire when an ebreak is hit from a task.
-      // Might be able to detect which call site the EBREAK is at and report it etc
-      /*if (breakpoint_triggered == 0)
-      {
-         breakpoint_triggered = 1;
-         uint32_t breakpointPC = 0;
-         asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (breakpointPC) );
-
-         EchoUART("Breakpoint triggered at ");
-         EchoInt(breakpointPC);
-         EchoUART(" instruction: ");
-         EchoInt(saved_instruction);
-         EchoUART("\r\n");
-      }*/
+      // This will get kicked if we hit a breakpoint
+      gdb_handler(task_array);
    }
 
    void external_interrupt()
    {
-      // TODO: GDB stub here
       //ProcessUARTInputAsync();
-      gdb_stub();
+      // This will get kicked every time we receive a byte from the UART port
+      gdb_handler(task_array);
    }
 //}
 
@@ -567,8 +538,8 @@ void __attribute__((naked)) interrupt_handler()
    asm volatile (
       "mv tp, sp;"
       "addi	sp,sp,-148;"
-      "sw	tp,144(sp);"
-      "sw	ra,140(sp);"
+      "sw	ra,144(sp);"
+      "sw	tp,140(sp);"
       "sw	t0,136(sp);"
       "sw	t1,132(sp);"
       "sw	t2,128(sp);"
@@ -584,7 +555,6 @@ void __attribute__((naked)) interrupt_handler()
       "sw	t4,88(sp);"
       "sw	t5,84(sp);"
       "sw	t6,80(sp);"
-
       //"sw	gp,76(sp);" // Do not save/restore this within same executable
       "sw	s0,72(sp);"
       "sw	s1,68(sp);"
@@ -631,37 +601,37 @@ void __attribute__((naked)) interrupt_handler()
       external_interrupt();
 
    asm volatile(
-      "lw	tp,144(sp);"
-      "lw	ra,140(sp);"
-      "lw	t0,136(sp);"
-      "lw	t1,132(sp);"
-      "lw	t2,128(sp);"
-      "lw	a0,124(sp);"
-      "lw	a1,120(sp);"
-      "lw	a2,116(sp);"
-      "lw	a3,112(sp);"
-      "lw	a4,108(sp);"
-      "lw	a5,104(sp);"
-      "lw	a6,100(sp);"
-      "lw	a7,96(sp);"
-      "lw	t3,92(sp);"
-      "lw	t4,88(sp);"
-      "lw	t5,84(sp);"
-      "lw	t6,80(sp);"
-
-      //"lw	gp,76(sp);"
-      "lw	s0,72(sp);"
-      "lw	s1,68(sp);"
-      "lw	s2,64(sp);"
-      "lw	s3,60(sp);"
-      "lw	s4,56(sp);"
-      "lw	s5,52(sp);"
-      "lw	s6,48(sp);"
-      "lw	s7,44(sp);"
-      "lw	s8,40(sp);"
-      "lw	s9,36(sp);"
-      "lw	s10,32(sp);"
-      "lw	s11,28(sp);"
+      "lw	ra,144(sp);" // 1
+      "lw	tp,140(sp);" // 2 (aliases as SP here)
+      "lw	t0,136(sp);" // 5
+      "lw	t1,132(sp);" // 6
+      "lw	t2,128(sp);" // 7
+      "lw	a0,124(sp);" // 10
+      "lw	a1,120(sp);" // 11
+      "lw	a2,116(sp);" // 12
+      "lw	a3,112(sp);" // 13
+      "lw	a4,108(sp);" // 14
+      "lw	a5,104(sp);" // 15
+      "lw	a6,100(sp);" // 16
+      "lw	a7,96(sp);"  // 17
+      "lw	t3,92(sp);"  // 28
+      "lw	t4,88(sp);"  // 29
+      "lw	t5,84(sp);"  // 30
+      "lw	t6,80(sp);"  // 31
+      //"lw	gp,76(sp);"  // 3 <<<
+      "lw	s0,72(sp);"  // 8 (fp)
+      "lw	s1,68(sp);"  // 9
+      "lw	s2,64(sp);"  // 18
+      "lw	s3,60(sp);"  // 19
+      "lw	s4,56(sp);"  // 20
+      "lw	s5,52(sp);"  // 21
+      "lw	s6,48(sp);"  // 22
+      "lw	s7,44(sp);"  // 23
+      "lw	s8,40(sp);"  // 24
+      "lw	s9,36(sp);"  // 25
+      "lw	s10,32(sp);" // 26
+      "lw	s11,28(sp);" // 27
+      //"lw	tp,...(sp);"  // 4 actual TP is lost (overwritten by SP)
 
       /*"flw	ft0,76(sp);"
       "flw	ft1,72(sp);"

@@ -19,7 +19,8 @@ riscv64-unknown-elf-g++ -o ROM_nekoichi.elf test/ROM_nekoichi.cpp test/utils.cpp
 # Experimental ROM contains test code and is mainly used for kernel/library development
 # Currently working on threading & interrupt handlers
 #riscv64-unknown-elf-g++ -o ROM_experimental.elf test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -nostartfiles -Wl,-Ttest/ROM_experimental.lds
-riscv64-unknown-elf-g++ -o ROM_experimental.elf test/debugger.cpp test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -fno-builtin -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
+# NOTE: this one will generate line debug/line number information (-g)
+riscv64-unknown-elf-g++ -o ROM_experimental.elf test/debugger.cpp test/ROM_experimental.cpp test/utils.cpp test/SDCARD.cpp test/FAT.cpp test/diskio.cpp test/console.cpp -fno-builtin -mcmodel=medany -std=c++11 -Wall -Ofast -g -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
 
 # Examples for nekoichi
 # Each one shows or test a certain functionality and serve as how-to examples
@@ -41,5 +42,5 @@ riscv64-unknown-elf-readelf -a ROM_experimental.elf >> ROMexperimentalasmdump.tx
 #riscv64-unknown-elf-readelf -a miniterm.elf >> minitermasmdump.txt
 
 # Coefficient files for ROM update and the exterimental ROM
-./build/release/riscvtool ROM_nekoichi.elf -makerom >> ROM_nekoichi.coe
-./build/release/riscvtool ROM_experimental.elf -makerom >> ROM_experimental.coe
+./build/release/riscvtool ROM_nekoichi.elf -makerom 0 0 >> ROM_nekoichi.coe
+./build/release/riscvtool ROM_experimental.elf -makerom 0 0 >> ROM_experimental.coe

@@ -3,6 +3,7 @@
 #include <setjmp.h>
 #include "debugger.h"
 
+const char hexdigits[] = "0123456789ABCDEF";
 
 void putDebugChar(int dbgchar)
 {
@@ -95,10 +96,51 @@ void strchecksum(const char *str, char *checksumstr)
     }
     checksum = checksum%256;
 
-    const char hexdigits[] = "0123456789ABCDEF";
     checksumstr[0] = hexdigits[((checksum>>4)%16)];
     checksumstr[1] = hexdigits[(checksum%16)];
     checksumstr[2] = 0;
+}
+
+void SendDebugPacketRegisters(cpu_context &task)
+{
+    char packetString[512];
+    for(uint32_t i=0;i<32;++i)
+    {
+        packetString[i*8+6] = hexdigits[((task.reg[i]>>28)%16)];
+        packetString[i*8+7] = hexdigits[((task.reg[i]>>24)%16)];
+        packetString[i*8+4] = hexdigits[((task.reg[i]>>20)%16)];
+        packetString[i*8+5] = hexdigits[((task.reg[i]>>16)%16)];
+        packetString[i*8+2] = hexdigits[((task.reg[i]>>12)%16)];
+        packetString[i*8+3] = hexdigits[((task.reg[i]>>8)%16)];
+        packetString[i*8+0] = hexdigits[((task.reg[i]>>4)%16)];
+        packetString[i*8+1] = hexdigits[(task.reg[i]%16)];
+    }
+
+    // PC last
+    packetString[32*8+6] = hexdigits[((task.PC>>28)%16)];
+    packetString[32*8+7] = hexdigits[((task.PC>>24)%16)];
+    packetString[32*8+4] = hexdigits[((task.PC>>20)%16)];
+    packetString[32*8+5] = hexdigits[((task.PC>>16)%16)];
+    packetString[32*8+2] = hexdigits[((task.PC>>12)%16)];
+    packetString[32*8+3] = hexdigits[((task.PC>>8)%16)];
+    packetString[32*8+1] = hexdigits[((task.PC>>4)%16)];
+    packetString[32*8+0] = hexdigits[(task.PC%16)];
+
+    packetString[32*8+8] = 0;
+
+    char checksumstr[3];
+    strchecksum(packetString, checksumstr);
+
+    EchoUART("+$");
+    EchoUART(packetString);
+    EchoUART("#");
+    EchoUART(checksumstr);
+
+    // EchoConsole("+$");
+    // EchoConsole(packetString);
+    // EchoConsole("#");
+    // EchoConsole(checksumstr);
+    // EchoConsole("\r\n");
 }
 
 void SendDebugPacket(const char *packetString)
@@ -120,7 +162,23 @@ void SendDebugPacket(const char *packetString)
     EchoConsole("\r\n");*/
 }
 
-void gdb_stub()
+uint32_t hex2int(char *hex)
+{
+    uint32_t val = 0;
+    while (*hex) {
+        uint8_t nibble = *hex++;
+        if (nibble >= '0' && nibble <= '9')
+            nibble = nibble - '0';
+        else if (nibble >= 'a' && nibble <='f')
+            nibble = nibble - 'a' + 10;
+        else if (nibble >= 'A' && nibble <='F')
+            nibble = nibble - 'A' + 10;
+        val = (val << 4) | (nibble & 0xF);
+    }
+    return val;
+}
+
+uint32_t gdb_handler(cpu_context tasks[])
 {
     // NOTES:
     // Checksum is computed as the modulo 256 sum of the packet info characters.
@@ -159,9 +217,9 @@ void gdb_stub()
 
         // qSupported: respond with 'hwbreak; swbreak'
 
-        EchoConsole(">");
-        EchoConsole(packetbuffer); // NOTE: Don't do this
-        EchoConsole("\r\n");
+        //EchoConsole(">");
+        //EchoConsole(packetbuffer); // NOTE: Don't do this
+        //EchoConsole("\r\n");
 
         if (startswith(packetbuffer, "qSupported", 10))
             SendDebugPacket("swbreak+;hwbreak+;multiprocess-;PacketSize=1024");
@@ -190,16 +248,62 @@ void gdb_stub()
         else if (startswith(packetbuffer, "qOffsets", 8))
             SendDebugPacket("Text=0;Data=0;Bss=0"); // No relocation
         else if (startswith(packetbuffer, "g", 1)) // List registers
-            SendDebugPacket("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"); // Return register data
+        {
+            SendDebugPacketRegisters(tasks[1]); // TODO: need to pick a task somehow
+        }
         else if (startswith(packetbuffer, "p", 1)) // Print register, p??
-            SendDebugPacket("00000000"); // Return register data
+        {
+            char hexbuf[4], regstring[9];
+            int r=0,p=1;
+            while (packetbuffer[p]!='#')
+                hexbuf[r++] = packetbuffer[p++];
+            hexbuf[r]=0;
+            r = hex2int(hexbuf);
+
+            regstring[6] = hexdigits[((tasks[1].reg[r]>>28)%16)];
+            regstring[7] = hexdigits[((tasks[1].reg[r]>>24)%16)];
+            regstring[4] = hexdigits[((tasks[1].reg[r]>>20)%16)];
+            regstring[5] = hexdigits[((tasks[1].reg[r]>>16)%16)];
+            regstring[2] = hexdigits[((tasks[1].reg[r]>>12)%16)];
+            regstring[3] = hexdigits[((tasks[1].reg[r]>>8)%16)];
+            regstring[0] = hexdigits[((tasks[1].reg[r]>>4)%16)];
+            regstring[1] = hexdigits[(tasks[1].reg[r]%16)];
+            regstring[8] = 0;
+
+            SendDebugPacket(regstring); // Return register data
+        }
         else if (startswith(packetbuffer, "qSymbol", 7))
             SendDebugPacket("OK"); // No symtable info required
         else if (startswith(packetbuffer, "D", 1)) // Detach
-            SendDebugPacket("OK");
+            SendDebugPacket("");
         else if (startswith(packetbuffer, "m", 1)) // Read memory, maddr,count
         {
-            SendDebugPacket("00000000");
+            char addrbuf[12], cntbuf[12];
+            int a=0,c=0, p=1;
+            while (packetbuffer[p]!=',')
+                addrbuf[a++] = packetbuffer[p++];
+            addrbuf[a]=0;
+            while (packetbuffer[p]!='#')
+                cntbuf[c++] = packetbuffer[p++];
+            cntbuf[c]=0;
+            a = hex2int(addrbuf);
+            c = hex2int(cntbuf);
+
+            char regstring[64];
+            uint32_t memval = *(uint32_t*)a;
+            regstring[6] = hexdigits[((memval>>28)%16)];
+            regstring[7] = hexdigits[((memval>>24)%16)];
+            regstring[4] = hexdigits[((memval>>20)%16)];
+            regstring[5] = hexdigits[((memval>>16)%16)];
+            regstring[2] = hexdigits[((memval>>12)%16)];
+            regstring[3] = hexdigits[((memval>>8)%16)];
+            regstring[0] = hexdigits[((memval>>4)%16)];
+            regstring[1] = hexdigits[(memval%16)];
+            regstring[8] = 0;
+
+            SendDebugPacket(regstring);
         }
     }
+
+    return 0x0; // TODO: might want to pass data back
 }

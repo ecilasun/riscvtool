@@ -11,6 +11,8 @@
 #include <chrono>
 #include <thread>
 
+char devicename[64] = "/dev/ttyUSB1";
+
 #pragma pack(push,1)
 struct SElfFileHeader32
 {
@@ -115,156 +117,6 @@ void dumpelf(char *_filename)
     delete [] bytestosend;
 }
 
-void sendcommand(char *_commandstring)
-{
-    /*HANDLE hComm;
-    DCB serialParams{0};
-    COMMTIMEOUTS timeouts{0};
-
-    int commandlength = strlen(_commandstring);
-
-    printf("Sending %dbyte command over COM4 @115200 bps...\n", commandlength);
-    hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hComm != INVALID_HANDLE_VALUE)
-    {
-        serialParams.DCBlength = sizeof(serialParams);
-        if (GetCommState(hComm, &serialParams))
-        {
-            serialParams.BaudRate = CBR_115200;
-            serialParams.ByteSize = 8;
-            serialParams.StopBits = ONESTOPBIT;
-            serialParams.Parity = NOPARITY;
-
-            if (SetCommState(hComm, &serialParams) != 0)
-            {
-                timeouts.ReadIntervalTimeout = 50;
-                timeouts.ReadTotalTimeoutConstant = 50;
-                timeouts.ReadTotalTimeoutMultiplier = 10;
-                timeouts.WriteTotalTimeoutConstant = 50;
-                timeouts.WriteTotalTimeoutMultiplier = 10;
-                if (SetCommTimeouts(hComm, &timeouts) != 0)
-                {
-                    DWORD byteswritten;
-                    // Send the command
-                    WriteFile(hComm, _commandstring, commandlength, &byteswritten, nullptr);
-                    printf("Done\n");
-                }
-                else
-                {
-                    printf("ERROR: can't set comm timeouts\n");
-                }
-                
-            }
-            else
-            {
-                printf("ERROR: can't set comm parameters\n");
-            }
-        }
-        else
-        {
-            printf("ERROR: can't get comm parameters\n");
-        }
-    }
-    else
-    {
-        printf("ERROR: can't open comm on port COM4\n");
-    }
-
-    CloseHandle(hComm);*/
-}
-
-void sendbinary(char *_filename, const unsigned int _target=0x80000000)
-{
-    /*HANDLE hComm;
-    DCB serialParams{0};
-    COMMTIMEOUTS timeouts{0};
-
-    FILE *fp;
-    fp = fopen(_filename, "rb");
-    if (!fp)
-    {
-        printf("ERROR: can't open binary file %s\n", _filename);
-        return;
-    }
-	unsigned int filebytesize = 0;
-    unsigned int targetaddress = _target;
-	fpos_t pos, endpos;
-	fgetpos(fp, &pos);
-	fseek(fp, 0, SEEK_END);
-	fgetpos(fp, &endpos);
-	fsetpos(fp, &pos);
-	filebytesize = (unsigned int)endpos;
-
-    // TODO: Actual binary to send starts at 0x1000
-    unsigned char *bytestosend = new unsigned char[filebytesize+8];
-    fread(bytestosend+8, 1, filebytesize, fp);
-    fclose(fp);
-    ((unsigned int*)bytestosend)[0] = targetaddress;
-    ((unsigned int*)bytestosend)[1] = filebytesize;
-
-    char commandtosend[512];
-    int commandlength=0;
-    sprintf(commandtosend, "bin%c", 13);
-    commandlength = 4;
-
-    printf("Sending raw binary file over COM4 @115200 bps at 0x%.8X\n", _target);
-    hComm = CreateFileA("\\\\.\\COM4", GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hComm != INVALID_HANDLE_VALUE)
-    {
-        serialParams.DCBlength = sizeof(serialParams);
-        if (GetCommState(hComm, &serialParams))
-        {
-            serialParams.BaudRate = CBR_115200;
-            serialParams.ByteSize = 8;
-            serialParams.StopBits = ONESTOPBIT;
-            serialParams.Parity = NOPARITY;
-
-            if (SetCommState(hComm, &serialParams) != 0)
-            {
-                timeouts.ReadIntervalTimeout = 50;
-                timeouts.ReadTotalTimeoutConstant = 50;
-                timeouts.ReadTotalTimeoutMultiplier = 10;
-                timeouts.WriteTotalTimeoutConstant = 50;
-                timeouts.WriteTotalTimeoutMultiplier = 10;
-                if (SetCommTimeouts(hComm, &timeouts) != 0)
-                {
-                    DWORD byteswritten;
-                    // Send the string "dat\r"
-                    WriteFile(hComm, commandtosend, commandlength, &byteswritten, nullptr);
-                    // Wait a bit for the receiving end to start accepting
-                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-                    // Send raw binary with 8byte header (file size)
-                    WriteFile(hComm, bytestosend, filebytesize+8, &byteswritten, nullptr);
-                    // Wait a bit after sending last bytes to avoid issues with repeated calls
-                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
-                    printf("Done\n");
-                }
-                else
-                {
-                    printf("ERROR: can't set comm timeouts\n");
-                }
-                
-            }
-            else
-            {
-                printf("ERROR: can't set comm parameters\n");
-            }
-        }
-        else
-        {
-            printf("ERROR: can't get comm parameters\n");
-        }
-    }
-    else
-    {
-        printf("ERROR: can't open comm on port COM4\n");
-    }
-
-    CloseHandle(hComm);
-    delete [] bytestosend;*/
-}
-
-
 unsigned int generateelfuploadpackage(unsigned char *_elfbinaryread, unsigned char *_elfbinaryout)
 {
     // Parse the header and check the magic word
@@ -325,7 +177,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     char *names = (char*)(bytestoread+stringtablesection->m_Offset);
 
     // Open COM port
-    int serial_port = open("/dev/ttyUSB1", O_RDWR);
+    int serial_port = open(devicename, O_RDWR);
     if (serial_port <0 )
     {
         printf("Error %i from open: %s\n", errno, strerror(errno));
@@ -492,39 +344,24 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
 int main(int argc, char **argv)
 {
-    if (argc>1)
-    {
-        if (argc>2)
-        {
-            if (strstr(argv[2], "-makerom"))
-            {
-                dumpelf(argv[1]);
-            }
-            if (strstr(argv[2], "-sendelf"))
-            {
-                unsigned int target = (unsigned int)strtoul(argv[3], nullptr, 16);
-                sendelf(argv[1], target);
-            }
-            if (strstr(argv[2], "-sendraw"))
-            {
-                unsigned int target = (unsigned int)strtoul(argv[3], nullptr, 16);
-                sendbinary(argv[1], target);
-            }
-            if (strstr(argv[2], "-sendcommand"))
-            {
-                char commandline[512];
-                sprintf(commandline, "%s\n", argv[1]);
-                sendcommand(commandline);
-            }
-        }
-        else
-            sendbinary(argv[1]); // By default send as raw bitmap image to 0x80000000
-    }
-    else
+    if (argc <= 4)
     {
         printf("RISCVTool\n");
-        printf("Usage: riscvtool.exe binaryfilename [-sendelf hexaddress|-sendraw hexaddress]\n");
-        printf("NOTE: If no option is supplied, binary upload is assumed to target address 0x80000000\n");
+        printf("Usage: riscvtool.exe binaryfilename [-sendelf hexaddress usbdevicename | -makerom]\n");
+        printf("NOTE: Default device name is /dev/ttyUSB1");
+        return -1;
     }
-    
+
+    if (strstr(argv[2], "-makerom"))
+    {
+        dumpelf(argv[1]);
+    }
+    if (strstr(argv[2], "-sendelf"))
+    {
+        unsigned int target = (unsigned int)strtoul(argv[3], nullptr, 16);
+        if (argc > 4)
+            strcpy(devicename, argv[4]);
+        sendelf(argv[1], target);
+    }
+    return 0;
 }
