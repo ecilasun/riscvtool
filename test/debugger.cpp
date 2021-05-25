@@ -235,22 +235,18 @@ uint32_t gdb_handler(cpu_context tasks[])
     // ? report the most recent signal
     // T allows remote to send only the registers required for quick decisions (step/conditional breakpoints)
 
-    int has_break = 0;
+    int external_break = 0;
     while (*IO_UARTRXByteCount)
     {
         char checkchar = *IO_UARTRX;
 
         if (checkchar == '\003')
-            has_break = 1;
+            external_break = 1;
         processgdbpacket(checkchar);
     }
 
-    if (has_break)
-    {
+    if (external_break)
         tasks[1].ctrlc = 1;
-        SendDebugPacket("T02");
-        return 0x1;
-    }
 
     // ACK
     if (packetcomplete)
