@@ -109,6 +109,13 @@ void int2architectureorderedstring(const uint32_t val, char *regstring)
     regstring[8] = 0;
 }
 
+void byte2architectureorderedstring(const uint8_t val, char *regstring)
+{
+    regstring[0] = hexdigits[((val>>4)%16)];
+    regstring[1] = hexdigits[(val%16)];
+    regstring[2] = 0;
+}
+
 void SendDebugPacketRegisters(cpu_context &task)
 {
     char packetString[512];
@@ -350,18 +357,24 @@ uint32_t gdb_handler(cpu_context tasks[])
             while (packetbuffer[p]!=',')
                 addrbuf[a++] = packetbuffer[p++];
             addrbuf[a]=0;
+            ++p; // skip the comma
             while (packetbuffer[p]!='#')
                 cntbuf[c++] = packetbuffer[p++];
             cntbuf[c]=0;
-            a = hex2int(addrbuf);
-            c = hex2int(cntbuf);
 
-            char regstring[64];
-            uint32_t memval = *(uint32_t*)a;
+            uint32_t addrs = hex2int(addrbuf);
+            uint32_t numbytes = hex2int(cntbuf);
 
-            int2architectureorderedstring(memval, regstring);
+            char memstring[1024];
+            uint32_t ofst = 0;
+            for (uint32_t i=0; i<numbytes; ++i)
+            {
+                uint8_t memval = *(uint8_t*)(addrs+i);
+                byte2architectureorderedstring(memval, &memstring[ofst]);
+                ofst += 2;
+            }
 
-            SendDebugPacket(regstring);
+            SendDebugPacket(memstring);
         }
         else if (startswith(packetbuffer, "s", 1)) // Step
         {
@@ -374,12 +387,12 @@ uint32_t gdb_handler(cpu_context tasks[])
             tasks[1].ctrlc = 8;
             SendDebugPacket("OK");
         }
-        else // Unknown command
+        /*else // Unknown command
         {
             EchoConsole(">");
             EchoConsole(packetbuffer); // NOTE: Don't do this
             EchoConsole("\r\n");
-        }
+        }*/
     }
 
     return 0x0; // TODO: might want to pass data back
