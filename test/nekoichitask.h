@@ -25,4 +25,5 @@ struct cpu_context
    uint32_t ctrlc{0};
    uint32_t ctrlcaddress{0};
    uint32_t ctrlcbackup{0};
+   uint32_t breakhit{0};
 };

@@ -204,7 +204,19 @@ void AddBreakPoint(cpu_context &task, uint32_t breakaddress)
     EchoConsole("\r\n");
 }
 
-uint32_t gdb_handler(cpu_context tasks[], uint32_t in_breakpoint)
+uint32_t gdb_breakpoint(cpu_context tasks[])
+{
+    if (tasks[1].breakhit == 0)
+    {
+        tasks[1].breakhit = 1;
+        SendDebugPacket("T02");
+        return 0x1;
+    }
+
+    return 0x0;
+}
+
+uint32_t gdb_handler(cpu_context tasks[])
 {
     // NOTES:
     // Checksum is computed as the modulo 256 sum of the packet info characters.
@@ -256,7 +268,10 @@ uint32_t gdb_handler(cpu_context tasks[], uint32_t in_breakpoint)
         else if (startswith(packetbuffer, "qTStatus", 8))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "?", 1))
-            SendDebugPacket("S05"); // SIGTRAP==5 https://man7.org/linux/man-pages/man7/signal.7.html
+        {
+            tasks[1].ctrlc = 1;
+            //SendDebugPacket("S05"); // S05==SIGTRAP, S02==SIGINT https://man7.org/linux/man-pages/man7/signal.7.html & https://chromium.googlesource.com/native_client/nacl-gdb/+/refs/heads/main/include/gdb/signals.def
+        }
         else if (startswith(packetbuffer, "qfThreadInfo", 12))
             SendDebugPacket("l"); // Not supported
         else if (startswith(packetbuffer, "qSymbol", 7))
@@ -359,6 +374,7 @@ uint32_t gdb_handler(cpu_context tasks[], uint32_t in_breakpoint)
         else if (startswith(packetbuffer, "c", 1)) // Continue
         {
             tasks[1].ctrlc = 8;
+            tasks[1].breakhit = 0;
             SendDebugPacket("OK");
         }
         else // Unknown command

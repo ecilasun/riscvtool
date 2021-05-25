@@ -532,7 +532,8 @@ void SetupTasks()
 
    void breakpoint_interrupt()
    {
-      // TODO: notify GDB about having hit a breakpoint so it knows we've paused
+      // Notify GDB about having hit a breakpoint so it knows we've paused
+      gdb_breakpoint(task_array);
    }
 
    void external_interrupt()
