@@ -209,7 +209,10 @@ uint32_t gdb_breakpoint(cpu_context tasks[])
     if (tasks[1].breakhit == 0)
     {
         tasks[1].breakhit = 1;
-        SendDebugPacket("T02");
+        // https://man7.org/linux/man-pages/man7/signal.7.html
+        // https://chromium.googlesource.com/native_client/nacl-gdb/+/refs/heads/main/include/gdb/signals.def
+        //SendDebugPacket("S05"); // S05==SIGTRAP, S02==SIGINT 
+        SendDebugPacket("T02"); // T0X can also send the 'important' registers and their values across such as PC/RA/SP, but S0X  cannot
         return 0x1;
     }
 
@@ -246,7 +249,7 @@ uint32_t gdb_handler(cpu_context tasks[])
     }
 
     if (external_break)
-        tasks[1].ctrlc = 1;
+        tasks[1].ctrlc = 1; // Stop on first chance
 
     // ACK
     if (packetcomplete)
@@ -265,8 +268,7 @@ uint32_t gdb_handler(cpu_context tasks[])
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "?", 1))
         {
-            tasks[1].ctrlc = 1;
-            //SendDebugPacket("S05"); // S05==SIGTRAP, S02==SIGINT https://man7.org/linux/man-pages/man7/signal.7.html & https://chromium.googlesource.com/native_client/nacl-gdb/+/refs/heads/main/include/gdb/signals.def
+            tasks[1].ctrlc = 1; // Stop on first chance
         }
         else if (startswith(packetbuffer, "qfThreadInfo", 12))
             SendDebugPacket("l"); // Not supported
@@ -370,7 +372,6 @@ uint32_t gdb_handler(cpu_context tasks[])
         else if (startswith(packetbuffer, "c", 1)) // Continue
         {
             tasks[1].ctrlc = 8;
-            tasks[1].breakhit = 0;
             SendDebugPacket("OK");
         }
         else // Unknown command

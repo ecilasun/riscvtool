@@ -473,6 +473,7 @@ void SetupTasks()
 
       if (task_array[current_task].ctrlc == 8)
       {
+         task_array[current_task].breakhit = 0;
          task_array[current_task].ctrlc = 0;
          *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
       }
