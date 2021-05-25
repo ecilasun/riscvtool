@@ -96,32 +96,31 @@ void strchecksum(const char *str, char *checksumstr)
     checksumstr[2] = 0;
 }
 
+void int2architectureorderedstring(const uint32_t val, char *regstring)
+{
+    regstring[6] = hexdigits[((val>>28)%16)];
+    regstring[7] = hexdigits[((val>>24)%16)];
+    regstring[4] = hexdigits[((val>>20)%16)];
+    regstring[5] = hexdigits[((val>>16)%16)];
+    regstring[2] = hexdigits[((val>>12)%16)];
+    regstring[3] = hexdigits[((val>>8)%16)];
+    regstring[0] = hexdigits[((val>>4)%16)];
+    regstring[1] = hexdigits[(val%16)];
+    regstring[8] = 0;
+}
+
 void SendDebugPacketRegisters(cpu_context &task)
 {
     char packetString[512];
+
+    // All registers first
     for(uint32_t i=0;i<32;++i)
-    {
-        packetString[i*8+6] = hexdigits[((task.reg[i]>>28)%16)];
-        packetString[i*8+7] = hexdigits[((task.reg[i]>>24)%16)];
-        packetString[i*8+4] = hexdigits[((task.reg[i]>>20)%16)];
-        packetString[i*8+5] = hexdigits[((task.reg[i]>>16)%16)];
-        packetString[i*8+2] = hexdigits[((task.reg[i]>>12)%16)];
-        packetString[i*8+3] = hexdigits[((task.reg[i]>>8)%16)];
-        packetString[i*8+0] = hexdigits[((task.reg[i]>>4)%16)];
-        packetString[i*8+1] = hexdigits[(task.reg[i]%16)];
-    }
+        int2architectureorderedstring(task.reg[i], &packetString[i*8]);
 
-    // PC last
-    packetString[32*8+6] = hexdigits[((task.PC>>28)%16)];
-    packetString[32*8+7] = hexdigits[((task.PC>>24)%16)];
-    packetString[32*8+4] = hexdigits[((task.PC>>20)%16)];
-    packetString[32*8+5] = hexdigits[((task.PC>>16)%16)];
-    packetString[32*8+2] = hexdigits[((task.PC>>12)%16)];
-    packetString[32*8+3] = hexdigits[((task.PC>>8)%16)];
-    packetString[32*8+1] = hexdigits[((task.PC>>4)%16)];
-    packetString[32*8+0] = hexdigits[(task.PC%16)];
+    // PC is sent last
+    int2architectureorderedstring(task.PC, &packetString[32*8]);
 
-    packetString[32*8+8] = 0;
+    // Not sure if float registers follow?
 
     char checksumstr[3];
     strchecksum(packetString, checksumstr);
@@ -130,12 +129,6 @@ void SendDebugPacketRegisters(cpu_context &task)
     EchoUART(packetString);
     EchoUART("#");
     EchoUART(checksumstr);
-
-    // EchoConsole("+$");
-    // EchoConsole(packetString);
-    // EchoConsole("#");
-    // EchoConsole(checksumstr);
-    // EchoConsole("\r\n");
 }
 
 void SendDebugPacket(const char *packetString)
@@ -240,9 +233,9 @@ uint32_t gdb_handler(cpu_context tasks[], uint32_t in_breakpoint)
         processgdbpacket(checkchar);
     }
 
-    if (has_break || in_breakpoint)
+    if (has_break)
     {
-        //tasks[1].ctrlc = 1;
+        tasks[1].ctrlc = 1;
         SendDebugPacket("T02");
         return 0x1;
     }
@@ -331,15 +324,7 @@ uint32_t gdb_handler(cpu_context tasks[], uint32_t in_breakpoint)
             hexbuf[r]=0;
             r = hex2int(hexbuf);
 
-            regstring[6] = hexdigits[((tasks[1].reg[r]>>28)%16)];
-            regstring[7] = hexdigits[((tasks[1].reg[r]>>24)%16)];
-            regstring[4] = hexdigits[((tasks[1].reg[r]>>20)%16)];
-            regstring[5] = hexdigits[((tasks[1].reg[r]>>16)%16)];
-            regstring[2] = hexdigits[((tasks[1].reg[r]>>12)%16)];
-            regstring[3] = hexdigits[((tasks[1].reg[r]>>8)%16)];
-            regstring[0] = hexdigits[((tasks[1].reg[r]>>4)%16)];
-            regstring[1] = hexdigits[(tasks[1].reg[r]%16)];
-            regstring[8] = 0;
+            int2architectureorderedstring(tasks[1].reg[r], regstring);
 
             SendDebugPacket(regstring); // Return register data
         }
@@ -360,25 +345,20 @@ uint32_t gdb_handler(cpu_context tasks[], uint32_t in_breakpoint)
 
             char regstring[64];
             uint32_t memval = *(uint32_t*)a;
-            regstring[6] = hexdigits[((memval>>28)%16)];
-            regstring[7] = hexdigits[((memval>>24)%16)];
-            regstring[4] = hexdigits[((memval>>20)%16)];
-            regstring[5] = hexdigits[((memval>>16)%16)];
-            regstring[2] = hexdigits[((memval>>12)%16)];
-            regstring[3] = hexdigits[((memval>>8)%16)];
-            regstring[0] = hexdigits[((memval>>4)%16)];
-            regstring[1] = hexdigits[(memval%16)];
-            regstring[8] = 0;
+
+            int2architectureorderedstring(memval, regstring);
 
             SendDebugPacket(regstring);
         }
         else if (startswith(packetbuffer, "s", 1)) // Step
         {
             // TODO:
+
             SendDebugPacket("OK");
         }
         else if (startswith(packetbuffer, "c", 1)) // Continue
         {
+            tasks[1].ctrlc = 8;
             SendDebugPacket("OK");
         }
         else // Unknown command

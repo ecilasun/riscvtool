@@ -22,4 +22,7 @@ struct cpu_context
    uint32_t quantum{DEFAULT_TIMESLICE}; // Run time for this task
    break_point_t breakpoints[8];
    uint32_t num_breakpoints{0};
+   uint32_t ctrlc{0};
+   uint32_t ctrlcaddress{0};
+   uint32_t ctrlcbackup{0};
 };

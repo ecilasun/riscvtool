@@ -462,6 +462,21 @@ void SetupTasks()
       // Save the mret address of incoming call site
       asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
 
+      // Current task will stop whenever it sees the CTRL-C request
+      if (task_array[current_task].ctrlc == 1)
+      {
+         task_array[current_task].ctrlc = 2;
+         task_array[current_task].ctrlcaddress = task_array[current_task].PC;
+         task_array[current_task].ctrlcbackup = *(uint32_t*)task_array[current_task].PC;
+         *(uint32_t*)task_array[current_task].PC = 0x00100073; // EBREAK
+      }
+
+      if (task_array[current_task].ctrlc == 8)
+      {
+         task_array[current_task].ctrlc = 0;
+         *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
+      }
+
       current_task= (current_task+1)%num_tasks;
 
       // Restore new task's registers (all except TP and GP)
@@ -517,8 +532,7 @@ void SetupTasks()
 
    void breakpoint_interrupt()
    {
-      // This will get kicked if we hit a breakpoint
-      gdb_handler(task_array, 1);
+      // TODO: notify GDB about having hit a breakpoint so it knows we've paused
    }
 
    void external_interrupt()
