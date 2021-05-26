@@ -404,18 +404,21 @@ void SetupTasks()
    // since the first time around we arrive at the timer interrupt
    // the PC/SP and registers belong to main()'s infinite spin loop.
    // Very short task (since it's a spinloop by default)
+   task_array[0].name = "main";
    task_array[0].PC = (uint32_t)SystemTaskPlaceholder;
    asm volatile("sw sp, %0;" : "=m" (task_array[0].reg[2]) ); // Use current stack pointer of incoming call site
    asm volatile("sw s0, %0;" : "=m" (task_array[0].reg[8]) ); // Use current frame pointer of incoming call site
    task_array[0].quantum = 250; // run for 0.025ms then switch
 
    // Main application body, will be time-sliced (medium size task)
+   task_array[1].name = "MainTask";
    task_array[1].PC = (uint32_t)MainTask;
    task_array[1].reg[2] = 0x0003E000; // NOTE: Need a stack allocator for real addresses
    task_array[1].reg[8] = 0x0003E000; // Frame pointer
    task_array[1].quantum = 10000; // run for 1ms then switch
 
    // Clock task (helps with time display and cursor blink, very short task)
+   task_array[2].name = "ClockTask";
    task_array[2].PC = (uint32_t)ClockTask;
    task_array[2].reg[2] = 0x0003F000; // NOTE: Need a stack allocator for real addresses
    task_array[2].reg[8] = 0x0003F000; // Frame pointer
@@ -465,7 +468,7 @@ void SetupTasks()
       // Save the mret address of incoming call site
       asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
 
-      // Current task will stop whenever it sees the CTRL-C request
+      // Break
       if (task_array[current_task].ctrlc == 1)
       {
          task_array[current_task].ctrlc = 2;
@@ -474,12 +477,24 @@ void SetupTasks()
          *(uint32_t*)task_array[current_task].PC = 0x00100073; // EBREAK
       }
 
+      // Resume
       if (task_array[current_task].ctrlc == 8)
       {
          task_array[current_task].breakhit = 0;
          task_array[current_task].ctrlc = 0;
          *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
       }
+
+      // Step
+      /*if (task_array[current_task].ctrlc == 16)
+      {
+         task_array[current_task].ctrlc = 2;
+         *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
+         // NOTE: if the next address is a jump target, how do I know where to step?
+         task_array[current_task].ctrlcaddress = task_array[current_task].PC+4;
+         task_array[current_task].ctrlcbackup = *(uint32_t*)(task_array[current_task].PC+4);
+         *(uint32_t*)(task_array[current_task].PC+4) = 0x00100073; // EBREAK
+      }*/
 
       current_task= (current_task+1)%num_tasks;
 

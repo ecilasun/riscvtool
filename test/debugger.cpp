@@ -131,6 +131,7 @@ void byte2architectureorderedstring(const uint8_t val, char *regstring)
     regstring[2] = 0;
 }
 
+// NOTE: This cannot be re-entrant
 void SendDebugPacketRegisters(cpu_context &task)
 {
     char packetString[512];
@@ -153,6 +154,7 @@ void SendDebugPacketRegisters(cpu_context &task)
     EchoUART(checksumstr);
 }
 
+// NOTE: This cannot be re-entrant
 void SendDebugPacket(const char *packetString)
 {
     char checksumstr[3];
@@ -162,14 +164,18 @@ void SendDebugPacket(const char *packetString)
     EchoUART(packetString);
     EchoUART("#");
     EchoUART(checksumstr);
+}
 
-    // Debug dump
-    /*EchoConsole("<");
-    EchoConsole("+$");
-    EchoConsole(packetString);
-    EchoConsole("#");
-    EchoConsole(checksumstr);
-    EchoConsole("\r\n");*/
+uint32_t dec2int(char *dec)
+{
+    uint32_t val = 0;
+    while (*dec) {
+        uint8_t digit = *dec++;
+        if (digit >= '0' && digit <= '9')
+            digit = digit - '0';
+        val = (val*10) + digit;
+    }
+    return val;
 }
 
 uint32_t hex2int(char *hex)
@@ -260,6 +266,8 @@ uint32_t gdb_handler(cpu_context tasks[])
     // ? report the most recent signal
     // T allows remote to send only the registers required for quick decisions (step/conditional breakpoints)
 
+    char outstring[1024] = "";
+
     int external_break = 0;
     while (*IO_UARTRXByteCount)
     {
@@ -284,27 +292,33 @@ uint32_t gdb_handler(cpu_context tasks[])
             SendDebugPacket("swbreak+;hwbreak+;multiprocess-;qXfer:threads:read+;PacketSize=1024");
         else if (startswith(packetbuffer, "qXfer:threads:read::", 20))
         {
-            /*char offsetbuf[12], lenbuf[12];
-            int a=0,c=0, p=1;
+            char offsetbuf[12];//, lenbuf[12];
+            int a=0, p=20;
             while (packetbuffer[p]!=',')
                 offsetbuf[a++] = packetbuffer[p++];
             offsetbuf[a]=0;
             ++p; // skip the comma
+            /*
+            int c=0;
             while (packetbuffer[p]!=':')
                 lenbuf[c++] = packetbuffer[p++];
-            lenbuf[c]=0;
+            lenbuf[c]=0;*/
 
-            uint32_t offset = hex2int(offsetbuf);
-            uint32_t length = hex2int(lenbuf);*/
+            uint32_t offset = dec2int(offsetbuf);
+            //uint32_t length = dec2int(lenbuf);
 
-
-            // TODO: send this from tasks structure
-            char threaddata[512] = "l<?xml version=\"1.0\"?>\n<threads>\n";
-            strcat(threaddata, "<thread id=\"1\" core=\"0\" name=\"main\"></thread>\n");
-            strcat(threaddata, "<thread id=\"2\" core=\"0\" name=\"MainTask\"></thread>\n");
-            strcat(threaddata, "<thread id=\"3\" core=\"0\" name=\"ClockTask\"></thread>\n");
-            strcat(threaddata, "</threads>\n");
-            SendDebugPacket(threaddata);
+            if (offset == 0)
+            {
+                strcat(outstring, "l<?xml version=\"1.0\"?>\n<threads>\n");
+                //for (uint32_t i=0;i<num_tasks;++i) task_array[i].name
+                strcat(outstring, "<thread id=\"1\" core=\"0\" name=\"main\"></thread>\n");
+                strcat(outstring, "<thread id=\"2\" core=\"0\" name=\"MainTask\"></thread>\n");
+                strcat(outstring, "<thread id=\"3\" core=\"0\" name=\"ClockTask\"></thread>\n");
+                strcat(outstring, "</threads>\n");
+                SendDebugPacket(outstring);
+            }
+            else
+                SendDebugPacket(""); // Not sure what to send here
         }
         /*else if (startswith(packetbuffer, "qXfer:traceframe-info:read::", 28))
         {
@@ -332,8 +346,14 @@ uint32_t gdb_handler(cpu_context tasks[])
             SendDebugPacket("1");
         else if (startswith(packetbuffer, "qOffsets", 8))
             SendDebugPacket("Text=0;Data=0;Bss=0"); // No relocation
+        else if (startswith(packetbuffer, "qRcmd,", 6))
+        {
+            SendDebugPacket("OK"); // ?
+        }
         else if (startswith(packetbuffer, "vCont?", 6))
+        {
             SendDebugPacket("vCont;c;s;t"); // Continue/step/stop actions supported
+        }
         /*else if (startswith(packetbuffer, "vCont", 5))
         {
             if (packetbuffer[5]=='c') // Continue action
@@ -345,6 +365,10 @@ uint32_t gdb_handler(cpu_context tasks[])
 
             SendDebugPacket("OK");
         }*/
+        else if (startswith(packetbuffer, "X1", 2)) // X1 addr, length : XX.. Write binary data to memory
+        {
+            SendDebugPacket(""); // Not applicable
+        }
         else if (startswith(packetbuffer, "qL", 2))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "qC", 2))
@@ -377,13 +401,15 @@ uint32_t gdb_handler(cpu_context tasks[])
             AddBreakPoint(tasks[dbg_current_thread], breakaddress);
             SendDebugPacket("OK");
         }
+        //else if (startswith(packetbuffer, "G", 1)) // Write registers
         else if (startswith(packetbuffer, "g", 1)) // List registers
         {
-            SendDebugPacketRegisters(tasks[dbg_current_thread]); // TODO: need to pick a task somehow
+            SendDebugPacketRegisters(tasks[dbg_current_thread]);
         }
+        //else if (startswith(packetbuffer, "P", 1)) // Write register
         else if (startswith(packetbuffer, "p", 1)) // Print register, p??
         {
-            char hexbuf[4], regstring[9];
+            char hexbuf[9], regstring[9];
             int r=0,p=1;
             while (packetbuffer[p]!='#')
                 hexbuf[r++] = packetbuffer[p++];
@@ -396,10 +422,6 @@ uint32_t gdb_handler(cpu_context tasks[])
         }
         else if (startswith(packetbuffer, "D", 1)) // Detach
             SendDebugPacket("");
-        else if (startswith(packetbuffer, "X1", 2)) // X1 addr, length : XX.. Write binary data to memory
-        {
-            SendDebugPacket(""); // Not applicable
-        }
         else if (startswith(packetbuffer, "M", 1)) // Set memory, maddr,count:bytes
         {
             char addrbuf[12], cntbuf[12];
@@ -414,7 +436,7 @@ uint32_t gdb_handler(cpu_context tasks[])
             ++p; // skip the column
 
             uint32_t addrs = hex2int(addrbuf);
-            uint32_t numbytes = hex2int(cntbuf);
+            uint32_t numbytes = dec2int(cntbuf);
 
             char bytebuf[3];
             bytebuf[2] = 0;
@@ -440,22 +462,22 @@ uint32_t gdb_handler(cpu_context tasks[])
             cntbuf[c]=0;
 
             uint32_t addrs = hex2int(addrbuf);
-            uint32_t numbytes = hex2int(cntbuf);
+            uint32_t numbytes = dec2int(cntbuf);
 
-            char memstring[1024];
             uint32_t ofst = 0;
             for (uint32_t i=0; i<numbytes; ++i)
             {
                 uint8_t memval = *(uint8_t*)(addrs+i);
-                byte2architectureorderedstring(memval, &memstring[ofst]);
+                byte2architectureorderedstring(memval, &outstring[ofst]);
                 ofst += 2;
             }
 
-            SendDebugPacket(memstring);
+            SendDebugPacket(outstring);
         }
         else if (startswith(packetbuffer, "s", 1)) // Step
         {
-            SendDebugPacket(""); // Deprecated, use vCont
+            //tasks[dbg_current_thread].ctrlc = 16;
+            SendDebugPacket(""); // Not sure what to do here, doesn't seem to work
         }
         else if (startswith(packetbuffer, "T", 1)) // T threadid (find out if threadid is alive)
         {
@@ -470,6 +492,7 @@ uint32_t gdb_handler(cpu_context tasks[])
         else if (startswith(packetbuffer, "H", 1))
         {
             // m/M/g/G etc
+            // NOTE: Thread id == -1 means 'all threads'
             if (packetbuffer[1]=='g') // Select thread
             {
                 char threadbuf[12];
