@@ -1,9 +1,11 @@
 #include "utils.h"
 #include "console.h"
 #include <setjmp.h>
+#include <string.h>
 #include "debugger.h"
 
 const char hexdigits[] = "0123456789ABCDEF";
+uint32_t dbg_current_thread = 0;
 
 void putDebugChar(int dbgchar)
 {
@@ -94,6 +96,19 @@ void strchecksum(const char *str, char *checksumstr)
     checksumstr[0] = hexdigits[((checksum>>4)%16)];
     checksumstr[1] = hexdigits[(checksum%16)];
     checksumstr[2] = 0;
+}
+
+void int2hex(const uint32_t val, char *regstring)
+{
+    regstring[0] = hexdigits[((val>>28)%16)];
+    regstring[1] = hexdigits[((val>>24)%16)];
+    regstring[2] = hexdigits[((val>>20)%16)];
+    regstring[3] = hexdigits[((val>>16)%16)];
+    regstring[4] = hexdigits[((val>>12)%16)];
+    regstring[5] = hexdigits[((val>>8)%16)];
+    regstring[6] = hexdigits[((val>>4)%16)];
+    regstring[7] = hexdigits[(val%16)];
+    regstring[8] = 0;
 }
 
 void int2architectureorderedstring(const uint32_t val, char *regstring)
@@ -213,9 +228,9 @@ void AddBreakPoint(cpu_context &task, uint32_t breakaddress)
 
 uint32_t gdb_breakpoint(cpu_context tasks[])
 {
-    if (tasks[1].breakhit == 0)
+    if (tasks[dbg_current_thread].breakhit == 0)
     {
-        tasks[1].breakhit = 1;
+        tasks[dbg_current_thread].breakhit = 1;
         // https://man7.org/linux/man-pages/man7/signal.7.html
         // https://chromium.googlesource.com/native_client/nacl-gdb/+/refs/heads/main/include/gdb/signals.def
         //SendDebugPacket("S05"); // S05==SIGTRAP, S02==SIGINT 
@@ -256,7 +271,7 @@ uint32_t gdb_handler(cpu_context tasks[])
     }
 
     if (external_break)
-        tasks[1].ctrlc = 1; // Stop on first chance
+        tasks[dbg_current_thread].ctrlc = 1; // Stop on first chance
 
     // ACK
     if (packetcomplete)
@@ -266,16 +281,48 @@ uint32_t gdb_handler(cpu_context tasks[])
         // qSupported: respond with 'hwbreak; swbreak'
 
         if (startswith(packetbuffer, "qSupported", 10))
-            SendDebugPacket("swbreak+;hwbreak+;multiprocess-;PacketSize=1024");
+            SendDebugPacket("swbreak+;hwbreak+;multiprocess-;qXfer:threads:read+;PacketSize=1024");
+        else if (startswith(packetbuffer, "qXfer:threads:read::", 20))
+        {
+            /*char offsetbuf[12], lenbuf[12];
+            int a=0,c=0, p=1;
+            while (packetbuffer[p]!=',')
+                offsetbuf[a++] = packetbuffer[p++];
+            offsetbuf[a]=0;
+            ++p; // skip the comma
+            while (packetbuffer[p]!=':')
+                lenbuf[c++] = packetbuffer[p++];
+            lenbuf[c]=0;
+
+            uint32_t offset = hex2int(offsetbuf);
+            uint32_t length = hex2int(lenbuf);*/
+
+
+            // TODO: send this from tasks structure
+            char threaddata[512] = "l<?xml version=\"1.0\"?>\n<threads>\n";
+            strcat(threaddata, "<thread id=\"1\" core=\"0\" name=\"main\"></thread>\n");
+            strcat(threaddata, "<thread id=\"2\" core=\"0\" name=\"MainTask\"></thread>\n");
+            strcat(threaddata, "<thread id=\"3\" core=\"0\" name=\"ClockTask\"></thread>\n");
+            strcat(threaddata, "</threads>\n");
+            SendDebugPacket(threaddata);
+        }
+        /*else if (startswith(packetbuffer, "qXfer:traceframe-info:read::", 28))
+        {
+            // offset, length
+            <?xml version="1.0"?>
+            <traceframe-info>
+            <memory start="" length="">
+            <tvar id="">
+            </traceframe-info>
+            SendDebugPacket(""); // TBD
+        }*/
         else if (startswith(packetbuffer, "vMustReplyEmpty", 15))
             SendDebugPacket(""); // Have to reply empty
-        else if (startswith(packetbuffer, "Hg0", 3)) // Future ops apply to thread 0
-            SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "qTStatus", 8))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "?", 1))
         {
-            tasks[1].ctrlc = 1; // Stop on first chance
+            tasks[dbg_current_thread].ctrlc = 1; // Stop on first chance
         }
         else if (startswith(packetbuffer, "qfThreadInfo", 12))
             SendDebugPacket("l"); // Not supported
@@ -287,19 +334,18 @@ uint32_t gdb_handler(cpu_context tasks[])
             SendDebugPacket("Text=0;Data=0;Bss=0"); // No relocation
         else if (startswith(packetbuffer, "vCont?", 6))
             SendDebugPacket("vCont;c;s;t"); // Continue/step/stop actions supported
-        else if (startswith(packetbuffer, "vCont", 5))
+        /*else if (startswith(packetbuffer, "vCont", 5))
         {
             if (packetbuffer[5]=='c') // Continue action
-                EchoConsole("cont\r\n");
+                tasks[dbg_current_thread].ctrlc = 8;
             if (packetbuffer[5]=='s') // Step action
                 EchoConsole("step\r\n");
             if (packetbuffer[5]=='t') // Stop action
-                EchoConsole("stop\r\n");
-            SendDebugPacket(""); // Not sure what this is
-        }
+                tasks[dbg_current_thread].ctrlc = 1;
+
+            SendDebugPacket("OK");
+        }*/
         else if (startswith(packetbuffer, "qL", 2))
-            SendDebugPacket(""); // Not supported
-        else if (startswith(packetbuffer, "Hc", 2))
             SendDebugPacket(""); // Not supported
         else if (startswith(packetbuffer, "qC", 2))
             SendDebugPacket(""); // Not supported
@@ -314,7 +360,7 @@ uint32_t gdb_handler(cpu_context tasks[])
             hexbuf[a]=0;
             breakaddress = hex2int(hexbuf);
 
-            RemoveBreakPoint(tasks[1], breakaddress);
+            RemoveBreakPoint(tasks[dbg_current_thread], breakaddress);
             SendDebugPacket("OK");
         }
         else if (startswith(packetbuffer, "Z0,", 3)) // insert breakpoint
@@ -328,12 +374,12 @@ uint32_t gdb_handler(cpu_context tasks[])
             hexbuf[a]=0;
             breakaddress = hex2int(hexbuf); // KIND code is probably '4' after this (standard 32bit break)
 
-            AddBreakPoint(tasks[1], breakaddress);
+            AddBreakPoint(tasks[dbg_current_thread], breakaddress);
             SendDebugPacket("OK");
         }
         else if (startswith(packetbuffer, "g", 1)) // List registers
         {
-            SendDebugPacketRegisters(tasks[1]); // TODO: need to pick a task somehow
+            SendDebugPacketRegisters(tasks[dbg_current_thread]); // TODO: need to pick a task somehow
         }
         else if (startswith(packetbuffer, "p", 1)) // Print register, p??
         {
@@ -344,7 +390,7 @@ uint32_t gdb_handler(cpu_context tasks[])
             hexbuf[r]=0;
             r = hex2int(hexbuf);
 
-            int2architectureorderedstring(tasks[1].reg[r], regstring);
+            int2architectureorderedstring(tasks[dbg_current_thread].reg[r], regstring);
 
             SendDebugPacket(regstring); // Return register data
         }
@@ -409,14 +455,39 @@ uint32_t gdb_handler(cpu_context tasks[])
         }
         else if (startswith(packetbuffer, "s", 1)) // Step
         {
-            // TODO:
-
+            SendDebugPacket(""); // Deprecated, use vCont
+        }
+        else if (startswith(packetbuffer, "T", 1)) // T threadid (find out if threadid is alive)
+        {
+            // TODO: Send E?? if thread is dead (does that also mean, breakpoint hit?)
             SendDebugPacket("OK");
         }
         else if (startswith(packetbuffer, "c", 1)) // Continue
         {
-            tasks[1].ctrlc = 8;
+            tasks[dbg_current_thread].ctrlc = 8; // Supposed to be deprecated
             SendDebugPacket("OK");
+        }
+        else if (startswith(packetbuffer, "H", 1))
+        {
+            // m/M/g/G etc
+            if (packetbuffer[1]=='g')
+            {
+                char threadbuf[12];
+                int a=0, p=2;
+                while (packetbuffer[p]!='#')
+                    threadbuf[a++] = packetbuffer[p++];
+                threadbuf[a]=0;
+
+                if (packetbuffer[2]=='p') // 0 select thread
+                    dbg_current_thread = hex2int(threadbuf);
+
+                SendDebugPacket("OK");
+            }
+            if (packetbuffer[1]=='c') // Continue
+            {
+                tasks[dbg_current_thread].ctrlc = 8;
+                SendDebugPacket("OK"); // deprecated, use vCont
+            }
         }
         else // Unknown command
         {
