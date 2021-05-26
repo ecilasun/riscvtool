@@ -470,16 +470,18 @@ uint32_t gdb_handler(cpu_context tasks[])
         else if (startswith(packetbuffer, "H", 1))
         {
             // m/M/g/G etc
-            if (packetbuffer[1]=='g')
+            if (packetbuffer[1]=='g') // Select thread
             {
                 char threadbuf[12];
                 int a=0, p=2;
                 while (packetbuffer[p]!='#')
                     threadbuf[a++] = packetbuffer[p++];
                 threadbuf[a]=0;
-
-                if (packetbuffer[2]=='p') // 0 select thread
-                    dbg_current_thread = hex2int(threadbuf);
+                uint32_t idx = hex2int(threadbuf);
+                if (idx == 0) // Eh?
+                    dbg_current_thread = 0;
+                else
+                    dbg_current_thread = idx-1; // Thread IDs start from one, so we have to go one down
 
                 SendDebugPacket("OK");
             }

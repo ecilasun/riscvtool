@@ -406,16 +406,19 @@ void SetupTasks()
    // Very short task (since it's a spinloop by default)
    task_array[0].PC = (uint32_t)SystemTaskPlaceholder;
    asm volatile("sw sp, %0;" : "=m" (task_array[0].reg[2]) ); // Use current stack pointer of incoming call site
+   asm volatile("sw s0, %0;" : "=m" (task_array[0].reg[8]) ); // Use current frame pointer of incoming call site
    task_array[0].quantum = 250; // run for 0.025ms then switch
 
    // Main application body, will be time-sliced (medium size task)
    task_array[1].PC = (uint32_t)MainTask;
    task_array[1].reg[2] = 0x0003E000; // NOTE: Need a stack allocator for real addresses
+   task_array[1].reg[8] = 0x0003E000; // Frame pointer
    task_array[1].quantum = 10000; // run for 1ms then switch
 
    // Clock task (helps with time display and cursor blink, very short task)
    task_array[2].PC = (uint32_t)ClockTask;
    task_array[2].reg[2] = 0x0003F000; // NOTE: Need a stack allocator for real addresses
+   task_array[2].reg[8] = 0x0003F000; // Frame pointer
    task_array[2].quantum = 2500; // run for 0.25ms then switch
 
    num_tasks = 3;
@@ -429,7 +432,7 @@ void SetupTasks()
 
       // Save current task's registers (all except TP and GP)
       asm volatile("lw tp, 144(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[1]) );
-      asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[2]) );
+      asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[2]) ); // New stack pointer
       asm volatile("lw tp, 136(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[5]) );
       asm volatile("lw tp, 132(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[6]) );
       asm volatile("lw tp, 128(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[7]) );
@@ -446,7 +449,7 @@ void SetupTasks()
       asm volatile("lw tp, 84(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
       asm volatile("lw tp, 80(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
       //asm volatile("lw tp, 76(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[3]) );
-      asm volatile("lw tp, 72(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[8]) );
+      asm volatile("lw tp, 72(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[8]) ); // Old stack pointer
       asm volatile("lw tp, 68(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[9]) );
       asm volatile("lw tp, 64(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[18]) );
       asm volatile("lw tp, 60(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[19]) );
@@ -616,7 +619,7 @@ void __attribute__((naked)) interrupt_handler()
 
    asm volatile(
       "lw	ra,144(sp);" // 1
-      "lw	tp,140(sp);" // 2 (aliases as SP here)
+      "lw	tp,140(sp);" // 2 (alias) -> Stack pointer
       "lw	t0,136(sp);" // 5
       "lw	t1,132(sp);" // 6
       "lw	t2,128(sp);" // 7
@@ -633,7 +636,7 @@ void __attribute__((naked)) interrupt_handler()
       "lw	t5,84(sp);"  // 30
       "lw	t6,80(sp);"  // 31
       //"lw	gp,76(sp);"  // 3 <<<
-      "lw	s0,72(sp);"  // 8 (fp)
+      "lw	s0,72(sp);"  // 8 (fp) -> Stack frame (point at previous stack pointer)
       "lw	s1,68(sp);"  // 9
       "lw	s2,64(sp);"  // 18
       "lw	s3,60(sp);"  // 19
