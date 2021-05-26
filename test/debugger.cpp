@@ -350,6 +350,37 @@ uint32_t gdb_handler(cpu_context tasks[])
         }
         else if (startswith(packetbuffer, "D", 1)) // Detach
             SendDebugPacket("");
+        else if (startswith(packetbuffer, "X1", 2)) // X1 addr, length : XX.. Write binary data to memory
+        {
+            SendDebugPacket(""); // Not applicable
+        }
+        else if (startswith(packetbuffer, "M", 1)) // Set memory, maddr,count:bytes
+        {
+            char addrbuf[12], cntbuf[12];
+            int a=0,c=0, p=1;
+            while (packetbuffer[p]!=',')
+                addrbuf[a++] = packetbuffer[p++];
+            addrbuf[a]=0;
+            ++p; // skip the comma
+            while (packetbuffer[p]!=':')
+                cntbuf[c++] = packetbuffer[p++];
+            cntbuf[c]=0;
+            ++p; // skip the column
+
+            uint32_t addrs = hex2int(addrbuf);
+            uint32_t numbytes = hex2int(cntbuf);
+
+            char bytebuf[3];
+            bytebuf[2] = 0;
+            for (uint32_t i=0; i<numbytes; ++i)
+            {
+                bytebuf[0] = packetbuffer[p++];
+                bytebuf[1] = packetbuffer[p++];
+                uint32_t byteval = hex2int(bytebuf);
+                *(uint8_t*)(addrs+i) = (uint8_t)byteval;
+            }
+            SendDebugPacket("OK");
+        }
         else if (startswith(packetbuffer, "m", 1)) // Read memory, maddr,count
         {
             char addrbuf[12], cntbuf[12];
@@ -387,12 +418,12 @@ uint32_t gdb_handler(cpu_context tasks[])
             tasks[1].ctrlc = 8;
             SendDebugPacket("OK");
         }
-        /*else // Unknown command
+        else // Unknown command
         {
             EchoConsole(">");
             EchoConsole(packetbuffer); // NOTE: Don't do this
             EchoConsole("\r\n");
-        }*/
+        }
     }
 
     return 0x0; // TODO: might want to pass data back

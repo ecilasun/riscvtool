@@ -322,7 +322,7 @@ int ClockTask()
 
 int MainTask()
 {
-   const uint8_t bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
+   uint8_t bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    // Set output page
    uint32_t page = 0;
    GPUSetRegister(6, page);
