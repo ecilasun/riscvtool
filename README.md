@@ -41,9 +41,11 @@ mandelbrot - draws a mandelbrot figure on the video buffer
 gpupipetest - tests the GPU rasterizer / synchronization mechanisms and the realtime clock
 ```
 
-As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use the following command line:
+# Uploading binaries
+
+As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use a command line similar to the following (while changing the name of your device to match)
 ```
-./build/release/riscvtool miniterm.elf -sendelf 0x00010000
+./build/release/riscvtool miniterm.elf -sendelf 0x10000 /dev/ttyUSB4
 ```
 
 P.S. Always use 0x00010000 as base address if you haven't used a custom linker script.
@@ -68,6 +70,19 @@ Branching to 0x00010528
 ```
 
 NOTE: Take care to keep your binary away from address range 0x00000000-0x00005000 so that the loader code does not get overwritten while loading your binary.
+
+# Debugging with GDB
+
+If you've linked your program with the debug.cpp file and have necessary trap handlers installed (as in the ROM_explerimental.cpp sample), you can then attach with GDB to debug your code:
+
+```
+riscv64-unknown-elf-gdb -b 115200 --tui ROM_experimental.elf
+target remote /dev/ttyUSB4
+```
+
+This will break into the currently executing program. Use 'c' command to resume execution, or Ctrl+C to break at an arbitrary breakpoint. You can also set breakpoints when the program is paused by using 'b DrawConsole' for instance. On resume with 'c' the program will be stopped at the new breakpoint address.
+
+# RISC-V compiler tools
 
 NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknown-elf-g++) are missing from your system, please follow the instructions at https://github.com/riscv/riscv-gnu-toolchain
 It is advised to build the rv32i / rv32if / rv32imf / rv32imaf libraries

@@ -6,16 +6,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(Windows) Launch",
-            "type": "cppvsdbg",
+            "name": "C++ Launch",
+            "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/release/sendbin.exe",
-            "args": ["${workspaceFolder}/program"],
+            "program": "${workspaceFolder}/ROM_experimental.elf",
+            "miDebuggerServerAddress": "/dev/ttyUSB3",
+            "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/release/",
-            "symbolSearchPath": "${workspaceFolder}/build/release/",
+            "cwd": "${workspaceFolder}/",
             "environment": [],
-            "externalConsole": true
+            // "targetArchitecture": "risc-v",
+            "externalConsole": true,
+            "MIMode": "gdb"
         }
     ]
 }
