@@ -122,19 +122,25 @@ void showdir()
             EchoConsole(" ");
             EchoConsole(finf.fsize);
             EchoConsole(" ");
+            EchoUART(finf.fname);
+            EchoUART(" ");
+            EchoInt(finf.fsize);
+            EchoUART(" ");
             /*EchoConsole(1944 + ((finf.ftime&0xFE00)>>9));
             EchoConsole("/");
             EchoConsole((finf.ftime&0x1E0)>>5);
             EchoConsole("/");
             EchoConsole(finf.ftime&0x1F);*/
-            if (finf.fattrib&0x01) EchoConsole("r");
-            if (finf.fattrib&0x02) EchoConsole("h");
-            if (finf.fattrib&0x04) EchoConsole("s");
-            if (finf.fattrib&0x08) EchoConsole("l");
-            if (finf.fattrib&0x0F) EchoConsole("L");
-            if (finf.fattrib&0x10) EchoConsole("d");
-            if (finf.fattrib&0x20) EchoConsole("a");
+            if (finf.fattrib&0x01) { EchoConsole("r"); EchoUART("r"); }
+            if (finf.fattrib&0x02) { EchoConsole("h"); EchoUART("h"); }
+            if (finf.fattrib&0x04) { EchoConsole("s"); EchoUART("s"); }
+            if (finf.fattrib&0x08) { EchoConsole("l"); EchoUART("l"); }
+            if (finf.fattrib&0x0F) { EchoConsole("L"); EchoUART("L"); }
+            if (finf.fattrib&0x10) { EchoConsole("d"); EchoUART("d"); }
+            if (finf.fattrib&0x20) { EchoConsole("a"); EchoUART("a"); }
+
             EchoConsole("\r\n");
+            EchoUART("\r\n");
          }
       } while(re == FR_OK && dir.sect!=0);
    }
@@ -217,6 +223,8 @@ int main()
             {
                EchoConsole("\r\n");
                EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
+               EchoUART("\r\n");
+               EchoUART("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
             }
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
             {
