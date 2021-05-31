@@ -558,7 +558,7 @@ void SetupTasks()
    void external_interrupt()
    {
       //if (debugger_mode)
-         gdb_handler(task_array);
+         gdb_handler(task_array, num_tasks);
       //else
       //   ProcessUARTInputAsync();
    }

@@ -111,6 +111,31 @@ void int2hex(const uint32_t val, char *regstring)
     regstring[8] = 0;
 }
 
+void uint2dec(const uint32_t val, char *msg)
+{
+    const char digits[] = "0123456789";
+
+    int d = 1000000000;
+    uint32_t enableappend = 0;
+    uint32_t m = 0;
+    /*if (i<0)
+    msg[m++] = '-';*/
+    for (int c=0;c<10;++c)
+    {
+        //uint32_t r = abs(val/d)%10;
+        uint32_t r = (val/d)%10;
+        // Ignore preceeding zeros
+        if ((r!=0) || (enableappend) || (d==1))
+        {
+            enableappend = 1; // Rest of the digits can be appended
+            msg[m++] = digits[r];
+        }
+        d = d/10;
+    }
+    msg[m] = 0;
+}
+
+
 void int2architectureorderedstring(const uint32_t val, char *regstring)
 {
     regstring[6] = hexdigits[((val>>28)%16)];
@@ -247,7 +272,7 @@ uint32_t gdb_breakpoint(cpu_context tasks[])
     return 0x0;
 }
 
-uint32_t gdb_handler(cpu_context tasks[])
+uint32_t gdb_handler(cpu_context tasks[], const uint32_t num_tasks)
 {
     // NOTES:
     // Checksum is computed as the modulo 256 sum of the packet info characters.
@@ -310,10 +335,16 @@ uint32_t gdb_handler(cpu_context tasks[])
             if (offset == 0)
             {
                 strcat(outstring, "l<?xml version=\"1.0\"?>\n<threads>\n");
-                //for (uint32_t i=0;i<num_tasks;++i) task_array[i].name
-                strcat(outstring, "<thread id=\"1\" core=\"0\" name=\"main\"></thread>\n");
-                strcat(outstring, "<thread id=\"2\" core=\"0\" name=\"MainTask\"></thread>\n");
-                strcat(outstring, "<thread id=\"3\" core=\"0\" name=\"ClockTask\"></thread>\n");
+                for (uint32_t i=0;i<num_tasks;++i)
+                {
+                    char threadid[10];
+                    uint2dec(i+1, threadid);
+                    strcat(outstring, "<thread id=\"");
+                    strcat(outstring, threadid);
+                    strcat(outstring, "\" core=\"0\" name=\"");
+                    strcat(outstring, tasks[i].name);
+                    strcat(outstring, "\"></thread>\n");
+                }
                 strcat(outstring, "</threads>\n");
                 SendDebugPacket(outstring);
             }
