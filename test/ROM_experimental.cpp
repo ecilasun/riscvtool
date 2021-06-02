@@ -427,142 +427,150 @@ void SetupTasks()
    num_tasks = 3;
 }
 
-/*extern "C"
-{*/
-   void timer_interrupt()
+void timer_interrupt()
+{
+   // TODO: Save/Restore float registers
+
+   // Save current task's registers (all except TP and GP)
+   asm volatile("lw tp, 144(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[1]) );
+   asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[2]) ); // New stack pointer
+   asm volatile("lw tp, 136(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[5]) );
+   asm volatile("lw tp, 132(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[6]) );
+   asm volatile("lw tp, 128(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[7]) );
+   asm volatile("lw tp, 124(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[10]) );
+   asm volatile("lw tp, 120(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[11]) );
+   asm volatile("lw tp, 116(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[12]) );
+   asm volatile("lw tp, 112(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[13]) );
+   asm volatile("lw tp, 108(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[14]) );
+   asm volatile("lw tp, 104(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[15]) );
+   asm volatile("lw tp, 100(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[16]) );
+   asm volatile("lw tp, 96(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[17]) );
+   asm volatile("lw tp, 92(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[28]) );
+   asm volatile("lw tp, 88(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[29]) );
+   asm volatile("lw tp, 84(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
+   asm volatile("lw tp, 80(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
+   //asm volatile("lw tp, 76(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[3]) );
+   asm volatile("lw tp, 72(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[8]) ); // Old stack pointer
+   asm volatile("lw tp, 68(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[9]) );
+   asm volatile("lw tp, 64(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[18]) );
+   asm volatile("lw tp, 60(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[19]) );
+   asm volatile("lw tp, 56(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[20]) );
+   asm volatile("lw tp, 52(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[21]) );
+   asm volatile("lw tp, 48(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[22]) );
+   asm volatile("lw tp, 44(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[23]) );
+   asm volatile("lw tp, 40(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[24]) );
+   asm volatile("lw tp, 36(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[25]) );
+   asm volatile("lw tp, 32(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[26]) );
+   asm volatile("lw tp, 28(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[27]) );
+
+   // Save the mret address of incoming call site
+   asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
+
+   // Break
+   if (task_array[current_task].ctrlc == 1)
    {
-      // TODO: Save/Restore float registers
-
-      // Save current task's registers (all except TP and GP)
-      asm volatile("lw tp, 144(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[1]) );
-      asm volatile("lw tp, 140(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[2]) ); // New stack pointer
-      asm volatile("lw tp, 136(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[5]) );
-      asm volatile("lw tp, 132(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[6]) );
-      asm volatile("lw tp, 128(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[7]) );
-      asm volatile("lw tp, 124(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[10]) );
-      asm volatile("lw tp, 120(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[11]) );
-      asm volatile("lw tp, 116(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[12]) );
-      asm volatile("lw tp, 112(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[13]) );
-      asm volatile("lw tp, 108(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[14]) );
-      asm volatile("lw tp, 104(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[15]) );
-      asm volatile("lw tp, 100(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[16]) );
-      asm volatile("lw tp, 96(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[17]) );
-      asm volatile("lw tp, 92(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[28]) );
-      asm volatile("lw tp, 88(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[29]) );
-      asm volatile("lw tp, 84(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[30]) );
-      asm volatile("lw tp, 80(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[31]) );
-      //asm volatile("lw tp, 76(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[3]) );
-      asm volatile("lw tp, 72(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[8]) ); // Old stack pointer
-      asm volatile("lw tp, 68(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[9]) );
-      asm volatile("lw tp, 64(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[18]) );
-      asm volatile("lw tp, 60(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[19]) );
-      asm volatile("lw tp, 56(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[20]) );
-      asm volatile("lw tp, 52(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[21]) );
-      asm volatile("lw tp, 48(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[22]) );
-      asm volatile("lw tp, 44(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[23]) );
-      asm volatile("lw tp, 40(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[24]) );
-      asm volatile("lw tp, 36(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[25]) );
-      asm volatile("lw tp, 32(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[26]) );
-      asm volatile("lw tp, 28(sp); sw tp, %0;" : "=m" (task_array[current_task].reg[27]) );
-
-      // Save the mret address of incoming call site
-      asm volatile("csrr tp, mepc; sw tp, %0;" : "=m" (task_array[current_task].PC) );
-
-      // Break
-      if (task_array[current_task].ctrlc == 1)
-      {
-         task_array[current_task].ctrlc = 2;
-         task_array[current_task].ctrlcaddress = task_array[current_task].PC;
-         task_array[current_task].ctrlcbackup = *(uint32_t*)task_array[current_task].PC;
-         *(uint32_t*)task_array[current_task].PC = 0x00100073; // EBREAK
-      }
-
-      // Resume
-      if (task_array[current_task].ctrlc == 8)
-      {
-         task_array[current_task].breakhit = 0;
-         task_array[current_task].ctrlc = 0;
-         *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
-      }
-
-      // Step
-      /*if (task_array[current_task].ctrlc == 16)
-      {
-         task_array[current_task].ctrlc = 2;
-         *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
-         // NOTE: if the next address is a jump target, how do I know where to step?
-         task_array[current_task].ctrlcaddress = task_array[current_task].PC+4;
-         task_array[current_task].ctrlcbackup = *(uint32_t*)(task_array[current_task].PC+4);
-         *(uint32_t*)(task_array[current_task].PC+4) = 0x00100073; // EBREAK
-      }*/
-
-      current_task= (current_task+1)%num_tasks;
-
-      // Restore new task's registers (all except TP and GP)
-      asm volatile("lw tp, %0; sw tp, 144(sp);" : : "m" (task_array[current_task].reg[1]) );
-      asm volatile("lw tp, %0; sw tp, 140(sp);" : : "m" (task_array[current_task].reg[2]) );
-      asm volatile("lw tp, %0; sw tp, 136(sp);" : : "m" (task_array[current_task].reg[5]) );
-      asm volatile("lw tp, %0; sw tp, 132(sp);" : : "m" (task_array[current_task].reg[6]) );
-      asm volatile("lw tp, %0; sw tp, 128(sp);" : : "m" (task_array[current_task].reg[7]) );
-      asm volatile("lw tp, %0; sw tp, 124(sp);" : : "m" (task_array[current_task].reg[10]) );
-      asm volatile("lw tp, %0; sw tp, 120(sp);" : : "m" (task_array[current_task].reg[11]) );
-      asm volatile("lw tp, %0; sw tp, 116(sp);" : : "m" (task_array[current_task].reg[12]) );
-      asm volatile("lw tp, %0; sw tp, 112(sp);" : : "m" (task_array[current_task].reg[13]) );
-      asm volatile("lw tp, %0; sw tp, 108(sp);" : : "m" (task_array[current_task].reg[14]) );
-      asm volatile("lw tp, %0; sw tp, 104(sp);" : : "m" (task_array[current_task].reg[15]) );
-      asm volatile("lw tp, %0; sw tp, 100(sp);" : : "m" (task_array[current_task].reg[16]) );
-      asm volatile("lw tp, %0; sw tp, 96(sp);" : : "m" (task_array[current_task].reg[17]) );
-      asm volatile("lw tp, %0; sw tp, 92(sp);" : : "m" (task_array[current_task].reg[28]) );
-      asm volatile("lw tp, %0; sw tp, 88(sp);" : : "m" (task_array[current_task].reg[29]) );
-      asm volatile("lw tp, %0; sw tp, 84(sp);" : : "m" (task_array[current_task].reg[30]) );
-      asm volatile("lw tp, %0; sw tp, 80(sp);" : : "m" (task_array[current_task].reg[31]) );
-      //asm volatile("lw tp, %0; sw tp, 76(sp);" : : "m" (task_array[current_task].reg[3]) );
-      asm volatile("lw tp, %0; sw tp, 72(sp);" : : "m" (task_array[current_task].reg[8]) );
-      asm volatile("lw tp, %0; sw tp, 68(sp);" : : "m" (task_array[current_task].reg[9]) );
-      asm volatile("lw tp, %0; sw tp, 64(sp);" : : "m" (task_array[current_task].reg[18]) );
-      asm volatile("lw tp, %0; sw tp, 60(sp);" : : "m" (task_array[current_task].reg[19]) );
-      asm volatile("lw tp, %0; sw tp, 56(sp);" : : "m" (task_array[current_task].reg[20]) );
-      asm volatile("lw tp, %0; sw tp, 52(sp);" : : "m" (task_array[current_task].reg[21]) );
-      asm volatile("lw tp, %0; sw tp, 48(sp);" : : "m" (task_array[current_task].reg[22]) );
-      asm volatile("lw tp, %0; sw tp, 44(sp);" : : "m" (task_array[current_task].reg[23]) );
-      asm volatile("lw tp, %0; sw tp, 40(sp);" : : "m" (task_array[current_task].reg[24]) );
-      asm volatile("lw tp, %0; sw tp, 36(sp);" : : "m" (task_array[current_task].reg[25]) );
-      asm volatile("lw tp, %0; sw tp, 32(sp);" : : "m" (task_array[current_task].reg[26]) );
-      asm volatile("lw tp, %0; sw tp, 28(sp);" : : "m" (task_array[current_task].reg[27]) );
-
-      // Set up new mret address to new tasks's saved (resume) PC
-      asm volatile("lw tp, %0; csrrw zero, mepc, tp;" : : "m" (task_array[current_task].PC) );
-
-      // Re-trigger the timer interrupt to trigger after task's run time
-      uint32_t clockhigh, clocklow, tmp;
-      asm volatile(
-         "1:\n"
-         "rdtimeh %0\n"
-         "rdtime %1\n"
-         "rdtimeh %2\n"
-         "bne %0, %2, 1b\n"
-         : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
-      );
-      uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-      uint64_t future = now + task_array[current_task].quantum; // Run time for next task minus tolerance
-      asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
-      asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
+      task_array[current_task].ctrlc = 2;
+      task_array[current_task].ctrlcaddress = task_array[current_task].PC;
+      task_array[current_task].ctrlcbackup = *(uint32_t*)task_array[current_task].PC;
+      *(uint32_t*)task_array[current_task].PC = 0x00100073; // EBREAK
    }
 
-   void breakpoint_interrupt()
+   // Resume
+   if (task_array[current_task].ctrlc == 8)
    {
-      // Notify GDB about having hit a breakpoint so it knows we've paused
-      gdb_breakpoint(task_array);
+      task_array[current_task].breakhit = 0;
+      task_array[current_task].ctrlc = 0;
+      *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
    }
 
-   void external_interrupt()
+   // Step
+   /*if (task_array[current_task].ctrlc == 16)
    {
-      //if (debugger_mode)
-         gdb_handler(task_array, num_tasks);
-      //else
-      //   ProcessUARTInputAsync();
+      task_array[current_task].ctrlc = 2;
+      *(uint32_t*)(task_array[current_task].ctrlcaddress) = task_array[current_task].ctrlcbackup;
+      // NOTE: if the next address is a jump target, how do I know where to step?
+      task_array[current_task].ctrlcaddress = task_array[current_task].PC+4;
+      task_array[current_task].ctrlcbackup = *(uint32_t*)(task_array[current_task].PC+4);
+      *(uint32_t*)(task_array[current_task].PC+4) = 0x00100073; // EBREAK
+   }*/
+
+   current_task= (current_task+1)%num_tasks;
+
+   // Restore new task's registers (all except TP and GP)
+   asm volatile("lw tp, %0; sw tp, 144(sp);" : : "m" (task_array[current_task].reg[1]) );
+   asm volatile("lw tp, %0; sw tp, 140(sp);" : : "m" (task_array[current_task].reg[2]) );
+   asm volatile("lw tp, %0; sw tp, 136(sp);" : : "m" (task_array[current_task].reg[5]) );
+   asm volatile("lw tp, %0; sw tp, 132(sp);" : : "m" (task_array[current_task].reg[6]) );
+   asm volatile("lw tp, %0; sw tp, 128(sp);" : : "m" (task_array[current_task].reg[7]) );
+   asm volatile("lw tp, %0; sw tp, 124(sp);" : : "m" (task_array[current_task].reg[10]) );
+   asm volatile("lw tp, %0; sw tp, 120(sp);" : : "m" (task_array[current_task].reg[11]) );
+   asm volatile("lw tp, %0; sw tp, 116(sp);" : : "m" (task_array[current_task].reg[12]) );
+   asm volatile("lw tp, %0; sw tp, 112(sp);" : : "m" (task_array[current_task].reg[13]) );
+   asm volatile("lw tp, %0; sw tp, 108(sp);" : : "m" (task_array[current_task].reg[14]) );
+   asm volatile("lw tp, %0; sw tp, 104(sp);" : : "m" (task_array[current_task].reg[15]) );
+   asm volatile("lw tp, %0; sw tp, 100(sp);" : : "m" (task_array[current_task].reg[16]) );
+   asm volatile("lw tp, %0; sw tp, 96(sp);" : : "m" (task_array[current_task].reg[17]) );
+   asm volatile("lw tp, %0; sw tp, 92(sp);" : : "m" (task_array[current_task].reg[28]) );
+   asm volatile("lw tp, %0; sw tp, 88(sp);" : : "m" (task_array[current_task].reg[29]) );
+   asm volatile("lw tp, %0; sw tp, 84(sp);" : : "m" (task_array[current_task].reg[30]) );
+   asm volatile("lw tp, %0; sw tp, 80(sp);" : : "m" (task_array[current_task].reg[31]) );
+   //asm volatile("lw tp, %0; sw tp, 76(sp);" : : "m" (task_array[current_task].reg[3]) );
+   asm volatile("lw tp, %0; sw tp, 72(sp);" : : "m" (task_array[current_task].reg[8]) );
+   asm volatile("lw tp, %0; sw tp, 68(sp);" : : "m" (task_array[current_task].reg[9]) );
+   asm volatile("lw tp, %0; sw tp, 64(sp);" : : "m" (task_array[current_task].reg[18]) );
+   asm volatile("lw tp, %0; sw tp, 60(sp);" : : "m" (task_array[current_task].reg[19]) );
+   asm volatile("lw tp, %0; sw tp, 56(sp);" : : "m" (task_array[current_task].reg[20]) );
+   asm volatile("lw tp, %0; sw tp, 52(sp);" : : "m" (task_array[current_task].reg[21]) );
+   asm volatile("lw tp, %0; sw tp, 48(sp);" : : "m" (task_array[current_task].reg[22]) );
+   asm volatile("lw tp, %0; sw tp, 44(sp);" : : "m" (task_array[current_task].reg[23]) );
+   asm volatile("lw tp, %0; sw tp, 40(sp);" : : "m" (task_array[current_task].reg[24]) );
+   asm volatile("lw tp, %0; sw tp, 36(sp);" : : "m" (task_array[current_task].reg[25]) );
+   asm volatile("lw tp, %0; sw tp, 32(sp);" : : "m" (task_array[current_task].reg[26]) );
+   asm volatile("lw tp, %0; sw tp, 28(sp);" : : "m" (task_array[current_task].reg[27]) );
+
+   // Set up new mret address to new tasks's saved (resume) PC
+   asm volatile("lw tp, %0; csrrw zero, mepc, tp;" : : "m" (task_array[current_task].PC) );
+
+   // Re-trigger the timer interrupt to trigger after task's run time
+   uint32_t clockhigh, clocklow, tmp;
+   asm volatile(
+      "1:\n"
+      "rdtimeh %0\n"
+      "rdtime %1\n"
+      "rdtimeh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
+   );
+   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+   uint64_t future = now + task_array[current_task].quantum; // Run time for next task minus tolerance
+   asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
+   asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
+}
+
+void breakpoint_interrupt()
+{
+   // Notify GDB about having hit a breakpoint so it knows we've paused
+   gdb_breakpoint(task_array);
+}
+
+void external_interrupt(uint32_t deviceID)
+{
+   // This handler will service all hardware interrupts simultaneusly
+
+   if (deviceID&0x0001) // UART
+      gdb_handler(task_array, num_tasks);
+
+   if (deviceID&0x0002) // SWITCHES
+   {
+      // TODO: Handle switch interaction, possibly stash switch state to a pre-determined memory address from mscratch register
+      uint8_t switchstate = *IO_SwitchState;
+      EchoUART("Switches: ");
+      EchoInt(switchstate);
+      EchoUART("\r\n");
    }
-//}
+
+   //ProcessUARTInputAsync();
+}
 
 //void __attribute__((interrupt("machine"))) interrupt_handler()
 void __attribute__((naked)) interrupt_handler()
@@ -625,12 +633,21 @@ void __attribute__((naked)) interrupt_handler()
 
    register uint32_t causedword;
    asm volatile("csrr %0, mcause" : "=r"(causedword));
-   if (causedword==7) // Timer
-      timer_interrupt();
-   else if (causedword==3) // Breakpoint
-      breakpoint_interrupt();
-   else if (causedword==11) // External
-      external_interrupt();
+   switch(causedword&0x0000FFFF)
+   {
+      case 7: // Timer
+         timer_interrupt();
+         break;
+      case 3: // Breakpoint
+         breakpoint_interrupt();
+         break;
+      case 11: // External
+         external_interrupt((causedword&0xFFFF0000)>>16);
+         break;
+      default:
+         // NOTE: Unknown interrupts will be ignored
+         break;
+   }
 
    asm volatile(
       "lw	ra,144(sp);" // 1
