@@ -24,7 +24,6 @@
 uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
-//uint32_t debugger_mode = 0;
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -564,7 +563,13 @@ void external_interrupt(uint32_t deviceID)
    {
       // TODO: Handle switch interaction, possibly stash switch state to a pre-determined memory address from mscratch register
       uint8_t switchstate = *IO_SwitchState;
-      EchoUART("Switches: ");
+      /*if ((switchstate & 0x80) == 0) // SDCard inserted
+      {
+         sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
+         EchoUART(sdcardavailable ? "SDCard\r\n" : "Unknown\r\n");
+      }*/
+
+      EchoUART("SWITCHES:");
       EchoInt(switchstate);
       EchoUART("\r\n");
    }
