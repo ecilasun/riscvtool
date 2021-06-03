@@ -57,6 +57,9 @@ uint32_t saved_instruction = 0;
 
 void RunELF()
 {
+   EchoUART("Starting at 0x");
+   EchoInt((uint32_t)branchaddress);
+   EchoUART("\r\n");
     // Set up stack pointer and branch to loaded executable's entry point (noreturn)
     // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
     asm volatile (
@@ -103,7 +106,7 @@ void RunELF()
     );
 }
 
-void ParseELFHeader(SElfFileHeader32 *fheader)
+void ParseELFHeaderAndLoadSections(SElfFileHeader32 *fheader)
 {
    if (fheader->m_Magic != 0x464C457F)
    {
@@ -112,9 +115,7 @@ void ParseELFHeader(SElfFileHeader32 *fheader)
    }
 
    branchaddress = fheader->m_Entry;
-   EchoConsole("Program entry point: "); EchoUART("Program entry point: ");
-   EchoConsoleHex(branchaddress); EchoInt(branchaddress);
-   EchoConsole("\r\n"); EchoUART("\r\n");
+   EchoUART("Loading");
 
    WORD bytesread;
 
@@ -134,7 +135,7 @@ void ParseELFHeader(SElfFileHeader32 *fheader)
    pf_lseek(stringtablesection.m_Offset);
    pf_read(names, stringtablesection.m_Size, &bytesread);
 
-   // Dump all section names and info
+   // Load all loadable sections
    for(unsigned short i=0; i<fheader->m_SHNum; ++i)
    {
       // Seek-load section headers as needed
@@ -145,14 +146,16 @@ void ParseELFHeader(SElfFileHeader32 *fheader)
       // If this is a section worth loading...
       if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
       {
-         // TODO: Load this section to memory
+         // ...place it in memory
          uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
          pf_lseek(sheader.m_Offset);
+         EchoUART(".");
          pf_read(elfsectionpointer, sheader.m_Size, &bytesread);
       }
    }
 
    free(names);
+   EchoUART("\r\n");
 }
 
 int LoadELF(const char *filename)
@@ -165,7 +168,7 @@ int LoadELF(const char *filename)
       // Read header
       SElfFileHeader32 fheader;
       pf_read(&fheader, sizeof(fheader), &bytesread);
-      ParseELFHeader(&fheader);
+      ParseELFHeaderAndLoadSections(&fheader);
       return 0;
    }
    else

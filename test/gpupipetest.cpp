@@ -191,7 +191,7 @@ void resetparticles(short *particles)
    {
       particles[4*i+0] = Random()%256; // X position
       particles[4*i+1] = -32; // Y position, <-30 if dead
-      particles[4*i+2] = 2 + (Random()%8); // Speed
+      particles[4*i+2] = 3 + (Random()%7); // Speed
       particles[4*i+3] = 192 + (Random()%32); // Barrier
    }
 }
@@ -214,7 +214,7 @@ void drawparticles(short *particles)
    {
       particles[4*spawnerindex+0] = Random()%256;
       //particles[4*spawnerindex+1] = (Random()%24)-24;
-      particles[4*spawnerindex+2] = 2 + (Random()%4);
+      particles[4*spawnerindex+2] = 3 + (Random()%7);
       particles[4*spawnerindex+3] = 192 + (Random()%32); // Barrier
    }
 
@@ -226,14 +226,14 @@ void drawparticles(short *particles)
    short ry1 = sinf(proll+3.1415927f*0.5f)*3.f;
    for (int i=0;i<MAX_PARTICLES;++i)
    {
-      if (i%128==0)
+      if (i%64==0)
       {
          const float S = 3.f;
          rx0 = cosf(proll)*S;
          ry0 = sinf(proll)*S;
          rx1 = cosf(proll+3.1415927f*0.5f)*S;
          ry1 = sinf(proll+3.1415927f*0.5f)*S;
-         proll += 0.04f;
+         proll -= 0.02f;
       }
       if (particles[4*i+1] != -1)
       {
@@ -255,12 +255,12 @@ void drawparticles(short *particles)
          GPUSetRegister(1, vertex0);
          GPUSetRegister(2, vertex1);
          GPUSetRegister(3, vertex2);
-         //GPUSetRegister(4, vertex4);
+         //GPUSetRegister(4, vertex3);
          GPURasterizeTriangle(1,2,3,i&0xFF);
-         //GPURasterizeTriangle(3,4,1,i&0xFF);F
+         //GPURasterizeTriangle(3,4,1,i&0xFF);
       }
    }
-   proll += 0.04f;
+   proll -= 0.02f;
 }
 
 int main(int argc, char ** argv)
@@ -313,7 +313,7 @@ int main(int argc, char ** argv)
          uint32_t hours, minutes, seconds;
          ClockMsToHMS(milliseconds, hours,minutes,seconds);
 
-         float rate = (float)(milliseconds%0xFFFF)/360.f;
+         float rate = (float)(milliseconds%0xFFFF)/1000.f;
          drawrect(x, y, rate);
 
          uint32_t colortwo = (c1<<24) | (c1<<16) | (c1<<8) | c1;
