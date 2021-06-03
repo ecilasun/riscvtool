@@ -24,8 +24,11 @@
 uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
+uint32_t sdcardstate;
 
-uint8_t hardwareswitchstates = 0; // TODO: need a correct initial state here
+// States
+uint8_t oldhardwareswitchstates = 0;
+uint8_t hardwareswitchstates = 0;
 
 FATFS Fs;
 uint32_t sdcardavailable = 0;
@@ -308,11 +311,26 @@ int SystemTaskPlaceholder()
 
 int ClockTask()
 {
+   uint32_t lastmilliseconds = 0;
    while (1)
    {
       clk = ReadClock();
       milliseconds = ClockToMs(clk);
       ClockMsToHMS(milliseconds, hours, minutes, seconds);
+
+      if (milliseconds - lastmilliseconds > 200)
+      {
+         lastmilliseconds = milliseconds;
+
+         uint32_t newsdcardstate = (hardwareswitchstates&0x80) ? 0x00 : 0x01;
+         if (newsdcardstate != sdcardstate)
+         {
+            EchoUART("SDCARD: ");
+            EchoUART(newsdcardstate ? "INSERTED" : "REMOVED");
+            EchoUART("\r\n");
+            sdcardstate = newsdcardstate;
+         }
+      }
    }
 
    return 0;
@@ -420,15 +438,15 @@ void SetupTasks()
    task_array[2].PC = (uint32_t)ClockTask;
    task_array[2].reg[2] = 0x0003E010; // NOTE: Need a stack allocator for real addresses
    task_array[2].reg[8] = 0x0003E010; // Frame pointer
-   task_array[2].quantum = 2500; // run for 0.25ms then switch
+   task_array[2].quantum = 1000; // run for 0.1ms then switch
 
-   //task_array[3].name = "AudioTask";
-   //task_array[3].PC = (uint32_t)AudioTask;
-   //task_array[3].reg[2] = 0x0003D020; // NOTE: Need a stack allocator for real addresses
-   //task_array[3].reg[8] = 0x0003D020; // Frame pointer
-   //task_array[3].quantum = 2500; // run for 0.25ms then switch
+   //task_array[3].name = "SDCardTask";
+   //task_array[3].PC = (uint32_t)SDCardTask;
+   //task_array[3].reg[2] = 0x0003C030; // NOTE: Need a stack allocator for real addresses
+   //task_array[3].reg[8] = 0x0003C030; // Frame pointer
+   //task_array[3].quantum = 1000; // run for 0.1ms then switch
 
-   num_tasks = 3; //4
+   num_tasks = 3; //4;
 }
 
 void timer_interrupt()
@@ -573,15 +591,28 @@ void external_interrupt(uint32_t deviceID)
    {
       // TODO: Handle switch interaction, possibly stash switch state to a pre-determined memory address from mscratch register
       hardwareswitchstates = *IO_SwitchState;
+
+      // Check the bit that changed
+      switch(hardwareswitchstates ^ oldhardwareswitchstates)
+      {
+         case 0x01: EchoUART(hardwareswitchstates&0x01 ? "S0HIGH\r\n" : "S0LOW\r\n"); break;
+         case 0x02: EchoUART(hardwareswitchstates&0x02 ? "S1HIGH\r\n" : "S1LOW\r\n"); break;
+         case 0x04: EchoUART(hardwareswitchstates&0x04 ? "S2HIGH\r\n" : "S2LOW\r\n"); break;
+         case 0x08: EchoUART(hardwareswitchstates&0x08 ? "S3HIGH\r\n" : "S3LOW\r\n"); break;
+         case 0x10: EchoUART(hardwareswitchstates&0x10 ? "B0DOWN\r\n" : "B0UP\r\n"); break;
+         case 0x20: EchoUART(hardwareswitchstates&0x20 ? "B1DOWN\r\n" : "B1UP\r\n"); break;
+         case 0x40: EchoUART(hardwareswitchstates&0x40 ? "B2DOWN\r\n" : "B2UP\r\n"); break;
+         //case 0x80: EchoUART(hardwareswitchstates&0x80 ? "SDREMOVED\r\n" : "SDINSERTED\r\n"); break;
+         default: break;
+      };
+
+      oldhardwareswitchstates = hardwareswitchstates;
+
       /*if ((switchstate & 0x80) == 0) // SDCard inserted
       {
          sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
          EchoUART(sdcardavailable ? "SDCard\r\n" : "Unknown\r\n");
       }*/
-
-      EchoUART("SWITCHES:");
-      EchoInt(hardwareswitchstates);
-      EchoUART("\r\n");
    }
 }
 
@@ -780,6 +811,11 @@ int main()
 
    EchoUART("\r\nNekoIchi [v004] [rv32imf] [GPU]\r\n");
    EchoUART("(c)2021 Engin Cilasun\r\n");
+
+   // Grab the initial state of switches
+   while (*IO_SwitchByteCount)
+      oldhardwareswitchstates = *IO_SwitchState;
+   sdcardstate = 0xFF;
 
    sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
 
