@@ -25,6 +25,8 @@ uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
 
+uint8_t hardwareswitchstates = 0; // TODO: need a correct initial state here
+
 FATFS Fs;
 uint32_t sdcardavailable = 0;
 volatile uint32_t branchaddress = 0x10000; // TODO: Branch to actual entry point
@@ -241,7 +243,6 @@ void HandleDemoCommands(char checkchar)
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
          EchoConsole("run: branch to entrypoint\r\n");
-         EchoConsole("gdb: go to debugger mode\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
@@ -255,8 +256,6 @@ void HandleDemoCommands(char checkchar)
          showtime = (showtime+1)%2;
       else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
          RunELF();
-//      else if ((cmdbuffer[0]=='g') && (cmdbuffer[1]=='d') && (cmdbuffer[2]=='b'))
-//         debugger_mode = 1; // Once here, I'm afraid the only way back is to reset this via debugger
    }
 
    if (escapemode)
@@ -412,18 +411,24 @@ void SetupTasks()
    // Main application body, will be time-sliced (medium size task)
    task_array[1].name = "MainTask";
    task_array[1].PC = (uint32_t)MainTask;
-   task_array[1].reg[2] = 0x0003E000; // NOTE: Need a stack allocator for real addresses
-   task_array[1].reg[8] = 0x0003E000; // Frame pointer
+   task_array[1].reg[2] = 0x0003F000; // NOTE: Need a stack allocator for real addresses
+   task_array[1].reg[8] = 0x0003F000; // Frame pointer
    task_array[1].quantum = 10000; // run for 1ms then switch
 
    // Clock task (helps with time display and cursor blink, very short task)
    task_array[2].name = "ClockTask";
    task_array[2].PC = (uint32_t)ClockTask;
-   task_array[2].reg[2] = 0x0003F000; // NOTE: Need a stack allocator for real addresses
-   task_array[2].reg[8] = 0x0003F000; // Frame pointer
+   task_array[2].reg[2] = 0x0003E010; // NOTE: Need a stack allocator for real addresses
+   task_array[2].reg[8] = 0x0003E010; // Frame pointer
    task_array[2].quantum = 2500; // run for 0.25ms then switch
 
-   num_tasks = 3;
+   //task_array[3].name = "AudioTask";
+   //task_array[3].PC = (uint32_t)AudioTask;
+   //task_array[3].reg[2] = 0x0003D020; // NOTE: Need a stack allocator for real addresses
+   //task_array[3].reg[8] = 0x0003D020; // Frame pointer
+   //task_array[3].quantum = 2500; // run for 0.25ms then switch
+
+   num_tasks = 3; //4
 }
 
 void timer_interrupt()
@@ -557,12 +562,17 @@ void external_interrupt(uint32_t deviceID)
    // This handler will service all hardware interrupts simultaneusly
 
    if (deviceID&0x0001) // UART
-      gdb_handler(task_array, num_tasks);
+   {
+      if (hardwareswitchstates&0x01) // First slide switch controls debug mode
+         gdb_handler(task_array, num_tasks);
+      else
+         ProcessUARTInputAsync();
+   }
 
    if (deviceID&0x0002) // SWITCHES
    {
       // TODO: Handle switch interaction, possibly stash switch state to a pre-determined memory address from mscratch register
-      uint8_t switchstate = *IO_SwitchState;
+      hardwareswitchstates = *IO_SwitchState;
       /*if ((switchstate & 0x80) == 0) // SDCard inserted
       {
          sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
@@ -570,11 +580,9 @@ void external_interrupt(uint32_t deviceID)
       }*/
 
       EchoUART("SWITCHES:");
-      EchoInt(switchstate);
+      EchoInt(hardwareswitchstates);
       EchoUART("\r\n");
    }
-
-   //ProcessUARTInputAsync();
 }
 
 //void __attribute__((interrupt("machine"))) interrupt_handler()
@@ -770,7 +778,7 @@ int main()
    EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
    EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
 
-   EchoUART("\r\nNekoIchi [v003] [rv32imf] [GPU]\r\n");
+   EchoUART("\r\nNekoIchi [v004] [rv32imf] [GPU]\r\n");
    EchoUART("(c)2021 Engin Cilasun\r\n");
 
    sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;

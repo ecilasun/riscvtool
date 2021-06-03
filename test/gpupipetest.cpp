@@ -210,11 +210,11 @@ void drawparticles(short *particles)
 
    // Spawn one particle if the current position is 'dead'
    spawnerindex = (spawnerindex + 1)%MAX_PARTICLES;
-   if (particles[3*spawnerindex+1] < -32) // Dead
+   if (particles[4*spawnerindex+1] < -32) // Dead
    {
-      particles[3*spawnerindex+0] = Random()%256;
-      //particles[3*spawnerindex+1] = (Random()%24)-24;
-      particles[3*spawnerindex+2] = 2 + (Random()%4);
+      particles[4*spawnerindex+0] = Random()%256;
+      //particles[4*spawnerindex+1] = (Random()%24)-24;
+      particles[4*spawnerindex+2] = 2 + (Random()%4);
       particles[4*spawnerindex+3] = 192 + (Random()%32); // Barrier
    }
 
@@ -224,9 +224,17 @@ void drawparticles(short *particles)
    short ry0 = sinf(proll)*3.f;
    short rx1 = cosf(proll+3.1415927f*0.5f)*3.f;
    short ry1 = sinf(proll+3.1415927f*0.5f)*3.f;
-   proll += 0.24f;
    for (int i=0;i<MAX_PARTICLES;++i)
    {
+      if (i%128==0)
+      {
+         const float S = 3.f;
+         rx0 = cosf(proll)*S;
+         ry0 = sinf(proll)*S;
+         rx1 = cosf(proll+3.1415927f*0.5f)*S;
+         ry1 = sinf(proll+3.1415927f*0.5f)*S;
+         proll += 0.04f;
+      }
       if (particles[4*i+1] != -1)
       {
          short ox = particles[4*i+0];
@@ -252,6 +260,7 @@ void drawparticles(short *particles)
          //GPURasterizeTriangle(3,4,1,i&0xFF);F
       }
    }
+   proll += 0.04f;
 }
 
 int main(int argc, char ** argv)

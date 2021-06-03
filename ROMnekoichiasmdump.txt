@@ -54,6 +54,7 @@ SYMBOL TABLE:
 0000289c l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
 0000232c l       .srodata	00000000 __init_array_start
 0000232c l       .srodata	00000000 __preinit_array_start
+0000181c g     F .text	000000f8 _Z13RunBinaryBlobv
 000030e0 g       *ABS*	00000000 __global_pointer$
 00002460 g       .data	00000000 _fdata
 0000054c g     F .text	000002e4 __ieee754_rem_pio2f
@@ -82,6 +83,7 @@ SYMBOL TABLE:
 00000a00 g       *ABS*	00000000 _STACK_SIZE
 00000290 g     F .text	000000dc memset
 00001914 g     F .text	000001e0 main
+00001774 g     F .text	000000a8 _Z14LoadBinaryBlobv
 00002960 g     O .sbss	00000004 __malloc_max_total_mem
 0000296c g     O .bss	00000004 gpuSideSubmitCounter
 00001454 g     F .text	000001f4 _Z16DrawRotatingRectff
@@ -94,12 +96,10 @@ SYMBOL TABLE:
 0000289c g       .data	00000000 _edata
 00002978 g       .bss	00000000 _end
 00002970 g     O .bss	00000004 gpuSubmitCounter
-0000181c g     F .text	000000f8 _Z13runbinaryblobv
 00000164 g     F .boot	00000020 _exit
 00000930 g     F .text	000008b8 __kernel_rem_pio2f
 0000127c g     F .text	000000b8 floorf
 00002960 g       .sbss	00000000 _fbss
-00001774 g     F .text	000000a8 _Z14loadbinaryblobv
 
 
 
@@ -1646,7 +1646,7 @@ Disassembly of section .text:
     176c:	01010113          	addi	sp,sp,16
     1770:	00008067          	ret
 
-00001774 <_Z14loadbinaryblobv>:
+00001774 <_Z14LoadBinaryBlobv>:
     1774:	00001597          	auipc	a1,0x1
     1778:	1505a583          	lw	a1,336(a1) # 28c4 <_GLOBAL_OFFSET_TABLE_+0x28>
     177c:	00001517          	auipc	a0,0x1
@@ -1661,36 +1661,36 @@ Disassembly of section .text:
     17a0:	00060693          	mv	a3,a2
     17a4:	00e12623          	sw	a4,12(sp)
     17a8:	0007a703          	lw	a4,0(a5)
-    17ac:	fe070ee3          	beqz	a4,17a8 <_Z14loadbinaryblobv+0x34>
+    17ac:	fe070ee3          	beqz	a4,17a8 <_Z14LoadBinaryBlobv+0x34>
     17b0:	00084703          	lbu	a4,0(a6)
     17b4:	00168693          	addi	a3,a3,1 # 7f800001 <__global_pointer$+0x7f7fcf21>
     17b8:	fee68fa3          	sb	a4,-1(a3)
     17bc:	00c12703          	lw	a4,12(sp)
-    17c0:	fee694e3          	bne	a3,a4,17a8 <_Z14loadbinaryblobv+0x34>
+    17c0:	fee694e3          	bne	a3,a4,17a8 <_Z14LoadBinaryBlobv+0x34>
     17c4:	01810693          	addi	a3,sp,24
     17c8:	0007a703          	lw	a4,0(a5)
-    17cc:	fe070ee3          	beqz	a4,17c8 <_Z14loadbinaryblobv+0x54>
+    17cc:	fe070ee3          	beqz	a4,17c8 <_Z14LoadBinaryBlobv+0x54>
     17d0:	00084703          	lbu	a4,0(a6)
     17d4:	00168693          	addi	a3,a3,1
     17d8:	fee68fa3          	sb	a4,-1(a3)
-    17dc:	fec696e3          	bne	a3,a2,17c8 <_Z14loadbinaryblobv+0x54>
+    17dc:	fec696e3          	bne	a3,a2,17c8 <_Z14LoadBinaryBlobv+0x54>
     17e0:	01812703          	lw	a4,24(sp)
     17e4:	01c12683          	lw	a3,28(sp)
-    17e8:	02070663          	beqz	a4,1814 <_Z14loadbinaryblobv+0xa0>
+    17e8:	02070663          	beqz	a4,1814 <_Z14LoadBinaryBlobv+0xa0>
     17ec:	00e68633          	add	a2,a3,a4
     17f0:	0007a703          	lw	a4,0(a5)
-    17f4:	fe070ee3          	beqz	a4,17f0 <_Z14loadbinaryblobv+0x7c>
+    17f4:	fe070ee3          	beqz	a4,17f0 <_Z14LoadBinaryBlobv+0x7c>
     17f8:	00052783          	lw	a5,0(a0)
     17fc:	00168693          	addi	a3,a3,1
     1800:	0007c783          	lbu	a5,0(a5)
     1804:	0ff7f793          	andi	a5,a5,255
     1808:	fef68fa3          	sb	a5,-1(a3)
     180c:	0005a783          	lw	a5,0(a1)
-    1810:	fed610e3          	bne	a2,a3,17f0 <_Z14loadbinaryblobv+0x7c>
+    1810:	fed610e3          	bne	a2,a3,17f0 <_Z14LoadBinaryBlobv+0x7c>
     1814:	02010113          	addi	sp,sp,32
     1818:	00008067          	ret
 
-0000181c <_Z13runbinaryblobv>:
+0000181c <_Z13RunBinaryBlobv>:
     181c:	00001797          	auipc	a5,0x1
     1820:	0a87a783          	lw	a5,168(a5) # 28c4 <_GLOBAL_OFFSET_TABLE_+0x28>
     1824:	fd010113          	addi	sp,sp,-48
@@ -1704,12 +1704,12 @@ Disassembly of section .text:
     1844:	01c10693          	addi	a3,sp,28
     1848:	00f12623          	sw	a5,12(sp)
     184c:	00072783          	lw	a5,0(a4)
-    1850:	fe078ee3          	beqz	a5,184c <_Z13runbinaryblobv+0x30>
+    1850:	fe078ee3          	beqz	a5,184c <_Z13RunBinaryBlobv+0x30>
     1854:	00064783          	lbu	a5,0(a2)
     1858:	00168693          	addi	a3,a3,1
     185c:	fef68fa3          	sb	a5,-1(a3)
     1860:	00c12783          	lw	a5,12(sp)
-    1864:	fed794e3          	bne	a5,a3,184c <_Z13runbinaryblobv+0x30>
+    1864:	fed794e3          	bne	a5,a3,184c <_Z13RunBinaryBlobv+0x30>
     1868:	00000517          	auipc	a0,0x0
     186c:	68850513          	addi	a0,a0,1672 # 1ef0 <PIo2+0x2c>
     1870:	284000ef          	jal	ra,1af4 <_Z8EchoUARTPKc>
@@ -1869,10 +1869,10 @@ Disassembly of section .text:
     1ad0:	01540663          	beq	s0,s5,1adc <main+0x1c8>
     1ad4:	00d00413          	li	s0,13
     1ad8:	fd5ff06f          	j	1aac <main+0x198>
-    1adc:	d41ff0ef          	jal	ra,181c <_Z13runbinaryblobv>
+    1adc:	d41ff0ef          	jal	ra,181c <_Z13RunBinaryBlobv>
     1ae0:	00d00413          	li	s0,13
     1ae4:	fc9ff06f          	j	1aac <main+0x198>
-    1ae8:	c8dff0ef          	jal	ra,1774 <_Z14loadbinaryblobv>
+    1ae8:	c8dff0ef          	jal	ra,1774 <_Z14LoadBinaryBlobv>
     1aec:	00d00413          	li	s0,13
     1af0:	fbdff06f          	j	1aac <main+0x198>
 
@@ -2012,52 +2012,52 @@ Symbol table '.symtab' contains 99 entries:
     50: 0000289c     0 OBJECT  LOCAL  DEFAULT    7 _GLOBAL_OFFSET_TABLE_
     51: 0000232c     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_start
     52: 0000232c     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_start
-    53: 000030e0     0 NOTYPE  GLOBAL DEFAULT  ABS __global_pointer$
-    54: 00002460     0 NOTYPE  GLOBAL DEFAULT    6 _fdata
-    55: 0000054c   740 FUNC    GLOBAL DEFAULT    2 __ieee754_rem_pio2f
-    56: 0000232c     0 NOTYPE  GLOBAL DEFAULT    3 _etext
-    57: 000030e0     0 NOTYPE  GLOBAL DEFAULT    9 _gp
-    58: 00002890     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRX
-    59: 00000184     0 NOTYPE  GLOBAL DEFAULT    1 _boot
-    60: 0000296c     0 NOTYPE  GLOBAL DEFAULT   11 _bss_start
-    61: 00002968     4 OBJECT  GLOBAL DEFAULT   10 __malloc_top_pad
-    62: 00001274     8 FUNC    GLOBAL DEFAULT    2 fabsf
-    63: 00002964     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_sbrked_mem
-    64: 0000288c     4 OBJECT  GLOBAL DEFAULT    6 IO_GPUFIFO
-    65: 0000232c     4 OBJECT  GLOBAL DEFAULT    4 _global_impure_ptr
-    66: 00001648   300 FUNC    GLOBAL DEFAULT    2 _Z14SubmitGPUFramev
-    67: 000001f4   156 FUNC    GLOBAL DEFAULT    2 __libc_init_array
-    68: 000011e8   140 FUNC    GLOBAL DEFAULT    2 __kernel_sinf
-    69: 00000408   160 FUNC    GLOBAL DEFAULT    2 cosf
-    70: 00002978     0 NOTYPE  GLOBAL DEFAULT   11 _bss_end
-    71: 00000198    92 FUNC    GLOBAL DEFAULT    2 __libc_fini_array
-    72: 00002974     4 OBJECT  GLOBAL DEFAULT   11 vramPage
-    73: 00000830   256 FUNC    GLOBAL DEFAULT    2 __kernel_cosf
-    74: 00000184     0 NOTYPE  GLOBAL DEFAULT    1 _ftext
-    75: 00000000   356 FUNC    GLOBAL DEFAULT    1 _start
-    76: 0000036c   156 FUNC    GLOBAL DEFAULT    2 __register_exitproc
-    77: 00001334   288 FUNC    GLOBAL DEFAULT    2 scalbnf
-    78: 00000a00     0 NOTYPE  GLOBAL DEFAULT  ABS _STACK_SIZE
-    79: 00000290   220 FUNC    GLOBAL DEFAULT    2 memset
-    80: 00001914   480 FUNC    GLOBAL DEFAULT    2 main
-    81: 00002960     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_total_mem
-    82: 0000296c     4 OBJECT  GLOBAL DEFAULT   11 gpuSideSubmitCounter
-    83: 00001454   500 FUNC    GLOBAL DEFAULT    2 _Z16DrawRotatingRectff
-    84: 00000184    20 FUNC    GLOBAL DEFAULT    2 atexit
-    85: 00002898     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTTX
-    86: 00002894     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRXByteCount
-    87: 00002978     0 NOTYPE  GLOBAL DEFAULT   11 __BSS_END__$
-    88: 000004a8   164 FUNC    GLOBAL DEFAULT    2 sinf
-    89: 00001af4    44 FUNC    GLOBAL DEFAULT    2 _Z8EchoUARTPKc
-    90: 0000289c     0 NOTYPE  GLOBAL DEFAULT    6 _edata
-    91: 00002978     0 NOTYPE  GLOBAL DEFAULT   11 _end
-    92: 00002970     4 OBJECT  GLOBAL DEFAULT   11 gpuSubmitCounter
-    93: 0000181c   248 FUNC    GLOBAL DEFAULT    2 _Z13runbinaryblobv
-    94: 00000164    32 FUNC    GLOBAL DEFAULT    1 _exit
-    95: 00000930  2232 FUNC    GLOBAL DEFAULT    2 __kernel_rem_pio2f
-    96: 0000127c   184 FUNC    GLOBAL DEFAULT    2 floorf
-    97: 00002960     0 NOTYPE  GLOBAL DEFAULT   10 _fbss
-    98: 00001774   168 FUNC    GLOBAL DEFAULT    2 _Z14loadbinaryblobv
+    53: 0000181c   248 FUNC    GLOBAL DEFAULT    2 _Z13RunBinaryBlobv
+    54: 000030e0     0 NOTYPE  GLOBAL DEFAULT  ABS __global_pointer$
+    55: 00002460     0 NOTYPE  GLOBAL DEFAULT    6 _fdata
+    56: 0000054c   740 FUNC    GLOBAL DEFAULT    2 __ieee754_rem_pio2f
+    57: 0000232c     0 NOTYPE  GLOBAL DEFAULT    3 _etext
+    58: 000030e0     0 NOTYPE  GLOBAL DEFAULT    9 _gp
+    59: 00002890     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRX
+    60: 00000184     0 NOTYPE  GLOBAL DEFAULT    1 _boot
+    61: 0000296c     0 NOTYPE  GLOBAL DEFAULT   11 _bss_start
+    62: 00002968     4 OBJECT  GLOBAL DEFAULT   10 __malloc_top_pad
+    63: 00001274     8 FUNC    GLOBAL DEFAULT    2 fabsf
+    64: 00002964     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_sbrked_mem
+    65: 0000288c     4 OBJECT  GLOBAL DEFAULT    6 IO_GPUFIFO
+    66: 0000232c     4 OBJECT  GLOBAL DEFAULT    4 _global_impure_ptr
+    67: 00001648   300 FUNC    GLOBAL DEFAULT    2 _Z14SubmitGPUFramev
+    68: 000001f4   156 FUNC    GLOBAL DEFAULT    2 __libc_init_array
+    69: 000011e8   140 FUNC    GLOBAL DEFAULT    2 __kernel_sinf
+    70: 00000408   160 FUNC    GLOBAL DEFAULT    2 cosf
+    71: 00002978     0 NOTYPE  GLOBAL DEFAULT   11 _bss_end
+    72: 00000198    92 FUNC    GLOBAL DEFAULT    2 __libc_fini_array
+    73: 00002974     4 OBJECT  GLOBAL DEFAULT   11 vramPage
+    74: 00000830   256 FUNC    GLOBAL DEFAULT    2 __kernel_cosf
+    75: 00000184     0 NOTYPE  GLOBAL DEFAULT    1 _ftext
+    76: 00000000   356 FUNC    GLOBAL DEFAULT    1 _start
+    77: 0000036c   156 FUNC    GLOBAL DEFAULT    2 __register_exitproc
+    78: 00001334   288 FUNC    GLOBAL DEFAULT    2 scalbnf
+    79: 00000a00     0 NOTYPE  GLOBAL DEFAULT  ABS _STACK_SIZE
+    80: 00000290   220 FUNC    GLOBAL DEFAULT    2 memset
+    81: 00001914   480 FUNC    GLOBAL DEFAULT    2 main
+    82: 00001774   168 FUNC    GLOBAL DEFAULT    2 _Z14LoadBinaryBlobv
+    83: 00002960     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_total_mem
+    84: 0000296c     4 OBJECT  GLOBAL DEFAULT   11 gpuSideSubmitCounter
+    85: 00001454   500 FUNC    GLOBAL DEFAULT    2 _Z16DrawRotatingRectff
+    86: 00000184    20 FUNC    GLOBAL DEFAULT    2 atexit
+    87: 00002898     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTTX
+    88: 00002894     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRXByteCount
+    89: 00002978     0 NOTYPE  GLOBAL DEFAULT   11 __BSS_END__$
+    90: 000004a8   164 FUNC    GLOBAL DEFAULT    2 sinf
+    91: 00001af4    44 FUNC    GLOBAL DEFAULT    2 _Z8EchoUARTPKc
+    92: 0000289c     0 NOTYPE  GLOBAL DEFAULT    6 _edata
+    93: 00002978     0 NOTYPE  GLOBAL DEFAULT   11 _end
+    94: 00002970     4 OBJECT  GLOBAL DEFAULT   11 gpuSubmitCounter
+    95: 00000164    32 FUNC    GLOBAL DEFAULT    1 _exit
+    96: 00000930  2232 FUNC    GLOBAL DEFAULT    2 __kernel_rem_pio2f
+    97: 0000127c   184 FUNC    GLOBAL DEFAULT    2 floorf
+    98: 00002960     0 NOTYPE  GLOBAL DEFAULT   10 _fbss
 
 No version information found in this file.
 Attribute Section: riscv

@@ -85,7 +85,7 @@ void SubmitGPUFrame()
    }
 }
 
-void loadbinaryblob()
+void LoadBinaryBlob()
 {
    // Header data
    uint32_t loadlen = 0;
@@ -131,7 +131,7 @@ void loadbinaryblob()
    }
 }
 
-void runbinaryblob()
+void RunBinaryBlob()
 {
    // Header data
    uint32_t branchaddress = 0;
@@ -247,9 +247,9 @@ int main()
          {
             // Load the incoming binary
             if (prevchar=='B')
-               loadbinaryblob();
+               LoadBinaryBlob();
             if (prevchar=='R')
-               runbinaryblob();
+               RunBinaryBlob();
          }
          prevchar = checkchar;
       }
