@@ -365,10 +365,10 @@ int MainTask()
 
       if (sdcardtriggerread)
       {
-         sdcardtriggerread = 0;
          sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
          if (LoadELF("BOOT.ELF") != -1)
              RunELF();
+         sdcardtriggerread = 0;
       }
 
       if (gpustate == cnt) // GPU work complete, push more
