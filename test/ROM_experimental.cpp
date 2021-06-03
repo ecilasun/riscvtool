@@ -325,9 +325,7 @@ int ClockTask()
          uint32_t newsdcardstate = (hardwareswitchstates&0x80) ? 0x00 : 0x01;
          if (newsdcardstate != sdcardstate)
          {
-            EchoUART("SDCARD: ");
-            EchoUART(newsdcardstate ? "INSERTED" : "REMOVED");
-            EchoUART("\r\n");
+            EchoUART(newsdcardstate ? "SDCARD INSERTED\r\n" : "SDCARD REMOVED\r\n");
             sdcardstate = newsdcardstate;
          }
       }
@@ -815,9 +813,11 @@ int main()
    // Grab the initial state of switches
    while (*IO_SwitchByteCount)
       oldhardwareswitchstates = *IO_SwitchState;
-   sdcardstate = 0xFF;
 
    sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
+   sdcardstate = sdcardavailable ? 0x01 : 0x00;
+   oldhardwareswitchstates |= sdcardavailable ? 0x00000000 : 0x00000080;
+   hardwareswitchstates = oldhardwareswitchstates;
 
    // Load and branch into the boot executable if one is found on the SDCard
    if (LoadELF("BOOT.ELF") != -1)
@@ -825,9 +825,6 @@ int main()
 
    SetupTasks();
    SetupInterruptHandlers();
-
-   //set_debug_traps();
-   //breakpoint();
 
    // This loop is a bit iffy, better not add code in here
    while (1) { }
