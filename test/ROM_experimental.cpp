@@ -25,6 +25,7 @@ uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
 uint32_t sdcardstate;
+uint32_t sdcardtriggerread = 0;
 
 // States
 uint8_t oldhardwareswitchstates = 0;
@@ -245,7 +246,6 @@ void HandleDemoCommands(char checkchar)
          EchoConsole("cls: clear screen\r\n");
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
-         EchoConsole("run: branch to entrypoint\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
@@ -254,11 +254,10 @@ void HandleDemoCommands(char checkchar)
       else if ((cmdbuffer[0]=='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
       {
          LoadELF(&cmdbuffer[5]); // Skip 'load ' part
+         RunELF();
       }
       else if ((cmdbuffer[0]=='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
          showtime = (showtime+1)%2;
-      else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
-         RunELF();
    }
 
    if (escapemode)
@@ -325,7 +324,9 @@ int ClockTask()
          uint32_t newsdcardstate = (hardwareswitchstates&0x80) ? 0x00 : 0x01;
          if (newsdcardstate != sdcardstate)
          {
-            EchoUART(newsdcardstate ? "SDCARD INSERTED\r\n" : "SDCARD REMOVED\r\n");
+            // Trigger for this to happen in the main loop
+            if (newsdcardstate)
+               sdcardtriggerread = 1;
             sdcardstate = newsdcardstate;
          }
       }
@@ -358,6 +359,14 @@ int MainTask()
    while(1)
    {
       // Hardware interrupt driven input processing happens async to this code
+
+      if (sdcardtriggerread)
+      {
+         sdcardtriggerread = 0;
+         sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
+         if (LoadELF("BOOT.ELF") != -1)
+             RunELF();
+      }
 
       if (gpustate == cnt) // GPU work complete, push more
       {
@@ -821,7 +830,7 @@ int main()
 
    // Load and branch into the boot executable if one is found on the SDCard
    if (LoadELF("BOOT.ELF") != -1)
-       RunELF();
+      RunELF();
 
    SetupTasks();
    SetupInterruptHandlers();
