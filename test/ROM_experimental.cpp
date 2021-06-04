@@ -367,7 +367,7 @@ int MainTask()
       {
          sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
          EchoUART(sdcardavailable ? "SDCard inserted\r\n" : "SDCard not inserted\r\n");
-         if (sdcardavailable && LoadELF("ABOOT.ELF") != -1)
+         if (sdcardavailable && LoadELF("BOOT.ELF") != -1)
              RunELF();
          sdcardtriggerread = 0;
       }
@@ -803,8 +803,7 @@ int main()
    EchoUART("rrrrrrrr   v   rrrrrrrr\r\n");
    EchoUART("rrrrrrrrrr   rrrrrrrrrr\r\n");
 
-   EchoUART("\r\nNekoIchi [v004] [rv32imf] [GPU]\r\n");
-   EchoUART("(c)2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoIchi [v005] [RV32IMF@100Mhz] [GPU@85Mhz]\r\n\xA9 2021 Engin Cilasun\r\n");
 
    // Grab the initial state of switches
    // This read does not trigger an interrupt but reads the live state
