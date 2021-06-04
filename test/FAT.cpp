@@ -751,7 +751,6 @@ FRESULT pf_mount (
 
 	/* Search FAT partition on the drive */
 	bsect = 0;
-    EchoUART("check sector 0\r\n");
 	fmt = check_fs(buf, bsect);			/* Check sector 0 as an SFD format */
 	if (fmt == 1) {						/* Not an FAT boot record, it may be FDISK format */
 		/* Check a partition listed in top of the partition table */
@@ -760,7 +759,6 @@ FRESULT pf_mount (
 		} else {
 			if (buf[4]) {					/* Is the partition existing? */
 				bsect = LD_DWORD(&buf[8]);	/* Partition offset in LBA */
-                EchoUART("check partition\r\n");
 				fmt = check_fs(buf, bsect);	/* Check the partition */
 			}
 		}
@@ -770,7 +768,6 @@ FRESULT pf_mount (
 	if (fmt) return FR_NO_FILESYSTEM;	/* No valid FAT patition is found */
 
 	/* Initialize the file system object */
-    EchoUART("init fs object\r\n");
 	if (disk_readp(buf, bsect, 13, sizeof(buf))) return FR_DISK_ERR;
 
 	fsize = LD_WORD(buf+BPB_FATSz16-13);				/* Number of sectors per FAT */
@@ -811,7 +808,7 @@ FRESULT pf_mount (
 	fs->flag = 0;
 	FatFs = fs;
 
-    EchoUART("mount OK\r\n");
+    //EchoUART("mount OK\r\n");
 	return FR_OK;
 }
 

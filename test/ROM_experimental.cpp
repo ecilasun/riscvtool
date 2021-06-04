@@ -25,7 +25,7 @@ uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
 uint32_t sdcardstate;
-uint32_t sdcardtriggerread = 0;
+uint32_t sdcardtriggerread;
 
 // States
 uint8_t oldhardwareswitchstates = 0;
@@ -328,7 +328,7 @@ int ClockTask()
          if (newsdcardstate != sdcardstate)
          {
             // Trigger for this to happen in the main loop
-            if (newsdcardstate)
+            //if (newsdcardstate) -> Triggers only when card inserted
                sdcardtriggerread = 1;
             sdcardstate = newsdcardstate;
          }
@@ -366,7 +366,8 @@ int MainTask()
       if (sdcardtriggerread)
       {
          sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
-         if (LoadELF("BOOT.ELF") != -1)
+         EchoUART(sdcardavailable ? "SDCard inserted\r\n" : "SDCard not inserted\r\n");
+         if (sdcardavailable && LoadELF("ABOOT.ELF") != -1)
              RunELF();
          sdcardtriggerread = 0;
       }
@@ -599,10 +600,10 @@ void external_interrupt(uint32_t deviceID)
 
    if (deviceID&0x0002) // SWITCHES
    {
-      // TODO: Handle switch interaction, possibly stash switch state to a pre-determined memory address from mscratch register
+      // Handle switch interaction, possibly stash switch state to a pre-determined memory address from mscratch register
       hardwareswitchstates = *IO_SwitchState;
 
-      // Check the bit that changed
+      // Debug output for individual switches that changed state
       switch(hardwareswitchstates ^ oldhardwareswitchstates)
       {
          case 0x01: EchoUART(hardwareswitchstates&0x01 ? "S0HIGH\r\n" : "S0LOW\r\n"); break;
@@ -617,12 +618,6 @@ void external_interrupt(uint32_t deviceID)
       };
 
       oldhardwareswitchstates = hardwareswitchstates;
-
-      /*if ((switchstate & 0x80) == 0) // SDCard inserted
-      {
-         sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
-         EchoUART(sdcardavailable ? "SDCard\r\n" : "Unknown\r\n");
-      }*/
    }
 }
 
@@ -797,43 +792,25 @@ void SetupInterruptHandlers()
 
 int main()
 {
-   EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvv  \r\n");
-   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvv    \r\n");
-   EchoUART("rr                vvvvvvvvvvvvvvvvvvvvvv      \r\n");
-   EchoUART("rr            vvvvvvvvvvvvvvvvvvvvvvvv      rr\r\n");
-   EchoUART("rrrr      vvvvvvvvvvvvvvvvvvvvvvvvvv      rrrr\r\n");
-   EchoUART("rrrrrr      vvvvvvvvvvvvvvvvvvvvvv      rrrrrr\r\n");
-   EchoUART("rrrrrrrr      vvvvvvvvvvvvvvvvvv      rrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrr      vvvvvvvvvvvvvv      rrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrr      vvvvvvvvvv      rrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrr      vvvvvv      rrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vv      rrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr          rrrrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
+   EchoUART("         vvvvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrr   vvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrrr  vvvvvvvvvvvv\r\n");
+   EchoUART("rrrrrrrr   vvvvvvvvvvv \r\n");
+   EchoUART("r        vvvvvvvvvvv   \r\n");
+   EchoUART("rr   vvvvvvvvvvvvv   rr\r\n");
+   EchoUART("rrrr   vvvvvvvvv   rrrr\r\n");
+   EchoUART("rrrrrr   vvvvv   rrrrrr\r\n");
+   EchoUART("rrrrrrrr   v   rrrrrrrr\r\n");
+   EchoUART("rrrrrrrrrr   rrrrrrrrrr\r\n");
 
    EchoUART("\r\nNekoIchi [v004] [rv32imf] [GPU]\r\n");
    EchoUART("(c)2021 Engin Cilasun\r\n");
 
    // Grab the initial state of switches
-   while (*IO_SwitchByteCount)
-      oldhardwareswitchstates = *IO_SwitchState;
-
-   sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
-   sdcardstate = sdcardavailable ? 0x01 : 0x00;
-   oldhardwareswitchstates |= sdcardavailable ? 0x00000000 : 0x00000080;
-   hardwareswitchstates = oldhardwareswitchstates;
-
-   // Load and branch into the boot executable if one is found on the SDCard
-   if (LoadELF("BOOT.ELF") != -1)
-      RunELF();
+   // This read does not trigger an interrupt but reads the live state
+   // Reads after an interrupt come from switch state FIFO
+   hardwareswitchstates = oldhardwareswitchstates = *IO_SwitchState;
+   sdcardstate = 0xFF;
 
    SetupTasks();
    SetupInterruptHandlers();
