@@ -792,6 +792,7 @@ void SetupInterruptHandlers()
 
 int main()
 {
+   EchoUART("\r\n\r\n");
    EchoUART("         vvvvvvvvvvvvvv\r\n");
    EchoUART("rrrrrrrr   vvvvvvvvvvvv\r\n");
    EchoUART("rrrrrrrrr  vvvvvvvvvvvv\r\n");
@@ -803,7 +804,7 @@ int main()
    EchoUART("rrrrrrrr   v   rrrrrrrr\r\n");
    EchoUART("rrrrrrrrrr   rrrrrrrrrr\r\n");
 
-   EchoUART("\r\nNekoIchi [v005] [RV32IMF@100Mhz] [GPU@85Mhz]\r\n\xA9 2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoIchi [v005] [RV32IMF@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Grab the initial state of switches
    // This read does not trigger an interrupt but reads the live state
