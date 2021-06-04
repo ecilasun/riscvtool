@@ -304,14 +304,13 @@ void ProcessUARTInputAsync()
    }
 }
 
-// This is not actually going to be called
-// and is a placeholder for the main() function
-int SystemTaskPlaceholder()
+// OS Idle task
+int OSIdleTask()
 {
    while(1) { }
 }
 
-int ClockTask()
+int OSPeriodicTask()
 {
    uint32_t lastmilliseconds = 0;
    while (1)
@@ -338,7 +337,7 @@ int ClockTask()
    return 0;
 }
 
-int MainTask()
+int OSMainTask()
 {
    uint8_t bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
    // Set output page
@@ -431,22 +430,22 @@ void SetupTasks()
    // since the first time around we arrive at the timer interrupt
    // the PC/SP and registers belong to main()'s infinite spin loop.
    // Very short task (since it's a spinloop by default)
-   task_array[0].name = "main";
-   task_array[0].PC = (uint32_t)SystemTaskPlaceholder;
+   task_array[0].name = "OSIdle";
+   task_array[0].PC = (uint32_t)OSIdleTask;
    asm volatile("sw sp, %0;" : "=m" (task_array[0].reg[2]) ); // Use current stack pointer of incoming call site
    asm volatile("sw s0, %0;" : "=m" (task_array[0].reg[8]) ); // Use current frame pointer of incoming call site
    task_array[0].quantum = 250; // run for 0.025ms then switch
 
    // Main application body, will be time-sliced (medium size task)
-   task_array[1].name = "MainTask";
-   task_array[1].PC = (uint32_t)MainTask;
+   task_array[1].name = "OSMain";
+   task_array[1].PC = (uint32_t)OSMainTask;
    task_array[1].reg[2] = 0x0003F000; // NOTE: Need a stack allocator for real addresses
    task_array[1].reg[8] = 0x0003F000; // Frame pointer
    task_array[1].quantum = 10000; // run for 1ms then switch
 
    // Clock task (helps with time display and cursor blink, very short task)
-   task_array[2].name = "ClockTask";
-   task_array[2].PC = (uint32_t)ClockTask;
+   task_array[2].name = "OSPeriodic";
+   task_array[2].PC = (uint32_t)OSPeriodicTask;
    task_array[2].reg[2] = 0x0003E010; // NOTE: Need a stack allocator for real addresses
    task_array[2].reg[8] = 0x0003E010; // Frame pointer
    task_array[2].quantum = 1000; // run for 0.1ms then switch
@@ -698,6 +697,11 @@ void __attribute__((naked)) interrupt_handler()
          break;
    }
 
+   // NOTE: The stack values corresponding to these registers
+   // will be overwritten by the task switcher if a timer
+   // interrupt is hit and it schedules another task,
+   // as well as modifying the return address for mret, so that
+   // we resume from within another function when we return.
    asm volatile(
       "lw	ra,144(sp);" // 1
       "lw	tp,140(sp);" // 2 (alias) -> Stack pointer
@@ -814,12 +818,18 @@ int main()
    hardwareswitchstates = oldhardwareswitchstates = *IO_SwitchState;
    sdcardstate = 0xFF;
 
+   // TODO:
    SetupTasks();
    SetupInterruptHandlers();
 
-   // This will only run slightly shorter than DEFAULT_TIMESLICE.
+   // If main() is not listed in the task list,
+   // this while loop will only run slightly shorter than DEFAULT_TIMESLICE.
    // It can only contain very short sequence of instructions,
    // after which the task scheduler will never visit it.
+   // In the case where SetupTasks/SetupInterruptHandlers are invoked
+   // from _start(), main() can live in the task list
+   // and will be re-visited as often as possible in which case
+   // it can replace the dummy OSIdle task.
    while (1) { }
 
    return 0;
