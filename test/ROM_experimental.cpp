@@ -817,7 +817,9 @@ int main()
    SetupTasks();
    SetupInterruptHandlers();
 
-   // This loop is a bit iffy, better not add code in here
+   // This will only run slightly shorter than DEFAULT_TIMESLICE.
+   // It can only contain very short sequence of instructions,
+   // after which the task scheduler will never visit it.
    while (1) { }
 
    return 0;
