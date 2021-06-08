@@ -201,30 +201,21 @@ void RunBinaryBlob()
 
 int main()
 {
-   EchoUART("              vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("                  vvvvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr    vvvvvvvvvvvvvvvvvvvvvvvv\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vvvvvvvvvvvvvvvvvvvvvv  \r\n");
-   EchoUART("rrrrrrrrrrrrr       vvvvvvvvvvvvvvvvvvvvvv    \r\n");
-   EchoUART("rr                vvvvvvvvvvvvvvvvvvvvvv      \r\n");
-   EchoUART("rr            vvvvvvvvvvvvvvvvvvvvvvvv      rr\r\n");
-   EchoUART("rrrr      vvvvvvvvvvvvvvvvvvvvvvvvvv      rrrr\r\n");
-   EchoUART("rrrrrr      vvvvvvvvvvvvvvvvvvvvvv      rrrrrr\r\n");
-   EchoUART("rrrrrrrr      vvvvvvvvvvvvvvvvvv      rrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrr      vvvvvvvvvvvvvv      rrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrr      vvvvvvvvvv      rrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrr      vvvvvv      rrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrr      vv      rrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrr          rrrrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrrrr      rrrrrrrrrrrrrrrrrrrr\r\n");
-   EchoUART("rrrrrrrrrrrrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrrrr\r\n");
+   EchoUART("\r\n\r\n");
+   EchoUART("+-------------------------+\r\n");
+   EchoUART("|          ************** |\r\n");
+   EchoUART("| ########   ************ |\r\n");
+   EchoUART("| #########  ************ |\r\n");
+   EchoUART("| ########   ***********  |\r\n");
+   EchoUART("| #        ***********    |\r\n");
+   EchoUART("| ##   *************   ## |\r\n");
+   EchoUART("| ####   *********   #### |\r\n");
+   EchoUART("| ######   *****   ###### |\r\n");
+   EchoUART("| ########   *   ######## |\r\n");
+   EchoUART("| ##########   ########## |\r\n");
+   EchoUART("+-------------------------+\r\n");
 
-   EchoUART("\r\nNekoIchi [v002] [rv32imf] [GPU]\r\n");
-   EchoUART("(c)2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoIchi [v005] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Initialize video page
    GPUSetRegister(2, vramPage);

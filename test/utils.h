@@ -10,6 +10,7 @@ extern volatile uint8_t *IO_SPIInput;
 extern volatile uint8_t *IO_SPIOutput;
 extern volatile uint8_t *IO_SwitchState;
 extern volatile uint32_t *IO_SwitchByteCount;
+extern volatile uint32_t *IO_AudioOutput;
 
 // Regular memory ranges
 extern volatile uint32_t *BRAMStart;

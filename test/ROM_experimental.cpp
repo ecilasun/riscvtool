@@ -26,6 +26,7 @@ cpu_context task_array[MAX_TASKS];
 uint32_t num_tasks = 0; // only one initially, which is the init_task
 uint32_t sdcardstate;
 uint32_t sdcardtriggerread;
+uint32_t recessmaintask = 0;
 
 // States
 uint8_t oldhardwareswitchstates = 0;
@@ -54,57 +55,6 @@ uint32_t milliseconds = 0;
 uint32_t hours, minutes, seconds;
 uint32_t breakpoint_triggered = 0;
 uint32_t saved_instruction = 0;
-
-void RunELF()
-{
-   EchoUART("Starting at 0x");
-   EchoInt((uint32_t)branchaddress);
-   EchoUART("\r\n");
-    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
-    // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
-    asm volatile (
-        "lw ra, %0 \n"
-        "fmv.w.x	f0, zero \n"
-        "fmv.w.x	f1, zero \n"
-        "fmv.w.x	f2, zero \n"
-        "fmv.w.x	f3, zero \n"
-        "fmv.w.x	f4, zero \n"
-        "fmv.w.x	f5, zero \n"
-        "fmv.w.x	f6, zero \n"
-        "fmv.w.x	f7, zero \n"
-        "fmv.w.x	f8, zero \n"
-        "fmv.w.x	f9, zero \n"
-        "fmv.w.x	f10, zero \n"
-        "fmv.w.x	f11, zero \n"
-        "fmv.w.x	f12, zero \n"
-        "fmv.w.x	f13, zero \n"
-        "fmv.w.x	f14, zero \n"
-        "fmv.w.x	f15, zero \n"
-        "fmv.w.x	f16, zero \n"
-        "fmv.w.x	f17, zero \n"
-        "fmv.w.x	f18, zero \n"
-        "fmv.w.x	f19, zero \n"
-        "fmv.w.x	f20, zero \n"
-        "fmv.w.x	f21, zero \n"
-        "fmv.w.x	f22, zero \n"
-        "fmv.w.x	f23, zero \n"
-        "fmv.w.x	f24, zero \n"
-        "fmv.w.x	f25, zero \n"
-        "fmv.w.x	f26, zero \n"
-        "fmv.w.x	f27, zero \n"
-        "fmv.w.x	f28, zero \n"
-        "fmv.w.x	f29, zero \n"
-        "fmv.w.x	f30, zero \n"
-        "fmv.w.x	f31, zero \n"
-        // NOTE: Since we have many stacks in this executable, choose the deepest in memory for new exec.
-        "li x12, 0x0003FFF0 \n"
-        "mv sp, x12 \n"
-        "ret \n"
-        : 
-        : "m" (branchaddress)
-        : 
-    );
-}
 
 void ParseELFHeaderAndLoadSections(SElfFileHeader32 *fheader)
 {
@@ -249,6 +199,7 @@ void HandleDemoCommands(char checkchar)
          EchoConsole("cls: clear screen\r\n");
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
+         EchoConsole("mem: DDR3 test\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
@@ -256,11 +207,31 @@ void HandleDemoCommands(char checkchar)
       }
       else if ((cmdbuffer[0]=='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
       {
-         LoadELF(&cmdbuffer[5]); // Skip 'load ' part
-         RunELF();
+         if (LoadELF(&cmdbuffer[5]) != -1) // Skip 'load ' part
+         {
+            task_array[3].PC = branchaddress;
+            num_tasks = 4; // Next time, scheduler will consider the loaded task as well
+            recessmaintask = 1;
+         }
       }
       else if ((cmdbuffer[0]=='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
          showtime = (showtime+1)%2;
+      else if ((cmdbuffer[0]=='m') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='m'))
+      {
+         EchoUART("DDR3 test\r\n");
+         uint32_t *ddr3mem = (uint32_t *)0x0003FFF0;
+         for (uint32_t i=0;i<32;++i)
+            ddr3mem[i] = 0xFEFDFCF0+i;
+         for (uint32_t i=0;i<32;++i)
+         {
+            uint32_t M = ddr3mem[i];
+            EchoUART("0x");
+            EchoInt((uint32_t)ddr3mem+i);
+            EchoUART(": 0x");
+            EchoInt(M);
+            EchoUART("\r\n");
+         }
+      }
    }
 
    if (escapemode)
@@ -360,15 +331,24 @@ int OSMainTask()
    unsigned int cnt = 0x00000000;
    while(1)
    {
+      // Main task should not interfere with graphics etc if
+      // an ELF was loaded
+      if (recessmaintask)
+         continue;
+
       // Hardware interrupt driven input processing happens async to this code
 
       if (sdcardtriggerread)
       {
+         sdcardtriggerread = 0;
          sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
          EchoUART(sdcardavailable ? "SDCard inserted\r\n" : "SDCard not inserted\r\n");
          if (sdcardavailable && LoadELF("BOOT.ELF") != -1)
-             RunELF();
-         sdcardtriggerread = 0;
+         {
+            task_array[3].PC = branchaddress;
+            num_tasks = 4; // Next time, scheduler will consider the loaded task as well
+            recessmaintask = 1;
+         }
       }
 
       if (gpustate == cnt) // GPU work complete, push more
@@ -441,7 +421,7 @@ void SetupTasks()
    task_array[1].PC = (uint32_t)OSMainTask;
    task_array[1].reg[2] = 0x0003F000; // NOTE: Need a stack allocator for real addresses
    task_array[1].reg[8] = 0x0003F000; // Frame pointer
-   task_array[1].quantum = 10000; // run for 1ms then switch
+   task_array[1].quantum = 5000; // run for 0.5ms then switch
 
    // Clock task (helps with time display and cursor blink, very short task)
    task_array[2].name = "OSPeriodic";
@@ -450,13 +430,14 @@ void SetupTasks()
    task_array[2].reg[8] = 0x0003E010; // Frame pointer
    task_array[2].quantum = 1000; // run for 0.1ms then switch
 
-   //task_array[3].name = "SDCardTask";
-   //task_array[3].PC = (uint32_t)SDCardTask;
-   //task_array[3].reg[2] = 0x0003C030; // NOTE: Need a stack allocator for real addresses
-   //task_array[3].reg[8] = 0x0003C030; // Frame pointer
-   //task_array[3].quantum = 1000; // run for 0.1ms then switch
+   // User task placeholder for code loaded from storage
+   task_array[3].name = "UserTask";
+   task_array[3].PC = (uint32_t)0x10000;
+   task_array[3].reg[2] = 0x0003C030; // NOTE: ELF needs a stack pointer set up
+   task_array[3].reg[8] = 0x0003C030; // NOTE: ELF needs a frame set up
+   task_array[3].quantum = 100000; // run for 10ms then switch to OS tasks
 
-   num_tasks = 3; //4;
+   num_tasks = 3; // Ignore user task until something is loaded and the entry point is patched, set to 4 afterwards
 }
 
 void timer_interrupt()
@@ -603,18 +584,26 @@ void external_interrupt(uint32_t deviceID)
       hardwareswitchstates = *IO_SwitchState;
 
       // Debug output for individual switches that changed state
+      int osbutton = 0;
       switch(hardwareswitchstates ^ oldhardwareswitchstates)
       {
-         case 0x01: EchoUART(hardwareswitchstates&0x01 ? "S0HIGH\r\n" : "S0LOW\r\n"); break;
+         case 0x01: EchoUART(hardwareswitchstates&0x01 ? "GDBServer\r\n" : "Terminal\r\n"); break;
          case 0x02: EchoUART(hardwareswitchstates&0x02 ? "S1HIGH\r\n" : "S1LOW\r\n"); break;
          case 0x04: EchoUART(hardwareswitchstates&0x04 ? "S2HIGH\r\n" : "S2LOW\r\n"); break;
          case 0x08: EchoUART(hardwareswitchstates&0x08 ? "S3HIGH\r\n" : "S3LOW\r\n"); break;
-         case 0x10: EchoUART(hardwareswitchstates&0x10 ? "B0DOWN\r\n" : "B0UP\r\n"); break;
+         case 0x10: EchoUART(hardwareswitchstates&0x10 ? "...\r\n" : "Toggle OSMain\r\n"); osbutton = 1; break;
          case 0x20: EchoUART(hardwareswitchstates&0x20 ? "B1DOWN\r\n" : "B1UP\r\n"); break;
          case 0x40: EchoUART(hardwareswitchstates&0x40 ? "B2DOWN\r\n" : "B2UP\r\n"); break;
          //case 0x80: EchoUART(hardwareswitchstates&0x80 ? "SDREMOVED\r\n" : "SDINSERTED\r\n"); break;
          default: break;
       };
+
+      // Toggle main vs loaded app
+      if (osbutton && ((hardwareswitchstates&0x10) == 0)) // OS button up
+      {
+         num_tasks = recessmaintask ? 3 : 4;
+         recessmaintask = !recessmaintask;
+      }
 
       oldhardwareswitchstates = hardwareswitchstates;
    }
@@ -690,7 +679,8 @@ void __attribute__((naked)) interrupt_handler()
          breakpoint_interrupt();
          break;
       case 11: // External
-         external_interrupt((causedword&0xFFFF0000)>>16);
+         // NOTE: Highest bit is set when the cause is an interrupt
+         external_interrupt((causedword&0x7FFF0000)>>16);
          break;
       default:
          // NOTE: Unknown interrupts will be ignored
@@ -824,7 +814,7 @@ int main()
 
    // If main() is not listed in the task list,
    // this while loop will only run slightly shorter than DEFAULT_TIMESLICE.
-   // It can only contain very short sequence of instructions,
+   // Therefore, it can only contain very short sequence of instructions (about 1ms),
    // after which the task scheduler will never visit it.
    // In the case where SetupTasks/SetupInterruptHandlers are invoked
    // from _start(), main() can live in the task list

@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "gpu.h"
 
+volatile uint32_t *IO_AudioOutput = (volatile uint32_t* )0x80000020;       // Two 16bit stereo samples to output (31:16->Right, 15:0->Left)
 volatile uint32_t *IO_SwitchByteCount = (volatile uint32_t* )0x8000001C;   // Switch state byte count (read)
 volatile uint8_t *IO_SwitchState = (volatile uint8_t* )0x80000018;         // Device switch states (read)
 volatile uint8_t *IO_SPIOutput = (volatile uint8_t* )0x80000014;           // SPU send data (write)
@@ -14,7 +15,7 @@ volatile uint32_t *IO_UARTRXByteCount = (volatile uint32_t* )0x80000004;   // UA
 volatile uint32_t *IO_GPUFIFO = (volatile uint32_t* )0x80000000;           // GPU control FIFO
 
 volatile uint32_t *BRAMStart = (uint32_t* )0x00000000; // Start of BLOCK RAM region, 0x00000000 - 0x0003FFFF (256KBytes)
-volatile uint32_t *DDR3Start = (uint32_t* )0x00040000; // Start of DDR3 RAM region, 0x00040000 - 0x0x0FFFFFFF (256Mbytes?)
+volatile uint32_t *DDR3Start = (uint32_t* )0x00040000; // Start of DDR3 RAM region, 0x00040000 - 0x0x0FFFFFFF (256Mbytes)
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t font[] __attribute__((aligned(4))) = {
