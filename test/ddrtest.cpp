@@ -142,24 +142,23 @@ int main()
     // Copy sine table to DDR3 from block memory
     EchoUART("Copying\r\n");
     for (uint32_t i=0;i<1024;++i)
-        ddr3mem[i*4] = sinewave[i];
+        ddr3mem[i] = sinewave[i];
 
     EchoUART("Comparing\r\n");
     int fails = 0;
     // Compare entries at random
     for (uint32_t i=0;i<1024;++i)
     {
-        uint32_t idx = (Random()%1024);
-        uint32_t V2 = ddr3mem[idx*4];
-        //V2 = ddr3mem[i*4]; // NOTE: Bus stall error in h/w, will read a second time
+        uint32_t idx = i;//(Random()%1024);
+        uint32_t V2 = ddr3mem[idx];
         if (sinewave[idx] != V2)
         {
             EchoUART("Mismatch at 0x");
-            EchoInt((uint32_t)&ddr3mem[idx*4]);
+            EchoHex((uint32_t)&ddr3mem[idx]);
             EchoUART(". Read=0x");
-            EchoInt(V2);
+            EchoHex(V2);
             EchoUART(", Original=0x");
-            EchoInt(sinewave[idx]);
+            EchoHex(sinewave[idx]);
             EchoUART("\r\n");
             ++fails;
             //break;
@@ -168,7 +167,11 @@ int main()
 
     EchoUART("Extended memory test ");
     if (fails)
-        EchoUART("FAILED\r\n");
+    {
+        EchoUART("FAILED 0x");
+        EchoHex(fails);
+        EchoUART(" times.\r\n");
+    }
     else
         EchoUART("PASSED\r\n");
 

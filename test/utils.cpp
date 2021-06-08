@@ -176,7 +176,7 @@ void EchoUART(const char *_message)
    }
 }
 
-void EchoInt(const uint32_t i)
+void EchoHex(const uint32_t i)
 {
    const char hexdigits[] = "0123456789ABCDEF";
    char msg[] = "        ";

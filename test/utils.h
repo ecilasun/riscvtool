@@ -60,7 +60,7 @@ void PrintDMA(const int col, const int row, const int maxlen, const char *messag
 void PrintDMAHex(const int ox, const int oy, const uint32_t i);
 uint32_t PrintDMADecimal(const int ox, const int oy, const int i);
 void EchoUART(const char *_message);
-void EchoInt(const uint32_t i);
+void EchoHex(const uint32_t i);
 void ClearScreen(const uint8_t color);
 uint32_t Random();
 uint64_t ReadClock();

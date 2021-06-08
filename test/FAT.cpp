@@ -704,16 +704,10 @@ BYTE check_fs (	/* 0:The FAT boot record, 1:Valid boot record but not an FAT, 2:
 )
 {
 	if (disk_readp(buf, sect, 510, 2))		/* Read the boot sector */
-    {
-        EchoInt(3);
 		return 3;
-    }
 
 	if (LD_WORD(buf) != 0xAA55)				/* Check record signature */
-    {
-        EchoInt(2);
 		return 2;
-    }
 
 	/*if (!disk_readp(buf, sect, BS_FilSysType, 2) && LD_WORD(buf) == 0x4146)	// Check FAT12/16
 		return 0;*/

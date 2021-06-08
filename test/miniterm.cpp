@@ -124,7 +124,7 @@ void showdir()
             EchoConsole(" ");
             EchoUART(finf.fname);
             EchoUART(" ");
-            EchoInt(finf.fsize);
+            EchoHex(finf.fsize);
             EchoUART(" ");
             /*EchoConsole(1944 + ((finf.ftime&0xFE00)>>9));
             EchoConsole("/");
@@ -240,9 +240,9 @@ int main()
             {
                 for (uint32_t i=branchaddress;i<branchaddress + 0x100;i+=4)
                 {
-                    EchoInt(i);
+                    EchoHex(i);
                     EchoUART(":");
-                    EchoInt(*((uint32_t*)i));
+                    EchoHex(*((uint32_t*)i));
                     EchoUART("\r\n");
                 }
             }

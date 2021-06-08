@@ -143,7 +143,7 @@ void ListDir()
          {
             EchoConsole(finf.fname); EchoUART(finf.fname);
             EchoConsole(" "); EchoUART(" ");
-            EchoConsole(finf.fsize); EchoInt(finf.fsize);
+            EchoConsole(finf.fsize); EchoHex(finf.fsize);
             EchoConsole(" "); EchoUART(" ");
             /*EchoConsole(1944 + ((finf.ftime&0xFE00)>>9));
             EchoConsole("/");
@@ -226,9 +226,9 @@ void HandleDemoCommands(char checkchar)
          {
             uint32_t M = ddr3mem[i];
             EchoUART("0x");
-            EchoInt((uint32_t)ddr3mem+i);
+            EchoHex((uint32_t)ddr3mem+i);
             EchoUART(": 0x");
-            EchoInt(M);
+            EchoHex(M);
             EchoUART("\r\n");
          }
       }
