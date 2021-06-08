@@ -1,7 +1,7 @@
 #include "utils.h"
 #include <math.h>
 
-int sinewave[1024] = {
+uint32_t sinewave[1024] = {
     0x4000,0x4065,0x40c9,0x412e,0x4192,0x41f7,0x425b,0x42c0,
     0x4324,0x4388,0x43ed,0x4451,0x44b5,0x451a,0x457e,0x45e2,
     0x4646,0x46aa,0x470e,0x4772,0x47d6,0x4839,0x489d,0x4901,
@@ -132,21 +132,19 @@ int sinewave[1024] = {
     0x3cdc,0x3d40,0x3da5,0x3e09,0x3e6e,0x3ed2,0x3f37,0x3f9b
 };
 
-int ssin(int s)
-{
-    return(sinewave[(s%1024)]-16384);
-}
-
 int main()
 {
     EchoUART("DDR3 test started\r\n"); // 0x00040000 - 0x0FFFFFFF
 
     volatile uint32_t *ddr3mem = (volatile uint32_t *)0x0F000000;
 
-    for (uint32_t i=0;i<16;++i)
-        ddr3mem[i*4] = 0xBAADF000 + i;
+    // Copy sine table to DDR3
+    EchoUART("Copying\r\n");
+    for (uint32_t i=0;i<1024;++i)
+        ddr3mem[i*4] = sinewave[i];
 
-    for (uint32_t i=0;i<16;++i)
+    /*EchoUART("Dumping\r\n");
+    for (uint32_t i=0;i<1024;++i)
     {
         EchoUART("0x");
         EchoInt((uint32_t)&ddr3mem[i*4]);
@@ -157,19 +155,24 @@ int main()
         EchoUART(": 0x");
         EchoInt(ddr3mem[i*4]);
         EchoUART("\r\n");
-    }
+    }*/
 
-    for (uint32_t i=0;i<16;++i)
+    EchoUART("Comparing\r\n");
+    for (uint32_t i=0;i<1024;++i)
     {
-        EchoUART("0x");
-        EchoInt((uint32_t)&ddr3mem[i*4]);
-        EchoUART(": 0x");
-        EchoInt(ddr3mem[i*4]);
-        EchoUART(": 0x");
-        EchoInt(ddr3mem[i*4]);
-        EchoUART(": 0x");
-        EchoInt(ddr3mem[i*4]);
-        EchoUART("\r\n");
+        uint32_t V2 = ddr3mem[i*4];
+        //V2 = ddr3mem[i*4]; // NOTE: Bus stall error in h/w, will read a second time
+        if (sinewave[i] != V2)
+        {
+            EchoUART("Mismatch at 0x");
+            EchoInt((uint32_t)&ddr3mem[i*4]);
+            EchoUART(". Read=0x");
+            EchoInt(V2);
+            EchoUART(", Original=0x");
+            EchoInt(sinewave[i]);
+            EchoUART("\r\n");
+            break;
+        }
     }
 
     EchoUART("Done, returning...\r\n");
