@@ -284,7 +284,13 @@ int main(int argc, char ** argv)
    GPUSetRegister(6, page);
    GPUSetVideoPage(6);
 
+   // HINT: we can 'place' particle buffer in DDR3 memory, instead of getting it allocated statically
+   //short *triparticles = (short*)0x0F000000;// short[4*MAX_PARTICLES];
+   // Or, we can statically allocate it and waste space in the binary
    short triparticles[4*MAX_PARTICLES];
+   // Or even better, we can dynamically allocate it and make it land wherever
+   //short *triparticles = new short[4*MAX_PARTICLES];
+
    resetparticles(triparticles);
 
    uint32_t prevtime = 0;

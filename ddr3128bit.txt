@@ -132,3 +132,11 @@
 					endcase
 					cpustate[`CPURETIREINSTRUCTION] <= 1'b1;
 				end else 
+
+
+									/*unique case (ddr3cmdout[35:34]) // busaddress[3:2])
+						2'b11: begin app_wdf_mask <= {ddr3cmdout[67:64],12'hFFF}; end
+						2'b10: begin app_wdf_mask <= {4'hF, ddr3cmdout[67:64], 8'hFF}; end
+						2'b01: begin app_wdf_mask <= {8'hFF, ddr3cmdout[67:64], 4'hF}; end
+						2'b00: begin app_wdf_mask <= {12'hFFF, ddr3cmdout[67:64]}; end
+					endcase*/
