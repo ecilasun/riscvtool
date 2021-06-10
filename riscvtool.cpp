@@ -274,14 +274,14 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
         if (!strcmp(sectionname, ".bss") || !strcmp(sectionname, ".stack"))
         {
-            printf("SKIP: '%s' @0x%.8X len:%.8X off:%.8X\n", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size, sheader->m_Offset);
+            printf("SKIPPING: '%s' @0x%.8X len:%.8X off:%.8X\n", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size, sheader->m_Offset);
             continue;
         }
 
         //if (sheader->m_Type == 0x1 || sheader->m_Type == 0xE || sheader->m_Type == 0xF || sheader->m_Type == 0x10) // Progbits/Iniarray/Finiarray/Preinitarray
         if (sheader->m_Flags & 0x00000007 && sheader->m_Size!=0) // writeable/alloc/exec and non-zero
         {
-            printf("SEND: '%s' @0x%.8X len:%.8X off:%.8X...", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size, sheader->m_Offset);
+            printf("SENDING: '%s' @0x%.8X len:%.8X off:%.8X...\n", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size, sheader->m_Offset);
 
             char commandtosend[512];
             int commandlength=2;
@@ -307,9 +307,9 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             if (byteswritten != 0)
-                printf("done (0x%.8X+0xC bytes written)\n", byteswritten-0xC);
+                ;//printf("done (0x%.8X+0xC bytes written)\n", byteswritten-0xC);
             else
-                printf("failed!\n");
+                printf("Failed!\n");
         }
     }
 

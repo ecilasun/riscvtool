@@ -1,22 +1,6 @@
-#pragma once
+#include "inttypes.h"
 
-#include <inttypes.h>
-
-extern volatile uint32_t *IO_GPUFIFO;
-extern volatile uint8_t *IO_UARTRX;
-extern volatile uint8_t *IO_UARTTX;
-extern volatile uint32_t *IO_UARTRXByteCount;
-extern volatile uint8_t *IO_SPIInput;
-extern volatile uint8_t *IO_SPIOutput;
-extern volatile uint8_t *IO_SwitchState;
-extern volatile uint32_t *IO_SwitchByteCount;
-extern volatile uint32_t *IO_AudioOutput;
-
-// Regular memory ranges
-extern volatile uint32_t *BRAMStart;
-extern volatile uint32_t *DDR3Start;
-
-enum cmdSupported {
+typedef enum {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */
     CMD0_GO_IDLE_STATE = 0,             /**< Resets the SD Memory Card */
     CMD1_SEND_OP_COND = 1,              /**< Sends host capacity support */
@@ -51,19 +35,16 @@ enum cmdSupported {
     ACMD41_SD_SEND_OP_COND = 41,
     ACMD42_SET_CLR_CARD_DETECT = 42,
     ACMD51_SEND_SCR = 51,
-};
+} SDCardCommand;
+
 #define CMD8_PATTERN (0xAA)
 #define SPI_CMD(x) (0x40 | (x & 0x3f))
 
-void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);
-void PrintDMA(const int col, const int row, const int maxlen, const char *message, bool masked=true);
-void PrintDMAHex(const int ox, const int oy, const uint32_t i);
-uint32_t PrintDMADecimal(const int ox, const int oy, const int i);
-void EchoUART(const char *_message);
-void EchoHex(const uint32_t i);
-void ClearScreen(const uint8_t color);
-uint32_t Random();
-uint64_t ReadClock();
-uint64_t ReadRetiredInstructions();
-uint32_t ClockToMs(uint64_t clock);
-void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &seconds);
+uint8_t SDIdle();
+uint8_t SDCheckVoltageRange(uint32_t *databack);
+uint8_t SDCardInit();
+uint8_t SDSetBlockSize512();
+uint8_t SDReadSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2]);
+
+int SDCardStartup();
+int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numbytes, uint32_t offset, uint32_t blockaddress);

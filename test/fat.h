@@ -70,24 +70,19 @@
 #define	CLUST	WORD
 #endif
 
+#define MAX_FATFS_HANDLES 8
 
 /* File system object structure */
 
 typedef struct {
 	BYTE	fs_type;	/* FAT sub type */
-	BYTE	flag;		/* File status flags */
 	BYTE	csize;		/* Number of sectors per cluster */
-	BYTE	pad1;
+	BYTE	pad1, pad2;
 	WORD	n_rootdir;	/* Number of root directory entries (0 on FAT32) */
 	CLUST	n_fatent;	/* Number of FAT entries (= number of clusters + 2) */
 	DWORD	fatbase;	/* FAT start sector */
 	DWORD	dirbase;	/* Root directory start sector (Cluster# on FAT32) */
 	DWORD	database;	/* Data start sector */
-	DWORD	fptr;		/* File R/W pointer */
-	DWORD	fsize;		/* File size */
-	CLUST	org_clust;	/* File start cluster */
-	CLUST	curr_clust;	/* File current cluster */
-	DWORD	dsect;		/* File current data sector */
 } FATFS;
 
 
@@ -135,13 +130,16 @@ typedef enum {
 /* Petit FatFs module application interface                     */
 
 FRESULT pf_mount (FATFS*);						/* Mount/Unmount a logical drive */
-FRESULT pf_open (const char*);					/* Open a file */
-FRESULT pf_read (void*, WORD, WORD*);			/* Read data from the open file */
-FRESULT pf_write (const void*, WORD, WORD*);	/* Write data to the open file */
-FRESULT pf_lseek (DWORD);						/* Move file pointer of the open file */
+int pf_open (const char*);					/* Open a file */
+FRESULT pf_read (int handle, void*, WORD, WORD*);			/* Read data from the open file */
+FRESULT pf_write (int handle, const void*, WORD, WORD*);	/* Write data to the open file */
+FRESULT pf_lseek (int handle, DWORD);						/* Move file pointer of the open file */
+FRESULT pf_close (int handle);
+unsigned int pf_filesize(int handle);
 FRESULT pf_opendir (DIR*, const char*);			/* Open a directory */
 FRESULT pf_readdir (DIR*, FILINFO*);			/* Read a directory item from the open directory */
 
+FATFS *GetFatFS();
 
 
 /*--------------------------------------------------------------*/

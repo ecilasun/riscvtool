@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "nekoichi.h"
 #include <math.h>
 
 uint16_t blockRAMTable[1024];

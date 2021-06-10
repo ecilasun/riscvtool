@@ -22,10 +22,10 @@
 /                     Fixed fails to open objects with DBCS character.
 /----------------------------------------------------------------------------*/
 
-#include "FAT.h"		/* Petit FatFs configurations and declarations */
+#include "fat.h"		/* Petit FatFs configurations and declarations */
 #include "diskio.h"		/* Declarations of low level disk I/O functions */
-#include "utils.h"
-
+#include "nekoichi.h"
+#include <stdio.h>
 
 /*--------------------------------------------------------------------------
    Module Private Definitions
@@ -313,7 +313,20 @@
 #define	DIR_FstClusLO		26
 #define	DIR_FileSize		28
 
+typedef struct 
+{
+	DWORD id;
+	CLUST	org_clust;	/* File start cluster */
+	CLUST	curr_clust;	/* File current cluster */
+	DWORD	fsize;		/* File size */
+	DWORD	fptr;		/* File R/W pointer */
+	BYTE	flag;		/* File status flags */
+	DWORD	dsect;		/* File current data sector */
+} SFileHandle;
 
+/* file handles */
+SFileHandle filehandles[MAX_FATFS_HANDLES];
+DWORD nexthandle;
 
 /*--------------------------------------------------------------------------
    Private Functions
@@ -323,6 +336,8 @@
 static
 FATFS *FatFs;	/* Pointer to the file system object (logical drive) */
 
+
+FATFS *GetFatFS() { return FatFs; }
 
 /* Fill memory */
 static
@@ -741,7 +756,10 @@ FRESULT pf_mount (
 	if (!fs) return FR_OK;				/* Unregister fs object */
 
 	if (disk_initialize() & STA_NOINIT)	/* Check if the drive is ready or not */
+	{
+		//I_Error ("pf_mount: disk not ready");
 		return FR_NOT_READY;
+	}
 
 	/* Search FAT partition on the drive */
 	bsect = 0;
@@ -758,11 +776,23 @@ FRESULT pf_mount (
 		}
 	}
 
-	if (fmt == 3) return FR_DISK_ERR;
-	if (fmt) return FR_NO_FILESYSTEM;	/* No valid FAT patition is found */
+	if (fmt == 3)
+	{
+		//I_Error ("pf_mount: disk error");
+		return FR_DISK_ERR;
+	}
+	if (fmt)
+	{
+		//I_Error ("pf_mount: no fs");
+		return FR_NO_FILESYSTEM;	/* No valid FAT patition is found */
+	}
 
 	/* Initialize the file system object */
-	if (disk_readp(buf, bsect, 13, sizeof(buf))) return FR_DISK_ERR;
+	if (disk_readp(buf, bsect, 13, sizeof(buf)))
+	{
+		//I_Error ("pf_mount: disk error");
+		return FR_DISK_ERR;
+	}
 
 	fsize = LD_WORD(buf+BPB_FATSz16-13);				/* Number of sectors per FAT */
 	if (!fsize) fsize = LD_DWORD(buf+BPB_FATSz32-13);
@@ -780,17 +810,22 @@ FRESULT pf_mount (
 
 	fmt = FS_FAT16;							/* Determine the FAT sub type */
 	if (mclst < 0xFF7) 						/* Number of clusters < 0xFF5 */
+	{
 #if _FS_FAT12
 		fmt = FS_FAT12;
 #else
+		//I_Error ("pf_mount: no fs");
 		return FR_NO_FILESYSTEM;
 #endif
+	}
 	if (mclst >= 0xFFF7)					/* Number of clusters >= 0xFFF5 */
+	{
 #if _FS_FAT32
 		fmt = FS_FAT32;
 #else
 		return FR_NO_FILESYSTEM;
 #endif
+	}
 
 	fs->fs_type = fmt;		/* FAT sub-type */
 	if (_FS_FAT32 && fmt == FS_FAT32)
@@ -799,10 +834,9 @@ FRESULT pf_mount (
 		fs->dirbase = fs->fatbase + fsize;				/* Root directory start sector (lba) */
 	fs->database = fs->fatbase + fsize + fs->n_rootdir / 16;	/* Data start sector (lba) */
 
-	fs->flag = 0;
+	//fs->flag = 0;
 	FatFs = fs;
 
-    //EchoUART("mount OK\r\n");
 	return FR_OK;
 }
 
@@ -813,7 +847,7 @@ FRESULT pf_mount (
 /* Open or Create a File                                                 */
 /*-----------------------------------------------------------------------*/
 
-FRESULT pf_open (
+int pf_open (
 	const char *path	/* Pointer to the file name */
 )
 {
@@ -822,23 +856,37 @@ FRESULT pf_open (
 	BYTE sp[12], dir[32];
 	FATFS *fs = FatFs;
 
-
 	if (!fs)						/* Check file system */
-		return FR_NOT_ENABLED;
+	{
+		//I_Error ("pf_open: no fs");
+		return -1;//FR_NOT_ENABLED;
+	}
 
-	fs->flag = 0;
 	dj.fn = sp;
 	res = follow_path(&dj, dir, path);	/* Follow the file path */
-	if (res != FR_OK) return res;		/* Follow failed */
+	if (res != FR_OK)
+	{
+		//I_Error ("pf_open: dir follow failed");
+		return -1;//res;		/* Follow failed */
+	}
 	if (!dir[0] || (dir[DIR_Attr] & AM_DIR))	/* It is a directory */
-		return FR_NO_FILE;
+		return -1;//FR_NO_FILE;
 
-	fs->org_clust = LD_CLUST(dir);			/* File start cluster */
-	fs->fsize = LD_DWORD(dir+DIR_FileSize);	/* File size */
-	fs->fptr = 0;						/* File pointer */
-	fs->flag = FA_OPENED;
+	// Set file handle
+	filehandles[nexthandle].id = nexthandle; 			/* Ordinal in file handle list */
+	filehandles[nexthandle].org_clust = LD_CLUST(dir);			/* File start cluster */
+	filehandles[nexthandle].fsize = LD_DWORD(dir+DIR_FileSize);	/* File size */
+	filehandles[nexthandle].fptr = 0;						/* File pointer */
+	filehandles[nexthandle].flag = FA_OPENED;
 
-	return FR_OK;
+	nexthandle++;
+	if (nexthandle>=MAX_FATFS_HANDLES)
+	{
+		//I_Error ("pf_open: too many file handles");
+		return -1;//FR_DISK_ERR; // Find a more suitable error
+	}
+
+	return filehandles[nexthandle].id;//FR_OK;
 }
 
 
@@ -850,6 +898,7 @@ FRESULT pf_open (
 #if _USE_READ
 
 FRESULT pf_read (
+	int handle,
 	void* buff,		/* Pointer to the read buffer (NULL:Forward data to the stream)*/
 	WORD btr,		/* Number of bytes to read */
 	WORD* br		/* Pointer to number of bytes read */
@@ -862,40 +911,65 @@ FRESULT pf_read (
 	BYTE cs, *rbuff = (BYTE *)buff;
 	FATFS *fs = FatFs;
 
-
 	*br = 0;
-	if (!fs) return FR_NOT_ENABLED;		/* Check file system */
-	if (!(fs->flag & FA_OPENED))		/* Check if opened */
-		return FR_NOT_OPENED;
+	if (!fs)
+	{
+		//I_Error ("pf_read(%d): no fs", handle);
+		return FR_NOT_ENABLED;		/* Check file system */
+	}
 
-	remain = fs->fsize - fs->fptr;
+	if (handle==-1)
+	{
+		//I_Error ("pf_read(%d): file index error", handle);
+		return FR_NOT_OPENED;
+	}
+
+	SFileHandle *h = &filehandles[handle];
+	if (!(h->flag & FA_OPENED))		/* Check if opened */
+	{
+		//I_Error ("pf_read(%d): file not opened", handle);
+		return FR_NOT_OPENED;
+	}
+
+	remain = h->fsize - h->fptr;
 	if (btr > remain) btr = (WORD)remain;			/* Truncate btr by remaining bytes */
 
 	while (btr)	{									/* Repeat until all data transferred */
-		if ((fs->fptr % 512) == 0) {				/* On the sector boundary? */
-			cs = (BYTE)(fs->fptr / 512 & (fs->csize - 1));	/* Sector offset in the cluster */
+		if ((h->fptr % 512) == 0) {				/* On the sector boundary? */
+			cs = (BYTE)(h->fptr / 512 & (fs->csize - 1));	/* Sector offset in the cluster */
 			if (!cs) {								/* On the cluster boundary? */
-				clst = (fs->fptr == 0) ?			/* On the top of the file? */
-					fs->org_clust : get_fat(fs->curr_clust);
-				if (clst <= 1) goto fr_abort;
-				fs->curr_clust = clst;				/* Update current cluster */
+				clst = (h->fptr == 0) ?			/* On the top of the file? */
+					h->org_clust : get_fat(h->curr_clust);
+				if (clst <= 1)
+				{
+					//I_Error ("pf_read(%d): disk error clst<=1", handle);
+					goto fr_abort;
+				}
+				h->curr_clust = clst;				/* Update current cluster */
 			}
-			sect = clust2sect(fs->curr_clust);		/* Get current sector */
-			if (!sect) goto fr_abort;
-			fs->dsect = sect + cs;
+			sect = clust2sect(h->curr_clust);		/* Get current sector */
+			if (!sect)
+			{
+				//I_Error ("pf_read(%d): disk error !sect", handle);
+				goto fr_abort;
+			}
+			h->dsect = sect + cs;
 		}
-		rcnt = (WORD)(512 - (fs->fptr % 512));		/* Get partial sector data from sector buffer */
+		rcnt = (WORD)(512 - (h->fptr % 512));		/* Get partial sector data from sector buffer */
 		if (rcnt > btr) rcnt = btr;
-		dr = disk_readp(!buff ? 0 : rbuff, fs->dsect, (WORD)(fs->fptr % 512), rcnt);
-		if (dr) goto fr_abort;
-		fs->fptr += rcnt; rbuff += rcnt;			/* Update pointers and counters */
+		dr = disk_readp(!buff ? 0 : rbuff, h->dsect, (WORD)(h->fptr % 512), rcnt);
+		if (dr)
+		{
+			//I_Error ("pf_read(%d): disk error disk_readp()!=0 buff:%.8X rcnt:%.8X", handle, buff, rcnt);
+			goto fr_abort;
+		}
+		h->fptr += rcnt; rbuff += rcnt;			/* Update pointers and counters */
 		btr -= rcnt; *br += rcnt;
 	}
-
 	return FR_OK;
 
 fr_abort:
-	fs->flag = 0;
+	h->flag = 0;
 	return FR_DISK_ERR;
 }
 #endif
@@ -908,6 +982,7 @@ fr_abort:
 #if _USE_WRITE
 
 FRESULT pf_write (
+	int handle,
 	const void* buff,	/* Pointer to the data to be written */
 	WORD btw,			/* Number of bytes to write (0:Finalize the current write operation) */
 	WORD* bw			/* Pointer to number of bytes written */
@@ -979,6 +1054,7 @@ fw_abort:
 #if _USE_LSEEK
 
 FRESULT pf_lseek (
+	int handle,
 	DWORD ofs		/* File pointer from top of file */
 )
 {
@@ -987,45 +1063,79 @@ FRESULT pf_lseek (
 	FATFS *fs = FatFs;
 
 
-	if (!fs) return FR_NOT_ENABLED;		/* Check file system */
-	if (!(fs->flag & FA_OPENED))		/* Check if opened */
-			return FR_NOT_OPENED;
+	if (!fs)
+	{
+		//I_Error ("pf_lseek: no fs");
+		return FR_NOT_ENABLED;		/* Check file system */
+	}
 
-	if (ofs > fs->fsize) ofs = fs->fsize;	/* Clip offset with the file size */
-	ifptr = fs->fptr;
-	fs->fptr = 0;
+	if (handle==-1)
+	{
+		//I_Error ("pf_read: file index error");
+		return FR_NOT_OPENED;
+	}
+
+	SFileHandle *h = &filehandles[handle];
+	if (!(h->flag & FA_OPENED))		/* Check if opened */
+	{
+		//I_Error ("pf_lseek: file not opened");
+		return FR_NOT_OPENED;
+	}
+
+	if (ofs > h->fsize) ofs = h->fsize;	/* Clip offset with the file size */
+	ifptr = h->fptr;
+	h->fptr = 0;
 	if (ofs > 0) {
 		bcs = (DWORD)fs->csize * 512;	/* Cluster size (byte) */
 		if (ifptr > 0 &&
 			(ofs - 1) / bcs >= (ifptr - 1) / bcs) {	/* When seek to same or following cluster, */
-			fs->fptr = (ifptr - 1) & ~(bcs - 1);	/* start from the current cluster */
-			ofs -= fs->fptr;
-			clst = fs->curr_clust;
+			h->fptr = (ifptr - 1) & ~(bcs - 1);	/* start from the current cluster */
+			ofs -= h->fptr;
+			clst = h->curr_clust;
 		} else {							/* When seek to back cluster, */
-			clst = fs->org_clust;			/* start from the first cluster */
-			fs->curr_clust = clst;
+			clst = h->org_clust;			/* start from the first cluster */
+			h->curr_clust = clst;
 		}
 		while (ofs > bcs) {				/* Cluster following loop */
 			clst = get_fat(clst);		/* Follow cluster chain */
 			if (clst <= 1 || clst >= fs->n_fatent) goto fe_abort;
-			fs->curr_clust = clst;
-			fs->fptr += bcs;
+			h->curr_clust = clst;
+			h->fptr += bcs;
 			ofs -= bcs;
 		}
-		fs->fptr += ofs;
+		h->fptr += ofs;
 		sect = clust2sect(clst);		/* Current sector */
 		if (!sect) goto fe_abort;
-		fs->dsect = sect + (fs->fptr / 512 & (fs->csize - 1));
+		h->dsect = sect + (h->fptr / 512 & (fs->csize - 1));
 	}
 
 	return FR_OK;
 
 fe_abort:
-	fs->flag = 0;
+	h->flag = 0;
+	//I_Error ("pf_lseek: disk error");
 	return FR_DISK_ERR;
 }
 #endif
 
+FRESULT pf_close(int handle)
+{
+	// TODO:
+	return FR_OK;
+}
+
+unsigned int pf_filesize(int handle)
+{
+	if (handle==-1)
+	{
+		//I_Error ("pf_read: file index error");
+		return FR_NOT_OPENED;
+	}
+
+	SFileHandle *h = &filehandles[handle];
+
+	return h->fsize;
+}
 
 
 /*-----------------------------------------------------------------------*/

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "utils.h"
+#include "nekoichi.h"
 
 static char consoleText[32*24];
 static int cursorx = 0;

@@ -6,10 +6,10 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include "utils.h"
+#include "nekoichi.h"
 #include "gpu.h"
-#include "SDCARD.h"
-#include "FAT.h"
+#include "sdcard.h"
+#include "fat.h"
 #include "console.h"
 #include "elf.h"
 #include "nekoichitask.h"
@@ -56,76 +56,99 @@ uint32_t hours, minutes, seconds;
 uint32_t breakpoint_triggered = 0;
 uint32_t saved_instruction = 0;
 
-void ParseELFHeaderAndLoadSections(SElfFileHeader32 *fheader)
+void ParseELFHeaderAndLoadSections(FILE *fp, SElfFileHeader32 *fheader, const uint32_t offset)
 {
    if (fheader->m_Magic != 0x464C457F)
    {
-       EchoConsole("Failed: expecting 0x7F+'ELF'\n");
+       printf("Failed: expecting 0x7F+'ELF'\n");
        return;
    }
 
-   branchaddress = fheader->m_Entry;
-   EchoUART("Loading");
-
-   WORD bytesread;
+   branchaddress = offset + fheader->m_Entry;
 
    // Read program header
    SElfProgramHeader32 pheader;
-   pf_lseek(fheader->m_PHOff);
-   pf_read(&pheader, sizeof(SElfProgramHeader32), &bytesread);
+   fseek(fp, fheader->m_PHOff, SEEK_SET);
+   fread(&pheader, sizeof(SElfProgramHeader32), 1, fp);
 
    // Read string table section header
    unsigned int stringtableindex = fheader->m_SHStrndx;
    SElfSectionHeader32 stringtablesection;
-   pf_lseek(fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
-   pf_read(&stringtablesection, sizeof(SElfSectionHeader32), &bytesread);
+   fseek(fp, fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex, SEEK_SET);
+   fread(&stringtablesection, sizeof(SElfSectionHeader32), 1, fp);
 
    // Allocate memory for and read string table
    char *names = (char *)malloc(stringtablesection.m_Size);
-   pf_lseek(stringtablesection.m_Offset);
-   pf_read(names, stringtablesection.m_Size, &bytesread);
+   fseek(fp, stringtablesection.m_Offset, SEEK_SET);
+   fread(names, stringtablesection.m_Size, 1, fp);
 
    // Load all loadable sections
    for(unsigned short i=0; i<fheader->m_SHNum; ++i)
    {
       // Seek-load section headers as needed
       SElfSectionHeader32 sheader;
-      pf_lseek(fheader->m_SHOff+fheader->m_SHEntSize*i);
-      pf_read(&sheader, sizeof(SElfSectionHeader32), &bytesread);
+      fseek(fp, fheader->m_SHOff+fheader->m_SHEntSize*i, SEEK_SET);
+      fread(&sheader, sizeof(SElfSectionHeader32), 1, fp);
 
       // If this is a section worth loading...
       if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
       {
          // ...place it in memory
-         uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
-         pf_lseek(sheader.m_Offset);
-         EchoUART(".");
-         pf_read(elfsectionpointer, sheader.m_Size, &bytesread);
+         uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr + offset;
+         fseek(fp, sheader.m_Offset, SEEK_SET);
+         printf("Loading section '%s' @0x%.8X, %.8X bytes\r\n", names+sheader.m_NameOffset, (unsigned int)elfsectionpointer, sheader.m_Size);
+         fread(elfsectionpointer, sheader.m_Size, 1, fp);
       }
    }
 
    free(names);
-   EchoUART("\r\n");
+   printf("Done.\r\n");
+}
+
+void LoadFile(char *filename, uint32_t base)
+{
+   FILE *fp = fopen(filename, "rb");
+   if (fp != nullptr)
+   {
+      // File size: Fs.fsize
+      //uint32_t fs = pf_filesize(fh); // ?
+      fread((void*)base, 512, 1, fp);
+      fclose(fp);
+   }
+}
+
+void Dump(uint32_t base, uint32_t offset)
+{
+   char str[5];
+   str[4]=0;
+   for(uint32_t i=0;i<16;++i) // Fs.fsize
+   {
+      uint32_t V = *(uint32_t*)(base+4*offset+4*i);
+      str[0] = V&0x000000FF; str[0] = str[0]<32 ? '.':str[0];
+      str[1] = (V>>8)&0x000000FF; str[1] = str[1]<32 ? '.':str[1];
+      str[2] = (V>>16)&0x000000FF; str[2] = str[2]<32 ? '.':str[2];
+      str[3] = (V>>24)&0x000000FF; str[3] = str[3]<32 ? '.':str[3];
+      printf("0x%.8X: %s\r\n", (unsigned int)V, str);
+   }
 }
 
 int LoadELF(const char *filename)
 {
-   FRESULT fr = pf_open(filename);
-   if (fr == FR_OK)
+   const uint32_t offset = 0x00000000; // To be used during debug
+   FILE *fp = fopen(filename, "rb");
+   if (fp != nullptr)
    {
       // File size: Fs.fsize
-      WORD bytesread;
       // Read header
       SElfFileHeader32 fheader;
-      pf_read(&fheader, sizeof(fheader), &bytesread);
-      ParseELFHeaderAndLoadSections(&fheader);
+      fread(&fheader, sizeof(fheader), 1, fp);
+      ParseELFHeaderAndLoadSections(fp, &fheader, offset);
+      fclose(fp);
       return 0;
    }
    else
    {
-      EchoConsole("Not found:"); EchoUART("Not found:");
-      EchoConsole(filename); EchoUART(filename);
-      EchoConsole("\r\n"); EchoUART("\r\n");
+      printf("File '%s' not found\r\n", filename);
       return -1;
    }
 }
@@ -141,32 +164,28 @@ void ListDir()
          re = pf_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
-            EchoConsole(finf.fname); EchoUART(finf.fname);
-            EchoConsole(" "); EchoUART(" ");
-            EchoConsole(finf.fsize); EchoHex(finf.fsize);
-            EchoConsole(" "); EchoUART(" ");
-            /*EchoConsole(1944 + ((finf.ftime&0xFE00)>>9));
-            EchoConsole("/");
-            EchoConsole((finf.ftime&0x1E0)>>5);
-            EchoConsole("/");
-            EchoConsole(finf.ftime&0x1F);*/
-            if (finf.fattrib&0x01) { EchoConsole("r"); EchoUART("r"); }
-            if (finf.fattrib&0x02) { EchoConsole("h"); EchoUART("h"); }
-            if (finf.fattrib&0x04) { EchoConsole("s"); EchoUART("s"); }
-            if (finf.fattrib&0x08) { EchoConsole("l"); EchoUART("l"); }
-            if (finf.fattrib&0x0F) { EchoConsole("L"); EchoUART("L"); }
-            if (finf.fattrib&0x10) { EchoConsole("d"); EchoUART("d"); }
-            if (finf.fattrib&0x20) { EchoConsole("a"); EchoUART("a"); }
-            EchoConsole("\r\n"); EchoUART("\r\n");
+            int fidx=0;
+            char flags[64]="";
+            if (finf.fattrib&0x01) flags[fidx++]='r';
+            if (finf.fattrib&0x02) flags[fidx++]='h';
+            if (finf.fattrib&0x04) flags[fidx++]='s';
+            if (finf.fattrib&0x08) flags[fidx++]='l';
+            if (finf.fattrib&0x0F) flags[fidx++]='L';
+            if (finf.fattrib&0x10) flags[fidx++]='d';
+            if (finf.fattrib&0x20) flags[fidx++]='a';
+            flags[fidx++]=0;
+            printf("%s %d %s\r\n", finf.fname, (int)finf.fsize, flags);
          }
       } while(re == FR_OK && dir.sect!=0);
    }
    else
-      EchoUART(FRtoString[re]);
+      printf("%s", FRtoString[re]);
 }
 
 void HandleDemoCommands(char checkchar)
 {
+   static uint32_t doffset = 0;
+
    if (checkchar == 8) // Backspace? (make sure your terminal uses ctrl+h for backspace)
    {
       ConsoleCursorStepBack();
@@ -185,7 +204,7 @@ void HandleDemoCommands(char checkchar)
       ConsoleStringAtRow(cmdbuffer);
       // Next, send a newline to go down one
       EchoConsole("\r\n");
-      EchoUART("\r\n");
+      printf("\r\n");
 
       // Clear the whole screen
       if ((cmdbuffer[0]=='c') && (cmdbuffer[1]=='l') && (cmdbuffer[2]=='s'))
@@ -195,43 +214,38 @@ void HandleDemoCommands(char checkchar)
       else if ((cmdbuffer[0]=='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
       {
          EchoConsole("dir: list files\r\n");
-         EchoConsole("load filename: load and run ELF\n\r");
+         EchoConsole("run filename: load and run ELF\n\r");
+         EchoConsole("load filename: load at 0x0A000000\n\r");
+         EchoConsole("dump: dump at 0x0A000000 & inc offset\n\r");
          EchoConsole("cls: clear screen\r\n");
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
-         EchoConsole("mem: DDR3 test\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
          ListDir();
       }
-      else if ((cmdbuffer[0]=='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
+      else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
       {
-         if (LoadELF(&cmdbuffer[5]) != -1) // Skip 'load ' part
+         if (LoadELF(&cmdbuffer[4]) != -1) // Skip 'run ' part
          {
             task_array[3].PC = branchaddress;
             num_tasks = 4; // Next time, scheduler will consider the loaded task as well
             recessmaintask = 1;
          }
       }
+      else if ((cmdbuffer[0]=='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
+      {
+         doffset = 0;
+         LoadFile(&cmdbuffer[5], 0x0A000000); // Skip 'load ' part
+      }
+      else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='p'))
+      {
+         Dump(0x0A000000, doffset);
+         doffset += 16;
+      }
       else if ((cmdbuffer[0]=='t') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='e'))
          showtime = (showtime+1)%2;
-      else if ((cmdbuffer[0]=='m') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='m'))
-      {
-         EchoUART("DDR3 test\r\n");
-         uint32_t *ddr3mem = (uint32_t *)0x0003FFF0;
-         for (uint32_t i=0;i<32;++i)
-            ddr3mem[i] = 0xFEFDFCF0+i;
-         for (uint32_t i=0;i<32;++i)
-         {
-            uint32_t M = ddr3mem[i];
-            EchoUART("0x");
-            EchoHex((uint32_t)ddr3mem+i);
-            EchoUART(": 0x");
-            EchoHex(M);
-            EchoUART("\r\n");
-         }
-      }
    }
 
    if (escapemode)
@@ -342,7 +356,7 @@ int OSMainTask()
       {
          sdcardtriggerread = 0;
          sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
-         EchoUART(sdcardavailable ? "SDCard inserted\r\n" : "SDCard not inserted\r\n");
+         printf(sdcardavailable ? "SDCard inserted\r\n" : "SDCard not inserted\r\n");
          if (sdcardavailable && LoadELF("BOOT.ELF") != -1)
          {
             task_array[3].PC = branchaddress;
@@ -587,14 +601,14 @@ void external_interrupt(uint32_t deviceID)
       int osbutton = 0;
       switch(hardwareswitchstates ^ oldhardwareswitchstates)
       {
-         case 0x01: EchoUART(hardwareswitchstates&0x01 ? "GDBServer\r\n" : "Terminal\r\n"); break;
-         case 0x02: EchoUART(hardwareswitchstates&0x02 ? "S1HIGH\r\n" : "S1LOW\r\n"); break;
-         case 0x04: EchoUART(hardwareswitchstates&0x04 ? "S2HIGH\r\n" : "S2LOW\r\n"); break;
-         case 0x08: EchoUART(hardwareswitchstates&0x08 ? "S3HIGH\r\n" : "S3LOW\r\n"); break;
-         case 0x10: EchoUART(hardwareswitchstates&0x10 ? "...\r\n" : "Toggle OSMain\r\n"); osbutton = 1; break;
-         case 0x20: EchoUART(hardwareswitchstates&0x20 ? "B1DOWN\r\n" : "B1UP\r\n"); break;
-         case 0x40: EchoUART(hardwareswitchstates&0x40 ? "B2DOWN\r\n" : "B2UP\r\n"); break;
-         //case 0x80: EchoUART(hardwareswitchstates&0x80 ? "SDREMOVED\r\n" : "SDINSERTED\r\n"); break;
+         case 0x01: printf(hardwareswitchstates&0x01 ? "GDBServer\r\n" : "Terminal\r\n"); break;
+         case 0x02: printf(hardwareswitchstates&0x02 ? "S1HIGH\r\n" : "S1LOW\r\n"); break;
+         case 0x04: printf(hardwareswitchstates&0x04 ? "S2HIGH\r\n" : "S2LOW\r\n"); break;
+         case 0x08: printf(hardwareswitchstates&0x08 ? "S3HIGH\r\n" : "S3LOW\r\n"); break;
+         case 0x10: printf(hardwareswitchstates&0x10 ? "...\r\n" : "Toggle OSMain\r\n"); osbutton = 1; break;
+         case 0x20: printf(hardwareswitchstates&0x20 ? "B1DOWN\r\n" : "B1UP\r\n"); break;
+         case 0x40: printf(hardwareswitchstates&0x40 ? "B2DOWN\r\n" : "B2UP\r\n"); break;
+         //case 0x80: printf(hardwareswitchstates&0x80 ? "SDREMOVED\r\n" : "SDINSERTED\r\n"); break;
          default: break;
       };
 
@@ -786,21 +800,23 @@ void SetupInterruptHandlers()
 
 int main()
 {
-   EchoUART("\r\n\r\n");
-   EchoUART("+-------------------------+\r\n");
-   EchoUART("|          ************** |\r\n");
-   EchoUART("| ########   ************ |\r\n");
-   EchoUART("| #########  ************ |\r\n");
-   EchoUART("| ########   ***********  |\r\n");
-   EchoUART("| #        ***********    |\r\n");
-   EchoUART("| ##   *************   ## |\r\n");
-   EchoUART("| ####   *********   #### |\r\n");
-   EchoUART("| ######   *****   ###### |\r\n");
-   EchoUART("| ########   *   ######## |\r\n");
-   EchoUART("| ##########   ########## |\r\n");
-   EchoUART("+-------------------------+\r\n");
+   setbuf(stdout, NULL);
 
-   EchoUART("\r\nNekoIchi [v005] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
+   printf("\r\n\r\n");
+   printf("+-------------------------+\r\n");
+   printf("|          ************** |\r\n");
+   printf("| ########   ************ |\r\n");
+   printf("| #########  ************ |\r\n");
+   printf("| ########   ***********  |\r\n");
+   printf("| #        ***********    |\r\n");
+   printf("| ##   *************   ## |\r\n");
+   printf("| ####   *********   #### |\r\n");
+   printf("| ######   *****   ###### |\r\n");
+   printf("| ########   *   ######## |\r\n");
+   printf("| ##########   ########## |\r\n");
+   printf("+-------------------------+\r\n");
+
+   printf("\r\nNekoIchi [v005] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Grab the initial state of switches
    // This read does not trigger an interrupt but reads the live state

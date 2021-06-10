@@ -9,10 +9,10 @@
 #define STARTUP_ROM
 #include "rom_nekoichi_rvcrt0.h"
 
-#include "utils.h"
+#include "nekoichi.h"
 #include "gpu.h"
 
-#include "SDCARD.h"
+#include "sdcard.h"
 
 volatile uint32_t gpuSideSubmitCounter = 0x00000000;
 uint32_t gpuSubmitCounter = 0;
@@ -187,7 +187,7 @@ void RunBinaryBlob()
       "fmv.w.x	f29, zero \n"
       "fmv.w.x	f30, zero \n"
       "fmv.w.x	f31, zero \n"
-      "li x12, 0x0003FFF0 \n" // we're not coming back to the loader, set SP to end of RAM
+      "li x12, 0x0FFFF000 \n" // we're not coming back to the loader, set SP to near the end of RAM
       "mv sp, x12 \n"
       "ret \n"
       : 
@@ -215,7 +215,7 @@ int main()
    EchoUART("| ##########   ########## |\r\n");
    EchoUART("+-------------------------+\r\n");
 
-   EchoUART("\r\nNekoIchi [v005] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoIchi [v006] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Initialize video page
    GPUSetRegister(2, vramPage);

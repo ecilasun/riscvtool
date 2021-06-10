@@ -5,10 +5,10 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include "utils.h"
+#include "nekoichi.h"
 #include "gpu.h"
-#include "SDCARD.h"
-#include "FAT.h"
+#include "sdcard.h"
+#include "fat.h"
 #include "console.h"
 #include "elf.h"
 
@@ -25,7 +25,7 @@ const char *FRtoString[]={
 	"FR_NO_FILESYSTEM\r\n"
 };
 
-void parseelfheader(SElfFileHeader32 *fheader)
+void parseelfheader(int fh, SElfFileHeader32 *fheader)
 {
    if (fheader->m_Magic != 0x464C457F)
    {
@@ -42,27 +42,27 @@ void parseelfheader(SElfFileHeader32 *fheader)
 
    // Read program header
    SElfProgramHeader32 pheader;
-   pf_lseek(fheader->m_PHOff);
-   pf_read(&pheader, sizeof(SElfProgramHeader32), &bytesread);
+   pf_lseek(fh, fheader->m_PHOff);
+   pf_read(fh, &pheader, sizeof(SElfProgramHeader32), &bytesread);
 
    // Read string table section header
    unsigned int stringtableindex = fheader->m_SHStrndx;
    SElfSectionHeader32 stringtablesection;
-   pf_lseek(fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
-   pf_read(&stringtablesection, sizeof(SElfSectionHeader32), &bytesread);
+   pf_lseek(fh, fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
+   pf_read(fh, &stringtablesection, sizeof(SElfSectionHeader32), &bytesread);
 
    // Allocate memory for and read string table
    char *names = (char *)malloc(stringtablesection.m_Size);
-   pf_lseek(stringtablesection.m_Offset);
-   pf_read(names, stringtablesection.m_Size, &bytesread);
+   pf_lseek(fh, stringtablesection.m_Offset);
+   pf_read(fh, names, stringtablesection.m_Size, &bytesread);
 
    // Dump all section names and info
    for(unsigned short i=0; i<fheader->m_SHNum; ++i)
    {
       // Seek-load section headers as needed
       SElfSectionHeader32 sheader;
-      pf_lseek(fheader->m_SHOff+fheader->m_SHEntSize*i);
-      pf_read(&sheader, sizeof(SElfSectionHeader32), &bytesread);
+      pf_lseek(fh, fheader->m_SHOff+fheader->m_SHEntSize*i);
+      pf_read(fh, &sheader, sizeof(SElfSectionHeader32), &bytesread);
 
       // If this is a section worth loading...
       if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
@@ -90,15 +90,16 @@ void parseelfheader(SElfFileHeader32 *fheader)
 
 void loadelf(char *commandline)
 {
-   FRESULT fr = pf_open(&commandline[5]);
-   if (fr == FR_OK)
+   int fh = pf_open(&commandline[5]);
+   if (fh != -1)
    {
       // File size: Fs.fsize
       WORD bytesread;
       // Read header
       SElfFileHeader32 fheader;
-      pf_read(&fheader, sizeof(fheader), &bytesread);
-      parseelfheader(&fheader);
+      pf_read(fh, &fheader, sizeof(fheader), &bytesread);
+      parseelfheader(fh, &fheader);
+      pf_close(fh);
    }
    else
    {

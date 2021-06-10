@@ -4,15 +4,15 @@ ROM_nekoichi.elf:     file format elf32-littleriscv
 SYMBOL TABLE:
 00000000 l    d  .boot	00000000 .boot
 00000088 l    d  .text	00000000 .text
-000019b8 l    d  .rodata	00000000 .rodata
-00001f64 l    d  .srodata	00000000 .srodata
-00001f68 l    d  .eh_frame	00000000 .eh_frame
-00002098 l    d  .data	00000000 .data
-000024d4 l    d  .got	00000000 .got
-00002508 l    d  .got.plt	00000000 .got.plt
-00002510 l    d  .sdata	00000000 .sdata
-00002598 l    d  .sbss	00000000 .sbss
-000025a4 l    d  .bss	00000000 .bss
+000019b4 l    d  .rodata	00000000 .rodata
+00001f60 l    d  .srodata	00000000 .srodata
+00001f64 l    d  .eh_frame	00000000 .eh_frame
+00002090 l    d  .data	00000000 .data
+000024cc l    d  .got	00000000 .got
+00002500 l    d  .got.plt	00000000 .got.plt
+00002508 l    d  .sdata	00000000 .sdata
+00002590 l    d  .sbss	00000000 .sbss
+0000259c l    d  .bss	00000000 .bss
 00000000 l    d  .comment	00000000 .comment
 00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
 00000000 l    d  .debug_info	00000000 .debug_info
@@ -24,7 +24,7 @@ SYMBOL TABLE:
 00000000 l    d  .debug_str	00000000 .debug_str
 00000000 l    df *ABS*	00000000 ROM_nekoichi.cpp
 00000050 l       .boot	00000000 noatexitfound
-000024c0 l     O .data	00000004 _ZZ16DrawRotatingRectffE4roll
+000024b8 l     O .data	00000004 _ZZ16DrawRotatingRectffE4roll
 00000000 l    df *ABS*	00000000 atexit.c
 00000000 l    df *ABS*	00000000 fini.c
 00000000 l    df *ABS*	00000000 init.c
@@ -32,49 +32,49 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_cos.c
 00000000 l    df *ABS*	00000000 sf_sin.c
 00000000 l    df *ABS*	00000000 ef_rem_pio2.c
-000019b8 l     O .rodata	00000080 npio2_hw
-00001a38 l     O .rodata	00000318 two_over_pi
+000019b4 l     O .rodata	00000080 npio2_hw
+00001a34 l     O .rodata	00000318 two_over_pi
 00000000 l    df *ABS*	00000000 kf_cos.c
 00000000 l    df *ABS*	00000000 kf_rem_pio2.c
-00001d50 l     O .rodata	0000000c init_jk
-00001d5c l     O .rodata	0000002c PIo2
+00001d4c l     O .rodata	0000000c init_jk
+00001d58 l     O .rodata	0000002c PIo2
 00000000 l    df *ABS*	00000000 kf_sin.c
 00000000 l    df *ABS*	00000000 sf_fabs.c
 00000000 l    df *ABS*	00000000 sf_floor.c
 00000000 l    df *ABS*	00000000 sf_scalbn.c
-00000000 l    df *ABS*	00000000 utils.cpp
+00000000 l    df *ABS*	00000000 nekoichi.cpp
 00000000 l    df *ABS*	00000000 impure.c
-00002098 l     O .data	00000428 impure_data
+00002090 l     O .data	00000428 impure_data
 00000000 l    df *ABS*	00000000 libgcc2.c
 00000000 l    df *ABS*	00000000 
-00001f64 l       .srodata	00000000 __fini_array_end
-00001f64 l       .srodata	00000000 __fini_array_start
-00001f64 l       .srodata	00000000 __init_array_end
-00001f64 l       .srodata	00000000 __preinit_array_end
-000024d4 l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
-00001f64 l       .srodata	00000000 __init_array_start
-00001f64 l       .srodata	00000000 __preinit_array_start
-00001720 g     F .text	000000f8 _Z13RunBinaryBlobv
+00001f60 l       .srodata	00000000 __fini_array_end
+00001f60 l       .srodata	00000000 __fini_array_start
+00001f60 l       .srodata	00000000 __init_array_end
+00001f60 l       .srodata	00000000 __preinit_array_end
+000024cc l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
+00001f60 l       .srodata	00000000 __init_array_start
+00001f60 l       .srodata	00000000 __preinit_array_start
+00001720 g     F .text	000000f4 _Z13RunBinaryBlobv
 00002d10 g       *ABS*	00000000 __global_pointer$
-000020a0 g       .data	00000000 _fdata
+00002090 g       .data	00000000 _fdata
 00000450 g     F .text	000002e4 __ieee754_rem_pio2f
-00001f64 g       .rodata	00000000 _etext
+00001f60 g       .rodata	00000000 _etext
 00002d10 g       .sdata	00000000 _gp
-000024c8 g     O .data	00000004 IO_UARTRX
+000024c0 g     O .data	00000004 IO_UARTRX
 00000088 g       .boot	00000000 _boot
-000025a4 g       .bss	00000000 _bss_start
-000025a0 g     O .sbss	00000004 __malloc_top_pad
+0000259c g       .bss	00000000 _bss_start
+00002598 g     O .sbss	00000004 __malloc_top_pad
 00001178 g     F .text	00000008 fabsf
-0000259c g     O .sbss	00000004 __malloc_max_sbrked_mem
-000024c4 g     O .data	00000004 IO_GPUFIFO
-00001f64 g     O .srodata	00000004 _global_impure_ptr
+00002594 g     O .sbss	00000004 __malloc_max_sbrked_mem
+000024bc g     O .data	00000004 IO_GPUFIFO
+00001f60 g     O .srodata	00000004 _global_impure_ptr
 0000154c g     F .text	0000012c _Z14SubmitGPUFramev
 000000f8 g     F .text	0000009c __libc_init_array
 000010ec g     F .text	0000008c __kernel_sinf
 0000030c g     F .text	000000a0 cosf
-000025b0 g       .bss	00000000 _bss_end
+000025a8 g       .bss	00000000 _bss_end
 0000009c g     F .text	0000005c __libc_fini_array
-000025ac g     O .bss	00000004 vramPage
+000025a4 g     O .bss	00000004 vramPage
 00000734 g     F .text	00000100 __kernel_cosf
 00000088 g       .boot	00000000 _ftext
 00000000 g     F .boot	00000068 _start
@@ -82,24 +82,24 @@ SYMBOL TABLE:
 00001238 g     F .text	00000120 scalbnf
 00000a00 g       *ABS*	00000000 _STACK_SIZE
 00000194 g     F .text	000000dc memset
-00001818 g     F .text	00000174 main
+00001814 g     F .text	00000174 main
 00001678 g     F .text	000000a8 _Z14LoadBinaryBlobv
-00002598 g     O .sbss	00000004 __malloc_max_total_mem
-000025a4 g     O .bss	00000004 gpuSideSubmitCounter
+00002590 g     O .sbss	00000004 __malloc_max_total_mem
+0000259c g     O .bss	00000004 gpuSideSubmitCounter
 00001358 g     F .text	000001f4 _Z16DrawRotatingRectff
 00000088 g     F .text	00000014 atexit
-000024d0 g     O .data	00000004 IO_UARTTX
-000024cc g     O .data	00000004 IO_UARTRXByteCount
-000025b0 g       .bss	00000000 __BSS_END__$
+000024c8 g     O .data	00000004 IO_UARTTX
+000024c4 g     O .data	00000004 IO_UARTRXByteCount
+000025a8 g       .bss	00000000 __BSS_END__$
 000003ac g     F .text	000000a4 sinf
-0000198c g     F .text	0000002c _Z8EchoUARTPKc
-000024d4 g       .data	00000000 _edata
-000025b0 g       .bss	00000000 _end
-000025a8 g     O .bss	00000004 gpuSubmitCounter
+00001988 g     F .text	0000002c _Z8EchoUARTPKc
+000024cc g       .data	00000000 _edata
+000025a8 g       .bss	00000000 _end
+000025a0 g     O .bss	00000004 gpuSubmitCounter
 00000068 g     F .boot	00000020 _exit
 00000834 g     F .text	000008b8 __kernel_rem_pio2f
 00001180 g     F .text	000000b8 floorf
-00002598 g       .sbss	00000000 _fbss
+00002590 g       .sbss	00000000 _fbss
 
 
 
@@ -107,24 +107,24 @@ Disassembly of section .boot:
 
 00000000 <_start>:
    0:	00002197          	auipc	gp,0x2
-   4:	4d81a183          	lw	gp,1240(gp) # 24d8 <_GLOBAL_OFFSET_TABLE_+0x4>
+   4:	4d01a183          	lw	gp,1232(gp) # 24d0 <_GLOBAL_OFFSET_TABLE_+0x4>
    8:	00040637          	lui	a2,0x40
    c:	ff060613          	addi	a2,a2,-16 # 3fff0 <__global_pointer$+0x3d2e0>
   10:	00060113          	mv	sp,a2
   14:	00010433          	add	s0,sp,zero
   18:	00002517          	auipc	a0,0x2
-  1c:	4d452503          	lw	a0,1236(a0) # 24ec <_GLOBAL_OFFSET_TABLE_+0x18>
+  1c:	4cc52503          	lw	a0,1228(a0) # 24e4 <_GLOBAL_OFFSET_TABLE_+0x18>
   20:	00002617          	auipc	a2,0x2
-  24:	4e062603          	lw	a2,1248(a2) # 2500 <_GLOBAL_OFFSET_TABLE_+0x2c>
+  24:	4d862603          	lw	a2,1240(a2) # 24f8 <_GLOBAL_OFFSET_TABLE_+0x2c>
   28:	40a60633          	sub	a2,a2,a0
   2c:	00000593          	li	a1,0
   30:	164000ef          	jal	ra,194 <memset>
   34:	00002517          	auipc	a0,0x2
-  38:	4c052503          	lw	a0,1216(a0) # 24f4 <_GLOBAL_OFFSET_TABLE_+0x20>
+  38:	4b852503          	lw	a0,1208(a0) # 24ec <_GLOBAL_OFFSET_TABLE_+0x20>
   3c:	00050a63          	beqz	a0,50 <noatexitfound>
   40:	00001517          	auipc	a0,0x1
   44:	00002517          	auipc	a0,0x2
-  48:	4a052503          	lw	a0,1184(a0) # 24e4 <_GLOBAL_OFFSET_TABLE_+0x10>
+  48:	49852503          	lw	a0,1176(a0) # 24dc <_GLOBAL_OFFSET_TABLE_+0x10>
   4c:	03c000ef          	jal	ra,88 <_boot>
 
 00000050 <noatexitfound>:
@@ -132,7 +132,7 @@ Disassembly of section .boot:
   54:	00012503          	lw	a0,0(sp)
   58:	00410593          	addi	a1,sp,4
   5c:	00000613          	li	a2,0
-  60:	7b80106f          	j	1818 <main>
+  60:	7b40106f          	j	1814 <main>
   64:	00100073          	ebreak
 
 00000068 <_exit>:
@@ -159,8 +159,8 @@ Disassembly of section .text:
       a0:	00812423          	sw	s0,8(sp)
       a4:	000027b7          	lui	a5,0x2
       a8:	00002437          	lui	s0,0x2
-      ac:	f6440413          	addi	s0,s0,-156 # 1f64 <_global_impure_ptr>
-      b0:	f6478793          	addi	a5,a5,-156 # 1f64 <_global_impure_ptr>
+      ac:	f6040413          	addi	s0,s0,-160 # 1f60 <_global_impure_ptr>
+      b0:	f6078793          	addi	a5,a5,-160 # 1f60 <_global_impure_ptr>
       b4:	408787b3          	sub	a5,a5,s0
       b8:	00912223          	sw	s1,4(sp)
       bc:	00112623          	sw	ra,12(sp)
@@ -185,14 +185,14 @@ Disassembly of section .text:
      100:	01212023          	sw	s2,0(sp)
      104:	00002437          	lui	s0,0x2
      108:	00002937          	lui	s2,0x2
-     10c:	f6440793          	addi	a5,s0,-156 # 1f64 <_global_impure_ptr>
-     110:	f6490913          	addi	s2,s2,-156 # 1f64 <_global_impure_ptr>
+     10c:	f6040793          	addi	a5,s0,-160 # 1f60 <_global_impure_ptr>
+     110:	f6090913          	addi	s2,s2,-160 # 1f60 <_global_impure_ptr>
      114:	40f90933          	sub	s2,s2,a5
      118:	00112623          	sw	ra,12(sp)
      11c:	00912223          	sw	s1,4(sp)
      120:	40295913          	srai	s2,s2,0x2
      124:	02090063          	beqz	s2,144 <__libc_init_array+0x4c>
-     128:	f6440413          	addi	s0,s0,-156
+     128:	f6040413          	addi	s0,s0,-160
      12c:	00000493          	li	s1,0
      130:	00042783          	lw	a5,0(s0)
      134:	00148493          	addi	s1,s1,1
@@ -201,12 +201,12 @@ Disassembly of section .text:
      140:	fe9918e3          	bne	s2,s1,130 <__libc_init_array+0x38>
      144:	00002437          	lui	s0,0x2
      148:	00002937          	lui	s2,0x2
-     14c:	f6440793          	addi	a5,s0,-156 # 1f64 <_global_impure_ptr>
-     150:	f6490913          	addi	s2,s2,-156 # 1f64 <_global_impure_ptr>
+     14c:	f6040793          	addi	a5,s0,-160 # 1f60 <_global_impure_ptr>
+     150:	f6090913          	addi	s2,s2,-160 # 1f60 <_global_impure_ptr>
      154:	40f90933          	sub	s2,s2,a5
      158:	40295913          	srai	s2,s2,0x2
      15c:	02090063          	beqz	s2,17c <__libc_init_array+0x84>
-     160:	f6440413          	addi	s0,s0,-156
+     160:	f6040413          	addi	s0,s0,-160
      164:	00000493          	li	s1,0
      168:	00042783          	lw	a5,0(s0)
      16c:	00148493          	addi	s1,s1,1
@@ -279,7 +279,7 @@ Disassembly of section .text:
 
 00000270 <__register_exitproc>:
      270:	000027b7          	lui	a5,0x2
-     274:	f647a703          	lw	a4,-156(a5) # 1f64 <_global_impure_ptr>
+     274:	f607a703          	lw	a4,-160(a5) # 1f60 <_global_impure_ptr>
      278:	14872783          	lw	a5,328(a4)
      27c:	04078c63          	beqz	a5,2d4 <__register_exitproc+0x64>
      280:	0047a703          	lw	a4,4(a5)
@@ -422,14 +422,14 @@ Disassembly of section .text:
      48c:	04874e63          	blt	a4,s0,4e8 <__ieee754_rem_pio2f+0x98>
      490:	3fc91737          	lui	a4,0x3fc91
      494:	000026b7          	lui	a3,0x2
-     498:	5106a787          	flw	fa5,1296(a3) # 2510 <_GLOBAL_OFFSET_TABLE_+0x3c>
+     498:	5086a787          	flw	fa5,1288(a3) # 2508 <_GLOBAL_OFFSET_TABLE_+0x3c>
      49c:	ff047413          	andi	s0,s0,-16
      4a0:	fd070713          	addi	a4,a4,-48 # 3fc90fd0 <__global_pointer$+0x3fc8e2c0>
      4a4:	24f05a63          	blez	a5,6f8 <__ieee754_rem_pio2f+0x2a8>
      4a8:	08f577d3          	fsub.s	fa5,fa0,fa5
      4ac:	12e40463          	beq	s0,a4,5d4 <__ieee754_rem_pio2f+0x184>
      4b0:	000027b7          	lui	a5,0x2
-     4b4:	5147a707          	flw	fa4,1300(a5) # 2514 <_GLOBAL_OFFSET_TABLE_+0x40>
+     4b4:	50c7a707          	flw	fa4,1292(a5) # 250c <_GLOBAL_OFFSET_TABLE_+0x40>
      4b8:	08e7f6d3          	fsub.s	fa3,fa5,fa4
      4bc:	00100513          	li	a0,1
      4c0:	08d7f7d3          	fsub.s	fa5,fa5,fa3
@@ -454,7 +454,7 @@ Disassembly of section .text:
      50c:	f00407d3          	fmv.w.x	fa5,s0
      510:	f0040753          	fmv.w.x	fa4,s0
      514:	c00797d3          	fcvt.w.s	a5,fa5,rtz
-     518:	8201a687          	flw	fa3,-2016(gp) # 2530 <_GLOBAL_OFFSET_TABLE_+0x5c>
+     518:	8181a687          	flw	fa3,-2024(gp) # 2528 <_GLOBAL_OFFSET_TABLE_+0x5c>
      51c:	f0000653          	fmv.w.x	fa2,zero
      520:	d007f7d3          	fcvt.s.w	fa5,a5
      524:	00300693          	li	a3,3
@@ -473,7 +473,7 @@ Disassembly of section .text:
      558:	0016b693          	seqz	a3,a3
      55c:	00168693          	addi	a3,a3,1
      560:	000027b7          	lui	a5,0x2
-     564:	a3878793          	addi	a5,a5,-1480 # 1a38 <two_over_pi>
+     564:	a3478793          	addi	a5,a5,-1484 # 1a34 <two_over_pi>
      568:	00200713          	li	a4,2
      56c:	00048593          	mv	a1,s1
      570:	00410513          	addi	a0,sp,4
@@ -501,29 +501,29 @@ Disassembly of section .text:
      5c8:	00f4a227          	fsw	fa5,4(s1)
      5cc:	00f4a027          	fsw	fa5,0(s1)
      5d0:	f01ff06f          	j	4d0 <__ieee754_rem_pio2f+0x80>
-     5d4:	80c1a707          	flw	fa4,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x48>
-     5d8:	8081a687          	flw	fa3,-2040(gp) # 2518 <_GLOBAL_OFFSET_TABLE_+0x44>
+     5d4:	8041a707          	flw	fa4,-2044(gp) # 2514 <_GLOBAL_OFFSET_TABLE_+0x48>
+     5d8:	8001a687          	flw	fa3,-2048(gp) # 2510 <_GLOBAL_OFFSET_TABLE_+0x44>
      5dc:	08d7f7d3          	fsub.s	fa5,fa5,fa3
      5e0:	ed9ff06f          	j	4b8 <__ieee754_rem_pio2f+0x68>
      5e4:	395000ef          	jal	ra,1178 <fabsf>
-     5e8:	8101a787          	flw	fa5,-2032(gp) # 2520 <_GLOBAL_OFFSET_TABLE_+0x4c>
-     5ec:	8141a707          	flw	fa4,-2028(gp) # 2524 <_GLOBAL_OFFSET_TABLE_+0x50>
+     5e8:	8081a787          	flw	fa5,-2040(gp) # 2518 <_GLOBAL_OFFSET_TABLE_+0x4c>
+     5ec:	80c1a707          	flw	fa4,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x50>
      5f0:	00002737          	lui	a4,0x2
      5f4:	01f00793          	li	a5,31
      5f8:	70f577c3          	fmadd.s	fa5,fa0,fa5,fa4
      5fc:	c0079553          	fcvt.w.s	a0,fa5,rtz
-     600:	51072787          	flw	fa5,1296(a4) # 2510 <_GLOBAL_OFFSET_TABLE_+0x3c>
+     600:	50872787          	flw	fa5,1288(a4) # 2508 <_GLOBAL_OFFSET_TABLE_+0x3c>
      604:	00002737          	lui	a4,0x2
      608:	d0057753          	fcvt.s.w	fa4,a0
      60c:	50f7754b          	fnmsub.s	fa0,fa4,fa5,fa0
-     610:	51472787          	flw	fa5,1300(a4) # 2514 <_GLOBAL_OFFSET_TABLE_+0x40>
+     610:	50c72787          	flw	fa5,1292(a4) # 250c <_GLOBAL_OFFSET_TABLE_+0x40>
      614:	10f777d3          	fmul.s	fa5,fa4,fa5
      618:	04a7ce63          	blt	a5,a0,674 <__ieee754_rem_pio2f+0x224>
      61c:	fff50793          	addi	a5,a0,-1
      620:	00279713          	slli	a4,a5,0x2
      624:	000027b7          	lui	a5,0x2
      628:	08f576d3          	fsub.s	fa3,fa0,fa5
-     62c:	9b878793          	addi	a5,a5,-1608 # 19b8 <npio2_hw>
+     62c:	9b478793          	addi	a5,a5,-1612 # 19b4 <npio2_hw>
      630:	00e787b3          	add	a5,a5,a4
      634:	0007a683          	lw	a3,0(a5)
      638:	f0047713          	andi	a4,s0,-256
@@ -549,12 +549,12 @@ Disassembly of section .text:
      688:	40e40733          	sub	a4,s0,a4
      68c:	00800693          	li	a3,8
      690:	fae6dae3          	bge	a3,a4,644 <__ieee754_rem_pio2f+0x1f4>
-     694:	8081a787          	flw	fa5,-2040(gp) # 2518 <_GLOBAL_OFFSET_TABLE_+0x44>
+     694:	8001a787          	flw	fa5,-2048(gp) # 2510 <_GLOBAL_OFFSET_TABLE_+0x44>
      698:	01900693          	li	a3,25
      69c:	50f776cb          	fnmsub.s	fa3,fa4,fa5,fa0
      6a0:	08d57553          	fsub.s	fa0,fa0,fa3
      6a4:	50f7754b          	fnmsub.s	fa0,fa4,fa5,fa0
-     6a8:	80c1a787          	flw	fa5,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x48>
+     6a8:	8041a787          	flw	fa5,-2044(gp) # 2514 <_GLOBAL_OFFSET_TABLE_+0x48>
      6ac:	50f777c7          	fmsub.s	fa5,fa4,fa5,fa0
      6b0:	08f6f653          	fsub.s	fa2,fa3,fa5
      6b4:	e00607d3          	fmv.x.w	a5,fa2
@@ -565,11 +565,11 @@ Disassembly of section .text:
      6c8:	20d68553          	fmv.s	fa0,fa3
      6cc:	00c4a027          	fsw	fa2,0(s1)
      6d0:	f79ff06f          	j	648 <__ieee754_rem_pio2f+0x1f8>
-     6d4:	8181a787          	flw	fa5,-2024(gp) # 2528 <_GLOBAL_OFFSET_TABLE_+0x54>
+     6d4:	8101a787          	flw	fa5,-2032(gp) # 2520 <_GLOBAL_OFFSET_TABLE_+0x54>
      6d8:	68f7754b          	fnmsub.s	fa0,fa4,fa5,fa3
      6dc:	08a6f6d3          	fsub.s	fa3,fa3,fa0
      6e0:	68f776cb          	fnmsub.s	fa3,fa4,fa5,fa3
-     6e4:	81c1a787          	flw	fa5,-2020(gp) # 252c <_GLOBAL_OFFSET_TABLE_+0x58>
+     6e4:	8141a787          	flw	fa5,-2028(gp) # 2524 <_GLOBAL_OFFSET_TABLE_+0x58>
      6e8:	68f777c7          	fmsub.s	fa5,fa4,fa5,fa3
      6ec:	08f57753          	fsub.s	fa4,fa0,fa5
      6f0:	e00707d3          	fmv.x.w	a5,fa4
@@ -577,7 +577,7 @@ Disassembly of section .text:
      6f8:	00f577d3          	fadd.s	fa5,fa0,fa5
      6fc:	02e40463          	beq	s0,a4,724 <__ieee754_rem_pio2f+0x2d4>
      700:	000027b7          	lui	a5,0x2
-     704:	5147a707          	flw	fa4,1300(a5) # 2514 <_GLOBAL_OFFSET_TABLE_+0x40>
+     704:	50c7a707          	flw	fa4,1292(a5) # 250c <_GLOBAL_OFFSET_TABLE_+0x40>
      708:	00e7f6d3          	fadd.s	fa3,fa5,fa4
      70c:	fff00513          	li	a0,-1
      710:	08d7f7d3          	fsub.s	fa5,fa5,fa3
@@ -585,8 +585,8 @@ Disassembly of section .text:
      718:	00e7f7d3          	fadd.s	fa5,fa5,fa4
      71c:	00f4a227          	fsw	fa5,4(s1)
      720:	db1ff06f          	j	4d0 <__ieee754_rem_pio2f+0x80>
-     724:	80c1a707          	flw	fa4,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x48>
-     728:	8081a687          	flw	fa3,-2040(gp) # 2518 <_GLOBAL_OFFSET_TABLE_+0x44>
+     724:	8041a707          	flw	fa4,-2044(gp) # 2514 <_GLOBAL_OFFSET_TABLE_+0x48>
+     728:	8001a687          	flw	fa3,-2048(gp) # 2510 <_GLOBAL_OFFSET_TABLE_+0x44>
      72c:	00d7f7d3          	fadd.s	fa5,fa5,fa3
      730:	fd9ff06f          	j	708 <__ieee754_rem_pio2f+0x2b8>
 
@@ -599,39 +599,39 @@ Disassembly of section .text:
      748:	c0051753          	fcvt.w.s	a4,fa0,rtz
      74c:	0e070063          	beqz	a4,82c <__kernel_cosf+0xf8>
      750:	10a576d3          	fmul.s	fa3,fa0,fa0
-     754:	8301a707          	flw	fa4,-2000(gp) # 2540 <_GLOBAL_OFFSET_TABLE_+0x6c>
-     758:	8341a787          	flw	fa5,-1996(gp) # 2544 <_GLOBAL_OFFSET_TABLE_+0x70>
+     754:	8281a707          	flw	fa4,-2008(gp) # 2538 <_GLOBAL_OFFSET_TABLE_+0x6c>
+     758:	82c1a787          	flw	fa5,-2004(gp) # 253c <_GLOBAL_OFFSET_TABLE_+0x70>
      75c:	78e6f743          	fmadd.s	fa4,fa3,fa4,fa5
-     760:	8381a787          	flw	fa5,-1992(gp) # 2548 <_GLOBAL_OFFSET_TABLE_+0x74>
+     760:	8301a787          	flw	fa5,-2000(gp) # 2540 <_GLOBAL_OFFSET_TABLE_+0x74>
      764:	78e6f743          	fmadd.s	fa4,fa3,fa4,fa5
-     768:	83c1a787          	flw	fa5,-1988(gp) # 254c <_GLOBAL_OFFSET_TABLE_+0x78>
+     768:	8341a787          	flw	fa5,-1996(gp) # 2544 <_GLOBAL_OFFSET_TABLE_+0x78>
      76c:	78e6f743          	fmadd.s	fa4,fa3,fa4,fa5
-     770:	8401a787          	flw	fa5,-1984(gp) # 2550 <_GLOBAL_OFFSET_TABLE_+0x7c>
+     770:	8381a787          	flw	fa5,-1992(gp) # 2548 <_GLOBAL_OFFSET_TABLE_+0x7c>
      774:	78e6f743          	fmadd.s	fa4,fa3,fa4,fa5
-     778:	8441a787          	flw	fa5,-1980(gp) # 2554 <_GLOBAL_OFFSET_TABLE_+0x80>
+     778:	83c1a787          	flw	fa5,-1988(gp) # 254c <_GLOBAL_OFFSET_TABLE_+0x80>
      77c:	78e6f7c3          	fmadd.s	fa5,fa3,fa4,fa5
      780:	10f6f7d3          	fmul.s	fa5,fa3,fa5
      784:	f0078753          	fmv.w.x	fa4,a5
-     788:	8141a507          	flw	fa0,-2028(gp) # 2524 <_GLOBAL_OFFSET_TABLE_+0x50>
+     788:	80c1a507          	flw	fa0,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x50>
      78c:	10b775d3          	fmul.s	fa1,fa4,fa1
      790:	58f6f7c7          	fmsub.s	fa5,fa3,fa5,fa1
      794:	78a6f7c7          	fmsub.s	fa5,fa3,fa0,fa5
-     798:	82c1a507          	flw	fa0,-2004(gp) # 253c <_GLOBAL_OFFSET_TABLE_+0x68>
+     798:	8241a507          	flw	fa0,-2012(gp) # 2534 <_GLOBAL_OFFSET_TABLE_+0x68>
      79c:	08f57553          	fsub.s	fa0,fa0,fa5
      7a0:	00008067          	ret
      7a4:	10a576d3          	fmul.s	fa3,fa0,fa0
-     7a8:	8301a787          	flw	fa5,-2000(gp) # 2540 <_GLOBAL_OFFSET_TABLE_+0x6c>
-     7ac:	8341a707          	flw	fa4,-1996(gp) # 2544 <_GLOBAL_OFFSET_TABLE_+0x70>
+     7a8:	8281a787          	flw	fa5,-2008(gp) # 2538 <_GLOBAL_OFFSET_TABLE_+0x6c>
+     7ac:	82c1a707          	flw	fa4,-2004(gp) # 253c <_GLOBAL_OFFSET_TABLE_+0x70>
      7b0:	70f6f7c3          	fmadd.s	fa5,fa3,fa5,fa4
-     7b4:	8381a707          	flw	fa4,-1992(gp) # 2548 <_GLOBAL_OFFSET_TABLE_+0x74>
+     7b4:	8301a707          	flw	fa4,-2000(gp) # 2540 <_GLOBAL_OFFSET_TABLE_+0x74>
      7b8:	3e99a6b7          	lui	a3,0x3e99a
      7bc:	99968693          	addi	a3,a3,-1639 # 3e999999 <__global_pointer$+0x3e996c89>
      7c0:	70d7f7c3          	fmadd.s	fa5,fa5,fa3,fa4
-     7c4:	83c1a707          	flw	fa4,-1988(gp) # 254c <_GLOBAL_OFFSET_TABLE_+0x78>
+     7c4:	8341a707          	flw	fa4,-1996(gp) # 2544 <_GLOBAL_OFFSET_TABLE_+0x78>
      7c8:	70d7f7c3          	fmadd.s	fa5,fa5,fa3,fa4
-     7cc:	8401a707          	flw	fa4,-1984(gp) # 2550 <_GLOBAL_OFFSET_TABLE_+0x7c>
+     7cc:	8381a707          	flw	fa4,-1992(gp) # 2548 <_GLOBAL_OFFSET_TABLE_+0x7c>
      7d0:	70d7f7c3          	fmadd.s	fa5,fa5,fa3,fa4
-     7d4:	8441a707          	flw	fa4,-1980(gp) # 2554 <_GLOBAL_OFFSET_TABLE_+0x80>
+     7d4:	83c1a707          	flw	fa4,-1988(gp) # 254c <_GLOBAL_OFFSET_TABLE_+0x80>
      7d8:	70d7f7c3          	fmadd.s	fa5,fa5,fa3,fa4
      7dc:	10d7f7d3          	fmul.s	fa5,fa5,fa3
      7e0:	fae6d2e3          	bge	a3,a4,784 <__kernel_cosf+0x50>
@@ -639,28 +639,28 @@ Disassembly of section .text:
      7e8:	02e6cc63          	blt	a3,a4,820 <__kernel_cosf+0xec>
      7ec:	ff0006b7          	lui	a3,0xff000
      7f0:	00d70733          	add	a4,a4,a3
-     7f4:	82c1a507          	flw	fa0,-2004(gp) # 253c <_GLOBAL_OFFSET_TABLE_+0x68>
+     7f4:	8241a507          	flw	fa0,-2012(gp) # 2534 <_GLOBAL_OFFSET_TABLE_+0x68>
      7f8:	f0070753          	fmv.w.x	fa4,a4
      7fc:	08e57553          	fsub.s	fa0,fa0,fa4
      800:	f0078653          	fmv.w.x	fa2,a5
      804:	10b675d3          	fmul.s	fa1,fa2,fa1
-     808:	8141a607          	flw	fa2,-2028(gp) # 2524 <_GLOBAL_OFFSET_TABLE_+0x50>
+     808:	80c1a607          	flw	fa2,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x50>
      80c:	58f6f7c7          	fmsub.s	fa5,fa3,fa5,fa1
      810:	70c6f6c7          	fmsub.s	fa3,fa3,fa2,fa4
      814:	08f6f7d3          	fsub.s	fa5,fa3,fa5
      818:	08f57553          	fsub.s	fa0,fa0,fa5
      81c:	00008067          	ret
-     820:	8241a507          	flw	fa0,-2012(gp) # 2534 <_GLOBAL_OFFSET_TABLE_+0x60>
-     824:	8281a707          	flw	fa4,-2008(gp) # 2538 <_GLOBAL_OFFSET_TABLE_+0x64>
+     820:	81c1a507          	flw	fa0,-2020(gp) # 252c <_GLOBAL_OFFSET_TABLE_+0x60>
+     824:	8201a707          	flw	fa4,-2016(gp) # 2530 <_GLOBAL_OFFSET_TABLE_+0x64>
      828:	fd9ff06f          	j	800 <__kernel_cosf+0xcc>
-     82c:	82c1a507          	flw	fa0,-2004(gp) # 253c <_GLOBAL_OFFSET_TABLE_+0x68>
+     82c:	8241a507          	flw	fa0,-2012(gp) # 2534 <_GLOBAL_OFFSET_TABLE_+0x68>
      830:	00008067          	ret
 
 00000834 <__kernel_rem_pio2f>:
      834:	e4010113          	addi	sp,sp,-448
      838:	1a912a23          	sw	s1,436(sp)
      83c:	000024b7          	lui	s1,0x2
-     840:	d5048893          	addi	a7,s1,-688 # 1d50 <init_jk>
+     840:	d4c48893          	addi	a7,s1,-692 # 1d4c <init_jk>
      844:	00e12a23          	sw	a4,20(sp)
      848:	00271713          	slli	a4,a4,0x2
      84c:	00068813          	mv	a6,a3
@@ -748,13 +748,13 @@ Disassembly of section .text:
      994:	004e0e13          	addi	t3,t3,4
      998:	00460613          	addi	a2,a2,4
      99c:	fdd514e3          	bne	a0,t4,964 <__kernel_rem_pio2f+0x130>
-     9a0:	84c1aa87          	flw	fs5,-1972(gp) # 255c <_GLOBAL_OFFSET_TABLE_+0x88>
-     9a4:	8201aa07          	flw	fs4,-2016(gp) # 2530 <_GLOBAL_OFFSET_TABLE_+0x5c>
-     9a8:	8501a487          	flw	fs1,-1968(gp) # 2560 <_GLOBAL_OFFSET_TABLE_+0x8c>
-     9ac:	8541a407          	flw	fs0,-1964(gp) # 2564 <_GLOBAL_OFFSET_TABLE_+0x90>
+     9a0:	8441aa87          	flw	fs5,-1980(gp) # 2554 <_GLOBAL_OFFSET_TABLE_+0x88>
+     9a4:	8181aa07          	flw	fs4,-2024(gp) # 2528 <_GLOBAL_OFFSET_TABLE_+0x5c>
+     9a8:	8481a487          	flw	fs1,-1976(gp) # 2558 <_GLOBAL_OFFSET_TABLE_+0x8c>
+     9ac:	84c1a407          	flw	fs0,-1972(gp) # 255c <_GLOBAL_OFFSET_TABLE_+0x90>
      9b0:	002d1793          	slli	a5,s10,0x2
-     9b4:	82c1a987          	flw	fs3,-2004(gp) # 253c <_GLOBAL_OFFSET_TABLE_+0x68>
-     9b8:	8141a907          	flw	fs2,-2028(gp) # 2524 <_GLOBAL_OFFSET_TABLE_+0x50>
+     9b4:	8241a987          	flw	fs3,-2012(gp) # 2534 <_GLOBAL_OFFSET_TABLE_+0x68>
+     9b8:	80c1a907          	flw	fs2,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x50>
      9bc:	02010b13          	addi	s6,sp,32
      9c0:	ff878993          	addi	s3,a5,-8
      9c4:	01c10713          	addi	a4,sp,28
@@ -948,10 +948,10 @@ Disassembly of section .text:
      cb4:	216b0553          	fmv.s	fa0,fs6
      cb8:	40e78533          	sub	a0,a5,a4
      cbc:	57c000ef          	jal	ra,1238 <scalbnf>
-     cc0:	8201a707          	flw	fa4,-2016(gp) # 2530 <_GLOBAL_OFFSET_TABLE_+0x5c>
+     cc0:	8181a707          	flw	fa4,-2024(gp) # 2528 <_GLOBAL_OFFSET_TABLE_+0x5c>
      cc4:	a0a707d3          	fle.s	a5,fa4,fa0
      cc8:	38078c63          	beqz	a5,1060 <_STACK_SIZE+0x660>
-     ccc:	84c1a687          	flw	fa3,-1972(gp) # 255c <_GLOBAL_OFFSET_TABLE_+0x88>
+     ccc:	8441a687          	flw	fa3,-1980(gp) # 2554 <_GLOBAL_OFFSET_TABLE_+0x88>
      cd0:	001a0e93          	addi	t4,s4,1
      cd4:	16010793          	addi	a5,sp,352
      cd8:	10d576d3          	fmul.s	fa3,fa0,fa3
@@ -967,14 +967,14 @@ Disassembly of section .text:
      d00:	c00796d3          	fcvt.w.s	a3,fa5,rtz
      d04:	ecdfa023          	sw	a3,-320(t6)
      d08:	ece7a023          	sw	a4,-320(a5)
-     d0c:	82c1a507          	flw	fa0,-2004(gp) # 253c <_GLOBAL_OFFSET_TABLE_+0x68>
+     d0c:	8241a507          	flw	fa0,-2012(gp) # 2534 <_GLOBAL_OFFSET_TABLE_+0x68>
      d10:	000a8513          	mv	a0,s5
      d14:	01d12023          	sw	t4,0(sp)
      d18:	520000ef          	jal	ra,1238 <scalbnf>
      d1c:	00012e83          	lw	t4,0(sp)
      d20:	380ecc63          	bltz	t4,10b8 <_STACK_SIZE+0x6b8>
      d24:	002e9893          	slli	a7,t4,0x2
-     d28:	84c1a687          	flw	fa3,-1972(gp) # 255c <_GLOBAL_OFFSET_TABLE_+0x88>
+     d28:	8441a687          	flw	fa3,-1980(gp) # 2554 <_GLOBAL_OFFSET_TABLE_+0x88>
      d2c:	11010793          	addi	a5,sp,272
      d30:	01178533          	add	a0,a5,a7
      d34:	00050713          	mv	a4,a0
@@ -989,7 +989,7 @@ Disassembly of section .text:
      d58:	00f72227          	fsw	fa5,4(a4)
      d5c:	fedb10e3          	bne	s6,a3,d3c <_STACK_SIZE+0x33c>
      d60:	0c010313          	addi	t1,sp,192
-     d64:	8481a607          	flw	fa2,-1976(gp) # 2558 <_GLOBAL_OFFSET_TABLE_+0x84>
+     d64:	8401a607          	flw	fa2,-1984(gp) # 2550 <_GLOBAL_OFFSET_TABLE_+0x84>
      d68:	00030813          	mv	a6,t1
      d6c:	00000593          	li	a1,0
      d70:	040d4e63          	bltz	s10,dcc <_STACK_SIZE+0x3cc>
@@ -1226,28 +1226,28 @@ Disassembly of section .text:
     1104:	06070863          	beqz	a4,1174 <__kernel_sinf+0x88>
     1108:	f00787d3          	fmv.w.x	fa5,a5
     110c:	10f7f753          	fmul.s	fa4,fa5,fa5
-    1110:	8581a787          	flw	fa5,-1960(gp) # 2568 <_GLOBAL_OFFSET_TABLE_+0x94>
-    1114:	85c1a687          	flw	fa3,-1956(gp) # 256c <_GLOBAL_OFFSET_TABLE_+0x98>
+    1110:	8501a787          	flw	fa5,-1968(gp) # 2560 <_GLOBAL_OFFSET_TABLE_+0x94>
+    1114:	8541a687          	flw	fa3,-1964(gp) # 2564 <_GLOBAL_OFFSET_TABLE_+0x98>
     1118:	68f777c3          	fmadd.s	fa5,fa4,fa5,fa3
-    111c:	8601a687          	flw	fa3,-1952(gp) # 2570 <_GLOBAL_OFFSET_TABLE_+0x9c>
+    111c:	8581a687          	flw	fa3,-1960(gp) # 2568 <_GLOBAL_OFFSET_TABLE_+0x9c>
     1120:	68e7f7c3          	fmadd.s	fa5,fa5,fa4,fa3
     1124:	f00786d3          	fmv.w.x	fa3,a5
     1128:	10e6f553          	fmul.s	fa0,fa3,fa4
-    112c:	8641a687          	flw	fa3,-1948(gp) # 2574 <_GLOBAL_OFFSET_TABLE_+0xa0>
+    112c:	85c1a687          	flw	fa3,-1956(gp) # 256c <_GLOBAL_OFFSET_TABLE_+0xa0>
     1130:	68e7f7c3          	fmadd.s	fa5,fa5,fa4,fa3
-    1134:	8681a687          	flw	fa3,-1944(gp) # 2578 <_GLOBAL_OFFSET_TABLE_+0xa4>
+    1134:	8601a687          	flw	fa3,-1952(gp) # 2570 <_GLOBAL_OFFSET_TABLE_+0xa4>
     1138:	68e7f7c3          	fmadd.s	fa5,fa5,fa4,fa3
     113c:	00051c63          	bnez	a0,1154 <__kernel_sinf+0x68>
-    1140:	86c1a687          	flw	fa3,-1940(gp) # 257c <_GLOBAL_OFFSET_TABLE_+0xa8>
+    1140:	8641a687          	flw	fa3,-1948(gp) # 2574 <_GLOBAL_OFFSET_TABLE_+0xa8>
     1144:	68f777c3          	fmadd.s	fa5,fa4,fa5,fa3
     1148:	f0078753          	fmv.w.x	fa4,a5
     114c:	70a7f543          	fmadd.s	fa0,fa5,fa0,fa4
     1150:	00008067          	ret
     1154:	10f577d3          	fmul.s	fa5,fa0,fa5
-    1158:	8141a687          	flw	fa3,-2028(gp) # 2524 <_GLOBAL_OFFSET_TABLE_+0x50>
+    1158:	80c1a687          	flw	fa3,-2036(gp) # 251c <_GLOBAL_OFFSET_TABLE_+0x50>
     115c:	78d5f7c7          	fmsub.s	fa5,fa1,fa3,fa5
     1160:	58e7f5c7          	fmsub.s	fa1,fa5,fa4,fa1
-    1164:	8701a787          	flw	fa5,-1936(gp) # 2580 <_GLOBAL_OFFSET_TABLE_+0xac>
+    1164:	8681a787          	flw	fa5,-1944(gp) # 2578 <_GLOBAL_OFFSET_TABLE_+0xac>
     1168:	58f57543          	fmadd.s	fa0,fa0,fa5,fa1
     116c:	f00787d3          	fmv.w.x	fa5,a5
     1170:	08a7f553          	fsub.s	fa0,fa5,fa0
@@ -1273,7 +1273,7 @@ Disassembly of section .text:
     11b0:	00f6f833          	and	a6,a3,a5
     11b4:	e0050653          	fmv.x.w	a2,fa0
     11b8:	02080663          	beqz	a6,11e4 <floorf+0x64>
-    11bc:	8781a787          	flw	fa5,-1928(gp) # 2588 <_GLOBAL_OFFSET_TABLE_+0xb4>
+    11bc:	8701a787          	flw	fa5,-1936(gp) # 2580 <_GLOBAL_OFFSET_TABLE_+0xb4>
     11c0:	f0000753          	fmv.w.x	fa4,zero
     11c4:	00f577d3          	fadd.s	fa5,fa0,fa5
     11c8:	a0f71853          	flt.s	a6,fa4,fa5
@@ -1285,7 +1285,7 @@ Disassembly of section .text:
     11e0:	00b6f633          	and	a2,a3,a1
     11e4:	f0060553          	fmv.w.x	fa0,a2
     11e8:	00008067          	ret
-    11ec:	8781a787          	flw	fa5,-1928(gp) # 2588 <_GLOBAL_OFFSET_TABLE_+0xb4>
+    11ec:	8701a787          	flw	fa5,-1936(gp) # 2580 <_GLOBAL_OFFSET_TABLE_+0xb4>
     11f0:	f0000753          	fmv.w.x	fa4,zero
     11f4:	e0050653          	fmv.x.w	a2,fa0
     11f8:	00f577d3          	fadd.s	fa5,fa0,fa5
@@ -1295,7 +1295,7 @@ Disassembly of section .text:
     1208:	fc07dee3          	bgez	a5,11e4 <floorf+0x64>
     120c:	e0050653          	fmv.x.w	a2,fa0
     1210:	fc068ae3          	beqz	a3,11e4 <floorf+0x64>
-    1214:	8741a603          	lw	a2,-1932(gp) # 2584 <_GLOBAL_OFFSET_TABLE_+0xb0>
+    1214:	86c1a603          	lw	a2,-1940(gp) # 257c <_GLOBAL_OFFSET_TABLE_+0xb0>
     1218:	fcdff06f          	j	11e4 <floorf+0x64>
     121c:	7f800737          	lui	a4,0x7f800
     1220:	e0050653          	fmv.x.w	a2,fa0
@@ -1314,7 +1314,7 @@ Disassembly of section .text:
     124c:	04d77e63          	bgeu	a4,a3,12a8 <scalbnf+0x70>
     1250:	00d7f633          	and	a2,a5,a3
     1254:	06061263          	bnez	a2,12b8 <scalbnf+0x80>
-    1258:	87c1a787          	flw	fa5,-1924(gp) # 258c <_GLOBAL_OFFSET_TABLE_+0xb8>
+    1258:	8741a787          	flw	fa5,-1932(gp) # 2584 <_GLOBAL_OFFSET_TABLE_+0xb8>
     125c:	ffff4737          	lui	a4,0xffff4
     1260:	cb070713          	addi	a4,a4,-848 # ffff3cb0 <__global_pointer$+0xffff0fa0>
     1264:	10f577d3          	fmul.s	fa5,fa0,fa5
@@ -1327,7 +1327,7 @@ Disassembly of section .text:
     1280:	0fe00613          	li	a2,254
     1284:	00078693          	mv	a3,a5
     1288:	04e65263          	bge	a2,a4,12cc <scalbnf+0x94>
-    128c:	8781a707          	flw	fa4,-1928(gp) # 2588 <_GLOBAL_OFFSET_TABLE_+0xb4>
+    128c:	8701a707          	flw	fa4,-1936(gp) # 2580 <_GLOBAL_OFFSET_TABLE_+0xb4>
     1290:	f00787d3          	fmv.w.x	fa5,a5
     1294:	20f707d3          	fsgnj.s	fa5,fa4,fa5
     1298:	10e7f7d3          	fmul.s	fa5,fa5,fa4
@@ -1349,7 +1349,7 @@ Disassembly of section .text:
     12d8:	0000c737          	lui	a4,0xc
     12dc:	35070713          	addi	a4,a4,848 # c350 <__global_pointer$+0x9640>
     12e0:	faa746e3          	blt	a4,a0,128c <scalbnf+0x54>
-    12e4:	8801a707          	flw	fa4,-1920(gp) # 2590 <_GLOBAL_OFFSET_TABLE_+0xbc>
+    12e4:	8781a707          	flw	fa4,-1928(gp) # 2588 <_GLOBAL_OFFSET_TABLE_+0xbc>
     12e8:	f00787d3          	fmv.w.x	fa5,a5
     12ec:	20f707d3          	fsgnj.s	fa5,fa4,fa5
     12f0:	10e7f7d3          	fmul.s	fa5,fa5,fa4
@@ -1363,7 +1363,7 @@ Disassembly of section .text:
     1310:	f0078553          	fmv.w.x	fa0,a5
     1314:	00008067          	ret
     1318:	f0078753          	fmv.w.x	fa4,a5
-    131c:	8801a787          	flw	fa5,-1920(gp) # 2590 <_GLOBAL_OFFSET_TABLE_+0xbc>
+    131c:	8781a787          	flw	fa5,-1928(gp) # 2588 <_GLOBAL_OFFSET_TABLE_+0xbc>
     1320:	10f777d3          	fmul.s	fa5,fa4,fa5
     1324:	e00787d3          	fmv.x.w	a5,fa5
     1328:	f79ff06f          	j	12a0 <scalbnf+0x68>
@@ -1374,7 +1374,7 @@ Disassembly of section .text:
     133c:	01779793          	slli	a5,a5,0x17
     1340:	00d7e7b3          	or	a5,a5,a3
     1344:	f0078753          	fmv.w.x	fa4,a5
-    1348:	8841a787          	flw	fa5,-1916(gp) # 2594 <_GLOBAL_OFFSET_TABLE_+0xc0>
+    1348:	87c1a787          	flw	fa5,-1924(gp) # 258c <_GLOBAL_OFFSET_TABLE_+0xc0>
     134c:	10f777d3          	fmul.s	fa5,fa4,fa5
     1350:	e00787d3          	fmv.x.w	a5,fa5
     1354:	f4dff06f          	j	12a0 <scalbnf+0x68>
@@ -1383,7 +1383,7 @@ Disassembly of section .text:
     1358:	fd010113          	addi	sp,sp,-48
     135c:	02812423          	sw	s0,40(sp)
     1360:	00001417          	auipc	s0,0x1
-    1364:	16040413          	addi	s0,s0,352 # 24c0 <_ZZ16DrawRotatingRectffE4roll>
+    1364:	15840413          	addi	s0,s0,344 # 24b8 <_ZZ16DrawRotatingRectffE4roll>
     1368:	01312827          	fsw	fs3,16(sp)
     136c:	00042987          	flw	fs3,0(s0)
     1370:	01512427          	fsw	fs5,8(sp)
@@ -1401,7 +1401,7 @@ Disassembly of section .text:
     13a0:	21398553          	fmv.s	fa0,fs3
     13a4:	808ff0ef          	jal	ra,3ac <sinf>
     13a8:	00001797          	auipc	a5,0x1
-    13ac:	ba87ab07          	flw	fs6,-1112(a5) # 1f50 <PIo2+0x1f4>
+    13ac:	ba47ab07          	flw	fs6,-1116(a5) # 1f4c <PIo2+0x1f4>
     13b0:	0169fb53          	fadd.s	fs6,fs3,fs6
     13b4:	20a50453          	fmv.s	fs0,fa0
     13b8:	216b0553          	fmv.s	fa0,fs6
@@ -1410,7 +1410,7 @@ Disassembly of section .text:
     13c4:	216b0553          	fmv.s	fa0,fs6
     13c8:	fe5fe0ef          	jal	ra,3ac <sinf>
     13cc:	00001797          	auipc	a5,0x1
-    13d0:	b887a787          	flw	fa5,-1144(a5) # 1f54 <PIo2+0x1f8>
+    13d0:	b847a787          	flw	fa5,-1148(a5) # 1f50 <PIo2+0x1f8>
     13d4:	a8f4f6cb          	fnmsub.s	fa3,fs1,fa5,fs5
     13d8:	a0f4774b          	fnmsub.s	fa4,fs0,fa5,fs4
     13dc:	a8f4f4c3          	fmadd.s	fs1,fs1,fa5,fs5
@@ -1435,7 +1435,7 @@ Disassembly of section .text:
     1428:	c00616d3          	fcvt.w.s	a3,fa2,rtz
     142c:	01061613          	slli	a2,a2,0x10
     1430:	00001597          	auipc	a1,0x1
-    1434:	0b05a583          	lw	a1,176(a1) # 24e0 <_GLOBAL_OFFSET_TABLE_+0xc>
+    1434:	0a85a583          	lw	a1,168(a1) # 24d8 <_GLOBAL_OFFSET_TABLE_+0xc>
     1438:	0005a583          	lw	a1,0(a1)
     143c:	00e66633          	or	a2,a2,a4
     1440:	01079793          	slli	a5,a5,0x10
@@ -1475,7 +1475,7 @@ Disassembly of section .text:
     14c8:	18166693          	ori	a3,a2,385
     14cc:	00a71713          	slli	a4,a4,0xa
     14d0:	00001617          	auipc	a2,0x1
-    14d4:	a8862787          	flw	fa5,-1400(a2) # 1f58 <PIo2+0x1fc>
+    14d4:	a8462787          	flw	fa5,-1404(a2) # 1f54 <PIo2+0x1fc>
     14d8:	00d5a023          	sw	a3,0(a1)
     14dc:	00f9f9d3          	fadd.s	fs3,fs3,fa5
     14e0:	1b176713          	ori	a4,a4,433
@@ -1511,9 +1511,9 @@ Disassembly of section .text:
     1550:	00812423          	sw	s0,8(sp)
     1554:	00912223          	sw	s1,4(sp)
     1558:	00001417          	auipc	s0,0x1
-    155c:	f9842403          	lw	s0,-104(s0) # 24f0 <_GLOBAL_OFFSET_TABLE_+0x1c>
+    155c:	f9042403          	lw	s0,-112(s0) # 24e8 <_GLOBAL_OFFSET_TABLE_+0x1c>
     1560:	00001497          	auipc	s1,0x1
-    1564:	fa44a483          	lw	s1,-92(s1) # 2504 <_GLOBAL_OFFSET_TABLE_+0x30>
+    1564:	f9c4a483          	lw	s1,-100(s1) # 24fc <_GLOBAL_OFFSET_TABLE_+0x30>
     1568:	00042783          	lw	a5,0(s0)
     156c:	0004a703          	lw	a4,0(s1)
     1570:	00112623          	sw	ra,12(sp)
@@ -1526,7 +1526,7 @@ Disassembly of section .text:
     158c:	01010113          	addi	sp,sp,16
     1590:	00008067          	ret
     1594:	00001917          	auipc	s2,0x1
-    1598:	f4c92903          	lw	s2,-180(s2) # 24e0 <_GLOBAL_OFFSET_TABLE_+0xc>
+    1598:	f4492903          	lw	s2,-188(s2) # 24d8 <_GLOBAL_OFFSET_TABLE_+0xc>
     159c:	00092703          	lw	a4,0(s2)
     15a0:	00178793          	addi	a5,a5,1
     15a4:	00f4a023          	sw	a5,0(s1)
@@ -1539,13 +1539,13 @@ Disassembly of section .text:
     15c0:	01300793          	li	a5,19
     15c4:	00f72023          	sw	a5,0(a4)
     15c8:	00001797          	auipc	a5,0x1
-    15cc:	9947a587          	flw	fa1,-1644(a5) # 1f5c <PIo2+0x200>
+    15cc:	9907a587          	flw	fa1,-1648(a5) # 1f58 <PIo2+0x200>
     15d0:	00001797          	auipc	a5,0x1
-    15d4:	9907a507          	flw	fa0,-1648(a5) # 1f60 <PIo2+0x204>
+    15d4:	98c7a507          	flw	fa0,-1652(a5) # 1f5c <PIo2+0x204>
     15d8:	d81ff0ef          	jal	ra,1358 <_Z16DrawRotatingRectff>
     15dc:	00092783          	lw	a5,0(s2)
     15e0:	00001597          	auipc	a1,0x1
-    15e4:	f085a583          	lw	a1,-248(a1) # 24e8 <_GLOBAL_OFFSET_TABLE_+0x14>
+    15e4:	f005a583          	lw	a1,-256(a1) # 24e0 <_GLOBAL_OFFSET_TABLE_+0x14>
     15e8:	00a41693          	slli	a3,s0,0xa
     15ec:	0007a023          	sw	zero,0(a5)
     15f0:	0005a703          	lw	a4,0(a1)
@@ -1585,9 +1585,9 @@ Disassembly of section .text:
 
 00001678 <_Z14LoadBinaryBlobv>:
     1678:	00001597          	auipc	a1,0x1
-    167c:	e845a583          	lw	a1,-380(a1) # 24fc <_GLOBAL_OFFSET_TABLE_+0x28>
+    167c:	e7c5a583          	lw	a1,-388(a1) # 24f4 <_GLOBAL_OFFSET_TABLE_+0x28>
     1680:	00001517          	auipc	a0,0x1
-    1684:	e5c52503          	lw	a0,-420(a0) # 24dc <_GLOBAL_OFFSET_TABLE_+0x8>
+    1684:	e5452503          	lw	a0,-428(a0) # 24d4 <_GLOBAL_OFFSET_TABLE_+0x8>
     1688:	fe010113          	addi	sp,sp,-32
     168c:	0005a783          	lw	a5,0(a1)
     1690:	00052803          	lw	a6,0(a0)
@@ -1629,11 +1629,11 @@ Disassembly of section .text:
 
 00001720 <_Z13RunBinaryBlobv>:
     1720:	00001797          	auipc	a5,0x1
-    1724:	ddc7a783          	lw	a5,-548(a5) # 24fc <_GLOBAL_OFFSET_TABLE_+0x28>
+    1724:	dd47a783          	lw	a5,-556(a5) # 24f4 <_GLOBAL_OFFSET_TABLE_+0x28>
     1728:	fd010113          	addi	sp,sp,-48
     172c:	0007a703          	lw	a4,0(a5)
     1730:	00001797          	auipc	a5,0x1
-    1734:	dac7a783          	lw	a5,-596(a5) # 24dc <_GLOBAL_OFFSET_TABLE_+0x8>
+    1734:	da47a783          	lw	a5,-604(a5) # 24d4 <_GLOBAL_OFFSET_TABLE_+0x8>
     1738:	0007a603          	lw	a2,0(a5)
     173c:	02010793          	addi	a5,sp,32
     1740:	02112623          	sw	ra,44(sp)
@@ -1648,8 +1648,8 @@ Disassembly of section .text:
     1764:	00c12783          	lw	a5,12(sp)
     1768:	fed794e3          	bne	a5,a3,1750 <_Z13RunBinaryBlobv+0x30>
     176c:	00000517          	auipc	a0,0x0
-    1770:	61c50513          	addi	a0,a0,1564 # 1d88 <PIo2+0x2c>
-    1774:	218000ef          	jal	ra,198c <_Z8EchoUARTPKc>
+    1770:	61850513          	addi	a0,a0,1560 # 1d84 <PIo2+0x2c>
+    1774:	214000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
     1778:	01c12083          	lw	ra,28(sp)
     177c:	f0000053          	fmv.w.x	ft0,zero
     1780:	f00000d3          	fmv.w.x	ft1,zero
@@ -1683,121 +1683,120 @@ Disassembly of section .text:
     17f0:	f0000ed3          	fmv.w.x	ft9,zero
     17f4:	f0000f53          	fmv.w.x	ft10,zero
     17f8:	f0000fd3          	fmv.w.x	ft11,zero
-    17fc:	00040637          	lui	a2,0x40
-    1800:	ff060613          	addi	a2,a2,-16 # 3fff0 <__global_pointer$+0x3d2e0>
-    1804:	00060113          	mv	sp,a2
-    1808:	00008067          	ret
-    180c:	02c12083          	lw	ra,44(sp)
-    1810:	03010113          	addi	sp,sp,48
-    1814:	00008067          	ret
+    17fc:	0ffff637          	lui	a2,0xffff
+    1800:	00060113          	mv	sp,a2
+    1804:	00008067          	ret
+    1808:	02c12083          	lw	ra,44(sp)
+    180c:	03010113          	addi	sp,sp,48
+    1810:	00008067          	ret
 
-00001818 <main>:
-    1818:	fe010113          	addi	sp,sp,-32
-    181c:	00000517          	auipc	a0,0x0
-    1820:	57c50513          	addi	a0,a0,1404 # 1d98 <PIo2+0x3c>
-    1824:	00112e23          	sw	ra,28(sp)
-    1828:	00812c23          	sw	s0,24(sp)
-    182c:	00912a23          	sw	s1,20(sp)
-    1830:	01212823          	sw	s2,16(sp)
-    1834:	01312623          	sw	s3,12(sp)
-    1838:	01412423          	sw	s4,8(sp)
-    183c:	01512223          	sw	s5,4(sp)
-    1840:	14c000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    1844:	00000517          	auipc	a0,0x0
-    1848:	55c50513          	addi	a0,a0,1372 # 1da0 <PIo2+0x44>
-    184c:	140000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    1850:	00000517          	auipc	a0,0x0
-    1854:	57050513          	addi	a0,a0,1392 # 1dc0 <PIo2+0x64>
-    1858:	134000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    185c:	00000517          	auipc	a0,0x0
-    1860:	58450513          	addi	a0,a0,1412 # 1de0 <PIo2+0x84>
-    1864:	128000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    1868:	00000517          	auipc	a0,0x0
-    186c:	59850513          	addi	a0,a0,1432 # 1e00 <PIo2+0xa4>
-    1870:	11c000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    1874:	00000517          	auipc	a0,0x0
-    1878:	5ac50513          	addi	a0,a0,1452 # 1e20 <PIo2+0xc4>
-    187c:	110000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    1880:	00000517          	auipc	a0,0x0
-    1884:	5c050513          	addi	a0,a0,1472 # 1e40 <PIo2+0xe4>
-    1888:	104000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    188c:	00000517          	auipc	a0,0x0
-    1890:	5d450513          	addi	a0,a0,1492 # 1e60 <PIo2+0x104>
-    1894:	0f8000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    1898:	00000517          	auipc	a0,0x0
-    189c:	5e850513          	addi	a0,a0,1512 # 1e80 <PIo2+0x124>
-    18a0:	0ec000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    18a4:	00000517          	auipc	a0,0x0
-    18a8:	5fc50513          	addi	a0,a0,1532 # 1ea0 <PIo2+0x144>
-    18ac:	0e0000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    18b0:	00000517          	auipc	a0,0x0
-    18b4:	61050513          	addi	a0,a0,1552 # 1ec0 <PIo2+0x164>
-    18b8:	0d4000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    18bc:	00000517          	auipc	a0,0x0
-    18c0:	62450513          	addi	a0,a0,1572 # 1ee0 <PIo2+0x184>
-    18c4:	0c8000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    18c8:	00000517          	auipc	a0,0x0
-    18cc:	4d850513          	addi	a0,a0,1240 # 1da0 <PIo2+0x44>
-    18d0:	0bc000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    18d4:	00000517          	auipc	a0,0x0
-    18d8:	62c50513          	addi	a0,a0,1580 # 1f00 <PIo2+0x1a4>
-    18dc:	0b0000ef          	jal	ra,198c <_Z8EchoUARTPKc>
-    18e0:	00001797          	auipc	a5,0x1
-    18e4:	c087a783          	lw	a5,-1016(a5) # 24e8 <_GLOBAL_OFFSET_TABLE_+0x14>
-    18e8:	0007a783          	lw	a5,0(a5)
-    18ec:	00001717          	auipc	a4,0x1
-    18f0:	bf472703          	lw	a4,-1036(a4) # 24e0 <_GLOBAL_OFFSET_TABLE_+0xc>
-    18f4:	00072703          	lw	a4,0(a4)
-    18f8:	00a79693          	slli	a3,a5,0xa
-    18fc:	0167d793          	srli	a5,a5,0x16
-    1900:	1016e693          	ori	a3,a3,257
-    1904:	00a79793          	slli	a5,a5,0xa
-    1908:	00d72023          	sw	a3,0(a4)
-    190c:	1217e793          	ori	a5,a5,289
-    1910:	00f72023          	sw	a5,0(a4)
-    1914:	02700793          	li	a5,39
-    1918:	00f72023          	sw	a5,0(a4)
-    191c:	0ff00413          	li	s0,255
-    1920:	00001497          	auipc	s1,0x1
-    1924:	bdc4a483          	lw	s1,-1060(s1) # 24fc <_GLOBAL_OFFSET_TABLE_+0x28>
-    1928:	00001997          	auipc	s3,0x1
-    192c:	bb49a983          	lw	s3,-1100(s3) # 24dc <_GLOBAL_OFFSET_TABLE_+0x8>
-    1930:	00d00913          	li	s2,13
-    1934:	04200a13          	li	s4,66
-    1938:	05200a93          	li	s5,82
-    193c:	00c0006f          	j	1948 <main+0x130>
-    1940:	00078413          	mv	s0,a5
-    1944:	c09ff0ef          	jal	ra,154c <_Z14SubmitGPUFramev>
-    1948:	0004a783          	lw	a5,0(s1)
-    194c:	0007a783          	lw	a5,0(a5)
-    1950:	fe078ae3          	beqz	a5,1944 <main+0x12c>
-    1954:	0009a783          	lw	a5,0(s3)
-    1958:	0007c783          	lbu	a5,0(a5)
-    195c:	0ff7f793          	andi	a5,a5,255
-    1960:	ff2790e3          	bne	a5,s2,1940 <main+0x128>
-    1964:	01440e63          	beq	s0,s4,1980 <main+0x168>
-    1968:	01540663          	beq	s0,s5,1974 <main+0x15c>
-    196c:	00d00413          	li	s0,13
-    1970:	fd5ff06f          	j	1944 <main+0x12c>
-    1974:	dadff0ef          	jal	ra,1720 <_Z13RunBinaryBlobv>
-    1978:	00d00413          	li	s0,13
-    197c:	fc9ff06f          	j	1944 <main+0x12c>
-    1980:	cf9ff0ef          	jal	ra,1678 <_Z14LoadBinaryBlobv>
-    1984:	00d00413          	li	s0,13
-    1988:	fbdff06f          	j	1944 <main+0x12c>
+00001814 <main>:
+    1814:	fe010113          	addi	sp,sp,-32
+    1818:	00000517          	auipc	a0,0x0
+    181c:	57c50513          	addi	a0,a0,1404 # 1d94 <PIo2+0x3c>
+    1820:	00112e23          	sw	ra,28(sp)
+    1824:	00812c23          	sw	s0,24(sp)
+    1828:	00912a23          	sw	s1,20(sp)
+    182c:	01212823          	sw	s2,16(sp)
+    1830:	01312623          	sw	s3,12(sp)
+    1834:	01412423          	sw	s4,8(sp)
+    1838:	01512223          	sw	s5,4(sp)
+    183c:	14c000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    1840:	00000517          	auipc	a0,0x0
+    1844:	55c50513          	addi	a0,a0,1372 # 1d9c <PIo2+0x44>
+    1848:	140000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    184c:	00000517          	auipc	a0,0x0
+    1850:	57050513          	addi	a0,a0,1392 # 1dbc <PIo2+0x64>
+    1854:	134000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    1858:	00000517          	auipc	a0,0x0
+    185c:	58450513          	addi	a0,a0,1412 # 1ddc <PIo2+0x84>
+    1860:	128000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    1864:	00000517          	auipc	a0,0x0
+    1868:	59850513          	addi	a0,a0,1432 # 1dfc <PIo2+0xa4>
+    186c:	11c000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    1870:	00000517          	auipc	a0,0x0
+    1874:	5ac50513          	addi	a0,a0,1452 # 1e1c <PIo2+0xc4>
+    1878:	110000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    187c:	00000517          	auipc	a0,0x0
+    1880:	5c050513          	addi	a0,a0,1472 # 1e3c <PIo2+0xe4>
+    1884:	104000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    1888:	00000517          	auipc	a0,0x0
+    188c:	5d450513          	addi	a0,a0,1492 # 1e5c <PIo2+0x104>
+    1890:	0f8000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    1894:	00000517          	auipc	a0,0x0
+    1898:	5e850513          	addi	a0,a0,1512 # 1e7c <PIo2+0x124>
+    189c:	0ec000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    18a0:	00000517          	auipc	a0,0x0
+    18a4:	5fc50513          	addi	a0,a0,1532 # 1e9c <PIo2+0x144>
+    18a8:	0e0000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    18ac:	00000517          	auipc	a0,0x0
+    18b0:	61050513          	addi	a0,a0,1552 # 1ebc <PIo2+0x164>
+    18b4:	0d4000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    18b8:	00000517          	auipc	a0,0x0
+    18bc:	62450513          	addi	a0,a0,1572 # 1edc <PIo2+0x184>
+    18c0:	0c8000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    18c4:	00000517          	auipc	a0,0x0
+    18c8:	4d850513          	addi	a0,a0,1240 # 1d9c <PIo2+0x44>
+    18cc:	0bc000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    18d0:	00000517          	auipc	a0,0x0
+    18d4:	62c50513          	addi	a0,a0,1580 # 1efc <PIo2+0x1a4>
+    18d8:	0b0000ef          	jal	ra,1988 <_Z8EchoUARTPKc>
+    18dc:	00001797          	auipc	a5,0x1
+    18e0:	c047a783          	lw	a5,-1020(a5) # 24e0 <_GLOBAL_OFFSET_TABLE_+0x14>
+    18e4:	0007a783          	lw	a5,0(a5)
+    18e8:	00001717          	auipc	a4,0x1
+    18ec:	bf072703          	lw	a4,-1040(a4) # 24d8 <_GLOBAL_OFFSET_TABLE_+0xc>
+    18f0:	00072703          	lw	a4,0(a4)
+    18f4:	00a79693          	slli	a3,a5,0xa
+    18f8:	0167d793          	srli	a5,a5,0x16
+    18fc:	1016e693          	ori	a3,a3,257
+    1900:	00a79793          	slli	a5,a5,0xa
+    1904:	00d72023          	sw	a3,0(a4)
+    1908:	1217e793          	ori	a5,a5,289
+    190c:	00f72023          	sw	a5,0(a4)
+    1910:	02700793          	li	a5,39
+    1914:	00f72023          	sw	a5,0(a4)
+    1918:	0ff00413          	li	s0,255
+    191c:	00001497          	auipc	s1,0x1
+    1920:	bd84a483          	lw	s1,-1064(s1) # 24f4 <_GLOBAL_OFFSET_TABLE_+0x28>
+    1924:	00001997          	auipc	s3,0x1
+    1928:	bb09a983          	lw	s3,-1104(s3) # 24d4 <_GLOBAL_OFFSET_TABLE_+0x8>
+    192c:	00d00913          	li	s2,13
+    1930:	04200a13          	li	s4,66
+    1934:	05200a93          	li	s5,82
+    1938:	00c0006f          	j	1944 <main+0x130>
+    193c:	00078413          	mv	s0,a5
+    1940:	c0dff0ef          	jal	ra,154c <_Z14SubmitGPUFramev>
+    1944:	0004a783          	lw	a5,0(s1)
+    1948:	0007a783          	lw	a5,0(a5)
+    194c:	fe078ae3          	beqz	a5,1940 <main+0x12c>
+    1950:	0009a783          	lw	a5,0(s3)
+    1954:	0007c783          	lbu	a5,0(a5)
+    1958:	0ff7f793          	andi	a5,a5,255
+    195c:	ff2790e3          	bne	a5,s2,193c <main+0x128>
+    1960:	01440e63          	beq	s0,s4,197c <main+0x168>
+    1964:	01540663          	beq	s0,s5,1970 <main+0x15c>
+    1968:	00d00413          	li	s0,13
+    196c:	fd5ff06f          	j	1940 <main+0x12c>
+    1970:	db1ff0ef          	jal	ra,1720 <_Z13RunBinaryBlobv>
+    1974:	00d00413          	li	s0,13
+    1978:	fc9ff06f          	j	1940 <main+0x12c>
+    197c:	cfdff0ef          	jal	ra,1678 <_Z14LoadBinaryBlobv>
+    1980:	00d00413          	li	s0,13
+    1984:	fbdff06f          	j	1940 <main+0x12c>
 
-0000198c <_Z8EchoUARTPKc>:
-    198c:	00054783          	lbu	a5,0(a0)
-    1990:	02078263          	beqz	a5,19b4 <_Z8EchoUARTPKc+0x28>
-    1994:	00150513          	addi	a0,a0,1
-    1998:	00001697          	auipc	a3,0x1
-    199c:	b606a683          	lw	a3,-1184(a3) # 24f8 <_GLOBAL_OFFSET_TABLE_+0x24>
-    19a0:	0006a703          	lw	a4,0(a3)
-    19a4:	00150513          	addi	a0,a0,1
-    19a8:	00f70023          	sb	a5,0(a4)
-    19ac:	fff54783          	lbu	a5,-1(a0)
-    19b0:	fe0798e3          	bnez	a5,19a0 <_Z8EchoUARTPKc+0x14>
-    19b4:	00008067          	ret
+00001988 <_Z8EchoUARTPKc>:
+    1988:	00054783          	lbu	a5,0(a0)
+    198c:	02078263          	beqz	a5,19b0 <_Z8EchoUARTPKc+0x28>
+    1990:	00150513          	addi	a0,a0,1
+    1994:	00001697          	auipc	a3,0x1
+    1998:	b5c6a683          	lw	a3,-1188(a3) # 24f0 <_GLOBAL_OFFSET_TABLE_+0x24>
+    199c:	0006a703          	lw	a4,0(a3)
+    19a0:	00150513          	addi	a0,a0,1
+    19a4:	00f70023          	sb	a5,0(a4)
+    19a8:	fff54783          	lbu	a5,-1(a0)
+    19ac:	fe0798e3          	bnez	a5,199c <_Z8EchoUARTPKc+0x14>
+    19b0:	00008067          	ret
 ELF Header:
   Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 
   Class:                             ELF32
@@ -1810,7 +1809,7 @@ ELF Header:
   Version:                           0x1
   Entry point address:               0x0
   Start of program headers:          52 (bytes into file)
-  Start of section headers:          24736 (bytes into file)
+  Start of section headers:          24720 (bytes into file)
   Flags:                             0x2, single-float ABI
   Size of this header:               52 (bytes)
   Size of program headers:           32 (bytes)
@@ -1823,28 +1822,28 @@ Section Headers:
   [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
   [ 0]                   NULL            00000000 000000 000000 00      0   0  0
   [ 1] .boot             PROGBITS        00000000 001000 000088 00  AX  0   0  4
-  [ 2] .text             PROGBITS        00000088 001088 001930 00  AX  0   0  4
-  [ 3] .rodata           PROGBITS        000019b8 0029b8 0005ac 00   A  0   0  4
-  [ 4] .srodata          PROGBITS        00001f64 002f64 000004 00   A  0   0  4
-  [ 5] .eh_frame         PROGBITS        00001f68 002f68 00012c 00   A  0   0  4
-  [ 6] .data             PROGBITS        00002098 003098 00043c 00  WA  0   0  8
-  [ 7] .got              PROGBITS        000024d4 0034d4 000034 04  WA  0   0  4
-  [ 8] .got.plt          PROGBITS        00002508 003508 000008 04  WA  0   0  4
-  [ 9] .sdata            PROGBITS        00002510 003510 000088 04  AM  0   0  4
-  [10] .sbss             NOBITS          00002598 003598 00000c 00  WA  0   0  4
-  [11] .bss              NOBITS          000025a4 003598 00000c 00  WA  0   0  4
-  [12] .comment          PROGBITS        00000000 003598 000012 01  MS  0   0  1
-  [13] .riscv.attributes RISCV_ATTRIBUTE 00000000 0035aa 000026 00      0   0  1
-  [14] .debug_info       PROGBITS        00000000 0035d0 0007b2 00      0   0  1
-  [15] .debug_abbrev     PROGBITS        00000000 003d82 00019d 00      0   0  1
-  [16] .debug_loc        PROGBITS        00000000 003f1f 000bcd 00      0   0  1
-  [17] .debug_aranges    PROGBITS        00000000 004aec 000020 00      0   0  1
-  [18] .debug_ranges     PROGBITS        00000000 004b0c 0000f8 00      0   0  1
-  [19] .debug_line       PROGBITS        00000000 004c04 00074f 00      0   0  1
-  [20] .debug_str        PROGBITS        00000000 005353 00028d 01  MS  0   0  1
-  [21] .symtab           SYMTAB          00000000 0055e0 000630 10     22  53  4
-  [22] .strtab           STRTAB          00000000 005c10 0003b4 00      0   0  1
-  [23] .shstrtab         STRTAB          00000000 005fc4 0000dc 00      0   0  1
+  [ 2] .text             PROGBITS        00000088 001088 00192c 00  AX  0   0  4
+  [ 3] .rodata           PROGBITS        000019b4 0029b4 0005ac 00   A  0   0  4
+  [ 4] .srodata          PROGBITS        00001f60 002f60 000004 00   A  0   0  4
+  [ 5] .eh_frame         PROGBITS        00001f64 002f64 00012c 00   A  0   0  4
+  [ 6] .data             PROGBITS        00002090 003090 00043c 00  WA  0   0  8
+  [ 7] .got              PROGBITS        000024cc 0034cc 000034 04  WA  0   0  4
+  [ 8] .got.plt          PROGBITS        00002500 003500 000008 04  WA  0   0  4
+  [ 9] .sdata            PROGBITS        00002508 003508 000088 04  AM  0   0  4
+  [10] .sbss             NOBITS          00002590 003590 00000c 00  WA  0   0  4
+  [11] .bss              NOBITS          0000259c 003590 00000c 00  WA  0   0  4
+  [12] .comment          PROGBITS        00000000 003590 000012 01  MS  0   0  1
+  [13] .riscv.attributes RISCV_ATTRIBUTE 00000000 0035a2 000026 00      0   0  1
+  [14] .debug_info       PROGBITS        00000000 0035c8 0007b2 00      0   0  1
+  [15] .debug_abbrev     PROGBITS        00000000 003d7a 00019d 00      0   0  1
+  [16] .debug_loc        PROGBITS        00000000 003f17 000bcd 00      0   0  1
+  [17] .debug_aranges    PROGBITS        00000000 004ae4 000020 00      0   0  1
+  [18] .debug_ranges     PROGBITS        00000000 004b04 0000f8 00      0   0  1
+  [19] .debug_line       PROGBITS        00000000 004bfc 00074f 00      0   0  1
+  [20] .debug_str        PROGBITS        00000000 00534b 00028d 01  MS  0   0  1
+  [21] .symtab           SYMTAB          00000000 0055d8 000630 10     22  53  4
+  [22] .strtab           STRTAB          00000000 005c08 0003aa 00      0   0  1
+  [23] .shstrtab         STRTAB          00000000 005fb2 0000dc 00      0   0  1
 Key to Flags:
   W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
   L (link order), O (extra OS processing required), G (group), T (TLS),
@@ -1855,7 +1854,7 @@ There are no section groups in this file.
 
 Program Headers:
   Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
-  LOAD           0x001000 0x00000000 0x00000000 0x02598 0x025b0 RWE 0x1000
+  LOAD           0x001000 0x00000000 0x00000000 0x02590 0x025a8 RWE 0x1000
 
  Section to Segment mapping:
   Segment Sections...
@@ -1872,15 +1871,15 @@ Symbol table '.symtab' contains 99 entries:
      0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
      1: 00000000     0 SECTION LOCAL  DEFAULT    1 
      2: 00000088     0 SECTION LOCAL  DEFAULT    2 
-     3: 000019b8     0 SECTION LOCAL  DEFAULT    3 
-     4: 00001f64     0 SECTION LOCAL  DEFAULT    4 
-     5: 00001f68     0 SECTION LOCAL  DEFAULT    5 
-     6: 00002098     0 SECTION LOCAL  DEFAULT    6 
-     7: 000024d4     0 SECTION LOCAL  DEFAULT    7 
-     8: 00002508     0 SECTION LOCAL  DEFAULT    8 
-     9: 00002510     0 SECTION LOCAL  DEFAULT    9 
-    10: 00002598     0 SECTION LOCAL  DEFAULT   10 
-    11: 000025a4     0 SECTION LOCAL  DEFAULT   11 
+     3: 000019b4     0 SECTION LOCAL  DEFAULT    3 
+     4: 00001f60     0 SECTION LOCAL  DEFAULT    4 
+     5: 00001f64     0 SECTION LOCAL  DEFAULT    5 
+     6: 00002090     0 SECTION LOCAL  DEFAULT    6 
+     7: 000024cc     0 SECTION LOCAL  DEFAULT    7 
+     8: 00002500     0 SECTION LOCAL  DEFAULT    8 
+     9: 00002508     0 SECTION LOCAL  DEFAULT    9 
+    10: 00002590     0 SECTION LOCAL  DEFAULT   10 
+    11: 0000259c     0 SECTION LOCAL  DEFAULT   11 
     12: 00000000     0 SECTION LOCAL  DEFAULT   12 
     13: 00000000     0 SECTION LOCAL  DEFAULT   13 
     14: 00000000     0 SECTION LOCAL  DEFAULT   14 
@@ -1892,7 +1891,7 @@ Symbol table '.symtab' contains 99 entries:
     20: 00000000     0 SECTION LOCAL  DEFAULT   20 
     21: 00000000     0 FILE    LOCAL  DEFAULT  ABS ROM_nekoichi.cpp
     22: 00000050     0 NOTYPE  LOCAL  DEFAULT    1 noatexitfound
-    23: 000024c0     4 OBJECT  LOCAL  DEFAULT    6 _ZZ16DrawRotatingRectffE4
+    23: 000024b8     4 OBJECT  LOCAL  DEFAULT    6 _ZZ16DrawRotatingRectffE4
     24: 00000000     0 FILE    LOCAL  DEFAULT  ABS atexit.c
     25: 00000000     0 FILE    LOCAL  DEFAULT  ABS fini.c
     26: 00000000     0 FILE    LOCAL  DEFAULT  ABS init.c
@@ -1900,49 +1899,49 @@ Symbol table '.symtab' contains 99 entries:
     28: 00000000     0 FILE    LOCAL  DEFAULT  ABS sf_cos.c
     29: 00000000     0 FILE    LOCAL  DEFAULT  ABS sf_sin.c
     30: 00000000     0 FILE    LOCAL  DEFAULT  ABS ef_rem_pio2.c
-    31: 000019b8   128 OBJECT  LOCAL  DEFAULT    3 npio2_hw
-    32: 00001a38   792 OBJECT  LOCAL  DEFAULT    3 two_over_pi
+    31: 000019b4   128 OBJECT  LOCAL  DEFAULT    3 npio2_hw
+    32: 00001a34   792 OBJECT  LOCAL  DEFAULT    3 two_over_pi
     33: 00000000     0 FILE    LOCAL  DEFAULT  ABS kf_cos.c
     34: 00000000     0 FILE    LOCAL  DEFAULT  ABS kf_rem_pio2.c
-    35: 00001d50    12 OBJECT  LOCAL  DEFAULT    3 init_jk
-    36: 00001d5c    44 OBJECT  LOCAL  DEFAULT    3 PIo2
+    35: 00001d4c    12 OBJECT  LOCAL  DEFAULT    3 init_jk
+    36: 00001d58    44 OBJECT  LOCAL  DEFAULT    3 PIo2
     37: 00000000     0 FILE    LOCAL  DEFAULT  ABS kf_sin.c
     38: 00000000     0 FILE    LOCAL  DEFAULT  ABS sf_fabs.c
     39: 00000000     0 FILE    LOCAL  DEFAULT  ABS sf_floor.c
     40: 00000000     0 FILE    LOCAL  DEFAULT  ABS sf_scalbn.c
-    41: 00000000     0 FILE    LOCAL  DEFAULT  ABS utils.cpp
+    41: 00000000     0 FILE    LOCAL  DEFAULT  ABS nekoichi.cpp
     42: 00000000     0 FILE    LOCAL  DEFAULT  ABS impure.c
-    43: 00002098  1064 OBJECT  LOCAL  DEFAULT    6 impure_data
+    43: 00002090  1064 OBJECT  LOCAL  DEFAULT    6 impure_data
     44: 00000000     0 FILE    LOCAL  DEFAULT  ABS libgcc2.c
     45: 00000000     0 FILE    LOCAL  DEFAULT  ABS 
-    46: 00001f64     0 NOTYPE  LOCAL  DEFAULT    4 __fini_array_end
-    47: 00001f64     0 NOTYPE  LOCAL  DEFAULT    4 __fini_array_start
-    48: 00001f64     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_end
-    49: 00001f64     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_end
-    50: 000024d4     0 OBJECT  LOCAL  DEFAULT    7 _GLOBAL_OFFSET_TABLE_
-    51: 00001f64     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_start
-    52: 00001f64     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_start
-    53: 00001720   248 FUNC    GLOBAL DEFAULT    2 _Z13RunBinaryBlobv
+    46: 00001f60     0 NOTYPE  LOCAL  DEFAULT    4 __fini_array_end
+    47: 00001f60     0 NOTYPE  LOCAL  DEFAULT    4 __fini_array_start
+    48: 00001f60     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_end
+    49: 00001f60     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_end
+    50: 000024cc     0 OBJECT  LOCAL  DEFAULT    7 _GLOBAL_OFFSET_TABLE_
+    51: 00001f60     0 NOTYPE  LOCAL  DEFAULT    4 __init_array_start
+    52: 00001f60     0 NOTYPE  LOCAL  DEFAULT    4 __preinit_array_start
+    53: 00001720   244 FUNC    GLOBAL DEFAULT    2 _Z13RunBinaryBlobv
     54: 00002d10     0 NOTYPE  GLOBAL DEFAULT  ABS __global_pointer$
-    55: 000020a0     0 NOTYPE  GLOBAL DEFAULT    6 _fdata
+    55: 00002090     0 NOTYPE  GLOBAL DEFAULT    6 _fdata
     56: 00000450   740 FUNC    GLOBAL DEFAULT    2 __ieee754_rem_pio2f
-    57: 00001f64     0 NOTYPE  GLOBAL DEFAULT    3 _etext
+    57: 00001f60     0 NOTYPE  GLOBAL DEFAULT    3 _etext
     58: 00002d10     0 NOTYPE  GLOBAL DEFAULT    9 _gp
-    59: 000024c8     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRX
+    59: 000024c0     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRX
     60: 00000088     0 NOTYPE  GLOBAL DEFAULT    1 _boot
-    61: 000025a4     0 NOTYPE  GLOBAL DEFAULT   11 _bss_start
-    62: 000025a0     4 OBJECT  GLOBAL DEFAULT   10 __malloc_top_pad
+    61: 0000259c     0 NOTYPE  GLOBAL DEFAULT   11 _bss_start
+    62: 00002598     4 OBJECT  GLOBAL DEFAULT   10 __malloc_top_pad
     63: 00001178     8 FUNC    GLOBAL DEFAULT    2 fabsf
-    64: 0000259c     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_sbrked_mem
-    65: 000024c4     4 OBJECT  GLOBAL DEFAULT    6 IO_GPUFIFO
-    66: 00001f64     4 OBJECT  GLOBAL DEFAULT    4 _global_impure_ptr
+    64: 00002594     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_sbrked_mem
+    65: 000024bc     4 OBJECT  GLOBAL DEFAULT    6 IO_GPUFIFO
+    66: 00001f60     4 OBJECT  GLOBAL DEFAULT    4 _global_impure_ptr
     67: 0000154c   300 FUNC    GLOBAL DEFAULT    2 _Z14SubmitGPUFramev
     68: 000000f8   156 FUNC    GLOBAL DEFAULT    2 __libc_init_array
     69: 000010ec   140 FUNC    GLOBAL DEFAULT    2 __kernel_sinf
     70: 0000030c   160 FUNC    GLOBAL DEFAULT    2 cosf
-    71: 000025b0     0 NOTYPE  GLOBAL DEFAULT   11 _bss_end
+    71: 000025a8     0 NOTYPE  GLOBAL DEFAULT   11 _bss_end
     72: 0000009c    92 FUNC    GLOBAL DEFAULT    2 __libc_fini_array
-    73: 000025ac     4 OBJECT  GLOBAL DEFAULT   11 vramPage
+    73: 000025a4     4 OBJECT  GLOBAL DEFAULT   11 vramPage
     74: 00000734   256 FUNC    GLOBAL DEFAULT    2 __kernel_cosf
     75: 00000088     0 NOTYPE  GLOBAL DEFAULT    1 _ftext
     76: 00000000   104 FUNC    GLOBAL DEFAULT    1 _start
@@ -1950,24 +1949,24 @@ Symbol table '.symtab' contains 99 entries:
     78: 00001238   288 FUNC    GLOBAL DEFAULT    2 scalbnf
     79: 00000a00     0 NOTYPE  GLOBAL DEFAULT  ABS _STACK_SIZE
     80: 00000194   220 FUNC    GLOBAL DEFAULT    2 memset
-    81: 00001818   372 FUNC    GLOBAL DEFAULT    2 main
+    81: 00001814   372 FUNC    GLOBAL DEFAULT    2 main
     82: 00001678   168 FUNC    GLOBAL DEFAULT    2 _Z14LoadBinaryBlobv
-    83: 00002598     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_total_mem
-    84: 000025a4     4 OBJECT  GLOBAL DEFAULT   11 gpuSideSubmitCounter
+    83: 00002590     4 OBJECT  GLOBAL DEFAULT   10 __malloc_max_total_mem
+    84: 0000259c     4 OBJECT  GLOBAL DEFAULT   11 gpuSideSubmitCounter
     85: 00001358   500 FUNC    GLOBAL DEFAULT    2 _Z16DrawRotatingRectff
     86: 00000088    20 FUNC    GLOBAL DEFAULT    2 atexit
-    87: 000024d0     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTTX
-    88: 000024cc     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRXByteCount
-    89: 000025b0     0 NOTYPE  GLOBAL DEFAULT   11 __BSS_END__$
+    87: 000024c8     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTTX
+    88: 000024c4     4 OBJECT  GLOBAL DEFAULT    6 IO_UARTRXByteCount
+    89: 000025a8     0 NOTYPE  GLOBAL DEFAULT   11 __BSS_END__$
     90: 000003ac   164 FUNC    GLOBAL DEFAULT    2 sinf
-    91: 0000198c    44 FUNC    GLOBAL DEFAULT    2 _Z8EchoUARTPKc
-    92: 000024d4     0 NOTYPE  GLOBAL DEFAULT    6 _edata
-    93: 000025b0     0 NOTYPE  GLOBAL DEFAULT   11 _end
-    94: 000025a8     4 OBJECT  GLOBAL DEFAULT   11 gpuSubmitCounter
+    91: 00001988    44 FUNC    GLOBAL DEFAULT    2 _Z8EchoUARTPKc
+    92: 000024cc     0 NOTYPE  GLOBAL DEFAULT    6 _edata
+    93: 000025a8     0 NOTYPE  GLOBAL DEFAULT   11 _end
+    94: 000025a0     4 OBJECT  GLOBAL DEFAULT   11 gpuSubmitCounter
     95: 00000068    32 FUNC    GLOBAL DEFAULT    1 _exit
     96: 00000834  2232 FUNC    GLOBAL DEFAULT    2 __kernel_rem_pio2f
     97: 00001180   184 FUNC    GLOBAL DEFAULT    2 floorf
-    98: 00002598     0 NOTYPE  GLOBAL DEFAULT   10 _fbss
+    98: 00002590     0 NOTYPE  GLOBAL DEFAULT   10 _fbss
 
 No version information found in this file.
 Attribute Section: riscv

@@ -1,8 +1,12 @@
 // Embedded utils
 
 #include <stdlib.h>
-#include "utils.h"
+#include <errno.h>
+#define STDOUT_FILENO 1
+
+#include "nekoichi.h"
 #include "gpu.h"
+#include "fat.h"
 
 volatile uint32_t *IO_AudioOutput = (volatile uint32_t* )0x80000020;       // Two 16bit stereo samples to output (31:16->Right, 15:0->Left)
 volatile uint32_t *IO_SwitchByteCount = (volatile uint32_t* )0x8000001C;   // Switch state byte count (read)
@@ -250,4 +254,143 @@ void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &sec
    hours = ms / 3600000;
    minutes = (ms % 3600000) / 60000;
    seconds = ((ms % 360000) % 60000) / 1000;
+}
+
+// C stdlib overrides
+
+// Place the heap into DDR3 memory
+//#undef errno
+//int nerrno;
+static uint8_t *heap_start  = (uint8_t*)0x01000000;
+static uint8_t *heap_end    = (uint8_t*)0x06FFFFFF;
+
+extern "C" {
+
+   /*int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
+   {
+     // offset the current task's wakeup time, do not busywait
+     // however for our architecture, scheduler will break and run
+     // other tasks regardless of what's going on, so we can busy spin here
+      errno = ENOSYS;
+      return -1;
+   }*/
+
+   int _chdir(const char *path)
+   {
+      errno = ENOSYS;
+      // pf_opendir ?
+      return -1;
+   }
+
+   char *_getcwd(char *buf, size_t size)
+   {
+      errno = -ENOSYS;
+      return NULL;
+   }
+
+   int _isatty(int file)
+   {
+      return (file == STDOUT_FILENO);
+   }
+
+   int _close(int file)
+   {
+      pf_close(file);
+      return 0;
+   }
+
+   off_t _lseek(int file, off_t ptr, int dir)
+   {
+      // TODO: we can only SEEK_SET for now
+      // impllement getfilepos to be able to do relative seeks
+      /*FRESULT fr =*/ pf_lseek(file, ptr);
+      return ptr;//pf_getfilepos(file);
+   }
+
+   int _lstat(const char *file, struct stat *st)
+   {
+      errno = ENOSYS;
+      return -1;
+   }
+
+   int _open(const char *name, int flags, int mode)
+   {
+      int fd = pf_open(name); // NOTE: mode is always rb
+      if (fd==-1)
+         errno = ENOENT;
+      return fd;
+   }
+
+   int _openat(int dirfd, const char *name, int flags, int mode)
+   {
+      // https://linux.die.net/man/2/openat
+      errno = ENOSYS;
+      return -1;
+   }
+
+   ssize_t _read(int file, void *ptr, size_t len)
+   {
+      WORD readlen;
+      pf_read(file, ptr, len, &readlen);
+      return readlen;
+   }
+
+   int _stat(const char *file, struct stat *st)
+   {
+      st->st_mode = S_IFCHR; // S_IFBLK for disk data?
+      return 0;
+   }
+
+   ssize_t _write(int file, const void *ptr, size_t len)
+   {
+      if (file != STDOUT_FILENO) {
+         // TODO: pf_write
+         errno = ENOSYS;
+         return -1;
+      }
+
+      char *cptr = (char*)ptr;
+      const char *eptr = cptr + len;
+      while (cptr != eptr)
+      {
+         *IO_UARTTX = *cptr;
+         ++cptr;
+      }
+      return len;
+   }
+
+   int _wait(int *status)
+   {
+      errno = ECHILD;
+      return -1;
+   }
+
+   void unimplemented_syscall()
+   {
+      const char *p = "Unimplemented system call\n";
+      while (*p)
+         *IO_UARTTX = *(p++);
+   }
+
+   int _brk(void *addr)
+   {
+      heap_start = (uint8_t*)addr;
+      return 0;
+   }
+
+   void *_sbrk(intptr_t incr)
+   {
+      uint8_t *old_heapstart = heap_start;
+
+      if (heap_start == heap_end) {
+         return NULL;
+      }
+
+      if ((heap_start += incr) < heap_end) {
+         heap_start += incr;
+      } else {
+         heap_start = heap_end;
+      }
+      return old_heapstart;
+   }
 }

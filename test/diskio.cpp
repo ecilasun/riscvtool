@@ -3,8 +3,8 @@
 /*-----------------------------------------------------------------------*/
 
 #include "diskio.h"
-#include "SDCARD.h"
-#include "utils.h"
+#include "sdcard.h"
+#include "nekoichi.h"
 
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */
