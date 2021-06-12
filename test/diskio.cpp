@@ -12,11 +12,12 @@
 
 DSTATUS disk_initialize (void)
 {
-	// Put your code here
-	if (SDCardStartup() != -1)
-		return RES_OK;
+	DSTATUS stat = STA_NOINIT;
 
-	return RES_ERROR;
+	if (SDCardStartup() != -1)
+		stat = 0x0;
+
+	return stat;
 }
 
 
@@ -26,16 +27,18 @@ DSTATUS disk_initialize (void)
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_readp (
-	BYTE* dest,			/* Pointer to the destination object */
-	DWORD sector,		/* Sector number (LBA) */
-	WORD sofs,			/* Offset in the sector */
-	WORD count			/* Byte count (bit15:destination) */
+	BYTE* buff,		/* Pointer to the destination object */
+	DWORD sector,	/* Sector number (LBA) */
+	UINT offset,	/* Offset in the sector */
+	UINT count		/* Byte count (bit15:destination) */
 )
 {
-	if (SDReadMultipleBlocks(dest, count, sofs, sector) != -1)
-		return RES_OK;
+	DRESULT res = RES_ERROR;
 
-	return RES_ERROR;
+	if (SDReadMultipleBlocks(buff, count, offset, sector) != -1)
+		res = RES_OK;
+
+	return res;
 }
 
 
@@ -49,7 +52,7 @@ DRESULT disk_writep (
 	DWORD sc		/* Sector number (LBA) or Number of bytes to send */
 )
 {
-	DRESULT res = RES_NOTRDY;
+	DRESULT res = RES_ERROR;
 
 
 	if (!buff) {
@@ -70,3 +73,4 @@ DRESULT disk_writep (
 
 	return res;
 }
+

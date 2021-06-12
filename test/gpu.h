@@ -1,6 +1,6 @@
 
 // Utility macros
-#define MAKERGB8BITCOLOR(_r, _g, _b) (((_b>>6)<<6) | ((_r>>5)<<3) | ((_g>>5)))
+#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 
 // GPU command macros
 #define GPU22BITIMM(_immed_) (_immed_&0x003FFFFF)
@@ -17,8 +17,8 @@
 // Set register lower 22 bits when source register is zero, otherwise sets uppper 10 bits
 #define GPUSETREGISTER 0x1
 
-// Plots a single byte into given VRAM address (To be deprecated)
-#define GPUWRITEVRAM 0x2
+// Sets an entry in the palette to given RGB color in source register
+#define GPUWRITEPALETTE 0x2
 
 // Clears the whole VRAM to color in source register (at x12 speed of continuous DWORD writes)
 #define GPUCLEAR 0x3
@@ -65,12 +65,15 @@ inline void GPUClearVRAMPage(const uint8_t clearColorRegister)
     *IO_GPUFIFO = GPUOPCODE(GPUCLEAR, clearColorRegister, 0, 0);
 }
 
-inline void GPURasterizeTriangle(const uint8_t vertex0Register, const uint8_t vertex1Register, const uint8_t vertex2Register, const uint8_t fillColor)
+inline void GPURasterizeTriangle(const uint8_t vertex0Register, const uint8_t vertex1Register, const uint8_t vertex2Register, const uint8_t fillColorIndex)
 {
-    *IO_GPUFIFO = GPUOPCODE3(GPURASTERIZE, vertex0Register, vertex1Register, vertex2Register, fillColor);
+    *IO_GPUFIFO = GPUOPCODE3(GPURASTERIZE, vertex0Register, vertex1Register, vertex2Register, fillColorIndex);
 }
 
-inline void GPUWriteVideoMemory(const uint8_t writeValueRegister, const uint8_t writeMask, const uint32_t DWORDAlignedVideoMemoryAddress)
+inline void GPUSetPaletteEntry(const uint8_t rgbRegister, const uint8_t targetPaletteEntry)
 {
-    *IO_GPUFIFO = GPUOPCODE2(GPUWRITEVRAM, writeValueRegister, 0, writeMask, (DWORDAlignedVideoMemoryAddress&0x3FFF));
+    // Each color component is 8 bits (8:8:8) giving a 24 bit color value
+    // There are 256 slots for color palette entries
+    // Color bit order in register should be: ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b)
+    *IO_GPUFIFO = GPUOPCODE(GPUWRITEPALETTE, rgbRegister, 0, targetPaletteEntry);
 }

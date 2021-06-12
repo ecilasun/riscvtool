@@ -9,7 +9,7 @@
 #include "nekoichi.h"
 #include "gpu.h"
 #include "sdcard.h"
-#include "fat.h"
+#include "pff.h"
 #include "console.h"
 #include "elf.h"
 #include "nekoichitask.h"
@@ -115,20 +115,30 @@ void LoadFile(char *filename, uint32_t base)
       fread((void*)base, 512, 1, fp);
       fclose(fp);
    }
+   else
+      printf("File %s not found\r\n", filename);
 }
 
 void Dump(uint32_t base, uint32_t offset)
 {
-   char str[5];
-   str[4]=0;
-   for(uint32_t i=0;i<16;++i) // Fs.fsize
+   char outstr[40];
+   char str[9];
+   str[8]=0;
+   for(uint32_t i=0;i<16;i+=2) // Fs.fsize
    {
-      uint32_t V = *(uint32_t*)(base+4*offset+4*i);
-      str[0] = V&0x000000FF; str[0] = str[0]<32 ? '.':str[0];
-      str[1] = (V>>8)&0x000000FF; str[1] = str[1]<32 ? '.':str[1];
-      str[2] = (V>>16)&0x000000FF; str[2] = str[2]<32 ? '.':str[2];
-      str[3] = (V>>24)&0x000000FF; str[3] = str[3]<32 ? '.':str[3];
-      printf("0x%.8X: %s\r\n", (unsigned int)V, str);
+      uint32_t V1 = *(uint32_t*)(base+4*offset+4*(i+0));
+      uint32_t V2 = *(uint32_t*)(base+4*offset+4*(i+1));
+      str[0] = V1&0x000000FF; str[0] = ((str[0]<32) | (str[0]>127)) ? '.':str[0];
+      str[1] = (V1>>8)&0x000000FF; str[1] = ((str[1]<32) | (str[1]>127)) ? '.':str[1];
+      str[2] = (V1>>16)&0x000000FF; str[2] = ((str[2]<32) | (str[2]>127)) ? '.':str[2];
+      str[3] = (V1>>24)&0x000000FF; str[3] = ((str[3]<32) | (str[3]>127)) ? '.':str[3];
+      str[4] = V2&0x000000FF; str[4] = ((str[4]<32) | (str[4]>127)) ? '.':str[4];
+      str[5] = (V2>>8)&0x000000FF; str[5] = ((str[5]<32) | (str[5]>127)) ? '.':str[5];
+      str[6] = (V2>>16)&0x000000FF; str[6] = ((str[6]<32) | (str[6]>127)) ? '.':str[6];
+      str[7] = (V2>>24)&0x000000FF; str[7] = ((str[7]<32) | (str[7]>127)) ? '.':str[7];
+      sprintf(outstr, "%.8X%.8X: %s\r\n", (unsigned int)V1,(unsigned int)V2, str);
+      printf(outstr);
+      EchoConsole(outstr);
    }
 }
 
@@ -156,7 +166,7 @@ int LoadELF(const char *filename)
 void ListDir()
 {
    DIR dir;
-   FRESULT re = pf_opendir(&dir, " ");
+   FRESULT re = pf_opendir(&dir, "/");
    if (re == FR_OK)
    {
       FILINFO finf;
@@ -324,7 +334,7 @@ int OSPeriodicTask()
 
 int OSMainTask()
 {
-   uint8_t bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
+   uint8_t bgcolor = 0x1A; // Light gray
    // Set output page
    uint32_t page = 0;
    GPUSetRegister(6, page);
@@ -341,7 +351,9 @@ int OSMainTask()
 
    // UART communication section
    uint32_t prevmilliseconds = 0;
-   volatile unsigned int gpustate = 0x00000000;
+   // Make sure this lands in the Fast RAM
+   volatile uint32_t *gpustate = (volatile uint32_t *)0x0003FFF0;
+   *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
    while(1)
    {
@@ -365,7 +377,7 @@ int OSMainTask()
          }
       }
 
-      if (gpustate == cnt) // GPU work complete, push more
+      if (*gpustate == cnt) // GPU work complete, push more
       {
          ++cnt;
 
@@ -404,14 +416,14 @@ int OSMainTask()
          GPUSetVideoPage(6);
 
          // GPU status address in G1
-         uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
+         uint32_t gpustateDWORDaligned = uint32_t(gpustate);
          GPUSetRegister(1, gpustateDWORDaligned);
 
          // Write 'end of processing' from GPU so that CPU can resume its work
          GPUSetRegister(2, cnt);
          GPUWriteSystemMemory(2, 1);
 
-         gpustate = 0;
+         *gpustate = 0;
       }
    }
 
@@ -816,7 +828,7 @@ int main()
    printf("| ##########   ########## |\r\n");
    printf("+-------------------------+\r\n");
 
-   printf("\r\nNekoIchi [v005] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
+   printf("\r\nNekoIchi [v999] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Grab the initial state of switches
    // This read does not trigger an interrupt but reads the live state

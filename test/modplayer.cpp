@@ -1,6 +1,6 @@
 #include "nekoichi.h"
-#include "SDCARD.h"
-#include "FAT.h"
+#include "sdcard.h"
+#include "pff.h"
 
 // Original post on pouet.net by https://www.pouet.net/user.php?who=182
 
@@ -693,14 +693,14 @@ FATFS Fs;
 int main(int argc, char* argv[])
 {
     pf_mount(&Fs);
-    FRESULT fr = pf_open("SONG.MOD");
-    if (fr == FR_OK)
+    int songfile = pf_open("SONG.MOD");
+    if (songfile == FR_OK)
     {
-        int size=Fs.fsize;
+        uint32_t size = pf_filesize(songfile);
         unsigned char *mod = new unsigned char[size];
-        WORD *bytesread=0;
-        pf_read(mod, size, bytesread);
-        //pf_close();
+        UINT *bytesread=0;
+        pf_read(songfile, mod, size, bytesread);
+        pf_close(songfile);
 
         Paula P;
         ModPlayer player(&P, mod);
@@ -710,8 +710,8 @@ int main(int argc, char* argv[])
             float tmpbuf[64];
             player.Render(tmpbuf, 64);
 
-            for (int i=0;i<64;++i)
-                *IO_AudioOutput = (uint32_t)(65536.f*tmpbuf[i]);
+            /*for (int i=0;i<64;++i)
+                *IO_AudioOutput = (uint32_t)(65536.f*tmpbuf[i]);*/
         }
 
         delete[] mod;

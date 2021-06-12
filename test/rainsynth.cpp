@@ -151,7 +151,12 @@ int main()
         int R = B*ssin(k+l);
         int L = B*ssin(k+l);
 
-        *IO_AudioOutput = ((R&0xFFFF)<<16) | (L&0xFFFF);
+        // TODO: Access APU instead of the audio port
+        //*IO_AudioOutput = ((R&0xFFFF)<<16) | (L&0xFFFF);
+
+        // Direct output mode
+        *IO_APUFIFO = ((R&0xFFFF)<<16) | 0x0000; // WriteRightDirect
+        *IO_APUFIFO = ((L&0xFFFF)<<16) | 0x0010; // WriteLeftDirect
 
         divider0++;
         if (divider0>64)

@@ -21,11 +21,12 @@ uint32_t vramPage = 0;
 void DrawRotatingRect(const float ox, const float oy)
 {
    static float roll = 1.8f;
+   float S = cosf(roll*0.1f)*12.f;
 
-   float rx0 = cosf(roll)*12.f;
-   float ry0 = sinf(roll)*12.f;
-   float rx1 = cosf(roll+3.1415927f*0.5f)*12.f;
-   float ry1 = sinf(roll+3.1415927f*0.5f)*12.f;
+   float rx0 = cosf(roll)*S;
+   float ry0 = sinf(roll)*S;
+   float rx1 = cosf(roll+3.1415927f*0.5f)*S;
+   float ry1 = sinf(roll+3.1415927f*0.5f)*S;
 
    short x1 = short(ox - rx0 - rx1);
    short y1 = short(oy - ry0 - ry1);
@@ -45,24 +46,20 @@ void DrawRotatingRect(const float ox, const float oy)
    GPUSetRegister(2, vertex1);
    GPUSetRegister(3, vertex2);
    GPUSetRegister(4, vertex3);
-   uint8_t ncolor = 0x37;
-   GPURasterizeTriangle(1,2,3,ncolor);
-   GPURasterizeTriangle(3,4,1,ncolor^0xFF);
+   GPURasterizeTriangle(1,2,3,0x00); // Black
+   GPURasterizeTriangle(3,4,1,0x0F); // White
 
    roll += 0.055f;
 }
 
 void SubmitGPUFrame()
 {
-   const uint8_t bgcolor = 0x03;//0x7C;
-   const uint32_t colorbits = (bgcolor<<24) | (bgcolor<<16) | (bgcolor<<8) | bgcolor;
-
    if (gpuSideSubmitCounter == gpuSubmitCounter)
    {
       ++gpuSubmitCounter;
 
       // CLS
-      GPUSetRegister(1, colorbits);
+      GPUSetRegister(1, 0x18181818); // 4 Gray pixels
       GPUClearVRAMPage(1);
 
       DrawRotatingRect(128, 96);
@@ -215,7 +212,7 @@ int main()
    EchoUART("| ##########   ########## |\r\n");
    EchoUART("+-------------------------+\r\n");
 
-   EchoUART("\r\nNekoIchi [v006] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoIchi [v007] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Initialize video page
    GPUSetRegister(2, vramPage);

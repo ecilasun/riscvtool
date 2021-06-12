@@ -40,15 +40,15 @@ int mandelbrotFloat(float ox, float oy, float sx)
       for (int col = 0; col < 256; col+=2)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
-         uint8_t c;
+         int c;
          if (M < 2)
          {
-            c = MAKERGB8BITCOLOR(0, 100, 0);
+            c = 0;
          }
          else
          {
             float ratio = float(M)/float(R);
-            c = MAKERGB8BITCOLOR(int(10+1.f*ratio*140), 100, int(1.f*ratio*200));
+            c = int(1.f*ratio*255);
          }
 
          mandelbuffer[col + (row<<8)] = c;
@@ -75,8 +75,19 @@ int main(int argc, char ** argv)
    float X = -0.235125f;
    float Y = 0.827215f;
 
-   volatile unsigned int gpustate = 0x00000000;
-   unsigned int cnt = 0x00000000;
+   // Make sure this lands in the Fast RAM
+   volatile uint32_t *gpustate = (volatile uint32_t *)0x0003FFF0;
+   *gpustate = 0x0;
+   uint32_t cnt = 0x0;
+
+  // Set grayscale palette
+   for (uint32_t i=0;i<255;++i)
+   {
+      int j=255-i;
+      uint32_t color = (j<<16) | (j<<8) | j;
+      GPUSetRegister(1, color);
+      GPUSetPaletteEntry(1, i);
+   }
 
    uint64_t prevreti = ReadRetiredInstructions();
    uint32_t prevms = ClockToMs(ReadClock());
@@ -98,7 +109,7 @@ int main(int argc, char ** argv)
          prevreti = reti;
       }
 
-      if (gpustate == cnt) // GPU work complete, push more
+      if (*gpustate == cnt) // GPU work complete, push more
       {
          ++cnt;
 
@@ -130,14 +141,14 @@ int main(int argc, char ** argv)
          GPUSetVideoPage(6);
 
          // GPU status address in G1
-         uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
+         uint32_t gpustateDWORDaligned = uint32_t(gpustate);
          GPUSetRegister(1, gpustateDWORDaligned);
 
          // Write 'end of processing' from GPU so that CPU can resume its work
          GPUSetRegister(2, cnt);
          GPUWriteSystemMemory(2, 1);
 
-         gpustate = 0;
+         *gpustate = 0;
       }
    }
 

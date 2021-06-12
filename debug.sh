@@ -3,7 +3,8 @@
 # upload binary using
 # ./build/release/riscvtool ROM_experimental.elf -sendelf 0x10000 /dev/ttyUSB4
 
-riscv64-unknown-elf-gdb -b 115200 doom.elf
+# riscv64-unknown-elf-gdb -b 115200 doom.elf
+gdbgui --gdb-cmd="riscv64-unknown-elf-gdb -b 115200 doom.elf"
 
 # After GDB starts, attach and test with:
 # target remote /dev/ttyUSB1

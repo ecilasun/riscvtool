@@ -8,7 +8,7 @@
 #include "nekoichi.h"
 #include "gpu.h"
 #include "sdcard.h"
-#include "fat.h"
+#include "pff.h"
 #include "console.h"
 #include "elf.h"
 
@@ -25,95 +25,30 @@ const char *FRtoString[]={
 	"FR_NO_FILESYSTEM\r\n"
 };
 
-void parseelfheader(int fh, SElfFileHeader32 *fheader)
+/*void loadfile(char *commandline)
 {
-   if (fheader->m_Magic != 0x464C457F)
+   FIL fp;
+   FRESULT fr = f_open(&fp, &commandline[5], FA_READ);
+   if (fr == FR_OK)
    {
-       EchoConsole("Failed: expecting 0x7F+'ELF'\n");
-       return;
-   }
-
-   branchaddress = fheader->m_Entry;
-   EchoConsole("Program entry point: ");
-   EchoConsoleHex(branchaddress);
-   EchoConsole("\r\n");
-
-   WORD bytesread;
-
-   // Read program header
-   SElfProgramHeader32 pheader;
-   pf_lseek(fh, fheader->m_PHOff);
-   pf_read(fh, &pheader, sizeof(SElfProgramHeader32), &bytesread);
-
-   // Read string table section header
-   unsigned int stringtableindex = fheader->m_SHStrndx;
-   SElfSectionHeader32 stringtablesection;
-   pf_lseek(fh, fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
-   pf_read(fh, &stringtablesection, sizeof(SElfSectionHeader32), &bytesread);
-
-   // Allocate memory for and read string table
-   char *names = (char *)malloc(stringtablesection.m_Size);
-   pf_lseek(fh, stringtablesection.m_Offset);
-   pf_read(fh, names, stringtablesection.m_Size, &bytesread);
-
-   // Dump all section names and info
-   for(unsigned short i=0; i<fheader->m_SHNum; ++i)
-   {
-      // Seek-load section headers as needed
-      SElfSectionHeader32 sheader;
-      pf_lseek(fh, fheader->m_SHOff+fheader->m_SHEntSize*i);
-      pf_read(fh, &sheader, sizeof(SElfSectionHeader32), &bytesread);
-
-      // If this is a section worth loading...
-      if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
-      {
-         // TODO: Load this section to memory
-         /*uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
-         pf_lseek(sheader.m_Offset);
-         pf_read(elfsectionpointer, sheader.m_Size, &bytesread);*/
-
-         // DEBUG: dump info about sections to load
-         EchoConsole(&names[sheader.m_NameOffset]);
-         EchoConsole("\r\n");
-         EchoConsole(" ");
-         EchoConsoleHex(sheader.m_Addr);
-         EchoConsole(" ");
-         EchoConsoleHex(sheader.m_Size);
-         EchoConsole(" ");
-         EchoConsoleHex(sheader.m_Offset);
-         EchoConsole("\r\n");
-      }
-   }
-
-   free(names);
-}
-
-void loadelf(char *commandline)
-{
-   int fh = pf_open(&commandline[5]);
-   if (fh != -1)
-   {
-      // File size: Fs.fsize
-      WORD bytesread;
-      // Read header
-      SElfFileHeader32 fheader;
-      pf_read(fh, &fheader, sizeof(fheader), &bytesread);
-      parseelfheader(fh, &fheader);
-      pf_close(fh);
+      uint32_t fsz = f_size(&fp);
+      UINT bytesread;
+      f_read(&fp, (void*)0x0A000000, fsz, &bytesread);;
+      f_close(&fp);
    }
    else
    {
-      EchoConsole("\r\nNot found:");
-      EchoConsole(&commandline[5]);
+      EchoUART(FRtoString[fr]);
    }
-}
+}*/
 
 void showdir()
 {
    DIR dir;
-   FRESULT re = pf_opendir(&dir, " ");
+   FRESULT re = pf_opendir(&dir, "/");
    if (re == FR_OK)
    {
+      //pf_rewinddir(&dir);
       FILINFO finf;
       do{
          re = pf_readdir(&dir, &finf);
@@ -132,18 +67,19 @@ void showdir()
             EchoConsole((finf.ftime&0x1E0)>>5);
             EchoConsole("/");
             EchoConsole(finf.ftime&0x1F);*/
-            if (finf.fattrib&0x01) { EchoConsole("r"); EchoUART("r"); }
-            if (finf.fattrib&0x02) { EchoConsole("h"); EchoUART("h"); }
-            if (finf.fattrib&0x04) { EchoConsole("s"); EchoUART("s"); }
-            if (finf.fattrib&0x08) { EchoConsole("l"); EchoUART("l"); }
-            if (finf.fattrib&0x0F) { EchoConsole("L"); EchoUART("L"); }
-            if (finf.fattrib&0x10) { EchoConsole("d"); EchoUART("d"); }
-            if (finf.fattrib&0x20) { EchoConsole("a"); EchoUART("a"); }
+            if (finf.fattrib&AM_RDO) { EchoConsole("r"); EchoUART("r"); }
+            if (finf.fattrib&AM_HID) { EchoConsole("h"); EchoUART("h"); }
+            if (finf.fattrib&AM_SYS) { EchoConsole("s"); EchoUART("s"); }
+            //if (finf.fattrib&0x08) { EchoConsole("l"); EchoUART("l"); }
+            //if (finf.fattrib&0x0F) { EchoConsole("L"); EchoUART("L"); }
+            if (finf.fattrib&AM_DIR) { EchoConsole("d"); EchoUART("d"); }
+            if (finf.fattrib&AM_ARC) { EchoConsole("a"); EchoUART("a"); }
 
             EchoConsole("\r\n");
             EchoUART("\r\n");
          }
-      } while(re == FR_OK && dir.sect!=0);
+      } while(re == FR_OK && (finf.fname[0]!=0));
+      //pf_closedir(&dir);
    }
    else
       EchoUART(FRtoString[re]);
@@ -152,12 +88,23 @@ void showdir()
 
 int main()
 {
-   pf_mount(&Fs);
+   FRESULT fr = pf_mount(&Fs);
+   if (fr != FR_OK)
+      EchoUART(FRtoString[fr]);
 
-   const unsigned char bgcolor = 0xC0; // BRG -> B=0xC0, R=0x38, G=0x07
-   //const unsigned char editbgcolor = 0x00;
+   const unsigned char bgcolor = 0x1A; // Use default VGA palette grayscale value
 
    char cmdbuffer[33*25];
+
+   // Set text color - default is 255 (black)
+   /*{
+      int r=0x10;
+      int g=0xFF;
+      int b=0xFF;
+      uint32_t color = (g<<16) | (r<<8) | b;
+      GPUSetRegister(1, color);
+      GPUSetPaletteEntry(1, 255);
+   }*/
 
    // Set output page
    uint32_t page = 0;
@@ -179,7 +126,9 @@ int main()
    uint32_t prevmilliseconds = 0;
    uint32_t cursorevenodd = 0;
    uint32_t toggletime = 0;
-   volatile unsigned int gpustate = 0x00000000;
+   // Make sure this lands in the Fast RAM
+   volatile uint32_t *gpustate = (volatile uint32_t *)0x0003FFF0;
+   *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
    int escapemode = 0;
    while(1)
@@ -223,23 +172,23 @@ int main()
             else if ((cmdbuffer[0]='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
             {
                EchoConsole("\r\n");
-               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
+               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load given file\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
                EchoUART("\r\n");
-               EchoUART("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load and run ELF\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
+               EchoUART("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load given file\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
             }
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
             {
                EchoConsole("\r\n");
                showdir();
             }
-            else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
+            /*else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
             {
                EchoConsole("\r\n");
-               loadelf(cmdbuffer);
-            }
+               loadfile(cmdbuffer);
+            }*/
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='p'))
             {
-                for (uint32_t i=branchaddress;i<branchaddress + 0x100;i+=4)
+                for (uint32_t i=0x0A000000;i<0x0A000100;i+=4)
                 {
                     EchoHex(i);
                     EchoUART(":");
@@ -253,7 +202,7 @@ int main()
             {
                asm (
                   "lw ra, %0 \n"
-                  "li x12, 0x0001FFF0 \n"
+                  "li x12, 0x0FFFF000 \n"
                   "mv sp, x12 \n"
                   "ret \n"
                   : 
@@ -295,7 +244,7 @@ int main()
             *IO_UARTTX = 10; // Echo extra linefeed
       }
 
-      if (gpustate == cnt) // GPU work complete, push more
+      if (*gpustate == cnt) // GPU work complete, push more
       {
          ++cnt;
          // Show the char table
@@ -333,14 +282,14 @@ int main()
          GPUSetVideoPage(6);
 
          // GPU status address in G1
-         uint32_t gpustateDWORDaligned = uint32_t(&gpustate);
+         uint32_t gpustateDWORDaligned = uint32_t(gpustate);
          GPUSetRegister(1, gpustateDWORDaligned);
 
          // Write 'end of processing' from GPU so that CPU can resume its work
          GPUSetRegister(2, cnt);
          GPUWriteSystemMemory(2, 1);
 
-         gpustate = 0;
+         *gpustate = 0;
       }
    }
 
