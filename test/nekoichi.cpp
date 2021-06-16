@@ -151,7 +151,7 @@ void PrintDMAHex(const int ox, const int oy, const uint32_t i)
    PrintDMA(ox, oy, msg);
 }
 
-uint32_t PrintDMADecimal(const int ox, const int oy, const int i)
+uint32_t PrintDMADecimal(const int ox, const int oy, const int i, bool masked)
 {
    const char digits[] = "0123456789";
    char msg[] = "                   ";
@@ -174,7 +174,7 @@ uint32_t PrintDMADecimal(const int ox, const int oy, const int i)
    }
    msg[m] = 0;
 
-   PrintDMA(ox, oy, msg);
+   PrintDMA(ox, oy, msg, masked);
    return m;
 }
 

@@ -230,10 +230,16 @@ void HandleDemoCommands(char checkchar)
          EchoConsole("cls: clear screen\r\n");
          EchoConsole("help: help screen\r\n");
          EchoConsole("time: toggle time\r\n");
+         EchoConsole("die: run illegal instruction\r\n");
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
          ListDir();
+      }
+      else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='e'))
+      {
+         // Generate an illegal instruction
+         asm volatile(".dword 0xFFFFFFFF");
       }
       else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
       {
@@ -586,6 +592,15 @@ void timer_interrupt()
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 }
 
+void illegalinstructiontrap()
+{
+   printf("Illegal instruction exception at 0x????????\r\n");
+   // Stay in an infinite loop to avoid re-triggering this interrupt.
+   // Or perhaps we should replace the broken instruction with an ebreak instead
+   // but set the 'cause' to illegal instruction instead?
+   while(1){}
+}
+
 void breakpoint_interrupt()
 {
    // Notify GDB about having hit a breakpoint so it knows we've paused
@@ -704,6 +719,9 @@ void __attribute__((naked)) interrupt_handler()
       case 3: // Breakpoint
          breakpoint_interrupt();
          break;
+      case 2: // Illegal instruction
+         illegalinstructiontrap();
+         break;
       case 11: // External
          // NOTE: Highest bit is set when the cause is an interrupt
          external_interrupt((causedword&0x7FFF0000)>>16);
@@ -805,8 +823,8 @@ void SetupInterruptHandlers()
    int mstatus = (1 << 3);
    asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
 
-   // Enable machine timer interrupts, machine external interrupts and debug interrupt
-   int msie = (1 << 7) | (1 << 11) | (1 << 3);
+   // Enable machine timer interrupts, machine external interrupts, debug interrupt and illegal instruction exception
+   int msie = (1 << 7) | (1 << 11) | (1 << 3) | (1 << 2);
    asm volatile("csrrw zero, mie,%0" :: "r" (msie));
 }
 

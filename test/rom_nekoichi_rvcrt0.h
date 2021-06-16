@@ -59,7 +59,7 @@ extern "C"
 
    void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
    {
-      asm (
+      /*asm (
          // This will invoke an ECALL to halt the CPU
          "li a1,0;"
          "li a2,0;"
@@ -69,6 +69,6 @@ extern "C"
          "li a7,93;"
          "ecall;"
          "j _exit;"
-      );
+      );*/
    }
 };
