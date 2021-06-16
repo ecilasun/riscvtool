@@ -19,10 +19,14 @@ extern "C"
          ".option pop;"
 
          // Set up stack pointer and align it to 16 bytes
-#ifdef STARTUP_ROM
+#if defined(ROM_STARTUP_256K)
          //"la sp, __stack_top;"
          "li sp, 0x0003FFF0;" // Initial stack lives in Fast RAM
          "mv s0, sp;" // Set frame pointer to same address
+#elif defined(ROM_STARTUP_64K)
+         //"la sp, __stack_top;"
+         "li sp, 0x0000FFF0;"
+         "mv s0, sp;"
 #endif
 
          // Clear BSS

@@ -6,7 +6,7 @@
 #include <memory.h>
 #include <math.h>
 
-#define STARTUP_ROM
+#define ROM_STARTUP_256K
 #include "rom_nekoichi_rvcrt0.h"
 
 #include "nekoichi.h"

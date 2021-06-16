@@ -17,7 +17,7 @@
 
 // NOTE: Uncomment when experimental ROM should be compiled as actual ROM image
 // Also need to swap the the ROM image compile command in build.sh file
-//#define STARTUP_ROM
+//#define ROM_STARTUP_256K
 //#include "rom_nekoichi_rvcrt0.h"
 
 // Entry zero will always be main()
