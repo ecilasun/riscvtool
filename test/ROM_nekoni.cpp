@@ -95,7 +95,7 @@ void RunBinaryBlob()
 
 int main()
 {
-   EchoUART("\r\nNekoNi [v001] [RV32I] \r\n\u00A9 2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoNi [v001] [RV32E] \r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;
