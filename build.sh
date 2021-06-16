@@ -39,8 +39,8 @@ riscv64-unknown-elf-g++ -o mandelbrot.elf test/mandelbrot.cpp test/nekoichi.cpp 
 # ASM dumps - for debug purposes only (not a requirement to have them)
 riscv64-unknown-elf-objdump -d -t -r  ROM_nekoichi.elf >> ROMnekoichiasmdump.txt
 riscv64-unknown-elf-readelf -a ROM_nekoichi.elf >> ROMnekoichiasmdump.txt
-riscv64-unknown-elf-objdump -d -t -r  ROM_nekoichi.elf >> ROMnekoniasmdump.txt
-riscv64-unknown-elf-readelf -a ROM_nekoichi.elf >> ROMnekoniasmdump.txt
+riscv64-unknown-elf-objdump -d -t -r  ROM_nekoni.elf >> ROMnekoniasmdump.txt
+riscv64-unknown-elf-readelf -a ROM_nekoni.elf >> ROMnekoniasmdump.txt
 
 riscv64-unknown-elf-objdump -d -t -r  ROM_experimental.elf >> ROMexperimentalasmdump.txt
 riscv64-unknown-elf-readelf -a ROM_experimental.elf >> ROMexperimentalasmdump.txt
