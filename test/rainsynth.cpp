@@ -146,8 +146,8 @@ int main()
 
     while(1)
     {
-        int R = ssin(k*l+(Random()%118));
-        int L = ssin(k*l+(Random()%118));
+        int R = ssin((k+1)*(l+1));
+        int L = ssin((k+1)*(l+1));
 
         // Write to the FIFO directly (it will stall after 1024 samples if we're too fast)
         *IO_AudioFIFO = ((R&0xFFFF)<<16) | (L&0xFFFF);
