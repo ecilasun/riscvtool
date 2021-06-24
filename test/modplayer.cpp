@@ -6,13 +6,12 @@
 #include <string.h>
 #include "micromod.h"
 
-#define SAMPLING_FREQ  44000  /* 48khz. */
-#define REVERB_BUF_LEN 440   /* 5ms. */
+#define SAMPLING_FREQ  44000  /* 44khz. */
+#define REVERB_BUF_LEN 1100   /* 12.5ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
-#define BUFFER_SAMPLES 512  /* ? buffer. */
+#define BUFFER_SAMPLES 128  /* buffer size */
 
-//static SDL_sem *semaphore;
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
 static short reverb_buffer[ REVERB_BUF_LEN ];
 short buffers[2][ BUFFER_SAMPLES * NUM_CHANNELS ];
@@ -144,6 +143,9 @@ static long play_module( signed char *module ) {
 				reverb( buffers[writebuffer], BUFFER_SAMPLES );
 				samples_remaining -= count;
 
+        // TODO: move one of these to a thread so that the other one doesn't have to wait,
+        // while utilizing the writebuffer index.
+
 				// Audio FIFO will be drained at playback rate and
         // the CPU will stall to wait if the FIFO is full.
         // Therefore, no need to worry about synchronization.
@@ -166,7 +168,7 @@ FATFS Fs;
 int main( int argc, char **argv ) {
 	int arg, result;
 	long count, length;
-	const char *filename = "sd:/orig.mod";
+	const char *filename = "sd:/quake.mod";
 	signed char *module;
 
   FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
