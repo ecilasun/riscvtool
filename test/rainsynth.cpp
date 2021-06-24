@@ -157,14 +157,14 @@ int main()
         //*IO_APUFIFO = ((L&0xFFFF)<<16) | 0x0010; // CmdWriteLeftSample
 
         divider0++;
-        if (divider0>48)
+        if (divider0>96)
         {
             divider0=0;
             k+=1;
         }
 
         divider1++;
-        if (divider1>16)
+        if (divider1>64)
         {
             divider1=0;
             l+=1;

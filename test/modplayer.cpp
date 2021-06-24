@@ -7,7 +7,7 @@
 #include "micromod.h"
 
 #define SAMPLING_FREQ  44000  /* 44khz. */
-#define REVERB_BUF_LEN 1100   /* 12.5ms. */
+#define REVERB_BUF_LEN 4400   /* 50ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
 #define BUFFER_SAMPLES 128  /* buffer size */
