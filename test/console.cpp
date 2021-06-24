@@ -152,7 +152,8 @@ void DrawConsole()
 void ConsoleStringAtRow(char *target)
 {
     // NOTE: Input string must be >32 bytes long to accomodate the null terminator
-    for (int cx=0; cx<32; ++cx)
+    int cx;
+    for (cx=0; cx<cursorx; ++cx)
         target[cx] = consoleText[cursory*32+cx];
-    target[32] = 0;
+    target[cx] = 0;
 }

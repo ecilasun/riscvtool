@@ -6,18 +6,19 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
+#include <unistd.h>
 #include "nekoichi.h"
 #include "gpu.h"
 #include "sdcard.h"
-#include "pff.h"
 #include "console.h"
 #include "elf.h"
 #include "nekoichitask.h"
 #include "debugger.h"
+#include "../fat32/ff.h"
 
 // NOTE: Uncomment when experimental ROM should be compiled as actual ROM image
 // Also need to swap the the ROM image compile command in build.sh file
-//#define ROM_STARTUP_256K
+//#define ROM_STARTUP_128K
 //#include "rom_nekoichi_rvcrt0.h"
 
 // Entry zero will always be main()
@@ -27,6 +28,7 @@ uint32_t num_tasks = 0; // only one initially, which is the init_task
 uint32_t sdcardstate;
 uint32_t sdcardtriggerread;
 uint32_t recessmaintask = 0;
+uint32_t eventuallydie = 0;
 
 // States
 uint8_t oldhardwareswitchstates = 0;
@@ -36,14 +38,26 @@ FATFS Fs;
 uint32_t sdcardavailable = 0;
 volatile uint32_t branchaddress = 0x10000; // TODO: Branch to actual entry point
 const char *FRtoString[]={
-   "FR_OK\r\n",
-	"FR_DISK_ERR\r\n",
-	"FR_NOT_READY\r\n",
-	"FR_NO_FILE\r\n",
-	"FR_NO_PATH\r\n",
-	"FR_NOT_OPENED\r\n",
-	"FR_NOT_ENABLED\r\n",
-	"FR_NO_FILESYSTEM\r\n"
+	"Succeeded\r\n",
+	"A hard error occurred in the low level disk I/O layer\r\n",
+	"Assertion failed\r\n",
+	"The physical drive cannot work\r\n",
+	"Could not find the file\r\n",
+	"Could not find the path\r\n",
+	"The path name format is invalid\r\n",
+	"Access denied due to prohibited access or directory full\r\n",
+	"Access denied due to prohibited access\r\n",
+	"The file/directory object is invalid\r\n",
+	"The physical drive is write protected\r\n",
+	"The logical drive number is invalid\r\n",
+	"The volume has no work area\r\n",
+	"There is no valid FAT volume\r\n",
+	"The f_mkfs() aborted due to any problem\r\n",
+	"Could not get a grant to access the volume within defined period\r\n",
+	"The operation is rejected according to the file sharing policy\r\n",
+	"LFN working buffer could not be allocated\r\n",
+	"Number of open files > FF_FS_LOCK\r\n",
+	"Given parameter is invalid\r\n"
 };
 
 // Demo book keeping storage
@@ -107,12 +121,29 @@ void ParseELFHeaderAndLoadSections(FILE *fp, SElfFileHeader32 *fheader, const ui
 
 void LoadFile(char *filename, uint32_t base)
 {
+   int percent = 0;
    FILE *fp = fopen(filename, "rb");
    if (fp != nullptr)
    {
-      // File size: Fs.fsize
-      //uint32_t fs = pf_filesize(fh); // ?
-      fread((void*)base, 512, 1, fp);
+      fseek(fp, 0, SEEK_END);
+      long size = ftell(fp);
+      fseek(fp, 0, SEEK_SET);
+
+      long chunks = (size+511)/512;
+      printf("%d bytes\r\n", (unsigned int)size);
+      for (int c=0;c<chunks;++c)
+      {
+         printf("\0337 Loading [");
+         for (int i=0;i<percent;++i)
+            printf(":");
+         for (int i=0;i<20-percent;++i)
+            printf(" ");
+         printf("]  %d bytes\0338", 512*c);
+         fread((void*)(base+c*512), 512, 1, fp);
+         percent = (c*20)/chunks;
+      }
+      printf("File loaded at 0x%.8X                      \r\n", (unsigned int)base);
+
       fclose(fp);
    }
    else
@@ -163,15 +194,15 @@ int LoadELF(const char *filename)
    }
 }
 
-void ListDir()
+void ListDir(const char *path)
 {
    DIR dir;
-   FRESULT re = pf_opendir(&dir, "/");
+   FRESULT re = f_opendir(&dir, path);
    if (re == FR_OK)
    {
       FILINFO finf;
       do{
-         re = pf_readdir(&dir, &finf);
+         re = f_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
             int fidx=0;
@@ -187,6 +218,7 @@ void ListDir()
             printf("%s %d %s\r\n", finf.fname, (int)finf.fsize, flags);
          }
       } while(re == FR_OK && dir.sect!=0);
+      f_closedir(&dir);
    }
    else
       printf("%s", FRtoString[re]);
@@ -234,12 +266,11 @@ void HandleDemoCommands(char checkchar)
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
       {
-         ListDir();
+         ListDir(&cmdbuffer[4]);
       }
       else if ((cmdbuffer[0]=='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='e'))
       {
-         // Generate an illegal instruction
-         asm volatile(".dword 0xFFFFFFFF");
+         eventuallydie = 1;
       }
       else if ((cmdbuffer[0]=='r') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='n'))
       {
@@ -358,7 +389,7 @@ int OSMainTask()
    // UART communication section
    uint32_t prevmilliseconds = 0;
    // Make sure this lands in the Fast RAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)0x0003FFF0;
+   volatile uint32_t *gpustate = (volatile uint32_t *)0x00005000;
    *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
    while(1)
@@ -373,14 +404,33 @@ int OSMainTask()
       if (sdcardtriggerread)
       {
          sdcardtriggerread = 0;
-         sdcardavailable = (pf_mount(&Fs) == FR_OK) ? 1 : 0;
-         printf(sdcardavailable ? "SDCard inserted\r\n" : "SDCard not inserted\r\n");
+         FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+         if (mountattempt!=FR_OK)
+            printf(FRtoString[mountattempt]);
+         /*else
+         {
+            FRESULT chdirattempt = f_chdir("sd:/");
+            if (FR_OK != chdirattempt)
+               printf(FRtoString[chdirattempt]);
+         }*/
+         sdcardavailable = ( mountattempt == FR_OK) ? 1 : 0;
+         printf(sdcardavailable ? "SDCard available\r\n" : "SDCard not available\r\n");
          if (sdcardavailable && LoadELF("BOOT.ELF") != -1)
          {
             task_array[3].PC = branchaddress;
             num_tasks = 4; // Next time, scheduler will consider the loaded task as well
             recessmaintask = 1;
          }
+      }
+
+      if (eventuallydie)
+      {
+         eventuallydie = 0;
+
+         printf("Crashing...\r\n");
+         // Generate illegal instructions
+         asm volatile(".dword 0x00000000");
+         asm volatile(".dword 0xFFFFFFFF");
       }
 
       if (*gpustate == cnt) // GPU work complete, push more
@@ -592,13 +642,18 @@ void timer_interrupt()
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 }
 
-void illegalinstructiontrap()
+void illegalinstruction_exception()
 {
-   printf("Illegal instruction exception at 0x????????\r\n");
-   // Stay in an infinite loop to avoid re-triggering this interrupt.
-   // Or perhaps we should replace the broken instruction with an ebreak instead
-   // but set the 'cause' to illegal instruction instead?
-   while(1){}
+   register uint32_t at;
+   asm volatile("csrr %0, mtval" : "=r"(at));
+
+   printf("Illegal instruction @0x%.8X: 0x%.8X\r\n", (unsigned int)at, *(unsigned int*)at);
+
+   // Cause a debug breakpoint (but the place it breaks might be wrong for now)
+   //gdb_breakpoint(task_array);
+
+   // Deadlock
+   while(1) { }
 }
 
 void breakpoint_interrupt()
@@ -713,14 +768,14 @@ void __attribute__((naked)) interrupt_handler()
    asm volatile("csrr %0, mcause" : "=r"(causedword));
    switch(causedword&0x0000FFFF)
    {
-      case 7: // Timer
-         timer_interrupt();
+      case 2: // Illegal instruction
+         illegalinstruction_exception();
          break;
       case 3: // Breakpoint
          breakpoint_interrupt();
          break;
-      case 2: // Illegal instruction
-         illegalinstructiontrap();
+      case 7: // Timer
+         timer_interrupt();
          break;
       case 11: // External
          // NOTE: Highest bit is set when the cause is an interrupt
@@ -819,20 +874,22 @@ void SetupInterruptHandlers()
    // Set trap handler address
    asm volatile("csrrw zero, mtvec, %0" :: "r" (interrupt_handler));
 
-   // Enable machine interrupts
-   int mstatus = (1 << 3);
-   asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
-
    // Enable machine timer interrupts, machine external interrupts, debug interrupt and illegal instruction exception
    int msie = (1 << 7) | (1 << 11) | (1 << 3) | (1 << 2);
    asm volatile("csrrw zero, mie,%0" :: "r" (msie));
+
+   // Enable machine interrupts
+   int mstatus = (1 << 3);
+   asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
 }
 
 int main()
 {
    setbuf(stdout, NULL);
+   InitFont();
 
-   printf("\r\n\r\n");
+   // 'clear' terminal and print the RV logo
+   printf("\033[2J\r\n");
    printf("+-------------------------+\r\n");
    printf("|          ************** |\r\n");
    printf("| ########   ************ |\r\n");
@@ -846,7 +903,13 @@ int main()
    printf("| ##########   ########## |\r\n");
    printf("+-------------------------+\r\n");
 
-   printf("\r\nNekoIchi [v999] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
+   // Grab MISA register and show type of machine we're running on
+   register uint32_t ISAword;
+   asm volatile("csrr %0, misa" : "=r"(ISAword));
+   printf("\r\nRV32IMFZicsr (0x%.8X)\r\n", (unsigned int)ISAword); //{2'b01, 4'b0000, 26'b00000000000001000100100000}; -> 32bit I M F
+
+   // Copyright message
+   printf("NekoIchi \u00A9 2021 Engin Cilasun\r\n");
 
    // Grab the initial state of switches
    // This read does not trigger an interrupt but reads the live state
@@ -854,7 +917,6 @@ int main()
    hardwareswitchstates = oldhardwareswitchstates = *IO_SwitchState;
    sdcardstate = 0xFF;
 
-   // TODO:
    SetupTasks();
    SetupInterruptHandlers();
 

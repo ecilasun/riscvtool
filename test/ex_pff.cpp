@@ -1133,6 +1133,7 @@ FRESULT pf_lseek (
 
 
 /*-----------------------------------------------------------------------*/
+/* Close file handle                                                     */
 /*-----------------------------------------------------------------------*/
 FRESULT pf_close(int handle)
 {
@@ -1146,11 +1147,12 @@ FRESULT pf_close(int handle)
 }
 
 /*-----------------------------------------------------------------------*/
+/* Return file size                                                      */
 /*-----------------------------------------------------------------------*/
 unsigned int pf_filesize(int handle)
 {
 	if (handle==-1)
-		return FR_NOT_OPENED;
+		return 0;//FR_NOT_OPENED;
 
 	SFileHandle *h = &filehandles[handle];
 
@@ -1158,7 +1160,20 @@ unsigned int pf_filesize(int handle)
 }
 
 /*-----------------------------------------------------------------------*/
-/* Create a Directroy Object                                             */
+/* Return current file cursor                                            */
+/*-----------------------------------------------------------------------*/
+DWORD pf_fpos (int handle)
+{
+	if (handle==-1)
+		return 0;//FR_NOT_OPENED;
+
+	SFileHandle *h = &filehandles[handle];
+
+	return h->fptr;
+}
+
+/*-----------------------------------------------------------------------*/
+/* Create a Directory Object                                             */
 /*-----------------------------------------------------------------------*/
 #if PF_USE_DIR
 

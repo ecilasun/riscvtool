@@ -47,4 +47,4 @@ uint8_t SDSetBlockSize512();
 uint8_t SDReadSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2]);
 
 int SDCardStartup();
-int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numbytes, uint32_t offset, uint32_t blockaddress);
+int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress);

@@ -122,6 +122,7 @@ FRESULT pf_opendir (DIR* dj, const char* path);				/* Open a directory */
 FRESULT pf_readdir (DIR* dj, FILINFO* fno);					/* Read a directory item from the open directory */
 FRESULT pf_close(int handle);
 unsigned int pf_filesize(int handle);
+DWORD pf_fpos (int handle);
 
 FATFS *GetFatFS();
 

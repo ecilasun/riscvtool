@@ -6,17 +6,16 @@
 #include <memory.h>
 #include <math.h>
 
-#define ROM_STARTUP_256K
+#define ROM_STARTUP_128K
 #include "rom_nekoichi_rvcrt0.h"
 
 #include "nekoichi.h"
 #include "gpu.h"
 
-#include "sdcard.h"
-
-volatile uint32_t gpuSideSubmitCounter = 0x00000000;
+volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)0x0001FFF0;
 uint32_t gpuSubmitCounter = 0;
 uint32_t vramPage = 0;
+uint32_t osc = 0;
 
 void DrawRotatingRect(const float ox, const float oy)
 {
@@ -54,8 +53,10 @@ void DrawRotatingRect(const float ox, const float oy)
 
 void SubmitGPUFrame()
 {
-   if (gpuSideSubmitCounter == gpuSubmitCounter)
+   // Do not submit more work if the GPU is not ready
+   if (*gpuSideSubmitCounter == gpuSubmitCounter)
    {
+      // Next frame
       ++gpuSubmitCounter;
 
       // CLS
@@ -73,12 +74,12 @@ void SubmitGPUFrame()
       GPUSetVideoPage(2);
 
       // GPU will write value in G2 to address in G3 in the future
-      GPUSetRegister(3, uint32_t(&gpuSideSubmitCounter));
+      GPUSetRegister(3, uint32_t(gpuSideSubmitCounter));
       GPUSetRegister(2, gpuSubmitCounter);
       GPUWriteSystemMemory(2, 3);
 
       // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
-      gpuSideSubmitCounter = 0;
+      *gpuSideSubmitCounter = 0;
    }
 }
 
@@ -198,25 +199,12 @@ void RunBinaryBlob()
 
 int main()
 {
-   EchoUART("\r\n\r\n");
-   EchoUART("+-------------------------+\r\n");
-   EchoUART("|          ************** |\r\n");
-   EchoUART("| ########   ************ |\r\n");
-   EchoUART("| #########  ************ |\r\n");
-   EchoUART("| ########   ***********  |\r\n");
-   EchoUART("| #        ***********    |\r\n");
-   EchoUART("| ##   *************   ## |\r\n");
-   EchoUART("| ####   *********   #### |\r\n");
-   EchoUART("| ######   *****   ###### |\r\n");
-   EchoUART("| ########   *   ######## |\r\n");
-   EchoUART("| ##########   ########## |\r\n");
-   EchoUART("+-------------------------+\r\n");
-
-   EchoUART("\r\nNekoIchi [v007] [RV32IMFZicsr@100Mhz] [GPU@85Mhz]\r\n\u00A9 2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoIchi [v008] [RV32IMFZicsr] [GPU]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Initialize video page
    GPUSetRegister(2, vramPage);
    GPUSetVideoPage(2);
+   *gpuSideSubmitCounter = 0;
 
    // UART communication section
    uint8_t prevchar = 0xFF;

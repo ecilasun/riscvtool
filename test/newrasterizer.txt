@@ -1,0 +1,617 @@
+`timescale 1ns / 1ps
+
+`include "cpuops.vh"
+`include "gpuops.vh"
+
+// ================================================================
+// Fine rasterizer unit
+// TODO
+// ================================================================
+
+module finerasterunit(
+	input wire reset,
+	input wire clock,
+	input wire fqempty,
+	input wire [127:0] fqdout,
+	input wire fqvalid,
+	output logic fqre = 1'b0,
+	output logic [31:0] vramwriteword,
+	output logic [3:0] vramwe = 4'b0000,
+	output logic [31:0] vramaddress );
+
+logic [3:0] state = 4'b0000;
+
+logic signed [15:0] x0,y0,x1,y1,x2,y2;
+logic signed [15:0] pX, pY;
+logic [7:0] color;
+
+logic signed [15:0] E0,E1,E2;
+	
+always_ff @(posedge clock) begin
+	if (reset) begin
+		//
+	end else begin
+		case (state)
+			4'b0000: begin // IDLE
+				if (~fqempty) begin
+					// Found something
+					fqre <= 1'b1;
+					state <= 4'b0001;
+				end
+			end
+			4'b0001: begin // READ
+				fqre <= 1'b0;
+				if (fqvalid) begin
+					// Vertices
+					{x0, y0} <= fqdout[127:96];
+					{x1, y1} <= fqdout[95:64];
+					{x2, y2} <= fqdout[63:32];
+					// Corner of the tile
+					{pX, pY} <= {4'd0, fqdout[31:20], 4'd0, fqdout[19:8]}; // 12 bits unsigned each, expand to 16bit signed
+					// Solid color
+					color <= fqdout[7:0];
+					// Start working on it
+					state <= 4'b0010;
+				end
+			end
+			4'b0010: begin // FINEMASKGEN
+				// Upper left corner of tile
+				E0 <= (pY-y0)*(x0-x1) + (pX-x0)*(y1-y0);
+				E1 <= (pY-y1)*(x1-x2) + (pX-x1)*(y2-y1);
+				E2 <= (pY-y2)*(x2-x0) + (pX-x2)*(y0-y2);
+				// TODO: 15 more for all pixels
+				state <= 4'b0011;
+			end
+			4'b0011: begin // WRITE
+				// TODO: Write 4 DWORDs for the 4x4 tile
+				vramwe <= 4'b1111;
+				vramaddress <= {pY[7:0], pX[7:2]};
+				vramwriteword <= {color,color,color,color};
+				state <= 4'b0000; // Go to idle
+			end
+		endcase
+	end
+end
+
+endmodule
+
+// ================================================================
+// Coarse rasterizer unit
+// bounds generation
+// bounds clipping / alignment
+// triangle sweep to generate fine raster tiles
+// ================================================================
+
+module coarserasterunit(
+	input wire reset,
+	input wire clock,
+	input wire cqempty,
+	input wire cqvalid,
+	output logic cqre = 1'b1,
+	input wire [127:0] cqdout,
+	input wire fqfull,
+	output logic fqwe,
+	output logic [127:0] fqdin);
+	
+logic [3:0] state = 4'b0000;
+
+logic signed [15:0] x0,y0,x1,y1,x2,y2;
+logic [7:0] color;
+
+logic signed [15:0] minX, minY, maxX, maxY;
+logic signed [15:0] pX, pY;
+
+logic signed [15:0] E0, E1, E2;
+
+always_ff @(posedge clock) begin
+	if (reset) begin
+	end else begin
+		case (state)
+			4'b0000: begin // IDLE
+				if (~cqempty) begin // Something's available
+					cqre <= 1'b1; // Request to read it
+					state <= 4'b0001;
+				end
+			end
+			4'b0001: begin // READ
+				cqre <= 1'b0;
+				if (cqvalid) begin
+					{x0, y0} <= cqdout[127:96];
+					{x1, y1} <= cqdout[95:64];
+					{x2, y2} <= cqdout[63:32];
+					// NOTE: cqdout[31:8] (3 bytes) not used yet
+					color <= cqdout[7:0];
+					state <= 4'b0010;
+				end
+			end
+			4'b0010: begin // MINMAX0
+				minX <= x0 < x1 ? x0:x1;
+				minY <= y0 < y1 ? y0:y1;
+				maxX <= x0 > x1 ? x0:x1;
+				maxY <= y0 > y1 ? y0:y1;
+				state <= 4'b0011;
+			end
+			4'b0011: begin // MINMAX1
+				minX <= minX < x2 ? minX:x2;
+				minY <= minY < y2 ? minY:y2;
+				maxX <= maxX > x2 ? maxX:x2;
+				maxY <= maxY > y2 ? maxY:y2;
+				state <= 4'b0100;
+			end
+			4'b0100: begin // CLIP
+				minX <= minX < 16'sd256 ? (minX < 16'sd0 ? 16'sd0 : minX) : 16'sd255;
+				maxX <= maxX < 16'sd256 ? (maxX < 16'sd0 ? 16'sd0 : maxX) : 16'sd255;
+				minY <= minY < 16'sd192 ? (minY < 16'sd0 ? 16'sd0 : minY) : 16'sd191;
+				maxY <= maxY < 16'sd192 ? (maxY < 16'sd0 ? 16'sd0 : maxY) : 16'sd191;
+				state <= 4'b0101;
+			end
+			4'b0101: begin // ALIGN
+				// Truncate min/max to nearest multiple of 4
+				minX <= {minX[15:2],2'b00};
+				minY <= {minY[15:2],2'b00};
+				pX <= {minX[15:2],2'b00};
+				pY <= {minX[15:2],2'b00};
+				maxX <= {maxX[15:2],2'b00};
+				maxY <= {maxY[15:2],2'b00};
+				state <= 4'b0110;
+			end
+			4'b0110: begin // EDGEMASK
+				// Upper left corner of tile
+				E0 <= (pY-y0)*(x0-x1) + (pX-x0)*(y1-y0);
+				E1 <= (pY-y1)*(x1-x2) + (pX-x1)*(y2-y1);
+				E2 <= (pY-y2)*(x2-x0) + (pX-x2)*(y0-y2);
+				// TODO: 3 more for other corners
+				state <= 4'b0111;
+			end
+			4'b0111: begin // GENFINETILE
+
+				// Composite tile mask
+				// If any bit of a tile is set, an edge crosses it
+				// If all edges cross a tile, it's inside the triangle
+				// tilehit = (|edgemask[3:0]) & (|edgemask[7:4]) & (|edgemask[11:8]);
+				// tilehit = (E00[15]|E01[15]|E02[15]|E03[15]) & (E10[15]|E11[15]|E12[15]|E13[15]) & (E20[15]|E21[15]|E22[15]|E23[15]);
+				// tilecoverage = edgemask[3:0] & edgemask[7:4] & edgemask[11:8];
+				// tilecoverage = {E00[15],E01[15],E02[15],E03[15]} & {E10[15],E11[15],E12[15],E13[15]} & {E20[15],E21[15],E22[15],E23[15]};
+				
+				// Tile mask valid?
+				if (E0[15]&E1[15]&E2[15]) begin // all 3 edges <0 on this position
+					if (~fqfull) begin
+						fqwe <= 1'b1;
+						// NOTE: After clamp, pX,pY must be unsigned so we can strip the lower 12 bits out without issues
+						fqdin <= {x0,y0,x1,y1,x2,y2,pX[11:0],pY[11:0],color};
+						state <= 4'b1000; // Step to next tile
+					end else begin
+						state <= 4'b0111; // Spin, wait for queue to become empty
+					end
+				end
+			end
+			4'b1000: begin // SWEEP
+				fqwe <= 1'b0;
+				if (pY >= maxY) begin
+					// We have exhausted all rows to send to fine rasterizer
+					state <= 4'b0000; // Go to idle
+				end else begin
+					// Step to next tile
+					if (pX >= maxX) begin // | (~widetilemask)
+						pX <= minX;
+						// Step one tile down
+						pY <= pY + 16'sd1; // tile height=1
+					end else begin
+						// Step to next tile on scanline
+						pX <= pX + 16'sd4;
+					end
+					state <= 4'b0110; // Build new edge mask
+				end
+			end
+		endcase
+	end
+end
+
+endmodule
+
+// ==============================================================
+// Edge equation / mask generator
+// ==============================================================
+
+module LineRasterMask(
+	input wire reset,
+	input wire clock,
+	input wire signed [15:0] pX,
+	input wire signed [15:0] pY,
+	input wire signed [15:0] x0,
+	input wire signed [15:0] y0,
+	input wire signed [15:0] x1,
+	input wire signed [15:0] y1,
+	output wire outmask );
+
+logic signed [31:0] lineedge;
+logic signed [15:0] A, B, dy, dx;
+
+always_ff @(posedge clock) begin
+	if (reset) begin
+		//
+	end else begin
+		A <= (pY-y0);
+		B <= (pX-x0);
+		dy <= (y1-y0);
+		dx <= (x0-x1);
+		lineedge <= A*dx + B*dy;
+	end
+end
+
+assign outmask = lineedge[31]; // Only care about the sign bit
+
+endmodule
+
+// ==============================================================
+// GPU register file
+// ==============================================================
+
+module gpuregisterfile(
+	input wire reset,
+	input wire clock,
+	input wire [2:0] rs1,
+	input wire [2:0] rs2,
+	input wire [2:0] rs3,
+	input wire [2:0] rd,
+	input wire wren, 
+	input wire [31:0] datain,
+	output wire [31:0] rval1,
+	output wire [31:0] rval2,
+	output wire [31:0] rval3 );
+
+logic [31:0] registers[0:7]; 
+
+initial begin
+	registers[0] <= 32'h00000000;
+	registers[1] <= 32'h00000000; 
+	registers[2] <= 32'h00000000;
+	registers[3] <= 32'h00000000;
+	registers[4] <= 32'h00000000;
+	registers[5] <= 32'h00000000;
+	registers[6] <= 32'h00000000;
+	registers[7] <= 32'h00000000;
+end
+
+always @(posedge clock) begin
+	if (wren & rd != 0)
+		registers[rd] <= datain;
+end
+
+assign rval1 = rs1 == 0 ? 32'd0 : registers[rs1];
+assign rval2 = rs2 == 0 ? 32'd0 : registers[rs2];
+assign rval3 = rs3 == 0 ? 32'd0 : registers[rs3];
+
+endmodule
+
+// ==============================================================
+// GPU main
+// ==============================================================
+
+module GPU (
+	input wire clock,
+	input wire rasterclock,
+	input wire reset,
+	input wire [31:0] vsync,
+	output logic videopage = 1'b0,
+	// GPU FIFO
+	input wire fifoempty,
+	input wire [31:0] fifodout,
+	input wire fifdoutvalid,
+	output logic fiford_en,
+	// VRAM
+	output wire [13:0] videoaddress,
+	output wire [3:0] videowe,
+	output wire [31:0] videowriteword,
+	output wire [11:0] videolanemask,
+	// SYSRAM DMA channel
+	output logic [31:0] dmaaddress,
+	output logic [31:0] dmawriteword,
+	output logic [3:0] dmawe,
+	input wire [31:0] dma_data,
+	output logic palettewe = 1'b0,
+	output logic [7:0] paletteaddress,
+	output logic [31:0] palettedata );
+
+logic [`GPUSTATEBITS-1:0] gpustate = `GPUSTATEIDLE_MASK;
+
+// Write request from GPU itself
+logic [13:0] vramaddress;
+logic [3:0] vramwe;
+logic [31:0] vramwriteword;
+logic [11:0] vramlanemask;
+
+// Write request from fine rasterizer
+wire [31:0] rasterwriteword;
+wire [31:0] rasteraddress;
+wire [3:0] rasterwe;
+
+// TODO: Either select between outputs here or as a better method use a VRAM write queue (running as fast as fine raster)
+assign videoaddress = |rasterwe ? rasteraddress : vramaddress;
+assign videowe = |rasterwe ? rasterwe : vramwe;
+assign videowriteword = |rasterwe ? rasterwriteword : vramwriteword;
+assign videolanemask = |rasterwe ? 12'd0 : vramlanemask;
+
+logic [31:0] rdatain;
+wire [31:0] rval1;
+wire [31:0] rval2;
+wire [31:0] rval3;
+logic rwren = 1'b0;
+logic [2:0] rs1;
+logic [2:0] rs2;
+logic [2:0] rs3;
+logic [2:0] rd;
+logic [2:0] cmd;
+logic [13:0] dmacount;
+logic [21:0] immshort;
+logic [27:0] imm;
+gpuregisterfile gpuregs(
+	.reset(reset),
+	.clock(clock),
+	.rs1(rs1),
+	.rs2(rs2),
+	.rs3(rs3),
+	.rd(rd),
+	.wren(rwren),
+	.datain(rdatain),
+	.rval1(rval1),
+	.rval2(rval2),
+	.rval3(rval3) );
+
+logic signed [15:0] tileX0, tileY0;
+logic signed [15:0] x0, y0, x1, y1, x2, y2;
+logic [7:0] tricol;
+
+// Triangle facing flag
+logic triFacing;
+
+// Triangle facing
+LineRasterMask tfc(reset, clock, x2, y2, x0,y0, x1,y1, triFacing);
+
+wire cqfull, cqempty, cqvalid;
+logic [127:0] cqdin;
+wire [127:0] cqout;
+logic cqwe;
+wire cqre;
+
+rasterqueue CoarseRasterQueue(
+	.wr_clk(clock),
+	.full(cqfull),
+	.din(cqdin), // x0,y0,x1,y1,x2,y2,24'd0,color
+	.wr_en(cqwe),
+	.rd_clk(rasterclock),
+	.empty(cqempty),
+	.dout(cqdout),
+	.rd_en(cqre),
+	.valid(cqvalid),
+	.rst(reset) );
+
+wire fqfull, fqempty, fqvalid;
+wire [127:0] fqdin;
+wire [127:0] fqdout;
+wire fqwe, fqre;
+
+rasterqueue FineRasterQueue(
+	.wr_clk(clock),
+	.full(fqfull),
+	.din(fqdin), // x0,y0,x1,y1,x2,y2,tileX,tileY,color
+	.wr_en(fqwe),
+	.rd_clk(rasterclock),
+	.empty(fqempty),
+	.dout(fqdout),
+	.rd_en(fqre),
+	.valid(fqvalid),
+	.rst(reset) );
+
+coarserasterunit CoarseRasterizer(
+	.reset(reset),
+	.clock(rasterclock),
+	.cqempty(cqempty),
+	.cqvalid(cqvalid),
+	.cqre(cqre),
+	.cqdout(cqdout),
+	.fqfull(fqfull),
+	.fqwe(fqwe),
+	.fqdin(fqdin) );
+
+finerasterunit FineRasterizer(
+	.reset(reset),
+	.clock(rasterclock),
+	.fqempty(fqempty),
+	.fqre(fqre),
+	.fqdout(fqdout),
+	.fqvalid(fqvalid),
+	.vramwriteword(rasterwriteword),
+	.vramwe(rasterwe),
+	.vramaddress(rasteraddress) );
+
+logic [31:0] vsyncrequestpoint = 32'd0;
+
+always_ff @(posedge clock) begin
+	if (reset) begin
+
+		gpustate <= `GPUSTATEIDLE_MASK;
+		vramwe <= 4'b0000;
+		vramlanemask <= 12'h000;
+		dmawe <= 4'b0000;
+		fiford_en <= 1'b0;
+
+	end else begin
+	
+		gpustate <= `GPUSTATENONE_MASK;
+	
+		unique case (1'b1)
+		
+			gpustate[`GPUSTATEIDLE]: begin
+				// Stop writes to memory and registers
+				vramwe <= 4'b0000;
+				rwren <= 1'b0;
+				// Also turn off parallel writes
+				vramlanemask <= 12'h000;
+				// And DMA writes
+				dmawe <= 4'b0000;
+				// Stop palette writes
+				palettewe <= 1'b0;
+				// Stop coarse raster queue writes
+				cqwe <= 1'b0;
+
+				// See if there's something on the fifo
+				if (~fifoempty) begin
+					fiford_en <= 1'b1;
+					gpustate[`GPUSTATELATCHCOMMAND] <= 1'b1;
+				end else begin
+					gpustate[`GPUSTATEIDLE] <= 1'b1;
+				end
+			end
+
+			gpustate[`GPUSTATELATCHCOMMAND]: begin
+				// Turn off fifo read request on the next clock
+				fiford_en <= 1'b0;
+				if (fifdoutvalid) begin
+					// Data is available, latch and jump to execute
+					cmd <= fifodout[2:0];			// command
+													// fifodout[3] is unused for now
+					rs1 <= fifodout[6:4];			// source register 1
+					rs2 <= fifodout[9:7];			// source register 2 (==destination register)
+					rd <= fifodout[9:7];			// destination register
+					rs3 <= fifodout[12:10];			// source register 3 (overlaps immediates) 
+					immshort <= fifodout[31:10];	// 22 bit immediate
+					imm <= fifodout[31:4];			// 28 bit immediate
+					vsyncrequestpoint <= vsync;
+					gpustate[`GPUSTATEEXEC] <= 1'b1;
+				end else begin
+					// Data is not available yet, spin
+					gpustate[`GPUSTATELATCHCOMMAND] <= 1'b1;
+				end
+			end
+
+			// Command execute state
+			gpustate[`GPUSTATEEXEC]: begin
+				unique case (cmd)
+					`GPUCMD_VSYNC: begin
+						if (vsync > vsyncrequestpoint)
+							gpustate[`GPUSTATEIDLE] <= 1'b1;
+						else
+							gpustate[`GPUSTATEEXEC] <= 1'b1;
+					end
+
+					`GPUCMD_SETREG: begin
+						rwren <= 1'b1;
+						if (rs1==3'd0) // set LOW if source register is zero register
+							rdatain <= {10'd0, immshort};
+						else // set HIGH if source register is not zero register
+							rdatain <= {immshort[9:0], rval1[21:0]};
+						gpustate[`GPUSTATEIDLE] <= 1'b1;
+					end
+
+					`GPUCMD_SETPALENT: begin
+						paletteaddress <= immshort[7:0];
+						palettedata <= rval1;
+						palettewe <= 1'b1;
+						gpustate[`GPUSTATEIDLE] <= 1'b1;
+					end
+
+					`GPUCMD_CLEAR: begin
+						vramaddress <= 14'd0;
+						vramwriteword <= rval1;
+						// Enable all 4 bytes since clears are 32bit per write
+						vramwe <= 4'b1111;
+						vramlanemask <= 12'hFFF; // Turn on all lanes for parallel writes
+						gpustate[`GPUSTATECLEAR] <= 1'b1;
+					end
+
+					`GPUCMD_SYSDMA: begin
+						dmaaddress <= rval1; // rs1: source
+						dmacount <= 14'd0;
+						dmawe <= 4'b0000; // Reading from SYSRAM
+						gpustate[`GPUSTATEDMAKICK] <= 1'b1;
+					end
+
+					`GPUCMD_RASTER: begin
+						// Grab primitive vertex data from rs&rd
+						{y0, x0} <= rval1;
+						{y1, x1} <= rval2;
+						{y2, x2} <= rval3;
+						tricol <= immshort[10:3];
+						// Either reject or process this triangle
+						gpustate[`GPUSTATEBACKFACECULL] <= 1'b1;
+					end
+
+					`GPUCMD_SYSMEMOUT: begin
+						dmaaddress <= rval2; // rs1: source
+						dmawriteword <= rval1; // rs2: output word (same as rd)
+						dmawe <= 4'b1111;
+						gpustate[`GPUSTATEIDLE] <= 1'b1;
+					end
+
+					`GPUCMD_SETVPAGE: begin
+						videopage <= rval1;
+						gpustate[`GPUSTATEIDLE] <= 1'b1;
+					end
+				endcase
+			end
+			
+			gpustate[`GPUSTATECLEAR]: begin // CLEAR
+				if (vramaddress == 14'h400) begin // 12*(256*192/4) (DWORD addresses) -> 0xC*0x400
+					gpustate[`GPUSTATEIDLE] <= 1'b1;
+				end else begin
+					vramaddress <= vramaddress + 14'd1;
+					// Loop in same state
+					gpustate[`GPUSTATECLEAR] <= 1'b1;
+				end
+			end
+
+			gpustate[`GPUSTATEDMAKICK]: begin
+				// Delay for first read
+				dmaaddress <= dmaaddress + 32'd4;
+				gpustate[`GPUSTATEDMA] <= 1'b1;
+			end
+
+			gpustate[`GPUSTATEDMA]: begin // SYSDMA
+				if (dmacount == immshort[13:0]) begin
+					// DMA done
+					vramwe <= 4'b0000;
+					gpustate[`GPUSTATEIDLE] <= 1'b1;
+				end else begin
+					// Write the previous DWORD to absolute address
+					vramaddress <= rval2[13:0] + dmacount;
+					vramwriteword <= dma_data;
+					
+					if (immshort[14]==1'b1) begin
+						// Zero-masked DMA
+						vramwe <= {|dma_data[31:24], |dma_data[23:16], |dma_data[15:8], |dma_data[7:0]};
+					end else begin
+						// Unmasked DM
+						vramwe <= 4'b1111;
+					end
+
+					// Step to next DWORD to read
+					dmaaddress <= dmaaddress + 32'd4;
+					dmacount <= dmacount + 14'd1;
+					gpustate[`GPUSTATEDMA] <= 1'b1;
+				end
+			end
+
+			gpustate[`GPUSTATEBACKFACECULL]: begin
+				// This result is available one clock after setting up x/y values
+				if (triFacing == 1'b1) begin
+					// Resume, polygon facing forwards
+					gpustate[`GPUSTATEIDLE] <= 1'b1;
+					// Push to coarse raster queue for processing
+					cqdin <= {x0,y0,x1,y1,x2,y2,24'd0,tricol};
+					cqwe <= 1'b1;
+				end else begin
+					// Abort, polygon facing backwards
+					gpustate[`GPUSTATEIDLE] <= 1'b1;
+				end
+			end
+
+			default: begin
+				// noop
+			end
+
+		endcase
+	end
+end
+	
+endmodule

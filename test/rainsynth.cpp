@@ -146,20 +146,18 @@ int main()
 
     while(1)
     {
-        int B = 1 + (ssin(k)&0x0000000F);
+        int R = ssin(k+l+(Random()%18));
+        int L = ssin(k+l+(Random()%18));
 
-        int R = B*ssin(k+l);
-        int L = B*ssin(k+l);
+        // Write to the FIFO directly (it will stall after 1024 samples if we're too fast)
+        *IO_AudioFIFO = ((R&0xFFFF)<<16) | (L&0xFFFF);
 
-        // TODO: Access APU instead of the audio port
-        //*IO_AudioOutput = ((R&0xFFFF)<<16) | (L&0xFFFF);
-
-        // Direct output mode
-        *IO_APUFIFO = ((R&0xFFFF)<<16) | 0x0000; // WriteRightDirect
-        *IO_APUFIFO = ((L&0xFFFF)<<16) | 0x0010; // WriteLeftDirect
+        // TODO: Audio Processing Unit mode
+        //*IO_APUFIFO = ((R&0xFFFF)<<16) | 0x0000; // CmdWriteRightSample
+        //*IO_APUFIFO = ((L&0xFFFF)<<16) | 0x0010; // CmdWriteLeftSample
 
         divider0++;
-        if (divider0>64)
+        if (divider0>48)
         {
             divider0=0;
             k+=1;

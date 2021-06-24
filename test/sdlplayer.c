@@ -1,23 +1,28 @@
-#include "nekoichi.h"
-#include "sdcard.h"
-#include "../fat32/ff.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <signal.h>
+
+#include "SDL.h"
+#include "SDL_main.h"
+
 #include "micromod.h"
 
-#define SAMPLING_FREQ  22591  /* 48khz. */
-#define REVERB_BUF_LEN 2259   /* 50ms. */
+/*
+	Simple command-line test player for micromod using SDL.
+*/
+
+#define SAMPLING_FREQ  48000  /* 48khz. */
+#define REVERB_BUF_LEN 4800   /* 50ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
-#define BUFFER_SAMPLES 16384  /* ? buffer. */
+#define BUFFER_SAMPLES 16384  /* 64k buffer. */
 
-//static SDL_sem *semaphore;
-static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
-static short reverb_buffer[ REVERB_BUF_LEN ];
-short buffer[ BUFFER_SAMPLES * NUM_CHANNELS ];
-static long reverb_len, reverb_idx, filt_l, filt_r;
+static SDL_sem *semaphore;
 static long samples_remaining;
+static short reverb_buffer[ REVERB_BUF_LEN ];
+static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
+static long reverb_len, reverb_idx, filt_l, filt_r;
 
 /*
 	2:1 downsampling with simple but effective anti-aliasing.
@@ -68,7 +73,35 @@ static void crossfeed( short *audio, int count ) {
 	}
 }
 
-static long read_file( const char *filename, void *buffer, long length ) {
+static void audio_callback( void *udata, Uint8 *stream, int len ) {
+	long count;
+	count = len * OVERSAMPLE / 4;
+	if( samples_remaining < count ) {
+		/* Clear output.*/
+		memset( stream, 0, len );
+		count = samples_remaining;
+	}
+	if( count > 0 ) {
+		/* Get audio from replay.*/
+		memset( mix_buffer, 0, count * NUM_CHANNELS * sizeof( short ) );
+		micromod_get_audio( mix_buffer, count );
+		downsample( mix_buffer, ( short * ) stream, count );
+		crossfeed( ( short * ) stream, count / OVERSAMPLE );
+		reverb( ( short * ) stream, count / OVERSAMPLE );
+		samples_remaining -= count;
+	} else {
+		/* Notify the main thread to stop playback.*/
+		SDL_SemPost( semaphore );
+	}
+}
+
+static void termination_handler( int signum ) {
+	/* Notify the main thread to stop playback. */
+	SDL_SemPost( semaphore );
+	fprintf( stderr, "\nTerminated!\n" );
+}
+
+static long read_file( char *filename, void *buffer, long length ) {
 	FILE *file;
 	long count;
 	count = -1;
@@ -76,15 +109,13 @@ static long read_file( const char *filename, void *buffer, long length ) {
 	if( file != NULL ) {
 		count = fread( buffer, 1, length, file );
 		if( count < length && !feof( file ) ) {
-			printf("Unable to read file '%s'.\n", filename );
+			fprintf( stderr, "Unable to read file '%s'.\n", filename );
 			count = -1;
 		}
 		if( fclose( file ) != 0 ) {
-			printf("Unable to close file '%s'.\n", filename );
+			fprintf( stderr, "Unable to close file '%s'.\n", filename );
 		}
 	}
-  else
-    printf("Unable to find file '%s'.\n", filename );
 	return count;
 }
 
@@ -99,17 +130,17 @@ static void print_module_info() {
 	}
 }
 
-static long read_module_length( const char *filename ) {
+static long read_module_length( char *filename ) {
 	long length;
 	signed char header[ 1084 ];
 	length = read_file( filename, header, 1084 );
 	if( length == 1084 ) {
 		length = micromod_calculate_mod_file_len( header );
 		if( length < 0 ) {
-			printf("Module file type not recognised.\n");
+			fprintf( stderr, "Module file type not recognised.\n");
 		}
 	} else {
-		printf("Unable to read module file '%s'.\n", filename );
+		fprintf( stderr, "Unable to read module file '%s'.\n", filename );
 		length = -1;
 	}
 	return length;
@@ -117,7 +148,7 @@ static long read_module_length( const char *filename ) {
 
 static long play_module( signed char *module ) {
 	long result;
-	//SDL_AudioSpec audiospec;
+	SDL_AudioSpec audiospec;
 	/* Initialise replay.*/
 	result = micromod_initialise( module, SAMPLING_FREQ * OVERSAMPLE );
 	if( result == 0 ) {
@@ -126,66 +157,74 @@ static long play_module( signed char *module ) {
 		samples_remaining = micromod_calculate_song_duration();
 		printf( "Song Duration: %li seconds.\n", samples_remaining / ( SAMPLING_FREQ * OVERSAMPLE ) );
 		fflush( NULL );
-
-			int playing = 1;
-			int current_buffer = 0;
-			while( playing )
-      {
-				int count = BUFFER_SAMPLES * OVERSAMPLE;
-				if( count > samples_remaining )
-					count = samples_remaining;
-
-        __builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
-				micromod_get_audio( mix_buffer, count );
-				downsample( mix_buffer, buffer, BUFFER_SAMPLES * OVERSAMPLE );
-				crossfeed( buffer, BUFFER_SAMPLES );
-				reverb( buffer, BUFFER_SAMPLES );
-				samples_remaining -= count;
-
-				// Audio FIFO will be drained at playback rate and
-        // the CPU will stall to wait if the FIFO is full.
-        // Therefore, no need to worry about synchronization.
-        uint32_t *playback = (uint32_t*)buffer;
-        for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
-          *IO_AudioFIFO = playback[i];
-
-				if( samples_remaining <= 0 || result != 0 )
-					playing = 0;
+		/* Initialise SDL_AudioSpec Structure. */
+		memset( &audiospec, 0, sizeof( SDL_AudioSpec ) );
+		audiospec.freq = SAMPLING_FREQ;
+		audiospec.format = AUDIO_S16SYS;
+		audiospec.channels = NUM_CHANNELS;
+		audiospec.samples = BUFFER_SAMPLES;
+		audiospec.callback = audio_callback;
+		audiospec.userdata = NULL;
+		/* Initialise audio subsystem. */
+		result = SDL_Init( SDL_INIT_AUDIO );
+		if( result == 0 ) {
+			/* Open the audio device. */
+			result = SDL_OpenAudio( &audiospec, NULL );
+			if( result == 0 ) {
+				/* Begin playback. */
+				SDL_PauseAudio( 0 );
+				/* Wait for playback to finish. */
+				semaphore = SDL_CreateSemaphore( 0 );
+				result = SDL_SemWait( semaphore );
+				if( result != 0 ) {
+					fprintf( stderr, "SDL_SemWait() failed.\n" );
+				}
+				/* Close audio device and shut down SDL. */
+				SDL_CloseAudio();
+				SDL_Quit();
+			} else {
+				fprintf( stderr, "Unable to open audio device: %s\n", SDL_GetError() );
 			}
-
+		} else {
+			fprintf( stderr, "Unable to initialise SDL: %s\n", SDL_GetError() );
+		}
+	} else {
+		fprintf( stderr, "Unable to initialise replay.\n" );
 	}
 	return result;
 }
 
-FATFS Fs;
-
 int main( int argc, char **argv ) {
 	int arg, result;
 	long count, length;
-	const char *filename = "sd:/orig.mod";
+	char *filename;
 	signed char *module;
-
-  FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-  if (mountattempt != FR_OK)
-  {
-    EchoUART("No medium\n");
-    return -1;
-  }
-
+	filename = NULL;
+	for( arg = 1; arg < argc; arg++ ) {
+		/* Parse arguments.*/
+		if( strcmp( argv[ arg ], "-reverb" ) == 0 ) {
+			reverb_len = REVERB_BUF_LEN;
+		} else {
+			filename = argv[ arg ];
+		}
+	}
 	result = EXIT_FAILURE;
 	if( filename == NULL ) {
-		printf("Usage: %s [-reverb] filename\n", argv[ 0 ] );
+		fprintf( stderr, "Usage: %s [-reverb] filename\n", argv[ 0 ] );
 	} else {
 		/* Read module file.*/
 		length = read_module_length( filename );
 		if( length > 0 ) {
 			printf( "Module Data Length: %li bytes.\n", length );
-			module = (signed char*)calloc( length, 1 );
+			module = calloc( length, 1 );
 			if( module != NULL ) {
 				count = read_file( filename, module, length );
 				if( count < length ) {
-					printf("Module file is truncated. %li bytes missing.\n", length - count );
+					fprintf( stderr, "Module file is truncated. %li bytes missing.\n", length - count );
 				}
+				/* Install signal handlers.*/
+				signal( SIGTERM, termination_handler );
+				signal( SIGINT,  termination_handler );
 				/* Play.*/
 				if( play_module( module ) == 0 ) {
 					result = EXIT_SUCCESS;

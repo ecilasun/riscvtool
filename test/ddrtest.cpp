@@ -9,27 +9,29 @@ int main()
     EchoUART("Clearing extended memory\r\n"); // 0x00000000 - 0x0FFFFFFF
     int i=0;
     uint64_t startclock = ReadClock();
-    for (uint32_t m=0x00000000; m<0x04000000; ++m)
+    for (uint32_t m=0x00040000; m<0x04000000; m+=4)
     {
         *((uint32_t*)m) = 0x00000000;
         if ((m!=0) && ((m%0x100000) == 0))
         {
-            i+=4;
-            printf("%d Mbytes cleared\r\n", i);
+            ++i;
+            printf("%d Mbytes cleared @%.8X\r\n", i, (unsigned int)m);
         }
     }
+
     uint64_t endclock = ReadClock();
     uint32_t deltams = ClockToMs(endclock-startclock);
-    printf("Clearing 256Mbytes took %d ms (0x%.8X)\r\n", (unsigned int)deltams, (unsigned int)deltams);
-    float rate = (256.f*1024.f) / float(deltams);
-    printf("Zero-write rate is %f Mbytes/sec\r\n", rate);
+    printf("Clearing 64Mbytes took %d ms (0x%.8X)\r\n", (unsigned int)deltams, (unsigned int)deltams);
+
+    int rate = (1024*64*1024) / deltams;
+    printf("Zero-write rate is %d Kbytes/sec\r\n", rate);
 
     printf("Testing 128K extended memory write persistance\r\n"); // 0x00040000 - 0x0FFFFFFF
 
     const uint32_t stride = 1;
 
     // Pick a far position in DDR3 memory range
-    volatile uint16_t *ddr3mem = (volatile uint16_t *)0x0D000000;
+    volatile uint16_t *ddr3mem = (volatile uint16_t *)0x02000000;
 
     printf("Generating WORD aligned test data\r\n");
     for (uint32_t i=0;i<1024;++i)

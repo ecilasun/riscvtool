@@ -124,6 +124,7 @@ void drawparticles(short *particles)
 
 int main(int argc, char ** argv)
 {
+   InitFont();
    ClearConsole();
 
    // Set register g1 with color data
@@ -137,7 +138,7 @@ int main(int argc, char ** argv)
    int m=0;
 
    // Make sure this lands in the Fast RAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)0x0003FFF0;
+   volatile uint32_t *gpustate = (volatile uint32_t *)0x0001FFF0;
    *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
 

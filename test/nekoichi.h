@@ -51,13 +51,14 @@ extern volatile uint8_t *IO_SPIInput;
 extern volatile uint8_t *IO_SPIOutput;
 extern volatile uint8_t *IO_SwitchState;
 extern volatile uint32_t *IO_SwitchByteCount;
-extern volatile uint32_t *IO_APUFIFO;
+extern volatile uint32_t *IO_AudioFIFO;
 
 // Device memory ranges
 extern volatile uint32_t *DDR3Start;
 extern volatile uint32_t *FastRAMStart;
 extern volatile uint32_t *AudioRAMStart;
 
+void InitFont();
 void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);
 void PrintDMA(const int col, const int row, const int maxlen, const char *message, bool masked=true);
 void PrintDMAHex(const int ox, const int oy, const uint32_t i);

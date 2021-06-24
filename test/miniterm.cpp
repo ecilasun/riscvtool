@@ -8,22 +8,10 @@
 #include "nekoichi.h"
 #include "gpu.h"
 #include "sdcard.h"
-#include "pff.h"
 #include "console.h"
 #include "elf.h"
 
-FATFS Fs;
 volatile uint32_t branchaddress = 0x10000;
-const char *FRtoString[]={
-   "FR_OK\r\n",
-	"FR_DISK_ERR\r\n",
-	"FR_NOT_READY\r\n",
-	"FR_NO_FILE\r\n",
-	"FR_NO_PATH\r\n",
-	"FR_NOT_OPENED\r\n",
-	"FR_NOT_ENABLED\r\n",
-	"FR_NO_FILESYSTEM\r\n"
-};
 
 /*void loadfile(char *commandline)
 {
@@ -42,55 +30,9 @@ const char *FRtoString[]={
    }
 }*/
 
-void showdir()
-{
-   DIR dir;
-   FRESULT re = pf_opendir(&dir, "/");
-   if (re == FR_OK)
-   {
-      //pf_rewinddir(&dir);
-      FILINFO finf;
-      do{
-         re = pf_readdir(&dir, &finf);
-         if (re == FR_OK && dir.sect!=0)
-         {
-            EchoConsole(finf.fname);
-            EchoConsole(" ");
-            EchoConsole(finf.fsize);
-            EchoConsole(" ");
-            EchoUART(finf.fname);
-            EchoUART(" ");
-            EchoHex(finf.fsize);
-            EchoUART(" ");
-            /*EchoConsole(1944 + ((finf.ftime&0xFE00)>>9));
-            EchoConsole("/");
-            EchoConsole((finf.ftime&0x1E0)>>5);
-            EchoConsole("/");
-            EchoConsole(finf.ftime&0x1F);*/
-            if (finf.fattrib&AM_RDO) { EchoConsole("r"); EchoUART("r"); }
-            if (finf.fattrib&AM_HID) { EchoConsole("h"); EchoUART("h"); }
-            if (finf.fattrib&AM_SYS) { EchoConsole("s"); EchoUART("s"); }
-            //if (finf.fattrib&0x08) { EchoConsole("l"); EchoUART("l"); }
-            //if (finf.fattrib&0x0F) { EchoConsole("L"); EchoUART("L"); }
-            if (finf.fattrib&AM_DIR) { EchoConsole("d"); EchoUART("d"); }
-            if (finf.fattrib&AM_ARC) { EchoConsole("a"); EchoUART("a"); }
-
-            EchoConsole("\r\n");
-            EchoUART("\r\n");
-         }
-      } while(re == FR_OK && (finf.fname[0]!=0));
-      //pf_closedir(&dir);
-   }
-   else
-      EchoUART(FRtoString[re]);
-
-}
-
 int main()
 {
-   FRESULT fr = pf_mount(&Fs);
-   if (fr != FR_OK)
-      EchoUART(FRtoString[fr]);
+   InitFont();
 
    const unsigned char bgcolor = 0x1A; // Use default VGA palette grayscale value
 
@@ -127,7 +69,7 @@ int main()
    uint32_t cursorevenodd = 0;
    uint32_t toggletime = 0;
    // Make sure this lands in the Fast RAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)0x0003FFF0;
+   volatile uint32_t *gpustate = (volatile uint32_t *)0x0001FFF0;
    *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
    int escapemode = 0;
@@ -172,20 +114,10 @@ int main()
             else if ((cmdbuffer[0]='h') && (cmdbuffer[1]=='e') && (cmdbuffer[2]=='l') && (cmdbuffer[3]=='p'))
             {
                EchoConsole("\r\n");
-               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load given file\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
+               EchoConsole("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ncls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
                EchoUART("\r\n");
-               EchoUART("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ndir: list files\r\nload filename: load given file\n\rcls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
+               EchoUART("\r\nMiniTerm version 0.1\r\n(c)2021 Engin Cilasun\r\ncls: clear screen\r\nhelp: help screen\r\ntime: elapsed time\r\nrun:branch to ELF\r\ndump:dump first 256 bytes of ELF\r\n");
             }
-            else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='i') && (cmdbuffer[2]=='r'))
-            {
-               EchoConsole("\r\n");
-               showdir();
-            }
-            /*else if ((cmdbuffer[0]='l') && (cmdbuffer[1]=='o') && (cmdbuffer[2]=='a') && (cmdbuffer[3]=='d'))
-            {
-               EchoConsole("\r\n");
-               loadfile(cmdbuffer);
-            }*/
             else if ((cmdbuffer[0]='d') && (cmdbuffer[1]=='u') && (cmdbuffer[2]=='m') && (cmdbuffer[3]=='p'))
             {
                 for (uint32_t i=0x0A000000;i<0x0A000100;i+=4)

@@ -76,7 +76,7 @@ int main(int argc, char ** argv)
    float Y = 0.827215f;
 
    // Make sure this lands in the Fast RAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)0x0003FFF0;
+   volatile uint32_t *gpustate = (volatile uint32_t *)0x0001FFF0;
    *gpustate = 0x0;
    uint32_t cnt = 0x0;
 
@@ -84,7 +84,7 @@ int main(int argc, char ** argv)
    for (uint32_t i=0;i<255;++i)
    {
       int j=255-i;
-      uint32_t color = (j<<16) | (j<<8) | j;
+      uint32_t color = MAKERGBPALETTECOLOR(j, j, j);
       GPUSetRegister(1, color);
       GPUSetPaletteEntry(1, i);
    }
@@ -130,8 +130,8 @@ int main(int argc, char ** argv)
             GPUKickDMA(4, 5, dmacount, 0);
          }
 
-         PrintDMA(0, 0, "IPS: ");
-         PrintDMADecimal(5*8, 0, ips);
+         PrintDMA(0, 0, "IPS: ", false);
+         PrintDMADecimal(5*8, 0, ips, false);
 
          // Stall GPU until vsync is reached
          //GPUWaitForVsync();
