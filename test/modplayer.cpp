@@ -6,16 +6,16 @@
 #include <string.h>
 #include "micromod.h"
 
-#define SAMPLING_FREQ  22591  /* 48khz. */
-#define REVERB_BUF_LEN 2259   /* 50ms. */
+#define SAMPLING_FREQ  44000  /* 48khz. */
+#define REVERB_BUF_LEN 440   /* 5ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
-#define BUFFER_SAMPLES 16384  /* ? buffer. */
+#define BUFFER_SAMPLES 880  /* ? buffer. */
 
 //static SDL_sem *semaphore;
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
 static short reverb_buffer[ REVERB_BUF_LEN ];
-short buffer[ BUFFER_SAMPLES * NUM_CHANNELS ];
+short buffers[2][ BUFFER_SAMPLES * NUM_CHANNELS ];
 static long reverb_len, reverb_idx, filt_l, filt_r;
 static long samples_remaining;
 
@@ -128,6 +128,7 @@ static long play_module( signed char *module ) {
 		fflush( NULL );
 
 			int playing = 1;
+      int writebuffer = 0;
 			int current_buffer = 0;
 			while( playing )
       {
@@ -137,17 +138,19 @@ static long play_module( signed char *module ) {
 
         __builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
 				micromod_get_audio( mix_buffer, count );
-				downsample( mix_buffer, buffer, BUFFER_SAMPLES * OVERSAMPLE );
-				crossfeed( buffer, BUFFER_SAMPLES );
-				reverb( buffer, BUFFER_SAMPLES );
+				downsample( mix_buffer, buffers[writebuffer], BUFFER_SAMPLES * OVERSAMPLE );
+				crossfeed( buffers[writebuffer], BUFFER_SAMPLES );
+				reverb( buffers[writebuffer], BUFFER_SAMPLES );
 				samples_remaining -= count;
 
 				// Audio FIFO will be drained at playback rate and
         // the CPU will stall to wait if the FIFO is full.
         // Therefore, no need to worry about synchronization.
-        uint32_t *playback = (uint32_t*)buffer;
+        uint32_t *playback = (uint32_t*)buffers[(writebuffer+1)%2];
         for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
           *IO_AudioFIFO = playback[i];
+        
+        writebuffer = (writebuffer+1)%2;
 
 				if( samples_remaining <= 0 || result != 0 )
 					playing = 0;
