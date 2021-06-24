@@ -10,7 +10,7 @@
 #define REVERB_BUF_LEN 440   /* 5ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
-#define BUFFER_SAMPLES 880  /* ? buffer. */
+#define BUFFER_SAMPLES 512  /* ? buffer. */
 
 //static SDL_sem *semaphore;
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
@@ -136,6 +136,7 @@ static long play_module( signed char *module ) {
 				if( count > samples_remaining )
 					count = samples_remaining;
 
+        // Anything above 19ms stalls this
         __builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
 				micromod_get_audio( mix_buffer, count );
 				downsample( mix_buffer, buffers[writebuffer], BUFFER_SAMPLES * OVERSAMPLE );
