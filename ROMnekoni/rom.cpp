@@ -7,9 +7,9 @@
 #include <math.h>
 
 #define ROM_STARTUP_64K
-#include "rom_nekoichi_rvcrt0.h"
+#include "rvcrt0.h"
 
-#include "nekoichi.h"
+#include "../nekolib/nekoichi.h"
 
 void LoadBinaryBlob()
 {

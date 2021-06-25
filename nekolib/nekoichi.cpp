@@ -6,7 +6,7 @@
 
 #include "nekoichi.h"
 #include "gpu.h"
-#include "../fat32/ff.h"
+#include "fat32/ff.h"
 
 volatile uint32_t *IO_AudioFIFO = (volatile uint32_t* )0x80000020;         // Audio FIFO
 volatile uint32_t *IO_SwitchByteCount = (volatile uint32_t* )0x8000001C;   // Switch state byte count (read)

@@ -14,7 +14,7 @@
 #include "elf.h"
 #include "nekoichitask.h"
 #include "debugger.h"
-#include "../fat32/ff.h"
+#include "fat32/ff.h"
 
 // NOTE: Uncomment when experimental ROM should be compiled as actual ROM image
 // Also need to swap the the ROM image compile command in build.sh file

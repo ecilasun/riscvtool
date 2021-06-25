@@ -1,10 +1,10 @@
 #include "nekoichi.h"
 #include "sdcard.h"
-#include "../fat32/ff.h"
+#include "fat32/ff.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "micromod.h"
+#include "micromod/micromod.h"
 
 #define SAMPLING_FREQ  44000  /* 44khz. */
 #define REVERB_BUF_LEN 4400   /* 50ms. */
@@ -126,38 +126,37 @@ static long play_module( signed char *module ) {
 		printf( "Song Duration: %li seconds.\n", samples_remaining / ( SAMPLING_FREQ * OVERSAMPLE ) );
 		fflush( NULL );
 
-			int playing = 1;
-      int writebuffer = 0;
-			int current_buffer = 0;
-			while( playing )
-      {
-				int count = BUFFER_SAMPLES * OVERSAMPLE;
-				if( count > samples_remaining )
-					count = samples_remaining;
+		int playing = 1;
+		int writebuffer = 0;
+		while( playing )
+		{
+			int count = BUFFER_SAMPLES * OVERSAMPLE;
+			if( count > samples_remaining )
+				count = samples_remaining;
 
-        // Anything above 19ms stalls this
-        __builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
-				micromod_get_audio( mix_buffer, count );
-				downsample( mix_buffer, buffers[writebuffer], BUFFER_SAMPLES * OVERSAMPLE );
-				crossfeed( buffers[writebuffer], BUFFER_SAMPLES );
-				reverb( buffers[writebuffer], BUFFER_SAMPLES );
-				samples_remaining -= count;
+        	// Anything above 19ms stalls this
+        	__builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
+			micromod_get_audio( mix_buffer, count );
+			downsample( mix_buffer, buffers[writebuffer], BUFFER_SAMPLES * OVERSAMPLE );
+			crossfeed( buffers[writebuffer], BUFFER_SAMPLES );
+			reverb( buffers[writebuffer], BUFFER_SAMPLES );
+			samples_remaining -= count;
 
-        // TODO: move one of these to a thread so that the other one doesn't have to wait,
-        // while utilizing the writebuffer index.
+        	// TODO: move one of these to a thread so that the other one doesn't have to wait,
+        	// while utilizing the writebuffer index.
 
-				// Audio FIFO will be drained at playback rate and
-        // the CPU will stall to wait if the FIFO is full.
-        // Therefore, no need to worry about synchronization.
-        uint32_t *playback = (uint32_t*)buffers[(writebuffer+1)%2];
-        for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
-          *IO_AudioFIFO = playback[i];
+			// Audio FIFO will be drained at playback rate and
+        	// the CPU will stall to wait if the FIFO is full.
+        	// Therefore, no need to worry about synchronization.
+        	uint32_t *playback = (uint32_t*)buffers[(writebuffer+1)%2];
+        	for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
+          	*IO_AudioFIFO = playback[i];
         
-        writebuffer = (writebuffer+1)%2;
+        	writebuffer = (writebuffer+1)%2;
 
 				if( samples_remaining <= 0 || result != 0 )
 					playing = 0;
-			}
+		}
 
 	}
 	return result;
@@ -166,7 +165,7 @@ static long play_module( signed char *module ) {
 FATFS Fs;
 
 int main( int argc, char **argv ) {
-	int arg, result;
+	int result;
 	long count, length;
 	const char *filename = "sd:/quake.mod";
 	signed char *module;

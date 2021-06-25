@@ -7,10 +7,10 @@
 #include <math.h>
 
 #define ROM_STARTUP_128K
-#include "rom_nekoichi_rvcrt0.h"
+#include "rvcrt0.h"
 
-#include "nekoichi.h"
-#include "gpu.h"
+#include "../nekolib/nekoichi.h"
+#include "../nekolib/gpu.h"
 
 volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)0x0001FFF0;
 uint32_t gpuSubmitCounter = 0;
