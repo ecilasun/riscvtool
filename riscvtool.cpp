@@ -154,7 +154,6 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     }
 
 	unsigned int filebytesize = 0;
-    unsigned int targetaddress = _target;
 	fpos_t pos, endpos;
 	fgetpos(fp, &pos);
 	fseek(fp, 0, SEEK_END);
@@ -169,7 +168,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
     SElfFileHeader32 *fheader = (SElfFileHeader32 *)bytestoread;
     SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(bytestoread+fheader->m_PHOff);
-    printf("Program PADDR 0x%.8X relocated to 0x%.8X\n", pheader->m_PAddr, _target);
+    printf("Program VADDR=0x%.8X, PADDR 0x%.8X relocated to 0x%.8X\n", pheader->m_VAddr, pheader->m_PAddr, _target);
     unsigned int relativeStartAddress = (fheader->m_Entry-pheader->m_PAddr)+_target;
     printf("Executable entry point is at 0x%.8X (new relative entry point: 0x%.8X)\n", fheader->m_Entry, relativeStartAddress);
     unsigned int stringtableindex = fheader->m_SHStrndx;
@@ -277,6 +276,14 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             printf("SKIPPING: '%s' @0x%.8X len:%.8X off:%.8X\n", sectionname, (sheader->m_Addr-pheader->m_PAddr)+_target, sheader->m_Size, sheader->m_Offset);
             continue;
         }
+
+        /*if (!strcmp(sectionname, ".got"))
+        {
+            // If we're relocating the ELF, we need to patch up the entries in: extern  Elf32_Addr  _GLOBAL_OFFSET_TABLE_[];
+            uint32_t *got = (uint32_t*)(bytestoread+sheader->m_Addr);
+            for (uint32_t i=0;i<sheader->m_Size/4;++i)
+                printf("GOE: %d: %.8X\n", i, got[i]);
+        }*/
 
         //if (sheader->m_Type == 0x1 || sheader->m_Type == 0xE || sheader->m_Type == 0xF || sheader->m_Type == 0x10) // Progbits/Iniarray/Finiarray/Preinitarray
         if (sheader->m_Flags & 0x00000007 && sheader->m_Size!=0) // writeable/alloc/exec and non-zero
