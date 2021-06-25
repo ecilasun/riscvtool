@@ -355,7 +355,7 @@
 
 /* variables for time measurement: */
 
-// mcycle ticks at 100Mhz
+// Cycles per second
 #define HZ 100000000
 #define Too_Small_Time 1
 #define CLOCK_TYPE "rdcycle()"
