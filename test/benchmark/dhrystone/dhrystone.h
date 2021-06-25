@@ -355,8 +355,8 @@
 
 /* variables for time measurement: */
 
-// ReadClockUsec() is in microseconds
-#define HZ 1000000
+// mcycle returns time in 10xusecs
+#define HZ 10000000
 #define Too_Small_Time 1
 #define CLOCK_TYPE "rdcycle()"
 #define Start_Timer() Begin_Time = read_csr(mcycle)
