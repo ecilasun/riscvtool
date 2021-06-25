@@ -21,6 +21,9 @@
 //#define ROM_STARTUP_128K
 //#include "rom_nekoichi_rvcrt0.h"
 
+#define Min(_a_, _b_) ((_a_)<(_b_) ? (_a_):(_b_))
+#define Max(_a_, _b_) ((_a_)>(_b_) ? (_a_):(_b_))
+
 // Entry zero will always be main()
 uint32_t current_task = 0; // init_task
 cpu_context task_array[MAX_TASKS];
@@ -392,6 +395,7 @@ int OSMainTask()
    volatile uint32_t *gpustate = (volatile uint32_t *)0x00005000;
    *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
+
    while(1)
    {
       // Main task should not interfere with graphics etc if
@@ -429,7 +433,7 @@ int OSMainTask()
 
          printf("Crashing...\r\n");
          // Generate illegal instructions
-         asm volatile(".dword 0x00000000");
+         asm volatile(".dword 0x012345FF");
          asm volatile(".dword 0xFFFFFFFF");
       }
 
@@ -439,6 +443,7 @@ int OSMainTask()
 
          // Show the char table
          ClearScreen(bgcolor);
+
          DrawConsole();
 
          // Cursor blink
