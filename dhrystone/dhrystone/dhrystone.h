@@ -355,13 +355,61 @@
 
 /* variables for time measurement: */
 
-// Cycles per second
-#define HZ 100000000
+#ifdef TIME
+
+#define CLOCK_TYPE "time()"
+#undef HZ
+#define HZ	(1000) /* time() returns time in ms */
+extern long     time(); /* see library function "time"  */
+#define Too_Small_Time 2 /* Measurements should last at least 2 ms */
+#define Start_Timer() Begin_Time = time ( (long *) 0)
+#define Stop_Timer()  End_Time   = time ( (long *) 0)
+
+#else
+
+#ifdef MSC_CLOCK /* Use Microsoft C hi-res clock */
+
+#undef HZ
+#undef TIMES
+#include <time.h>
+#define HZ	CLK_TCK
+#define CLOCK_TYPE "MSC clock()"
+extern clock_t	clock();
+#define Too_Small_Time (2*HZ)
+#define Start_Timer() Begin_Time = clock()
+#define Stop_Timer()  End_Time   = clock()
+
+#elif defined(__riscv)
+
+#define HZ 1000000
 #define Too_Small_Time 1
 #define CLOCK_TYPE "rdcycle()"
 #define Start_Timer() Begin_Time = read_csr(mcycle)
 #define Stop_Timer() End_Time = read_csr(mcycle)
 
+#else
+                /* Use times(2) time function unless    */
+                /* explicitly defined otherwise         */
+#define CLOCK_TYPE "times()"
+#include <sys/types.h>
+#include <sys/times.h>
+#ifndef HZ	/* Added by SP 900619 */
+#include <sys/param.h> /* If your system doesn't have this, use -DHZ=xxx */
+#else
+	*** You must define HZ!!! ***
+#endif /* HZ */
+#ifndef PASS2
+struct tms      time_info;
+#endif
+/*extern  int     times ();*/
+                /* see library function "times" */
+#define Too_Small_Time (2*HZ)
+                /* Measurements should last at least about 2 seconds */
+#define Start_Timer() times(&time_info); Begin_Time=(long)time_info.tms_utime
+#define Stop_Timer()  times(&time_info); End_Time = (long)time_info.tms_utime
+
+#endif /* MSC_CLOCK */
+#endif /* TIME */
 
 #define Mic_secs_Per_Second     1000000
 #define NUMBER_OF_RUNS		500 /* Default number of runs */
