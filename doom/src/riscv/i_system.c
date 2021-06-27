@@ -69,70 +69,54 @@ I_GetTime(void)
 static void
 I_GetEvent(void)
 {
-	static uint8_t prevchar = 0;
-
 	event_t event;
 
+	// Works with riscvtool's keyserver
+	unsigned char keydata[2];
 	if (*IO_UARTRXByteCount)
 	{
-		uint8_t inchar = *IO_UARTRX;
+		for (int i=0;i<2;++i)
+			keydata[i] = *IO_UARTRX;
+		// first byte: 1:down 2:up
+		// second byte: x11 keysymbol
 
 		// For each character that was received,
 		// create a 'down' event, and an 'up' event
 		// for the one before it if they're different
-		event.type = ev_keydown;
+		event.type = keydata[0] ? ev_keydown : ev_keyup;
 
-		switch (inchar)
+		switch (keydata[1])
 		{
 			case 'w':
 				event.data1 = KEY_UPARROW;
-				prevchar = KEY_UPARROW;
 			break;
 
 			case 's':
 				event.data1 = KEY_DOWNARROW;
-				prevchar = KEY_DOWNARROW;
 			break;
 
 			case 'q':
 				event.data1 = KEY_LEFTARROW;
-				prevchar = KEY_LEFTARROW;
 			break;
 
 			case 'e':
 				event.data1 = KEY_RIGHTARROW;
-				prevchar = KEY_RIGHTARROW;
 			break;
 
 			case 'a':
 				event.data1 = ',';
-				prevchar = ',';
 			break;
 
 			case 'd':
 				event.data1 = '.';
-				prevchar = '.';
 			break;
 
 			default:
-				event.data1 = inchar;
-				prevchar = inchar;
+				event.data1 = keydata[1];
 			break;
 		}
 
 		D_PostEvent(&event);
-	}
-	else
-	{
-		// Fake an 'up' event for the
-		// last known key, if there was one
-		if (prevchar != 0)
-		{
-			event.type = ev_keyup;
-			event.data1 = prevchar;
-			D_PostEvent(&event);
-			prevchar = 0;
-		}
 	}
 
 	static uint32_t oldhardwareswitchstates = 0;

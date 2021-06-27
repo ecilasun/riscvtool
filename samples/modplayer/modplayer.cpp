@@ -8,10 +8,10 @@
 #include "micromod/micromod.h"
 
 #define SAMPLING_FREQ  44000  /* 44khz. */
-#define REVERB_BUF_LEN 4400   /* 50ms. */
+#define REVERB_BUF_LEN 550    /* 6.25ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
-#define BUFFER_SAMPLES 128  /* buffer size */
+#define BUFFER_SAMPLES 1024  /* buffer size */
 
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
 static short reverb_buffer[ REVERB_BUF_LEN ];
@@ -165,7 +165,7 @@ FATFS Fs;
 int main( int argc, char **argv ) {
 	int result;
 	long count, length;
-	const char *filename = "sd:/drwho.mod";
+	const char *filename = "sd:/planet.mod";
 	signed char *module;
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
