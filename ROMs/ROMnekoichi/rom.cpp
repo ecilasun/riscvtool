@@ -15,7 +15,6 @@
 volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)(GraphicsRAMEnd-16); // Lives one DWORD before the stack
 uint32_t gpuSubmitCounter = 0;
 uint32_t vramPage = 0;
-uint32_t osc = 0;
 
 void SubmitGPUFrame()
 {
