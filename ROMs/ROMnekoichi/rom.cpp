@@ -6,13 +6,12 @@
 #include <memory.h>
 #include <math.h>
 
-#define ROM_STARTUP_128K
 #include "rvcrt0.h"
 
 #include "../nekolib/nekoichi.h"
 #include "../nekolib/gpu.h"
 
-volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)0x0001FFF0;
+volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)(GraphicsRAMEnd-16); // Lives one DWORD before the stack
 uint32_t gpuSubmitCounter = 0;
 uint32_t vramPage = 0;
 uint32_t osc = 0;
@@ -76,7 +75,7 @@ void SubmitGPUFrame()
       // GPU will write value in G2 to address in G3 in the future
       GPUSetRegister(3, uint32_t(gpuSideSubmitCounter));
       GPUSetRegister(2, gpuSubmitCounter);
-      GPUWriteSystemMemory(2, 3);
+      GPUWriteToGraphicsMemory(2, 3);
 
       // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
       *gpuSideSubmitCounter = 0;
@@ -199,7 +198,7 @@ void RunBinaryBlob()
 
 int main()
 {
-   EchoUART("\r\nNekoIchi [v008] [RV32IMFZicsr] [GPU]\r\n\u00A9 2021 Engin Cilasun\r\n");
+   EchoUART("\r\nNekoIchi [0x000A] [RV32IMFZicsr]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Initialize video page
    GPUSetRegister(2, vramPage);

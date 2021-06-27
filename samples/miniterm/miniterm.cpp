@@ -68,10 +68,12 @@ int main()
    uint32_t prevmilliseconds = 0;
    uint32_t cursorevenodd = 0;
    uint32_t toggletime = 0;
-   // Make sure this lands in the Fast RAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)0x0001FFF0;
+
+   // Make sure this lands in some unused area of the GraphicsRAM
+   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsRAMEnd-8;
    *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
+
    int escapemode = 0;
    while(1)
    {
@@ -219,7 +221,7 @@ int main()
 
          // Write 'end of processing' from GPU so that CPU can resume its work
          GPUSetRegister(2, cnt);
-         GPUWriteSystemMemory(2, 1);
+         GPUWriteToGraphicsMemory(2, 1);
 
          *gpustate = 0;
       }

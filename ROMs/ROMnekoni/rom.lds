@@ -1,5 +1,3 @@
-/* With help from https://github.com/pulp-platform/pulp-riscv-gnu-toolchain/blob/master/riscv.ld */
-
 OUTPUT_ARCH(riscv)
 OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 
@@ -8,7 +6,7 @@ GROUP( -lc -lgloss -lgcc )
 _STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0xA00;
 
 MEMORY{
-   RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 0x1F000
+   RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 0x04000
 }
 
 ENTRY(_start)

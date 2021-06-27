@@ -14,7 +14,7 @@
 
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
 static short reverb_buffer[ REVERB_BUF_LEN ];
-short buffers[2][ BUFFER_SAMPLES * NUM_CHANNELS ];
+short *buffer = (short*)AudioRAMStart;//[ BUFFER_SAMPLES * NUM_CHANNELS ];
 static long reverb_len, reverb_idx, filt_l, filt_r;
 static long samples_remaining;
 
@@ -114,51 +114,48 @@ static long read_module_length( const char *filename ) {
 	return length;
 }
 
-static long play_module( signed char *module ) {
+static long play_module( signed char *module )
+{
 	long result;
 	//SDL_AudioSpec audiospec;
 	/* Initialise replay.*/
 	result = micromod_initialise( module, SAMPLING_FREQ * OVERSAMPLE );
-	if( result == 0 ) {
+	if( result == 0 )
+	{
 		print_module_info();
-		/* Calculate song length. */
 		samples_remaining = micromod_calculate_song_duration();
 		printf( "Song Duration: %li seconds.\n", samples_remaining / ( SAMPLING_FREQ * OVERSAMPLE ) );
 		fflush( NULL );
 
 		int playing = 1;
-		int writebuffer = 0;
 		while( playing )
 		{
 			int count = BUFFER_SAMPLES * OVERSAMPLE;
 			if( count > samples_remaining )
 				count = samples_remaining;
 
-        	// Anything above 19ms stalls this
-        	__builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
+			// Anything above 19ms stalls this
+			__builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
 			micromod_get_audio( mix_buffer, count );
-			downsample( mix_buffer, buffers[writebuffer], BUFFER_SAMPLES * OVERSAMPLE );
-			crossfeed( buffers[writebuffer], BUFFER_SAMPLES );
-			reverb( buffers[writebuffer], BUFFER_SAMPLES );
+			downsample( mix_buffer, buffer, BUFFER_SAMPLES * OVERSAMPLE );
+			crossfeed( buffer, BUFFER_SAMPLES );
+			reverb( buffer, BUFFER_SAMPLES );
 			samples_remaining -= count;
 
-        	// TODO: move one of these to a thread so that the other one doesn't have to wait,
-        	// while utilizing the writebuffer index.
+			// TODO: If 'buffer' is placed in AudioRAM, the APU
+			// could kick the synchronized copy so we can free the CPU
 
 			// Audio FIFO will be drained at playback rate and
-        	// the CPU will stall to wait if the FIFO is full.
-        	// Therefore, no need to worry about synchronization.
-        	uint32_t *playback = (uint32_t*)buffers[(writebuffer+1)%2];
-        	for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
-          	*IO_AudioFIFO = playback[i];
-        
-        	writebuffer = (writebuffer+1)%2;
+			// the CPU will stall to wait if the FIFO is full.
+			// Therefore, no need to worry about synchronization.
+			for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
+				*IO_AudioFIFO = (buffer[i*2+1]<<16) | buffer[i*2+0];
 
-				if( samples_remaining <= 0 || result != 0 )
-					playing = 0;
+			if( samples_remaining <= 0 || result != 0 )
+				playing = 0;
 		}
-
 	}
+
 	return result;
 }
 
@@ -170,34 +167,38 @@ int main( int argc, char **argv ) {
 	const char *filename = "sd:/quake.mod";
 	signed char *module;
 
-  FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-  if (mountattempt != FR_OK)
-  {
-    EchoUART("No medium\n");
-    return -1;
-  }
+	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	if (mountattempt != FR_OK)
+	{
+		printf("Modplayer needs an SDCard with the file %s on it\n", filename);
+		return -1;
+	}
 
 	result = EXIT_FAILURE;
 	if( filename == NULL ) {
 		printf("Usage: %s [-reverb] filename\n", argv[ 0 ] );
-	} else {
+	}
+	else
+	{
 		/* Read module file.*/
 		length = read_module_length( filename );
-		if( length > 0 ) {
+		if( length > 0 )
+		{
 			printf( "Module Data Length: %li bytes.\n", length );
 			module = (signed char*)calloc( length, 1 );
-			if( module != NULL ) {
+			if( module != NULL )
+			{
 				count = read_file( filename, module, length );
-				if( count < length ) {
+				if( count < length )
 					printf("Module file is truncated. %li bytes missing.\n", length - count );
-				}
-				/* Play.*/
-				if( play_module( module ) == 0 ) {
+
+				if( play_module( module ) == 0 )
 					result = EXIT_SUCCESS;
-				}
+
 				free( module );
 			}
 		}
 	}
+
 	return result;
 }

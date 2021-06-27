@@ -23,51 +23,51 @@
 // Clears the whole VRAM to color in source register (at x12 speed of continuous DWORD writes)
 #define GPUCLEAR 0x3
 
-// Copies DWORD aligned SYSRAM address in rs to DWORD aligned VRAM address in rd, by given DWORDs
+// Copies DWORD aligned GRAM address in rs to DWORD aligned VRAM address in rd, by given DWORDs
 #define GPUSYSDMA 0x4
 
 // Rasterize primitive
 #define GPURASTERIZE 0x5
 
-// Write DWORD in rs onro SYSRAM address in rd, effectively signalling CPU from GPU side
-#define GPUSYSMEMOUT 0x6
+// Write DWORD in rs onto GRAM address in rd, effectively signalling CPU from GPU side
+#define GPUGMEMOUT 0x6
 
 // Set VRAM write page
 #define GPUSETVPAGE 0x7
 
 inline void GPUSetRegister(const uint8_t reg, uint32_t val) {
-    *IO_GPUFIFO = GPUOPCODE(GPUSETREGISTER, 0, reg, GPU22BITIMM(val));
-    *IO_GPUFIFO = GPUOPCODE(GPUSETREGISTER, reg, reg, GPU10BITIMM(val));
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUSETREGISTER, 0, reg, GPU22BITIMM(val));
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUSETREGISTER, reg, reg, GPU10BITIMM(val));
 }
 
 inline void GPUSetVideoPage(const uint8_t videoPageRegister)
 {
-    *IO_GPUFIFO = GPUOPCODE(GPUSETVPAGE, videoPageRegister, 0, 0);
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUSETVPAGE, videoPageRegister, 0, 0);
 }
 
-inline void GPUWriteSystemMemory(const uint8_t countRegister, const uint8_t sysramPointerReg)
+inline void GPUWriteToGraphicsMemory(const uint8_t countRegister, const uint8_t sysramPointerReg)
 {
-    *IO_GPUFIFO = GPUOPCODE(GPUSYSMEMOUT, countRegister, sysramPointerReg, 0);
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUGMEMOUT, countRegister, sysramPointerReg, 0);
 }
 
 inline void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAlignedTargetReg, const uint16_t DMALengthInDWORDs, const uint8_t masked)
 {
-    *IO_GPUFIFO = GPUOPCODE(GPUSYSDMA, SYSRAMSourceReg, VRAMDWORDAlignedTargetReg, ((DMALengthInDWORDs&0x3FFF) | (masked ? 0x4000 : 0x0000)));
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUSYSDMA, SYSRAMSourceReg, VRAMDWORDAlignedTargetReg, ((DMALengthInDWORDs&0x3FFF) | (masked ? 0x4000 : 0x0000)));
 }
 
 inline void GPUWaitForVsync()
 {
-    *IO_GPUFIFO = GPUOPCODE(GPUVSYNC, 0, 0, 0);
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUVSYNC, 0, 0, 0);
 }
 
 inline void GPUClearVRAMPage(const uint8_t clearColorRegister)
 {
-    *IO_GPUFIFO = GPUOPCODE(GPUCLEAR, clearColorRegister, 0, 0);
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUCLEAR, clearColorRegister, 0, 0);
 }
 
 inline void GPURasterizeTriangle(const uint8_t vertex0Register, const uint8_t vertex1Register, const uint8_t vertex2Register, const uint8_t fillColorIndex)
 {
-    *IO_GPUFIFO = GPUOPCODE3(GPURASTERIZE, vertex0Register, vertex1Register, vertex2Register, fillColorIndex);
+    *IO_GPUCommandFIFO = GPUOPCODE3(GPURASTERIZE, vertex0Register, vertex1Register, vertex2Register, fillColorIndex);
 }
 
 inline void GPUSetPaletteEntry(const uint8_t rgbRegister, const uint8_t targetPaletteEntry)
@@ -75,5 +75,5 @@ inline void GPUSetPaletteEntry(const uint8_t rgbRegister, const uint8_t targetPa
     // Each color component is 8 bits (8:8:8) giving a 24 bit color value
     // There are 256 slots for color palette entries
     // Color bit order in register should be: ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b)
-    *IO_GPUFIFO = GPUOPCODE(GPUWRITEPALETTE, rgbRegister, 0, targetPaletteEntry);
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUWRITEPALETTE, rgbRegister, 0, targetPaletteEntry);
 }

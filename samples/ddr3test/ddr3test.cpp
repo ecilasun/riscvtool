@@ -2,7 +2,8 @@
 #include <math.h>
 #include <stdio.h>
 
-uint16_t blockRAMTable[1024];
+// Place this into ARAM since it's small enough
+uint16_t *blockRAMTable = (uint16_t*)AudioRAMStart;
 
 int main()
 {

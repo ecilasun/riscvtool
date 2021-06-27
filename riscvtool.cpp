@@ -63,7 +63,7 @@ struct SElfSectionHeader32
 };
 #pragma pack(pop)
 
-void parseelfheader(unsigned char *_elfbinary)
+void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
 {
     // Parse the header and check the magic word
     SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
@@ -78,19 +78,32 @@ void parseelfheader(unsigned char *_elfbinary)
     SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinary+fheader->m_PHOff);
 
     printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
-    unsigned char *litteendian = (unsigned char *)(_elfbinary+pheader->m_Offset);
-    for (unsigned int i=0;i<pheader->m_MemSz;++i)
+    if (groupsize == 4) // 32bit groups (4 bytes)
     {
-        if (i!=0 && ((i%16) == 0))
-            printf("\n");
-        printf("%.2X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
-        if (((i+1)%4)==0 && i!=pheader->m_MemSz-1)
-            printf(" ");
+        unsigned char *litteendian = (unsigned char *)(_elfbinary+pheader->m_Offset);
+        for (unsigned int i=0;i<pheader->m_MemSz;++i)
+        {
+            if (i!=0 && ((i%16) == 0))
+                printf("\n");
+            printf("%.2X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
+            if (((i+1)%4)==0 && i!=pheader->m_MemSz-1)
+                printf(" "); // 32bit separator
+        }
+    }
+    else // 128bit groups (16 bytes)
+    {
+        unsigned int *litteendian = (unsigned int *)(_elfbinary+pheader->m_Offset);
+        for (unsigned int i=0;i<pheader->m_MemSz/4;++i)
+        {
+            if (i!=0 && ((i%4) == 0))
+                printf("\n");
+            printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
+        }
     }
     printf(";");
 }
 
-void dumpelf(char *_filename)
+void dumpelf(char *_filename, unsigned int groupsize)
 {
     FILE *fp;
     fp = fopen(_filename, "rb");
@@ -112,7 +125,7 @@ void dumpelf(char *_filename)
     fread(bytestosend, 1, filebytesize, fp);
     fclose(fp);
 
-    parseelfheader(bytestosend);
+    parseelfheader(bytestosend, groupsize);
 
     delete [] bytestosend;
 }
@@ -354,14 +367,15 @@ int main(int argc, char **argv)
     if (argc <= 4)
     {
         printf("RISCVTool\n");
-        printf("Usage: riscvtool.exe binaryfilename [-sendelf hexaddress usbdevicename | -makerom]\n");
+        printf("Usage: riscvtool.exe binaryfilename [-sendelf hexaddress usbdevicename | -makerom groupbytesize]\n");
         printf("NOTE: Default device name is /dev/ttyUSB1");
         return -1;
     }
 
     if (strstr(argv[2], "-makerom"))
     {
-        dumpelf(argv[1]);
+        unsigned int groupsize = (unsigned int)strtoul(argv[3], nullptr, 10);
+        dumpelf(argv[1], groupsize);
     }
     if (strstr(argv[2], "-sendelf"))
     {
