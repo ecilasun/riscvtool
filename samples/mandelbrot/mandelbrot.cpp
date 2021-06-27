@@ -35,9 +35,9 @@ int mandelbrotFloat(float ox, float oy, float sx)
 {
    int R = 32;//int(27.71f-5.156f*logf(sx));
 
-   for (int row = 0; row < 192; ++row)
+   for (int row = 0; row < 192; row+=2)
    {
-      for (int col = 0; col < 256; ++col)
+      for (int col = 0; col < 256; col+=2)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          int c;
