@@ -10,6 +10,7 @@
 #include "rvcrt0.h"
 
 #include "../nekoSDK/nekoichi.h"
+#include "../nekoSDK/uart.h"
 
 void LoadBinaryBlob()
 {

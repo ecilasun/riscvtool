@@ -10,6 +10,7 @@
 
 #include "../nekoSDK/nekoichi.h"
 #include "../nekoSDK/gpu.h"
+#include "../nekoSDK/uart.h"
 
 volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)(GraphicsRAMEnd-16); // Lives one DWORD before the stack
 uint32_t gpuSubmitCounter = 0;
