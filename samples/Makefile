@@ -6,9 +6,9 @@ default: all
 
 # Directories
 
-src_dir = samples
-corelib_dir = nekoSDK
-thirdparty_libs = 3rdparty
+src_dir = .
+corelib_dir = ../nekoSDK
+thirdparty_libs = ../3rdparty
 
 # Executable folders
 
