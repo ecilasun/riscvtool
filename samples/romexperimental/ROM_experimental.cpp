@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include "nekoichi.h"
 #include "gpu.h"
+#include "uart.h"
+#include "switches.h"
 #include "sdcard.h"
 #include "console.h"
 #include "elf.h"

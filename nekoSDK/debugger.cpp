@@ -2,6 +2,7 @@
 #include "console.h"
 #include <setjmp.h>
 #include <string.h>
+#include "uart.h"
 #include "debugger.h"
 
 const char hexdigits[] = "0123456789ABCDEF";

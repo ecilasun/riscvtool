@@ -1,4 +1,5 @@
 #include "nekoichi.h"
+#include "apu.h"
 #include "sdcard.h"
 #include "fat32/ff.h"
 #include <stdio.h>
@@ -164,7 +165,7 @@ FATFS Fs;
 int main( int argc, char **argv ) {
 	int result;
 	long count, length;
-	const char *filename = "sd:/quake.mod";
+	const char *filename = "sd:/drwho.mod";
 	signed char *module;
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);

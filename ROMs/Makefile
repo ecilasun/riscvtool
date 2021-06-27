@@ -7,7 +7,7 @@ default: all
 # Directories
 
 src_dir = .
-corelib_dir = ../nekolib
+corelib_dir = ../nekoSDK
 thirdparty_libs = ../3rdparty
 
 # Executable folders

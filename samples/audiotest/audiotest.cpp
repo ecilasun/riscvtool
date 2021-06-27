@@ -1,4 +1,5 @@
 #include "nekoichi.h"
+#include "apu.h"
 #include <math.h>
 
 int sinewave[1024] = {

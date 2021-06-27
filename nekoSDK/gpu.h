@@ -1,8 +1,14 @@
 
+#include <inttypes.h>
+
+extern volatile uint32_t *IO_GPUCommandFIFO;
+extern volatile uint32_t *GraphicsRAMStart;
+extern volatile uint32_t *GraphicsRAMEnd;
+
 // Utility macros
 #define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 
-// GPU command macros
+// GPU command FIFO macros
 #define GPU22BITIMM(_immed_) (_immed_&0x003FFFFF)
 #define GPU10BITIMM(_immed_) ((_immed_&0xFFC00000)>>22)
 #define GPUOPCODE(_cmd_, _rs_, _rd_, _imm_) (_imm_<<10)|(_rd_<<7)|(_rs_<<4)|(_cmd_)

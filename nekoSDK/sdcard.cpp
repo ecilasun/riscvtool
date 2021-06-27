@@ -1,4 +1,5 @@
 #include "nekoichi.h"
+#include "spi.h"
 #include "sdcard.h"
 #include <stdio.h>
 

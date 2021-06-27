@@ -6,25 +6,11 @@
 
 #include "nekoichi.h"
 #include "gpu.h"
+#include "uart.h"
 #include "fat32/ff.h"
-
-volatile uint32_t *IO_APUCommandFIFO = (volatile uint32_t* )0x80000024;    // APU command FIFO
-volatile uint32_t *IO_AudioFIFO = (volatile uint32_t* )0x80000020;         // Audio FIFO
-volatile uint32_t *IO_SwitchByteCount = (volatile uint32_t* )0x8000001C;   // Switch state byte count (read)
-volatile uint8_t *IO_SwitchState = (volatile uint8_t* )0x80000018;         // Device switch states (read)
-volatile uint8_t *IO_SPIOutput = (volatile uint8_t* )0x80000014;           // SPU send data (write)
-volatile uint8_t *IO_SPIInput = (volatile uint8_t* )0x80000010;            // SPI receive data (read)
-volatile uint8_t *IO_UARTTX = (volatile uint8_t* )0x8000000C;              // UART send data (write)
-volatile uint8_t *IO_UARTRX = (volatile uint8_t* )0x80000008;              // UART receive data (read)
-volatile uint32_t *IO_UARTRXByteCount = (volatile uint32_t* )0x80000004;   // UART input status (read)
-volatile uint32_t *IO_GPUCommandFIFO = (volatile uint32_t* )0x80000000;    // GPU command FIFO
 
 volatile uint32_t *DDR3Start = (uint32_t* )0x00000000;                     // Start of DDR3 RAM region (inclusive, 256Mbytes)
 volatile uint32_t *DDR3End = (uint32_t* )0x10000000;                       // End of DDR3 RAM region (non-inclusive)
-volatile uint32_t *GraphicsRAMStart = (uint32_t* )0x10000000;              // Start of Graphics RAM region (inclusive, 128KBytes)
-volatile uint32_t *GraphicsRAMEnd = (uint32_t* )0x10020000;                // End of Graphics RAM region (non-inclusive)
-volatile uint32_t *AudioRAMStart = (uint32_t* )0x20000000;                 // Start of Audio RAM region (inclusive, 64KBytes, serves as BOOT ROM)
-volatile uint32_t *AudioRAMEnd = (uint32_t* )0x20010000;                   // End of Audio RAM region (non-inclusive)
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t residentfont[] __attribute__((aligned(4))) = {

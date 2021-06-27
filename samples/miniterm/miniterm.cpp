@@ -7,6 +7,7 @@
 #include <math.h>
 #include "nekoichi.h"
 #include "gpu.h"
+#include "uart.h"
 #include "sdcard.h"
 #include "console.h"
 #include "elf.h"

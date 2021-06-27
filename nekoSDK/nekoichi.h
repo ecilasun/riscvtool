@@ -42,23 +42,9 @@ struct stat {
 #define S_IFLNK	__S_IFLNK
 #define S_IFSOCK __S_IFSOCK
 
-// Hardware devices
-extern volatile uint32_t *IO_GPUCommandFIFO;
-extern volatile uint8_t *IO_UARTRX;
-extern volatile uint8_t *IO_UARTTX;
-extern volatile uint32_t *IO_UARTRXByteCount;
-extern volatile uint8_t *IO_SPIInput;
-extern volatile uint8_t *IO_SPIOutput;
-extern volatile uint8_t *IO_SwitchState;
-extern volatile uint32_t *IO_SwitchByteCount;
-extern volatile uint32_t *IO_AudioFIFO;
-extern volatile uint32_t *IO_APUCommandFIFO;
-
 // Device memory ranges
 extern volatile uint32_t *DDR3Start;
-extern volatile uint32_t *GraphicsRAMStart;
-extern volatile uint32_t *GraphicsRAMEnd;
-extern volatile uint32_t *AudioRAMStart;
+extern volatile uint32_t *DDR3End;
 
 void InitFont();
 void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);

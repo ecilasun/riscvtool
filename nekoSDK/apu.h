@@ -1,5 +1,11 @@
+#include <inttypes.h>
 
-// APU command macros
+extern volatile uint32_t *IO_AudioFIFO;
+extern volatile uint32_t *IO_APUCommandFIFO;
+extern volatile uint32_t *AudioRAMStart;
+extern volatile uint32_t *AudioRAMEnd;
+
+// APU command FIFO macros
 #define APU22BITIMM(_immed_) (_immed_&0x003FFFFF)
 #define APU10BITIMM(_immed_) ((_immed_&0xFFC00000)>>22)
 #define APUOPCODE(_cmd_, _rs_, _rd_, _imm_) (_imm_<<10)|(_rd_<<7)|(_rs_<<4)|(_cmd_)
@@ -15,8 +21,8 @@
 #define APUAMEMOUT 0x6
 
 inline void APUSetRegister(const uint8_t reg, uint32_t val) {
-    *IO_APUCommandFIFO = GPUOPCODE(APUSETREGISTER, 0, reg, APU22BITIMM(val));
-    *IO_APUCommandFIFO = GPUOPCODE(APUSETREGISTER, reg, reg, APU10BITIMM(val));
+    *IO_APUCommandFIFO = APUOPCODE(APUSETREGISTER, 0, reg, APU22BITIMM(val));
+    *IO_APUCommandFIFO = APUOPCODE(APUSETREGISTER, reg, reg, APU10BITIMM(val));
 }
 
 inline void GPUWriteToAudioMemory(const uint8_t countRegister, const uint8_t sysramPointerReg)
