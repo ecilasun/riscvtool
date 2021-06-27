@@ -30,7 +30,6 @@
 #include "gpu.h"
 
 static uint32_t vramPage = 0;
-static uint32_t ticker = 0;
 
 uint8_t video_pal[256];
 

@@ -98,10 +98,10 @@ int NetbufferSize (void)
 //
 unsigned NetbufferChecksum (void)
 {
-    unsigned            c;
-    int         i,l;
+    //unsigned c;
+    //int         i,l;
 
-    c = 0x1234567;
+    //c = 0x1234567;
 
     // FIXME -endianess?
 //#ifdef NORMALUNIX

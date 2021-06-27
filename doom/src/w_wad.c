@@ -45,11 +45,6 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 
 #include "riscv/ff.h"
 
-// RISC-V raw
-#define O_BINARY          0
-#define O_RDONLY	     00
-#define O_WRONLY	     01
-#define O_RDWR		     02
 
 FIL s_filehandles[32]; // 32 files open at most
 int s_numhandles = 0;

@@ -343,13 +343,13 @@ extern byte     scantokey[128];
 void M_LoadDefaults (void)
 {
     int         i;
-    int         len;
-    FILE*       f;
-    char        def[80];
-    char        strparm[100];
-    char*       newstring;
-    int         parm;
-    boolean     isstring;
+    //int         len;
+    //FILE*       f;
+    //char        def[80];
+    //char        strparm[100];
+    //char*       newstring;
+    //int         parm;
+    //boolean     isstring;
 
     // set everything to base values
     numdefaults = sizeof(defaults)/sizeof(defaults[0]);
