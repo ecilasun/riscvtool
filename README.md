@@ -22,13 +22,15 @@ python waf clean
 
 # Building the ROM and samples for NekoIchi
 
-To build the ROM file and the samples, simply run:
+To build the ROM file and the samples, either switch to the 'ROMs' or 'samples' directory and run:
 
 ```
-./build.sh
+make
 ```
 
-This will create ROM_nekoichi.coe file which is the ROM image for NekoIchi, alognside with some samples that riscvtool can upload. You can copy the ROM_nekoichi.COE files contents over the BIOS.coe file in the source directory of NekoIchi HDL code, which you can find at https://github.com/ecilasun/NekoIchi
+You can also do the same with 'doom/src/riscv' and 'dhrystone' directories to build those programs.
+
+This will create ROMnekoichi.coe file which is the ROM image for NekoIchi, alognside with some samples that riscvtool can upload. You can copy the ROM_nekoichi.COE files contents over the BIOS.coe file in the source directory of NekoIchi HDL code, which you can find at https://github.com/ecilasun/NekoIchi
 
 With the exception of the ROM image, you can use a reasonable amount of C++11 code at some level, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file.
 
@@ -43,9 +45,9 @@ gpupipetest - tests the GPU rasterizer / synchronization mechanisms and the real
 
 # Uploading binaries
 
-As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use a command line similar to the following (while changing the name of your device to match)
+As an example, to upload the miniterm.elf to the SoC, given that the USB cable is connected and your COM port is set up properly, use a command line similar to the following (while changing the name of your USB device to match)
 ```
-./build/release/riscvtool miniterm.elf -sendelf 0x10000 /dev/ttyUSB4
+./build/release/riscvtool samples/miniterm.elf -sendelf 0x10000 /dev/ttyUSB1
 ```
 
 P.S. Always use 0x00010000 as base address if you haven't used a custom linker script.
@@ -73,11 +75,11 @@ NOTE: Take care to keep your binary away from address range 0x00000000-0x0000500
 
 # Debugging with GDB
 
-If you've linked your program with the debug.cpp file and have necessary trap handlers installed (as in the ROM_explerimental.cpp sample), you can then attach with GDB to debug your code:
+If you've linked your program with the debug.cpp file and have necessary trap handlers installed (as in the romexplerimental sample), you can then attach with GDB to debug your code:
 
 ```
-riscv64-unknown-elf-gdb -b 115200 --tui ROM_experimental.elf
-target remote /dev/ttyUSB4
+riscv64-unknown-elf-gdb -b 115200 --tui samples/romexperimental.elf
+target remote /dev/ttyUSB1
 ```
 
 This will break into the currently executing program. Use 'c' command to resume execution, or Ctrl+C to break at an arbitrary breakpoint. You can also set breakpoints when the program is paused by using 'b DrawConsole' for instance. On resume with 'c' the program will be stopped at the new breakpoint address.
