@@ -17,40 +17,6 @@ uint32_t gpuSubmitCounter = 0;
 uint32_t vramPage = 0;
 uint32_t osc = 0;
 
-void DrawRotatingRect(const float ox, const float oy)
-{
-   static float roll = 1.8f;
-   float S = cosf(roll*0.1f)*12.f;
-
-   float rx0 = cosf(roll)*S;
-   float ry0 = sinf(roll)*S;
-   float rx1 = cosf(roll+3.1415927f*0.5f)*S;
-   float ry1 = sinf(roll+3.1415927f*0.5f)*S;
-
-   short x1 = short(ox - rx0 - rx1);
-   short y1 = short(oy - ry0 - ry1);
-   short x2 = short(ox + rx0 - rx1);
-   short y2 = short(oy + ry0 - ry1);
-   short x3 = short(ox + rx0 + rx1);
-   short y3 = short(oy + ry0 + ry1);
-   short x4 = short(ox - rx0 + rx1);
-   short y4 = short(oy - ry0 + ry1);
-
-   uint32_t vertex0 = ((y1&0xFFFF)<<16) | (x1&0xFFFF);
-   uint32_t vertex1 = ((y2&0xFFFF)<<16) | (x2&0xFFFF);
-   uint32_t vertex2 = ((y3&0xFFFF)<<16) | (x3&0xFFFF);
-   uint32_t vertex3 = ((y4&0xFFFF)<<16) | (x4&0xFFFF);
-
-   GPUSetRegister(1, vertex0);
-   GPUSetRegister(2, vertex1);
-   GPUSetRegister(3, vertex2);
-   GPUSetRegister(4, vertex3);
-   GPURasterizeTriangle(1,2,3,0x00); // Black
-   GPURasterizeTriangle(3,4,1,0x0F); // White
-
-   roll += 0.055f;
-}
-
 void SubmitGPUFrame()
 {
    // Do not submit more work if the GPU is not ready
@@ -63,7 +29,7 @@ void SubmitGPUFrame()
       GPUSetRegister(1, 0x18181818); // 4 Gray pixels
       GPUClearVRAMPage(1);
 
-      DrawRotatingRect(128, 96);
+      PrintDMA(36, 92, "Awaiting UART upload...", true);
 
       // Stall GPU until vsync is reached
       GPUWaitForVsync();
@@ -199,6 +165,7 @@ void RunBinaryBlob()
 
 int main()
 {
+   InitFont();
    EchoUART("\r\nNekoIchi [0x000A] [RV32IMFZicsr]\r\n\u00A9 2021 Engin Cilasun\r\n");
 
    // Initialize video page
