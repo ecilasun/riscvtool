@@ -28,7 +28,7 @@ void SubmitGPUFrame()
       GPUSetRegister(1, 0x18181818); // 4 Gray pixels
       GPUClearVRAMPage(1);
 
-      PrintDMA(36, 92, "Awaiting UART upload...", true);
+      PrintDMA(96, 92, "NEKOICHI", true);
 
       // Stall GPU until vsync is reached
       GPUWaitForVsync();
