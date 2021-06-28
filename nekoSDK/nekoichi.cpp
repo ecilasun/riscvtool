@@ -94,16 +94,17 @@ void PrintDMA(const int col, const int row, const int maxlen, const char *messag
    while (i<maxlen && message[i] != 0)
    {
       int currentchar = message[i]-32;
+
+      // Skip space if masked (no point in drawing empty character)
       if (masked && (currentchar==0))
       {
          ++i;
          continue;
       }
-      if (currentchar<0)
-      {
-         ++i;
-         continue;
-      }
+
+      // Turn illegal characters into space
+      if ((currentchar<0) || (currentchar>127))
+         currentchar = 0;
 
       int charrow = (currentchar>>5)*8;
       int charcol = (currentchar%32)*8;

@@ -149,8 +149,9 @@ static long play_module( signed char *module )
 			// Audio FIFO will be drained at playback rate and
 			// the CPU will stall to wait if the FIFO is full.
 			// Therefore, no need to worry about synchronization.
+			uint32_t *src = (uint32_t *)buffer;
 			for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
-				*IO_AudioFIFO = (buffer[i*2+1]<<16) | buffer[i*2+0];
+				*IO_AudioFIFO = src[i];
 
 			if( samples_remaining <= 0 || result != 0 )
 				playing = 0;
@@ -165,7 +166,7 @@ FATFS Fs;
 int main( int argc, char **argv ) {
 	int result;
 	long count, length;
-	const char *filename = "sd:/planet.mod";
+	const char *filename = "sd:/drwho.mod";
 	signed char *module;
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
