@@ -166,7 +166,7 @@ FATFS Fs;
 int main( int argc, char **argv ) {
 	int result;
 	long count, length;
-	const char *filename = "sd:/drwho.mod";
+	const char *filename = "sd:/planet.mod";
 	signed char *module;
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
