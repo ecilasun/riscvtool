@@ -96,19 +96,26 @@ I_GetEvent(void)
 			break;
 
 			case 'q':
-				event.data1 = KEY_LEFTARROW;
-			break;
-
-			case 'e':
-				event.data1 = KEY_RIGHTARROW;
-			break;
-
-			case 'a':
 				event.data1 = ',';
 			break;
 
-			case 'd':
+			case 'e':
 				event.data1 = '.';
+			break;
+
+			case 'a':
+				event.data1 = KEY_LEFTARROW;
+			break;
+
+			case 'd':
+				event.data1 = KEY_RIGHTARROW;
+			break;
+
+			case '0':
+				event.type =  ev_joystick;
+				event.data1 = keydata[0];
+				event.data2 = 0;
+				event.data3 = 0;
 			break;
 
 			default:
