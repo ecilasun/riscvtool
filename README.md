@@ -71,7 +71,7 @@ SKIP: '.bss' @0x0001595C len:00004F8C off:0000595C
 Branching to 0x00010528
 ```
 
-NOTE: Take care to keep your binary away from address range 0x00000000-0x00005000 so that the loader code does not get overwritten while loading your binary.
+NOTE: Take care to keep your binary away from address range 0x20000000-0x2001FFFF so that the loader code does not get overwritten while loading your binary. All addresses from 0x00000000 up to 0x0FFFFFFF are available for program use otherwise (an 256Mbyte address range)
 
 # Debugging with GDB
 
