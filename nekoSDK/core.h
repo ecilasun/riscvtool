@@ -46,14 +46,6 @@ struct stat {
 extern volatile uint32_t *DDR3Start;
 extern volatile uint32_t *DDR3End;
 
-void InitFont();
-void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);
-void PrintDMA(const int col, const int row, const int maxlen, const char *message, bool masked=true);
-void PrintDMAHex(const int ox, const int oy, const uint32_t i);
-uint32_t PrintDMADecimal(const int ox, const int oy, const int i, bool masked=true);
-void EchoUART(const char *_message);
-void EchoHex(const uint32_t i);
-void ClearScreen(const uint8_t color);
 uint32_t Random();
 uint64_t ReadClock();
 uint64_t ReadRetiredInstructions();

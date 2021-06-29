@@ -1,4 +1,5 @@
-#include "nekoichi.h"
+#include "core.h"
+#include "uart.h"
 #include "apu.h"
 #include <math.h>
 #include <stdio.h>

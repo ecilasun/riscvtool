@@ -1,4 +1,4 @@
-#include "nekoichi.h"
+#include "core.h"
 #include "apu.h"
 #include <math.h>
 

@@ -4,7 +4,7 @@
 #include <memory.h>
 #include <math.h>
 #include <cmath>
-#include "nekoichi.h"
+#include "core.h"
 #include "gpu.h"
 #include "console.h"
 

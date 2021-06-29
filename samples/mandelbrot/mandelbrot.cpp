@@ -4,7 +4,7 @@
 #include <memory.h>
 #include <math.h>
 #include <cmath>
-#include "nekoichi.h"
+#include "core.h"
 #include "gpu.h"
 
 // Place the offscreen buffer in GPU accessible memory
@@ -74,7 +74,7 @@ int main(int argc, char ** argv)
    float Y = 0.827215f;
 
    // Make sure this lands in some unused area of the GraphicsRAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsRAMEnd-8;
+   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsFontStart-8;
    *gpustate = 0x0;
    uint32_t cnt = 0x0;
 

@@ -1,4 +1,4 @@
-#include "nekoichi.h"
+#include "core.h"
 #include "apu.h"
 #include "gpu.h"
 #include "switches.h"
@@ -12,7 +12,7 @@
 
 FATFS Fs;
 uint32_t hardwareswitchstates, oldhardwareswitchstates;
-volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)(GraphicsRAMStart+32);
+volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-8;
 uint32_t gpuSubmitCounter;
 uint32_t vramPage = 0;
 int selectedmodfile = 0;
@@ -24,7 +24,7 @@ uint32_t *onepixel = (uint32_t *)GraphicsRAMStart;
 
 void SubmitPlaybackFrame()
 {
-	//if (*gpuSideSubmitCounter == gpuSubmitCounter)
+	if (*gpuSideSubmitCounter == gpuSubmitCounter)
 	{
       // Next frame
       ++gpuSubmitCounter;
@@ -66,7 +66,7 @@ void SubmitPlaybackFrame()
 void SubmitGPUFrame()
 {
    // Do not submit more work if the GPU is not ready
-   //if (*gpuSideSubmitCounter == gpuSubmitCounter)
+   if (*gpuSideSubmitCounter == gpuSubmitCounter)
    {
       // Next frame
       ++gpuSubmitCounter;
@@ -352,8 +352,7 @@ int main( int argc, char **argv )
 	GPUSetPaletteEntry(1, 255);
 	GPUSetPaletteEntry(2, 0);
 
-	for (uint32_t i=0;i<64;++i)
-		onepixel[i] = 0x30303030;
+	*onepixel = 0x30303030;
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)

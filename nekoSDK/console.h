@@ -1,4 +1,4 @@
-#include "nekoichi.h"
+#include "core.h"
 
 void ClearConsole();
 void ScrollConsole();

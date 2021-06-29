@@ -4,6 +4,7 @@
 extern volatile uint32_t *IO_GPUCommandFIFO;
 extern volatile uint32_t *GraphicsRAMStart;
 extern volatile uint32_t *GraphicsRAMEnd;
+extern volatile uint32_t *GraphicsFontStart;
 
 // Utility macros
 #define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
@@ -83,3 +84,13 @@ inline void GPUSetPaletteEntry(const uint8_t rgbRegister, const uint8_t targetPa
     // Color bit order in register should be: ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b)
     *IO_GPUCommandFIFO = GPUOPCODE(GPUWRITEPALETTE, rgbRegister, 0, targetPaletteEntry);
 }
+
+
+// Utilities
+
+void ClearScreen(const uint8_t color);
+void InitFont();
+void PrintDMA(const int ox, const int oy, const char *message, bool masked=true);
+void PrintDMA(const int col, const int row, const int maxlen, const char *message, bool masked=true);
+void PrintDMAHex(const int ox, const int oy, const uint32_t i);
+uint32_t PrintDMADecimal(const int ox, const int oy, const int i, bool masked=true);

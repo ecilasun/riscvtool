@@ -9,7 +9,7 @@
 #define ROM_STARTUP_64K
 #include "rvcrt0.h"
 
-#include "../nekoSDK/nekoichi.h"
+#include "../nekoSDK/core.h"
 #include "../nekoSDK/uart.h"
 
 void LoadBinaryBlob()

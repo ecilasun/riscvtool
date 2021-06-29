@@ -1,4 +1,4 @@
-#include "nekoichi.h"
+#include "core.h"
 #include "console.h"
 #include <setjmp.h>
 #include <string.h>

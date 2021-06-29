@@ -9,7 +9,7 @@
 
 #include "rvcrt0.h"
 
-#include "../nekoSDK/nekoichi.h"
+#include "../nekoSDK/core.h"
 #include "../nekoSDK/gpu.h"
 #include "../nekoSDK/uart.h"
 #include "../nekoSDK/elf.h"
@@ -45,7 +45,7 @@ int numexecutables = 0;
 char *executables[64];
 
 FATFS Fs;
-volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)(GraphicsRAMEnd-16); // Lives one DWORD before the stack
+volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-8;
 uint32_t gpuSubmitCounter = 0;
 uint32_t vramPage = 0;
 
