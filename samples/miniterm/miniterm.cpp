@@ -5,7 +5,7 @@
 #include <string.h>
 #include <memory.h>
 #include <math.h>
-#include "nekoichi.h"
+#include "core.h"
 #include "gpu.h"
 #include "uart.h"
 #include "sdcard.h"
@@ -71,7 +71,7 @@ int main()
    uint32_t toggletime = 0;
 
    // Make sure this lands in some unused area of the GraphicsRAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsRAMEnd-8;
+   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsFontStart-8;
    *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
 
