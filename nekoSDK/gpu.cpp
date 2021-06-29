@@ -75,11 +75,11 @@ void PrintDMA(const int col, const int row, const char *message, bool masked)
       for (int y=0;y<8;++y)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)));
+         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)*256)));
          GPUSetRegister(4, sysramsource);
 
          // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
-         int py = ((y+row)<<8);
+         int py = ((y+row)*512);
          uint32_t vramramtarget = (i*8+0+col+py)>>2;
          GPUSetRegister(5, vramramtarget);
 
@@ -115,11 +115,11 @@ void PrintDMA(const int col, const int row, const int maxlen, const char *messag
       for (int y=0;y<8;++y)
       {
          // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)<<8)));
+         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)*256)));
          GPUSetRegister(4, sysramsource);
 
          // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
-         int py = ((y+row)<<8);
+         int py = ((y+row)*512);
          uint32_t vramramtarget = (i*8+0+col+py)>>2;
          GPUSetRegister(5, vramramtarget);
 

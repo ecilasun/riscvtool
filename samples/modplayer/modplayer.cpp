@@ -12,19 +12,19 @@
 
 FATFS Fs;
 uint32_t hardwareswitchstates, oldhardwareswitchstates;
-volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-8;
+volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-32;
 uint32_t gpuSubmitCounter;
 uint32_t vramPage = 0;
 int selectedmodfile = 0;
 int nummodfiles = 0;
 char *modfiles[64];
-int histogram[64];
+int histogram[80];
 
 uint32_t *onepixel = (uint32_t *)GraphicsRAMStart;
 
 void SubmitPlaybackFrame()
 {
-	if (*gpuSideSubmitCounter == gpuSubmitCounter)
+	//if (*gpuSideSubmitCounter == gpuSubmitCounter)
 	{
       // Next frame
       ++gpuSubmitCounter;
@@ -33,14 +33,14 @@ void SubmitPlaybackFrame()
 		GPUSetRegister(1, 0x10101010);
 		GPUClearVRAMPage(1);
 
-		for (int i=0;i<64;++i)
+		for (int i=0;i<80;++i)
 		{
 			int py = 96+histogram[i];
 
 			uint32_t sysramsource = uint32_t(onepixel);
 			GPUSetRegister(4, sysramsource);
 
-			uint32_t vramramtarget = (i*4+py*256)>>2;
+			uint32_t vramramtarget = (i*4+py*512)>>2;
 			GPUSetRegister(5, vramramtarget);
 
 			// Length of copy in DWORDs
@@ -66,7 +66,7 @@ void SubmitPlaybackFrame()
 void SubmitGPUFrame()
 {
    // Do not submit more work if the GPU is not ready
-   if (*gpuSideSubmitCounter == gpuSubmitCounter)
+   //if (*gpuSideSubmitCounter == gpuSubmitCounter)
    {
       // Next frame
       ++gpuSubmitCounter;
@@ -111,7 +111,7 @@ void SubmitGPUFrame()
 #define REVERB_BUF_LEN 550    /* 6.25ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
-#define BUFFER_SAMPLES 256  /* buffer size */
+#define BUFFER_SAMPLES 512  /* buffer size */
 
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
 static short reverb_buffer[ REVERB_BUF_LEN ];
@@ -244,7 +244,7 @@ static long play_module( signed char *module )
 
 			// Generate 255-wide histogram
 			//__builtin_memset( histogram, 0, 64*sizeof(uint32_t) );
-			for (int i=0;i<64/*BUFFER_SAMPLES*/;++i)
+			for (int i=0;i<80/*BUFFER_SAMPLES*/;++i)
 				histogram[i] = buffer[i*2*4]/256;
 				//histogram[src[i]%128]++;
 

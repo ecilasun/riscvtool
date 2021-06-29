@@ -99,7 +99,7 @@ I_FinishUpdate (void)
 	// NOTE: Cannot DMA from extended memory (DDR3)
 	// So we need to either draw pixel by pixel or copy to BRAM first, then DMA out
 
-	{
+	/*{
 		static int lasttic = 0;
        	int i = I_GetTime();
         int tics = i - lasttic;
@@ -110,7 +110,7 @@ I_FinishUpdate (void)
             screens[0][ (SCREENHEIGHT-128)*SCREENWIDTH + i] = 0xff;
         for ( ; i<20*2 ; i+=2)
             screens[0][ (SCREENHEIGHT-128)*SCREENWIDTH + i] = 0x0;
-	}
+	}*/
 
 	//if (*gpustate == cnt)
 	{
@@ -122,18 +122,18 @@ I_FinishUpdate (void)
 		// Fake screen buffer in BRAM (overwrites loader in BIOS)
 		// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
 		static int vB = 0;
-		for (int slice = 0; slice<12; ++slice)
+		for (int slice = 0; slice<13; ++slice)
 		{
-			// Truncate 320 pixels to 256
+			// The out buffer needs a stride of 512 instead of 320
 			for (int L=0;L<16;++L)
-				__builtin_memcpy((void*)bramvideobuffers[vB]+256*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 256);
+				__builtin_memcpy((void*)bramvideobuffers[vB]+512*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 320);
 
 			// Single DMA because backbuffer is same size as display
 			uint32_t sysramsource = (uint32_t)bramvideobuffers[vB];
 			GPUSetRegister(4, sysramsource);
-			uint32_t vramramtarget = (256*16*slice)>>2;
+			uint32_t vramramtarget = (512*16*slice)>>2;
 			GPUSetRegister(5, vramramtarget);
-			uint32_t dmacount = (256*16)>>2;
+			uint32_t dmacount = (512*16)>>2;
 			GPUKickDMA(4, 5, dmacount, 0);
 
 			// Go to next buffer as the current one is busy copying to the GPU

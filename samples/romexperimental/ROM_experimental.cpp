@@ -394,7 +394,7 @@ int OSMainTask()
    // UART communication section
    uint32_t prevmilliseconds = 0;
    // Make sure this lands in some unused area of the GraphicsRAM
-   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsFontStart-8;
+   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsFontStart-16;
    *gpustate = 0x0;
    unsigned int cnt = 0x00000000;
 

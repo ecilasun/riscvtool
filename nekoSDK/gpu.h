@@ -59,7 +59,7 @@ inline void GPUWriteToGraphicsMemory(const uint8_t countRegister, const uint8_t 
 
 inline void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAlignedTargetReg, const uint16_t DMALengthInDWORDs, const uint8_t masked)
 {
-    *IO_GPUCommandFIFO = GPUOPCODE(GPUSYSDMA, SYSRAMSourceReg, VRAMDWORDAlignedTargetReg, ((DMALengthInDWORDs&0x3FFF) | (masked ? 0x4000 : 0x0000)));
+    *IO_GPUCommandFIFO = GPUOPCODE(GPUSYSDMA, SYSRAMSourceReg, VRAMDWORDAlignedTargetReg, ((DMALengthInDWORDs&0x7FFF) | (masked ? 0x8000 : 0x0000)));
 }
 
 inline void GPUWaitForVsync()

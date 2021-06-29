@@ -14,8 +14,8 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
 {
    int iteration = 0;
 
-   float c_re = (float(col) - 128.f) / 256.f * sx + ox;
-   float c_im = (float(row) - 96.f) / 256.f * sx + oy;
+   float c_re = (float(col) - 64.f) / 128.f * sx + ox;
+   float c_im = (float(row) - 64.f) / 128.f * sx + oy;
    float x = 0.f, y = 0.f;
    float x2 = 0.f, y2 = 0.f;
    while (x2+y2 < 4.f && iteration < maxiter)
@@ -35,9 +35,9 @@ int mandelbrotFloat(float ox, float oy, float sx)
 {
    int R = 32;//int(27.71f-5.156f*logf(sx));
 
-   for (int row = 0; row < 192; row+=2)
+   for (int row = 0; row < 128; ++row)
    {
-      for (int col = 0; col < 256; col+=2)
+      for (int col = 0; col < 128; ++col)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          int c;
@@ -51,10 +51,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
             c = int(1.f*ratio*255);
          }
 
-         mandelbuffer[col + (row<<8)] = c;
-         mandelbuffer[col + 1 + (row<<8)] = c;
-         mandelbuffer[col + ((row+1)<<8)] = c;
-         mandelbuffer[col + 1 + ((row+1)<<8)] = c;
+         mandelbuffer[col + (row<<7)] = c;
       }
    }
    return 1;
@@ -79,7 +76,7 @@ int main(int argc, char ** argv)
    uint32_t cnt = 0x0;
 
    // Set grayscale palette
-   for (uint32_t i=0;i<255;++i)
+   for (uint32_t i=0;i<256;++i)
    {
       int j=255-i;
       uint32_t color = MAKERGBPALETTECOLOR(j, j, j);
@@ -107,27 +104,28 @@ int main(int argc, char ** argv)
          prevreti = reti;
       }
 
-      if (*gpustate == cnt) // GPU work complete, push more
+      //if (*gpustate == cnt) // GPU work complete, push more
       {
          ++cnt;
 
          // DMA
-         // Copies mandebrot ofscreen buffer (256x192) from SYSRAM onto VRAM, one scanline at a time
+         for (int L=0;L<128;++L)
+         {
+            // Source address in GRAM
+            uint32_t sysramsource = uint32_t(mandelbuffer+L*128);
+            GPUSetRegister(4, sysramsource);
 
-         // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
-         uint32_t sysramsource = uint32_t(mandelbuffer);
-         GPUSetRegister(4, sysramsource);
+            // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
+            uint32_t vramramtarget = ((L+64)*512>>2)+32;
+            GPUSetRegister(5, vramramtarget);
 
-         // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
-         uint32_t vramramtarget = 0x00000000;
-         GPUSetRegister(5, vramramtarget);
+            // Length of copy, in DWORDs
+            uint32_t dmacount = (128)>>2;
+            GPUKickDMA(4, 5, dmacount, 0);
+         }
 
-         // Length of copy, in DWORDs
-         uint32_t dmacount = (256*192)>>2;
-         GPUKickDMA(4, 5, dmacount, 0);
-
-         PrintDMA(0, 0, "IPS: ", false);
-         PrintDMADecimal(5*8, 0, ips, false);
+         PrintDMA(0, 200, "IPS: ", false);
+         PrintDMADecimal(5*8, 200, ips, false);
 
          // Stall GPU until vsync is reached
          //GPUWaitForVsync();

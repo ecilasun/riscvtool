@@ -48,7 +48,7 @@ void resetparticles(short *particles)
 {
    for (int i=0;i<MAX_PARTICLES;++i)
    {
-      particles[4*i+0] = Random()%256; // X position
+      particles[4*i+0] = Random()%320; // X position
       particles[4*i+1] = -32; // Y position, <-30 if dead
       particles[4*i+2] = 3 + (Random()%7); // Speed
       particles[4*i+3] = 192 + (Random()%32); // Barrier
@@ -71,7 +71,7 @@ void drawparticles(short *particles)
    spawnerindex = (spawnerindex + 1)%MAX_PARTICLES;
    if (particles[4*spawnerindex+1] < -32) // Dead
    {
-      particles[4*spawnerindex+0] = Random()%256;
+      particles[4*spawnerindex+0] = Random()%320;
       //particles[4*spawnerindex+1] = (Random()%24)-24;
       particles[4*spawnerindex+2] = 3 + (Random()%7);
       particles[4*spawnerindex+3] = 192 + (Random()%32); // Barrier
@@ -147,7 +147,7 @@ int main(int argc, char ** argv)
    GPUSetVideoPage(6);
 
    // Set palette
-   /*for (uint32_t i=0;i<255;++i)
+   /*for (uint32_t i=0;i<256;++i)
    {
       int j=255-i;
       uint32_t color = (j<<16) | (j<<8) | j;
