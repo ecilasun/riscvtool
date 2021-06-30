@@ -117,7 +117,7 @@ I_FinishUpdate (void)
 		//++cnt;
 
 		// Two buffers
-		uint8_t *bramvideobuffers[2] = {(uint8_t*)0x10000000, (uint8_t*)0x10001000}; // Two slices from top of GRAM
+		uint8_t *bramvideobuffers[2] = {(uint8_t*)0x10000000, (uint8_t*)0x10002000}; // Two slices from top of GRAM
 
 		// Fake screen buffer in BRAM (overwrites loader in BIOS)
 		// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
