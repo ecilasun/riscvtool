@@ -12,7 +12,7 @@ int main()
     EchoUART("Clearing extended memory\r\n"); // 0x00000000 - 0x0FFFFFFF
     int i=0;
     uint64_t startclock = ReadClock();
-    for (uint32_t m=0x00040000; m<0x04000000; m+=4)
+    for (uint32_t m=0x00040000; m<0x0FFF0000; m+=4)
     {
         *((uint32_t*)m) = 0x00000000;
         if ((m!=0) && ((m%0x100000) == 0))
@@ -24,9 +24,9 @@ int main()
 
     uint64_t endclock = ReadClock();
     uint32_t deltams = ClockToMs(endclock-startclock);
-    printf("Clearing 64Mbytes took %d ms (0x%.8X)\r\n", (unsigned int)deltams, (unsigned int)deltams);
+    printf("Clearing 256Mbytes took %d ms (0x%.8X)\r\n", (unsigned int)deltams, (unsigned int)deltams);
 
-    int rate = (1024*64*1024) / deltams;
+    int rate = (1024*256*1024) / deltams;
     printf("Zero-write rate is %d Kbytes/sec\r\n", rate);
 
     printf("Testing 128K extended memory write persistance\r\n"); // 0x00040000 - 0x0FFFFFFF
