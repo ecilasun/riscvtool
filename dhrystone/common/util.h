@@ -41,7 +41,7 @@ static int verifyDouble(int n, const volatile double* test, const double* verify
   return 0;
 }
 
-static void __attribute__((noinline)) barrier(int ncores)
+/*static void __attribute__((noinline)) barrier(int ncores)
 {
   static volatile int sense;
   static volatile int count;
@@ -59,7 +59,7 @@ static void __attribute__((noinline)) barrier(int ncores)
     ;
 
   __sync_synchronize();
-}
+}*/
 
 static uint64_t lfsr(uint64_t x)
 {

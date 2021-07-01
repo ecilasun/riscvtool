@@ -108,6 +108,8 @@ int main(int argc, char ** argv)
       {
          ++cnt;
 
+         ClearScreen(0x12);
+
          // DMA
          for (int L=0;L<128;++L)
          {
