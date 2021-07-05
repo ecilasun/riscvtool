@@ -108,7 +108,7 @@ void SubmitGPUFrame()
 }
 
 #define SAMPLING_FREQ  44000  /* 44khz. */
-#define REVERB_BUF_LEN 550    /* 6.25ms. */
+#define REVERB_BUF_LEN 1100    /* 12.5ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
 #define BUFFER_SAMPLES 512  /* buffer size */
@@ -245,8 +245,7 @@ static long play_module( signed char *module )
 			// Generate 255-wide histogram
 			//__builtin_memset( histogram, 0, 64*sizeof(uint32_t) );
 			for (int i=0;i<80/*BUFFER_SAMPLES*/;++i)
-				histogram[i] = buffer[i*2*4]/256;
-				//histogram[src[i]%128]++;
+				histogram[i] = (buffer[i*6+0]+buffer[i*6+1])/512;
 
 			// TODO: If 'buffer' is placed in AudioRAM, the APU
 			// could kick the synchronized copy so we can free the CPU
