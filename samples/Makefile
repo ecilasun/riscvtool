@@ -20,6 +20,7 @@ folders = \
 	miniterm \
 	gputest \
 	audiotest \
+	jpegview \
 
 # Rules
 
