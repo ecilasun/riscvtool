@@ -6,7 +6,6 @@
 #include <memory.h>
 #include <math.h>
 
-#define ROM_STARTUP_64K
 #include "rvcrt0.h"
 
 #include "../nekoSDK/core.h"
@@ -44,6 +43,9 @@ void LoadBinaryBlob()
       }
    }
 
+   EchoHex(loadlen);
+   EchoUART("\n----\n");
+
    // Read binary blob
    writecursor = 0;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
@@ -54,8 +56,11 @@ void LoadBinaryBlob()
       {
          unsigned char readdata = *IO_UARTRX;
          target[writecursor++] = readdata;
+         if ((writecursor % 8192) == 0)
+            EchoUART(".");
       }
    }
+   EchoUART("\n");
 }
 
 void RunBinaryBlob()
@@ -76,13 +81,13 @@ void RunBinaryBlob()
       }
    }
 
-   EchoUART("Starting...\r\n");
+   EchoUART("\nStarting\n");
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
    // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
    asm (
       "lw ra, %0 \n"
-      "li x12, 0x0FFFF000 \n" // we're not coming back to the loader, set SP to near the end of RAM
+      "li x12, 0x0FFFF000 \n" // we're not coming back to the loader, set SP to near the end of DDR3
       "mv sp, x12 \n"
       "ret \n"
       : 
@@ -96,7 +101,7 @@ void RunBinaryBlob()
 
 int main()
 {
-   EchoUART("\r\nNekoNi [v001] [RV32E] \r\n\u00A9 2021 Engin Cilasun\r\n");
+   EchoUART("\033[2J\nNekoNi [v001] [RV32I]\n\u00A9 2021 Engin Cilasun\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;
@@ -110,14 +115,15 @@ int main()
       {
          // Step 3: Read the data on UARTRX memory location
          char checkchar = *IO_UARTRX;
+         *IO_UARTTX = checkchar; // Echo back
 
-         if (checkchar == 13) // Enter followed by B (binary blob) or R (run blob)
+         if (checkchar == 13) // B or R followed by enter
          {
             // Load the incoming binary
             if (prevchar=='B')
-                LoadBinaryBlob();
+               LoadBinaryBlob();
             if (prevchar=='R')
-                RunBinaryBlob();
+               RunBinaryBlob();
          }
          prevchar = checkchar;
       }

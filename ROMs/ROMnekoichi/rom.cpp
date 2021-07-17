@@ -158,7 +158,7 @@ void LaunchELF(uint32_t branchaddress)
    // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
    asm (
       "lw ra, %0 \n"
-      "fmv.w.x	f0, zero \n"
+      /*"fmv.w.x	f0, zero \n"
       "fmv.w.x	f1, zero \n"
       "fmv.w.x	f2, zero \n"
       "fmv.w.x	f3, zero \n"
@@ -189,8 +189,8 @@ void LaunchELF(uint32_t branchaddress)
       "fmv.w.x	f28, zero \n"
       "fmv.w.x	f29, zero \n"
       "fmv.w.x	f30, zero \n"
-      "fmv.w.x	f31, zero \n"
-      "li x12, 0x0FFFF000 \n" // we're not coming back to the loader, set SP to near the end of RAM
+      "fmv.w.x	f31, zero \n"*/
+      "li x12, 0x0FFFF000 \n" // we're not coming back to the loader, set SP to near the end of DDR3
       "mv sp, x12 \n"
       "ret \n"
       : 
@@ -341,11 +341,16 @@ void ListDir(const char *path)
 
 int main()
 {
+   DDR3Start[0] = 0xBAADD00D;
+   DDR3Start[1] = 0xBADC0C0A;
+
    // Read switch state at startup
    hardwareswitchstates = oldhardwareswitchstates = *IO_SwitchState;
 
-   InitFont();
-   EchoUART("\nNekoIchi [0x000B] [RV32IMFZicsr]\n\u00A9 2021 Engin Cilasun\n");
+   if ((DDR3Start[0] != 0xBAADD00D) || (DDR3Start[1] != 0xBADC0C0A))
+      EchoUART("Hardware error: DDR3 memory failure\n");
+
+   EchoUART("\nNekoIchi [0x000C] [RV32IMFZicsr]\n\u00A9 2021 Engin Cilasun\n");
 
    uint32_t sdcardavailable = 0;
    FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
@@ -374,6 +379,7 @@ int main()
    uint32_t old_milliseconds = ClockToMs(clk);
    uint32_t dirListed = 0;
 
+   InitFont();
    while(1)
    {
       // Step 1: Read UART FIFO byte count
