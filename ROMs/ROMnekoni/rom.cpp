@@ -44,7 +44,6 @@ void LoadBinaryBlob()
    }
 
    EchoHex(loadlen);
-   EchoUART("\n----\n");
 
    // Read binary blob
    writecursor = 0;
@@ -101,7 +100,7 @@ void RunBinaryBlob()
 
 int main()
 {
-   EchoUART("\033[2J\nNekoNi [v001] [RV32I]\n\u00A9 2021 Engin Cilasun\n");
+   EchoUART("\033[2J\nNekoNi [v001] [RV32IZicsr]\n\u00A9 2021 Engin Cilasun\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;
