@@ -341,14 +341,8 @@ void ListDir(const char *path)
 
 int main()
 {
-   DDR3Start[0] = 0xBAADD00D;
-   DDR3Start[1] = 0xBADC0C0A;
-
    // Read switch state at startup
    hardwareswitchstates = oldhardwareswitchstates = *IO_SwitchState;
-
-   if ((DDR3Start[0] != 0xBAADD00D) || (DDR3Start[1] != 0xBADC0C0A))
-      EchoUART("Hardware error: DDR3 memory failure\n");
 
    EchoUART("\nNekoIchi [0x000C] [RV32IMFZicsr]\n\u00A9 2021 Engin Cilasun\n");
 
