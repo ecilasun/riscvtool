@@ -44,8 +44,6 @@ void LoadBinaryBlob()
       }
    }
 
-   EchoHex(loadlen);
-
    // Read binary blob
    writecursor = 0;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
@@ -56,11 +54,8 @@ void LoadBinaryBlob()
       {
          unsigned char readdata = *IO_UARTRX;
          target[writecursor++] = readdata;
-         if ((writecursor % 8192) == 0)
-            EchoUART(".");
       }
    }
-   EchoUART("\n");
 }
 
 void RunBinaryBlob()
@@ -81,7 +76,7 @@ void RunBinaryBlob()
       }
    }
 
-   EchoUART("\nStarting\n");
+   EchoUART("\nstarting...\n");
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
    // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
@@ -94,19 +89,11 @@ void RunBinaryBlob()
       : "m" (branchaddress)
       : 
    );
-
-   // Unfortunately, if I use 'noreturn' attribute with above code, it doesn't work
-   // and there'll be a redundant stack op and a ret generated here
 }
 
 int main()
 {
-    // Set color 0xFF to white
-    GPUSetRegister(0, 0xFF);
-    GPUSetRegister(1, MAKERGBPALETTECOLOR(0xFF,0xFF,0xFF));
-    GPUSetPaletteEntry(0, 1);
-
-    EchoUART("\033[2J\nNekoNi [v001] [RV32IZicsr]\n\u00A9 2021 Engin Cilasun\n");
+   EchoUART("\033[2J\nNekoNi [v001] [RV32IZicsr]+[GPU]\n\u00A9 2021 Engin Cilasun\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;
@@ -120,7 +107,7 @@ int main()
       {
          // Step 3: Read the data on UARTRX memory location
          char checkchar = *IO_UARTRX;
-         *IO_UARTTX = checkchar; // Echo back
+         //*IO_UARTTX = checkchar; // Echo back
 
          if (checkchar == 13) // B or R followed by enter
          {
