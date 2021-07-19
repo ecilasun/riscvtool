@@ -7,13 +7,14 @@ default: all
 # Directories
 
 src_dir = .
-corelib_dir = ../nekoSDK
+corelib_dir = ../nekoniSDK
 thirdparty_libs = ../3rdparty
 
 # Executable folders
 
 folders = \
 	ddr3test \
+	gputest \
 
 # Rules
 

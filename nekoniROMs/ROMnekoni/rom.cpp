@@ -7,9 +7,10 @@
 #include <math.h>
 
 #include "rvcrt0.h"
+#include "gpu.h"
 
-#include "../nekoSDK/core.h"
-#include "../nekoSDK/uart.h"
+#include "../nekoichiSDK/core.h"
+#include "../nekoichiSDK/uart.h"
 
 void LoadBinaryBlob()
 {
@@ -100,7 +101,12 @@ void RunBinaryBlob()
 
 int main()
 {
-   EchoUART("\033[2J\nNekoNi [v001] [RV32IZicsr]\n\u00A9 2021 Engin Cilasun\n");
+    // Set color 0xFF to white
+    GPUSetRegister(0, 0xFF);
+    GPUSetRegister(1, MAKERGBPALETTECOLOR(0xFF,0xFF,0xFF));
+    GPUSetPaletteEntry(0, 1);
+
+    EchoUART("\033[2J\nNekoNi [v001] [RV32IZicsr]\n\u00A9 2021 Engin Cilasun\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;

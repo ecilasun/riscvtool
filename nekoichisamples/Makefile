@@ -7,7 +7,7 @@ default: all
 # Directories
 
 src_dir = .
-corelib_dir = ../nekoSDK
+corelib_dir = ../nekoichiSDK
 thirdparty_libs = ../3rdparty
 
 # Executable folders

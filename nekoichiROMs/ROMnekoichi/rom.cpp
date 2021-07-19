@@ -9,11 +9,11 @@
 
 #include "rvcrt0.h"
 
-#include "../nekoSDK/core.h"
-#include "../nekoSDK/gpu.h"
-#include "../nekoSDK/uart.h"
-#include "../nekoSDK/elf.h"
-#include "../nekoSDK/switches.h"
+#include "../nekoichiSDK/core.h"
+#include "../nekoichiSDK/gpu.h"
+#include "../nekoichiSDK/uart.h"
+#include "../nekoichiSDK/elf.h"
+#include "../nekoichiSDK/switches.h"
 #include "../3rdparty/fat32/ff.h"
 
 const char *FRtoString[]={
