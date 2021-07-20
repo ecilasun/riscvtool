@@ -79,10 +79,11 @@ void RunBinaryBlob()
    EchoUART("\nstarting...\n");
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
-   // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
+   // NOTE: Assuming a one-way trip here for now since we live in ARAM and might
+   // be overwritten with audio data.
    asm (
       "lw ra, %0 \n"
-      "li x12, 0x0FFFF000 \n" // we're not coming back to the loader, set SP to near the end of DDR3
+      "li x12, 0x0FFFF000 \n"
       "mv sp, x12 \n"
       "ret \n"
       : 
@@ -107,7 +108,6 @@ int main()
       {
          // Step 3: Read the data on UARTRX memory location
          char checkchar = *IO_UARTRX;
-         //*IO_UARTTX = checkchar; // Echo back
 
          if (checkchar == 13) // B or R followed by enter
          {
