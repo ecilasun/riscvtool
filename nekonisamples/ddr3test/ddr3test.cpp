@@ -55,5 +55,8 @@ int main()
     if (res2 != NULL)
         printf("Reason: incorrect value read at %.8X\n", (unsigned int)res2);
 
+    // Stay here as we don't have anywhere to go back to
+    while (1) { }
+
     return 0;
 }

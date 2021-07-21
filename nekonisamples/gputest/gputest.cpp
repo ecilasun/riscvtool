@@ -10,14 +10,16 @@ int main()
     EchoUART("GPU Test\n");
 
     // Set color 0xFF to white
+    EchoUART(">writing palette entry...");
     GPUSetRegister(0, 0xFF);
     GPUSetRegister(1, MAKERGBPALETTECOLOR(0xFF,0xFF,0xFF));
     GPUSetPaletteEntry(0, 1);
-    EchoUART("-wrote palette entry\n");
+    EchoUART("done\n");
 
+    EchoUART(">writing to VRAM...");
     for (uint32_t y=16;y<122;++y)
     {
-        for (uint32_t x=20;x<183;x+=4)
+        for (uint32_t x=20;x<221;x+=4)
         {
             uint32_t tilex = x>>5;
             uint32_t tiley = y>>5;
@@ -35,8 +37,12 @@ int main()
             GPUWriteVRAM(3, 2, 0xF);
         }
     }
+    EchoUART("done\n");
 
-    EchoUART("-wrote to VRAM\n");
+    EchoUART("GPU write tests complete\n");
+
+    // Stay here, as we don't have anywhere else to go back to
+    while (1) { }
 
     return 0;
 }
