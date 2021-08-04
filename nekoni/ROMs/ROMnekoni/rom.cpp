@@ -12,6 +12,37 @@
 #include "core.h"
 #include "uart.h"
 
+void __attribute__((interrupt("machine"))) illegal_instruction_exception()
+{
+   // We only have illegal instruction handler installed,
+   // therefore won't need to check the mcause register
+   // to see why we're here
+
+   // Grab address of illegal instruction exception
+   register uint32_t at;
+   asm volatile("csrr %0, mtval" : "=r"(at));
+
+   // Show the address and the failing instruction
+   EchoUART("Illegal instruction @0x");
+   EchoHex((uint32_t)at);
+   EchoUART(" 0x");
+   EchoHex(*(uint32_t*)at);
+   EchoUART(" 0x\n");
+
+   // Deadlock
+   while(1) { }
+}
+
+void InstallIllegalInstructionHandler()
+{
+   int msie = (1 << 2); // Enable illegal instruction exception
+   int mstatus = (1 << 3); // Enable machine interrupts
+
+   asm volatile("csrrw zero, mtvec, %0" :: "r" (illegal_instruction_exception));
+   asm volatile("csrrw zero, mie,%0" :: "r" (msie));
+   asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
+}
+
 void LoadBinaryBlob()
 {
    // Header data
@@ -98,7 +129,7 @@ void RunBinaryBlob()
    asm (
       //"mv x1, x0\n" // Return address will be set below
       //"mv x2, x0\n" // Stack pointer will be set below
-      /*"mv x3, x0\n"
+      "mv x3, x0\n"
       "mv x4, x0\n"
       "mv x5, x0\n"
       "mv x6, x0\n"
@@ -126,7 +157,7 @@ void RunBinaryBlob()
       "mv x28, x0\n"
       "mv x29, x0\n"
       "mv x30, x0\n"
-      "mv x31, x0\n"*/
+      "mv x31, x0\n"
       "lw ra, %0 \n"
       "li x12, 0x0FFFF000 \n" // End of DDR3
       "mv sp, x12 \n"
@@ -139,6 +170,8 @@ void RunBinaryBlob()
 
 int main()
 {
+   InstallIllegalInstructionHandler();
+
    EchoUART("\033[2J\nNekoNi [v001] [RV32IZicsr]+[GPU]\n\u00A9 2021 Engin Cilasun\n");
 
    // UART communication section
