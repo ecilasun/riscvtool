@@ -1,0 +1,3112 @@
+
+./ROMnekoni.elf:     file format elf32-littleriscv
+./ROMnekoni.elf
+architecture: riscv:rv32, flags 0x00000112:
+EXEC_P, HAS_SYMS, D_PAGED
+start address 0x20000000
+
+Program Header:
+    LOAD off    0x00001000 vaddr 0x20000000 paddr 0x20000000 align 2**12
+         filesz 0x0000261c memsz 0x0000262c flags rwx
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .boot         00000064  20000000  20000000  00001000  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .text         000007c0  20000064  20000064  00001064  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  2 .rodata       0000186d  20000824  20000824  00001824  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  3 .srodata      00000004  20002094  20002094  00003094  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  4 .init_array   00000004  20002098  20002098  00003098  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  5 .eh_frame     00000114  2000209c  2000209c  0000309c  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  6 .data         00000438  200021b0  200021b0  000031b0  2**3
+                  CONTENTS, ALLOC, LOAD, DATA
+  7 .got          0000002c  200025e8  200025e8  000035e8  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  8 .got.plt      00000008  20002614  20002614  00003614  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  9 .sbss         0000000c  2000261c  2000261c  0000361c  2**2
+                  ALLOC
+ 10 .bss          00000004  20002628  20002628  0000361c  2**2
+                  ALLOC
+ 11 .comment      00000012  00000000  00000000  0000361c  2**0
+                  CONTENTS, READONLY
+ 12 .riscv.attributes 00000020  00000000  00000000  0000362e  2**0
+                  CONTENTS, READONLY
+SYMBOL TABLE:
+20000000 l    d  .boot	00000000 .boot
+20000064 l    d  .text	00000000 .text
+20000824 l    d  .rodata	00000000 .rodata
+20002094 l    d  .srodata	00000000 .srodata
+20002098 l    d  .init_array	00000000 .init_array
+2000209c l    d  .eh_frame	00000000 .eh_frame
+200021b0 l    d  .data	00000000 .data
+200025e8 l    d  .got	00000000 .got
+20002614 l    d  .got.plt	00000000 .got.plt
+2000261c l    d  .sbss	00000000 .sbss
+20002628 l    d  .bss	00000000 .bss
+00000000 l    d  .comment	00000000 .comment
+00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
+00000000 l    df *ABS*	00000000 rom.cpp
+2000004c l       .boot	00000000 noatexitfound
+00000000 l    df *ABS*	00000000 atexit.c
+00000000 l    df *ABS*	00000000 fini.c
+00000000 l    df *ABS*	00000000 init.c
+00000000 l    df *ABS*	00000000 memcpy.c
+00000000 l    df *ABS*	00000000 __atexit.c
+00000000 l    df *ABS*	00000000 uart.cpp
+00000000 l    df *ABS*	00000000 gpu.cpp
+20000808 l     F .text	0000001c _GLOBAL__sub_I_gpu.cpp
+00000000 l    df *ABS*	00000000 impure.c
+200021b0 l     O .data	00000428 impure_data
+00000000 l    df *ABS*	00000000 sdcard.cpp
+00000000 l    df *ABS*	00000000 core.cpp
+00000000 l    df *ABS*	00000000 
+20002091 l       .init_array	00000000 __fini_array_end
+20002091 l       .init_array	00000000 __fini_array_start
+2000209c l       .init_array	00000000 __init_array_end
+20002091 l       .init_array	00000000 __preinit_array_end
+200025e8 l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
+20002098 l       .init_array	00000000 __init_array_start
+20002091 l       .init_array	00000000 __preinit_array_start
+20000694 g     F .text	00000074 _Z13RunBinaryBlobv
+20002e20 g       *ABS*	00000000 __global_pointer$
+200021b0 g       .data	00000000 _fdata
+200025e4 g     O .data	00000004 GraphicsFontStart
+20002091 g       .rodata	00000000 _etext
+20002e20 g       .sbss	00000000 _gp
+200025d8 g     O .data	00000004 IO_UARTRX
+20000064 g       .boot	00000000 _boot
+20002628 g     O .bss	00000004 font
+20000170 g     F .text	00000128 memcpy
+20000418 g     F .text	00000048 .hidden __udivsi3
+20002628 g       .bss	00000000 _bss_start
+20002624 g     O .sbss	00000004 __malloc_top_pad
+20002620 g     O .sbss	00000004 __malloc_max_sbrked_mem
+20002094 g     O .srodata	00000004 _global_impure_ptr
+200000d4 g     F .text	0000009c __libc_init_array
+2000262c g       .bss	00000000 _bss_end
+20000078 g     F .text	0000005c __libc_fini_array
+20000460 g     F .text	00000010 .hidden __umodsi3
+20000064 g       .boot	00000000 _ftext
+20000000 g     F .boot	00000064 _start
+20000374 g     F .text	0000009c __register_exitproc
+00000a00 g       *ABS*	00000000 _STACK_SIZE
+200007d4 g     F .text	00000034 _Z8InitFontv
+20000298 g     F .text	000000dc memset
+20000708 g     F .text	000000a0 main
+200004c4 g     F .text	000001d0 _Z14LoadBinaryBlobv
+2000261c g     O .sbss	00000004 __malloc_max_total_mem
+20000410 g     F .text	00000084 .hidden __divsi3
+20000064 g     F .text	00000014 atexit
+200025e0 g     O .data	00000004 IO_UARTTX
+200025dc g     O .data	00000004 IO_UARTRXByteCount
+2000262c g       .bss	00000000 __BSS_END__$
+200007a8 g     F .text	0000002c _Z8EchoUARTPKc
+200025e8 g       .data	00000000 _edata
+20002630 g       .bss	00000000 _end
+20000494 g     F .text	00000030 .hidden __modsi3
+20000064 g     F .boot	00000000 _exit
+20002620 g       .sbss	00000000 _fbss
+
+
+
+Disassembly of section .boot:
+
+20000000 <_start>:
+20000000:	00002197          	auipc	gp,0x2
+20000004:	5ec1a183          	lw	gp,1516(gp) # 200025ec <_GLOBAL_OFFSET_TABLE_+0x4>
+20000008:	20008137          	lui	sp,0x20008
+2000000c:	ff010113          	addi	sp,sp,-16 # 20007ff0 <__global_pointer$+0x51d0>
+20000010:	00010413          	mv	s0,sp
+20000014:	00002517          	auipc	a0,0x2
+20000018:	5ec52503          	lw	a0,1516(a0) # 20002600 <_GLOBAL_OFFSET_TABLE_+0x18>
+2000001c:	00002617          	auipc	a2,0x2
+20000020:	5f462603          	lw	a2,1524(a2) # 20002610 <_GLOBAL_OFFSET_TABLE_+0x28>
+20000024:	40a60633          	sub	a2,a2,a0
+20000028:	00000593          	li	a1,0
+2000002c:	26c000ef          	jal	ra,20000298 <memset>
+20000030:	00002517          	auipc	a0,0x2
+20000034:	5d452503          	lw	a0,1492(a0) # 20002604 <_GLOBAL_OFFSET_TABLE_+0x1c>
+20000038:	00050a63          	beqz	a0,2000004c <noatexitfound>
+2000003c:	00001517          	auipc	a0,0x1
+20000040:	00002517          	auipc	a0,0x2
+20000044:	5bc52503          	lw	a0,1468(a0) # 200025fc <_GLOBAL_OFFSET_TABLE_+0x14>
+20000048:	01c000ef          	jal	ra,20000064 <_exit>
+
+2000004c <noatexitfound>:
+2000004c:	088000ef          	jal	ra,200000d4 <__libc_init_array>
+20000050:	00012503          	lw	a0,0(sp)
+20000054:	00410593          	addi	a1,sp,4
+20000058:	00000613          	li	a2,0
+2000005c:	6ac0006f          	j	20000708 <main>
+20000060:	00100073          	ebreak
+
+Disassembly of section .text:
+
+20000064 <atexit>:
+20000064:	00050593          	mv	a1,a0
+20000068:	00000693          	li	a3,0
+2000006c:	00000613          	li	a2,0
+20000070:	00000513          	li	a0,0
+20000074:	3000006f          	j	20000374 <__register_exitproc>
+
+20000078 <__libc_fini_array>:
+20000078:	ff010113          	addi	sp,sp,-16
+2000007c:	00812423          	sw	s0,8(sp)
+20000080:	200027b7          	lui	a5,0x20002
+20000084:	20002437          	lui	s0,0x20002
+20000088:	09140413          	addi	s0,s0,145 # 20002091 <_etext>
+2000008c:	09178793          	addi	a5,a5,145 # 20002091 <_etext>
+20000090:	408787b3          	sub	a5,a5,s0
+20000094:	00912223          	sw	s1,4(sp)
+20000098:	00112623          	sw	ra,12(sp)
+2000009c:	4027d493          	srai	s1,a5,0x2
+200000a0:	02048063          	beqz	s1,200000c0 <__libc_fini_array+0x48>
+200000a4:	ffc78793          	addi	a5,a5,-4
+200000a8:	00878433          	add	s0,a5,s0
+200000ac:	00042783          	lw	a5,0(s0)
+200000b0:	fff48493          	addi	s1,s1,-1
+200000b4:	ffc40413          	addi	s0,s0,-4
+200000b8:	000780e7          	jalr	a5
+200000bc:	fe0498e3          	bnez	s1,200000ac <__libc_fini_array+0x34>
+200000c0:	00c12083          	lw	ra,12(sp)
+200000c4:	00812403          	lw	s0,8(sp)
+200000c8:	00412483          	lw	s1,4(sp)
+200000cc:	01010113          	addi	sp,sp,16
+200000d0:	00008067          	ret
+
+200000d4 <__libc_init_array>:
+200000d4:	ff010113          	addi	sp,sp,-16
+200000d8:	00812423          	sw	s0,8(sp)
+200000dc:	01212023          	sw	s2,0(sp)
+200000e0:	20002437          	lui	s0,0x20002
+200000e4:	20002937          	lui	s2,0x20002
+200000e8:	09140793          	addi	a5,s0,145 # 20002091 <_etext>
+200000ec:	09190913          	addi	s2,s2,145 # 20002091 <_etext>
+200000f0:	40f90933          	sub	s2,s2,a5
+200000f4:	00112623          	sw	ra,12(sp)
+200000f8:	00912223          	sw	s1,4(sp)
+200000fc:	40295913          	srai	s2,s2,0x2
+20000100:	02090063          	beqz	s2,20000120 <__libc_init_array+0x4c>
+20000104:	09140413          	addi	s0,s0,145
+20000108:	00000493          	li	s1,0
+2000010c:	00042783          	lw	a5,0(s0)
+20000110:	00148493          	addi	s1,s1,1
+20000114:	00440413          	addi	s0,s0,4
+20000118:	000780e7          	jalr	a5
+2000011c:	fe9918e3          	bne	s2,s1,2000010c <__libc_init_array+0x38>
+20000120:	20002437          	lui	s0,0x20002
+20000124:	20002937          	lui	s2,0x20002
+20000128:	09840793          	addi	a5,s0,152 # 20002098 <__init_array_start>
+2000012c:	09c90913          	addi	s2,s2,156 # 2000209c <__init_array_end>
+20000130:	40f90933          	sub	s2,s2,a5
+20000134:	40295913          	srai	s2,s2,0x2
+20000138:	02090063          	beqz	s2,20000158 <__libc_init_array+0x84>
+2000013c:	09840413          	addi	s0,s0,152
+20000140:	00000493          	li	s1,0
+20000144:	00042783          	lw	a5,0(s0)
+20000148:	00148493          	addi	s1,s1,1
+2000014c:	00440413          	addi	s0,s0,4
+20000150:	000780e7          	jalr	a5
+20000154:	fe9918e3          	bne	s2,s1,20000144 <__libc_init_array+0x70>
+20000158:	00c12083          	lw	ra,12(sp)
+2000015c:	00812403          	lw	s0,8(sp)
+20000160:	00412483          	lw	s1,4(sp)
+20000164:	00012903          	lw	s2,0(sp)
+20000168:	01010113          	addi	sp,sp,16
+2000016c:	00008067          	ret
+
+20000170 <memcpy>:
+20000170:	00a5c7b3          	xor	a5,a1,a0
+20000174:	0037f793          	andi	a5,a5,3
+20000178:	00c508b3          	add	a7,a0,a2
+2000017c:	06079663          	bnez	a5,200001e8 <memcpy+0x78>
+20000180:	00300793          	li	a5,3
+20000184:	06c7f263          	bgeu	a5,a2,200001e8 <memcpy+0x78>
+20000188:	00357793          	andi	a5,a0,3
+2000018c:	00050713          	mv	a4,a0
+20000190:	0c079a63          	bnez	a5,20000264 <memcpy+0xf4>
+20000194:	ffc8f613          	andi	a2,a7,-4
+20000198:	40e606b3          	sub	a3,a2,a4
+2000019c:	02000793          	li	a5,32
+200001a0:	02000293          	li	t0,32
+200001a4:	06d7c263          	blt	a5,a3,20000208 <memcpy+0x98>
+200001a8:	00058693          	mv	a3,a1
+200001ac:	00070793          	mv	a5,a4
+200001b0:	02c77863          	bgeu	a4,a2,200001e0 <memcpy+0x70>
+200001b4:	0006a803          	lw	a6,0(a3)
+200001b8:	00478793          	addi	a5,a5,4
+200001bc:	00468693          	addi	a3,a3,4
+200001c0:	ff07ae23          	sw	a6,-4(a5)
+200001c4:	fec7e8e3          	bltu	a5,a2,200001b4 <memcpy+0x44>
+200001c8:	fff60793          	addi	a5,a2,-1
+200001cc:	40e787b3          	sub	a5,a5,a4
+200001d0:	ffc7f793          	andi	a5,a5,-4
+200001d4:	00478793          	addi	a5,a5,4
+200001d8:	00f70733          	add	a4,a4,a5
+200001dc:	00f585b3          	add	a1,a1,a5
+200001e0:	01176863          	bltu	a4,a7,200001f0 <memcpy+0x80>
+200001e4:	00008067          	ret
+200001e8:	00050713          	mv	a4,a0
+200001ec:	ff157ce3          	bgeu	a0,a7,200001e4 <memcpy+0x74>
+200001f0:	0005c783          	lbu	a5,0(a1)
+200001f4:	00170713          	addi	a4,a4,1
+200001f8:	00158593          	addi	a1,a1,1
+200001fc:	fef70fa3          	sb	a5,-1(a4)
+20000200:	ff1768e3          	bltu	a4,a7,200001f0 <memcpy+0x80>
+20000204:	00008067          	ret
+20000208:	0045a683          	lw	a3,4(a1)
+2000020c:	01c5a783          	lw	a5,28(a1)
+20000210:	0005af83          	lw	t6,0(a1)
+20000214:	0085af03          	lw	t5,8(a1)
+20000218:	00c5ae83          	lw	t4,12(a1)
+2000021c:	0105ae03          	lw	t3,16(a1)
+20000220:	0145a303          	lw	t1,20(a1)
+20000224:	0185a803          	lw	a6,24(a1)
+20000228:	00d72223          	sw	a3,4(a4)
+2000022c:	0205a683          	lw	a3,32(a1)
+20000230:	01f72023          	sw	t6,0(a4)
+20000234:	01e72423          	sw	t5,8(a4)
+20000238:	01d72623          	sw	t4,12(a4)
+2000023c:	01c72823          	sw	t3,16(a4)
+20000240:	00672a23          	sw	t1,20(a4)
+20000244:	01072c23          	sw	a6,24(a4)
+20000248:	00f72e23          	sw	a5,28(a4)
+2000024c:	02470713          	addi	a4,a4,36
+20000250:	40e607b3          	sub	a5,a2,a4
+20000254:	fed72e23          	sw	a3,-4(a4)
+20000258:	02458593          	addi	a1,a1,36
+2000025c:	faf2c6e3          	blt	t0,a5,20000208 <memcpy+0x98>
+20000260:	f49ff06f          	j	200001a8 <memcpy+0x38>
+20000264:	0005c683          	lbu	a3,0(a1)
+20000268:	00170713          	addi	a4,a4,1
+2000026c:	00377793          	andi	a5,a4,3
+20000270:	fed70fa3          	sb	a3,-1(a4)
+20000274:	00158593          	addi	a1,a1,1
+20000278:	f0078ee3          	beqz	a5,20000194 <memcpy+0x24>
+2000027c:	0005c683          	lbu	a3,0(a1)
+20000280:	00170713          	addi	a4,a4,1
+20000284:	00377793          	andi	a5,a4,3
+20000288:	fed70fa3          	sb	a3,-1(a4)
+2000028c:	00158593          	addi	a1,a1,1
+20000290:	fc079ae3          	bnez	a5,20000264 <memcpy+0xf4>
+20000294:	f01ff06f          	j	20000194 <memcpy+0x24>
+
+20000298 <memset>:
+20000298:	00f00313          	li	t1,15
+2000029c:	00050713          	mv	a4,a0
+200002a0:	02c37e63          	bgeu	t1,a2,200002dc <memset+0x44>
+200002a4:	00f77793          	andi	a5,a4,15
+200002a8:	0a079063          	bnez	a5,20000348 <memset+0xb0>
+200002ac:	08059263          	bnez	a1,20000330 <memset+0x98>
+200002b0:	ff067693          	andi	a3,a2,-16
+200002b4:	00f67613          	andi	a2,a2,15
+200002b8:	00e686b3          	add	a3,a3,a4
+200002bc:	00b72023          	sw	a1,0(a4)
+200002c0:	00b72223          	sw	a1,4(a4)
+200002c4:	00b72423          	sw	a1,8(a4)
+200002c8:	00b72623          	sw	a1,12(a4)
+200002cc:	01070713          	addi	a4,a4,16
+200002d0:	fed766e3          	bltu	a4,a3,200002bc <memset+0x24>
+200002d4:	00061463          	bnez	a2,200002dc <memset+0x44>
+200002d8:	00008067          	ret
+200002dc:	40c306b3          	sub	a3,t1,a2
+200002e0:	00269693          	slli	a3,a3,0x2
+200002e4:	00000297          	auipc	t0,0x0
+200002e8:	005686b3          	add	a3,a3,t0
+200002ec:	00c68067          	jr	12(a3)
+200002f0:	00b70723          	sb	a1,14(a4)
+200002f4:	00b706a3          	sb	a1,13(a4)
+200002f8:	00b70623          	sb	a1,12(a4)
+200002fc:	00b705a3          	sb	a1,11(a4)
+20000300:	00b70523          	sb	a1,10(a4)
+20000304:	00b704a3          	sb	a1,9(a4)
+20000308:	00b70423          	sb	a1,8(a4)
+2000030c:	00b703a3          	sb	a1,7(a4)
+20000310:	00b70323          	sb	a1,6(a4)
+20000314:	00b702a3          	sb	a1,5(a4)
+20000318:	00b70223          	sb	a1,4(a4)
+2000031c:	00b701a3          	sb	a1,3(a4)
+20000320:	00b70123          	sb	a1,2(a4)
+20000324:	00b700a3          	sb	a1,1(a4)
+20000328:	00b70023          	sb	a1,0(a4)
+2000032c:	00008067          	ret
+20000330:	0ff5f593          	andi	a1,a1,255
+20000334:	00859693          	slli	a3,a1,0x8
+20000338:	00d5e5b3          	or	a1,a1,a3
+2000033c:	01059693          	slli	a3,a1,0x10
+20000340:	00d5e5b3          	or	a1,a1,a3
+20000344:	f6dff06f          	j	200002b0 <memset+0x18>
+20000348:	00279693          	slli	a3,a5,0x2
+2000034c:	00000297          	auipc	t0,0x0
+20000350:	005686b3          	add	a3,a3,t0
+20000354:	00008293          	mv	t0,ra
+20000358:	fa0680e7          	jalr	-96(a3)
+2000035c:	00028093          	mv	ra,t0
+20000360:	ff078793          	addi	a5,a5,-16
+20000364:	40f70733          	sub	a4,a4,a5
+20000368:	00f60633          	add	a2,a2,a5
+2000036c:	f6c378e3          	bgeu	t1,a2,200002dc <memset+0x44>
+20000370:	f3dff06f          	j	200002ac <memset+0x14>
+
+20000374 <__register_exitproc>:
+20000374:	200027b7          	lui	a5,0x20002
+20000378:	0947a703          	lw	a4,148(a5) # 20002094 <_global_impure_ptr>
+2000037c:	14872783          	lw	a5,328(a4)
+20000380:	04078c63          	beqz	a5,200003d8 <__register_exitproc+0x64>
+20000384:	0047a703          	lw	a4,4(a5)
+20000388:	01f00813          	li	a6,31
+2000038c:	06e84e63          	blt	a6,a4,20000408 <__register_exitproc+0x94>
+20000390:	00271813          	slli	a6,a4,0x2
+20000394:	02050663          	beqz	a0,200003c0 <__register_exitproc+0x4c>
+20000398:	01078333          	add	t1,a5,a6
+2000039c:	08c32423          	sw	a2,136(t1)
+200003a0:	1887a883          	lw	a7,392(a5)
+200003a4:	00100613          	li	a2,1
+200003a8:	00e61633          	sll	a2,a2,a4
+200003ac:	00c8e8b3          	or	a7,a7,a2
+200003b0:	1917a423          	sw	a7,392(a5)
+200003b4:	10d32423          	sw	a3,264(t1)
+200003b8:	00200693          	li	a3,2
+200003bc:	02d50463          	beq	a0,a3,200003e4 <__register_exitproc+0x70>
+200003c0:	00170713          	addi	a4,a4,1
+200003c4:	00e7a223          	sw	a4,4(a5)
+200003c8:	010787b3          	add	a5,a5,a6
+200003cc:	00b7a423          	sw	a1,8(a5)
+200003d0:	00000513          	li	a0,0
+200003d4:	00008067          	ret
+200003d8:	14c70793          	addi	a5,a4,332
+200003dc:	14f72423          	sw	a5,328(a4)
+200003e0:	fa5ff06f          	j	20000384 <__register_exitproc+0x10>
+200003e4:	18c7a683          	lw	a3,396(a5)
+200003e8:	00170713          	addi	a4,a4,1
+200003ec:	00e7a223          	sw	a4,4(a5)
+200003f0:	00c6e633          	or	a2,a3,a2
+200003f4:	18c7a623          	sw	a2,396(a5)
+200003f8:	010787b3          	add	a5,a5,a6
+200003fc:	00b7a423          	sw	a1,8(a5)
+20000400:	00000513          	li	a0,0
+20000404:	00008067          	ret
+20000408:	fff00513          	li	a0,-1
+2000040c:	00008067          	ret
+
+20000410 <__divsi3>:
+20000410:	06054063          	bltz	a0,20000470 <__umodsi3+0x10>
+20000414:	0605c663          	bltz	a1,20000480 <__umodsi3+0x20>
+
+20000418 <__udivsi3>:
+20000418:	00058613          	mv	a2,a1
+2000041c:	00050593          	mv	a1,a0
+20000420:	fff00513          	li	a0,-1
+20000424:	02060c63          	beqz	a2,2000045c <__udivsi3+0x44>
+20000428:	00100693          	li	a3,1
+2000042c:	00b67a63          	bgeu	a2,a1,20000440 <__udivsi3+0x28>
+20000430:	00c05863          	blez	a2,20000440 <__udivsi3+0x28>
+20000434:	00161613          	slli	a2,a2,0x1
+20000438:	00169693          	slli	a3,a3,0x1
+2000043c:	feb66ae3          	bltu	a2,a1,20000430 <__udivsi3+0x18>
+20000440:	00000513          	li	a0,0
+20000444:	00c5e663          	bltu	a1,a2,20000450 <__udivsi3+0x38>
+20000448:	40c585b3          	sub	a1,a1,a2
+2000044c:	00d56533          	or	a0,a0,a3
+20000450:	0016d693          	srli	a3,a3,0x1
+20000454:	00165613          	srli	a2,a2,0x1
+20000458:	fe0696e3          	bnez	a3,20000444 <__udivsi3+0x2c>
+2000045c:	00008067          	ret
+
+20000460 <__umodsi3>:
+20000460:	00008293          	mv	t0,ra
+20000464:	fb5ff0ef          	jal	ra,20000418 <__udivsi3>
+20000468:	00058513          	mv	a0,a1
+2000046c:	00028067          	jr	t0 # 2000034c <memset+0xb4>
+20000470:	40a00533          	neg	a0,a0
+20000474:	00b04863          	bgtz	a1,20000484 <__umodsi3+0x24>
+20000478:	40b005b3          	neg	a1,a1
+2000047c:	f9dff06f          	j	20000418 <__udivsi3>
+20000480:	40b005b3          	neg	a1,a1
+20000484:	00008293          	mv	t0,ra
+20000488:	f91ff0ef          	jal	ra,20000418 <__udivsi3>
+2000048c:	40a00533          	neg	a0,a0
+20000490:	00028067          	jr	t0
+
+20000494 <__modsi3>:
+20000494:	00008293          	mv	t0,ra
+20000498:	0005ca63          	bltz	a1,200004ac <__modsi3+0x18>
+2000049c:	00054c63          	bltz	a0,200004b4 <__modsi3+0x20>
+200004a0:	f79ff0ef          	jal	ra,20000418 <__udivsi3>
+200004a4:	00058513          	mv	a0,a1
+200004a8:	00028067          	jr	t0
+200004ac:	40b005b3          	neg	a1,a1
+200004b0:	fe0558e3          	bgez	a0,200004a0 <__modsi3+0xc>
+200004b4:	40a00533          	neg	a0,a0
+200004b8:	f61ff0ef          	jal	ra,20000418 <__udivsi3>
+200004bc:	40b00533          	neg	a0,a1
+200004c0:	00028067          	jr	t0
+
+200004c4 <_Z14LoadBinaryBlobv>:
+200004c4:	fa010113          	addi	sp,sp,-96
+200004c8:	05512223          	sw	s5,68(sp)
+200004cc:	05612023          	sw	s6,64(sp)
+200004d0:	00002a97          	auipc	s5,0x2
+200004d4:	13caaa83          	lw	s5,316(s5) # 2000260c <_GLOBAL_OFFSET_TABLE_+0x24>
+200004d8:	00002b17          	auipc	s6,0x2
+200004dc:	11cb2b03          	lw	s6,284(s6) # 200025f4 <_GLOBAL_OFFSET_TABLE_+0xc>
+200004e0:	000aa783          	lw	a5,0(s5)
+200004e4:	000b2583          	lw	a1,0(s6)
+200004e8:	01c10613          	addi	a2,sp,28
+200004ec:	02010713          	addi	a4,sp,32
+200004f0:	04112e23          	sw	ra,92(sp)
+200004f4:	04812c23          	sw	s0,88(sp)
+200004f8:	04912a23          	sw	s1,84(sp)
+200004fc:	05212823          	sw	s2,80(sp)
+20000500:	05312623          	sw	s3,76(sp)
+20000504:	05412423          	sw	s4,72(sp)
+20000508:	03712e23          	sw	s7,60(sp)
+2000050c:	03812c23          	sw	s8,56(sp)
+20000510:	03912a23          	sw	s9,52(sp)
+20000514:	03a12823          	sw	s10,48(sp)
+20000518:	03b12623          	sw	s11,44(sp)
+2000051c:	00012c23          	sw	zero,24(sp)
+20000520:	00012e23          	sw	zero,28(sp)
+20000524:	00060693          	mv	a3,a2
+20000528:	00e12623          	sw	a4,12(sp)
+2000052c:	0007a703          	lw	a4,0(a5)
+20000530:	fe070ee3          	beqz	a4,2000052c <_Z14LoadBinaryBlobv+0x68>
+20000534:	0005c703          	lbu	a4,0(a1)
+20000538:	00168693          	addi	a3,a3,1
+2000053c:	fee68fa3          	sb	a4,-1(a3)
+20000540:	00c12703          	lw	a4,12(sp)
+20000544:	fed714e3          	bne	a4,a3,2000052c <_Z14LoadBinaryBlobv+0x68>
+20000548:	01810693          	addi	a3,sp,24
+2000054c:	0007a703          	lw	a4,0(a5)
+20000550:	fe070ee3          	beqz	a4,2000054c <_Z14LoadBinaryBlobv+0x88>
+20000554:	0005c703          	lbu	a4,0(a1)
+20000558:	00168693          	addi	a3,a3,1
+2000055c:	fee68fa3          	sb	a4,-1(a3)
+20000560:	fec696e3          	bne	a3,a2,2000054c <_Z14LoadBinaryBlobv+0x88>
+20000564:	01812903          	lw	s2,24(sp)
+20000568:	01c12b83          	lw	s7,28(sp)
+2000056c:	1ff90c13          	addi	s8,s2,511
+20000570:	009c5c13          	srli	s8,s8,0x9
+20000574:	0c090e63          	beqz	s2,20000650 <_Z14LoadBinaryBlobv+0x18c>
+20000578:	00002737          	lui	a4,0x2
+2000057c:	7ec70713          	addi	a4,a4,2028 # 27ec <_STACK_SIZE+0x1dec>
+20000580:	00000493          	li	s1,0
+20000584:	00000413          	li	s0,0
+20000588:	00002d97          	auipc	s11,0x2
+2000058c:	a9cd8d93          	addi	s11,s11,-1380 # 20002024 <_GLOBAL__sub_I_gpu.cpp+0x181c>
+20000590:	00002a17          	auipc	s4,0x2
+20000594:	aaca0a13          	addi	s4,s4,-1364 # 2000203c <_GLOBAL__sub_I_gpu.cpp+0x1834>
+20000598:	00002997          	auipc	s3,0x2
+2000059c:	aa898993          	addi	s3,s3,-1368 # 20002040 <_GLOBAL__sub_I_gpu.cpp+0x1838>
+200005a0:	00002c97          	auipc	s9,0x2
+200005a4:	a94c8c93          	addi	s9,s9,-1388 # 20002034 <_GLOBAL__sub_I_gpu.cpp+0x182c>
+200005a8:	00e12623          	sw	a4,12(sp)
+200005ac:	0007a783          	lw	a5,0(a5)
+200005b0:	00078e63          	beqz	a5,200005cc <_Z14LoadBinaryBlobv+0x108>
+200005b4:	000b2703          	lw	a4,0(s6)
+200005b8:	008b87b3          	add	a5,s7,s0
+200005bc:	00140413          	addi	s0,s0,1
+200005c0:	00074703          	lbu	a4,0(a4)
+200005c4:	0ff77713          	andi	a4,a4,255
+200005c8:	00e78023          	sb	a4,0(a5)
+200005cc:	1ff47793          	andi	a5,s0,511
+200005d0:	00078863          	beqz	a5,200005e0 <_Z14LoadBinaryBlobv+0x11c>
+200005d4:	07247e63          	bgeu	s0,s2,20000650 <_Z14LoadBinaryBlobv+0x18c>
+200005d8:	000aa783          	lw	a5,0(s5)
+200005dc:	fd1ff06f          	j	200005ac <_Z14LoadBinaryBlobv+0xe8>
+200005e0:	000d8513          	mv	a0,s11
+200005e4:	1c4000ef          	jal	ra,200007a8 <_Z8EchoUARTPKc>
+200005e8:	00000d13          	li	s10,0
+200005ec:	00048a63          	beqz	s1,20000600 <_Z14LoadBinaryBlobv+0x13c>
+200005f0:	001d0d13          	addi	s10,s10,1
+200005f4:	000a0513          	mv	a0,s4
+200005f8:	1b0000ef          	jal	ra,200007a8 <_Z8EchoUARTPKc>
+200005fc:	fe9d1ae3          	bne	s10,s1,200005f0 <_Z14LoadBinaryBlobv+0x12c>
+20000600:	01400793          	li	a5,20
+20000604:	409784b3          	sub	s1,a5,s1
+20000608:	00000d13          	li	s10,0
+2000060c:	00905a63          	blez	s1,20000620 <_Z14LoadBinaryBlobv+0x15c>
+20000610:	001d0d13          	addi	s10,s10,1
+20000614:	00098513          	mv	a0,s3
+20000618:	190000ef          	jal	ra,200007a8 <_Z8EchoUARTPKc>
+2000061c:	fe9d1ae3          	bne	s10,s1,20000610 <_Z14LoadBinaryBlobv+0x14c>
+20000620:	000c8513          	mv	a0,s9
+20000624:	184000ef          	jal	ra,200007a8 <_Z8EchoUARTPKc>
+20000628:	00c12783          	lw	a5,12(sp)
+2000062c:	00241513          	slli	a0,s0,0x2
+20000630:	00850533          	add	a0,a0,s0
+20000634:	00251513          	slli	a0,a0,0x2
+20000638:	00f50533          	add	a0,a0,a5
+2000063c:	000c0593          	mv	a1,s8
+20000640:	00955513          	srli	a0,a0,0x9
+20000644:	dd5ff0ef          	jal	ra,20000418 <__udivsi3>
+20000648:	00050493          	mv	s1,a0
+2000064c:	f92466e3          	bltu	s0,s2,200005d8 <_Z14LoadBinaryBlobv+0x114>
+20000650:	05812403          	lw	s0,88(sp)
+20000654:	05c12083          	lw	ra,92(sp)
+20000658:	05412483          	lw	s1,84(sp)
+2000065c:	05012903          	lw	s2,80(sp)
+20000660:	04c12983          	lw	s3,76(sp)
+20000664:	04812a03          	lw	s4,72(sp)
+20000668:	04412a83          	lw	s5,68(sp)
+2000066c:	04012b03          	lw	s6,64(sp)
+20000670:	03c12b83          	lw	s7,60(sp)
+20000674:	03812c03          	lw	s8,56(sp)
+20000678:	03412c83          	lw	s9,52(sp)
+2000067c:	03012d03          	lw	s10,48(sp)
+20000680:	02c12d83          	lw	s11,44(sp)
+20000684:	00002517          	auipc	a0,0x2
+20000688:	9cc50513          	addi	a0,a0,-1588 # 20002050 <_GLOBAL__sub_I_gpu.cpp+0x1848>
+2000068c:	06010113          	addi	sp,sp,96
+20000690:	1180006f          	j	200007a8 <_Z8EchoUARTPKc>
+
+20000694 <_Z13RunBinaryBlobv>:
+20000694:	00002797          	auipc	a5,0x2
+20000698:	f787a783          	lw	a5,-136(a5) # 2000260c <_GLOBAL_OFFSET_TABLE_+0x24>
+2000069c:	fd010113          	addi	sp,sp,-48
+200006a0:	0007a703          	lw	a4,0(a5)
+200006a4:	00002797          	auipc	a5,0x2
+200006a8:	f507a783          	lw	a5,-176(a5) # 200025f4 <_GLOBAL_OFFSET_TABLE_+0xc>
+200006ac:	0007a603          	lw	a2,0(a5)
+200006b0:	02010793          	addi	a5,sp,32
+200006b4:	02112623          	sw	ra,44(sp)
+200006b8:	00012e23          	sw	zero,28(sp)
+200006bc:	01c10693          	addi	a3,sp,28
+200006c0:	00f12623          	sw	a5,12(sp)
+200006c4:	00072783          	lw	a5,0(a4)
+200006c8:	fe078ee3          	beqz	a5,200006c4 <_Z13RunBinaryBlobv+0x30>
+200006cc:	00064783          	lbu	a5,0(a2)
+200006d0:	00168693          	addi	a3,a3,1
+200006d4:	fef68fa3          	sb	a5,-1(a3)
+200006d8:	00c12783          	lw	a5,12(sp)
+200006dc:	fed794e3          	bne	a5,a3,200006c4 <_Z13RunBinaryBlobv+0x30>
+200006e0:	00002517          	auipc	a0,0x2
+200006e4:	96450513          	addi	a0,a0,-1692 # 20002044 <_GLOBAL__sub_I_gpu.cpp+0x183c>
+200006e8:	0c0000ef          	jal	ra,200007a8 <_Z8EchoUARTPKc>
+200006ec:	01c12083          	lw	ra,28(sp)
+200006f0:	0ffff637          	lui	a2,0xffff
+200006f4:	00060113          	mv	sp,a2
+200006f8:	00008067          	ret
+200006fc:	02c12083          	lw	ra,44(sp)
+20000700:	03010113          	addi	sp,sp,48
+20000704:	00008067          	ret
+
+20000708 <main>:
+20000708:	fe010113          	addi	sp,sp,-32
+2000070c:	00002517          	auipc	a0,0x2
+20000710:	94850513          	addi	a0,a0,-1720 # 20002054 <_GLOBAL__sub_I_gpu.cpp+0x184c>
+20000714:	00912a23          	sw	s1,20(sp)
+20000718:	01212823          	sw	s2,16(sp)
+2000071c:	01312623          	sw	s3,12(sp)
+20000720:	01412423          	sw	s4,8(sp)
+20000724:	01512223          	sw	s5,4(sp)
+20000728:	00112e23          	sw	ra,28(sp)
+2000072c:	00812c23          	sw	s0,24(sp)
+20000730:	00002a97          	auipc	s5,0x2
+20000734:	edcaaa83          	lw	s5,-292(s5) # 2000260c <_GLOBAL_OFFSET_TABLE_+0x24>
+20000738:	070000ef          	jal	ra,200007a8 <_Z8EchoUARTPKc>
+2000073c:	00002a17          	auipc	s4,0x2
+20000740:	eb8a2a03          	lw	s4,-328(s4) # 200025f4 <_GLOBAL_OFFSET_TABLE_+0xc>
+20000744:	000aa703          	lw	a4,0(s5)
+20000748:	000a2603          	lw	a2,0(s4)
+2000074c:	00d00493          	li	s1,13
+20000750:	0ff00693          	li	a3,255
+20000754:	04200913          	li	s2,66
+20000758:	05200993          	li	s3,82
+2000075c:	00072783          	lw	a5,0(a4)
+20000760:	fe078ee3          	beqz	a5,2000075c <main+0x54>
+20000764:	00064403          	lbu	s0,0(a2) # ffff000 <_STACK_SIZE+0xfffe600>
+20000768:	0ff47413          	andi	s0,s0,255
+2000076c:	00940663          	beq	s0,s1,20000778 <main+0x70>
+20000770:	00040693          	mv	a3,s0
+20000774:	fe9ff06f          	j	2000075c <main+0x54>
+20000778:	01268e63          	beq	a3,s2,20000794 <main+0x8c>
+2000077c:	ff369ae3          	bne	a3,s3,20000770 <main+0x68>
+20000780:	f15ff0ef          	jal	ra,20000694 <_Z13RunBinaryBlobv>
+20000784:	000aa703          	lw	a4,0(s5)
+20000788:	000a2603          	lw	a2,0(s4)
+2000078c:	00040693          	mv	a3,s0
+20000790:	fcdff06f          	j	2000075c <main+0x54>
+20000794:	d31ff0ef          	jal	ra,200004c4 <_Z14LoadBinaryBlobv>
+20000798:	000aa703          	lw	a4,0(s5)
+2000079c:	000a2603          	lw	a2,0(s4)
+200007a0:	00040693          	mv	a3,s0
+200007a4:	fb9ff06f          	j	2000075c <main+0x54>
+
+200007a8 <_Z8EchoUARTPKc>:
+200007a8:	00054783          	lbu	a5,0(a0)
+200007ac:	02078263          	beqz	a5,200007d0 <_Z8EchoUARTPKc+0x28>
+200007b0:	00150513          	addi	a0,a0,1
+200007b4:	00002697          	auipc	a3,0x2
+200007b8:	e546a683          	lw	a3,-428(a3) # 20002608 <_GLOBAL_OFFSET_TABLE_+0x20>
+200007bc:	0006a703          	lw	a4,0(a3)
+200007c0:	00150513          	addi	a0,a0,1
+200007c4:	00f70023          	sb	a5,0(a4)
+200007c8:	fff54783          	lbu	a5,-1(a0)
+200007cc:	fe0798e3          	bnez	a5,200007bc <_Z8EchoUARTPKc+0x14>
+200007d0:	00008067          	ret
+
+200007d4 <_Z8InitFontv>:
+200007d4:	00002797          	auipc	a5,0x2
+200007d8:	e247a783          	lw	a5,-476(a5) # 200025f8 <_GLOBAL_OFFSET_TABLE_+0x10>
+200007dc:	0007a503          	lw	a0,0(a5)
+200007e0:	00002637          	lui	a2,0x2
+200007e4:	ff010113          	addi	sp,sp,-16
+200007e8:	80060613          	addi	a2,a2,-2048 # 1800 <_STACK_SIZE+0xe00>
+200007ec:	00000597          	auipc	a1,0x0
+200007f0:	03858593          	addi	a1,a1,56 # 20000824 <_GLOBAL__sub_I_gpu.cpp+0x1c>
+200007f4:	00112623          	sw	ra,12(sp)
+200007f8:	979ff0ef          	jal	ra,20000170 <memcpy>
+200007fc:	00c12083          	lw	ra,12(sp)
+20000800:	01010113          	addi	sp,sp,16
+20000804:	00008067          	ret
+
+20000808 <_GLOBAL__sub_I_gpu.cpp>:
+20000808:	00002797          	auipc	a5,0x2
+2000080c:	de87a783          	lw	a5,-536(a5) # 200025f0 <_GLOBAL_OFFSET_TABLE_+0x8>
+20000810:	0007a703          	lw	a4,0(a5)
+20000814:	00002797          	auipc	a5,0x2
+20000818:	de47a783          	lw	a5,-540(a5) # 200025f8 <_GLOBAL_OFFSET_TABLE_+0x10>
+2000081c:	00e7a023          	sw	a4,0(a5)
+20000820:	00008067          	ret
+
+Disassembly of section .rodata:
+
+20000824 <_etext-0x186d>:
+	...
+2000082c:	0000                	unimp
+2000082e:	00ff                	0xff
+20000830:	0000                	unimp
+20000832:	0000                	unimp
+20000834:	ff00                	fsw	fs0,56(a4)
+20000836:	ff00                	fsw	fs0,56(a4)
+20000838:	0000                	unimp
+2000083a:	0000                	unimp
+2000083c:	0000                	unimp
+2000083e:	00ff                	0xff
+20000840:	00ff                	0xff
+20000842:	0000                	unimp
+20000844:	ff00                	fsw	fs0,56(a4)
+20000846:	ffff                	0xffff
+20000848:	0000                	unimp
+2000084a:	0000                	unimp
+2000084c:	ff00                	fsw	fs0,56(a4)
+2000084e:	ffff                	0xffff
+20000850:	00ff                	0xff
+20000852:	0000                	unimp
+20000854:	0000                	unimp
+20000856:	00ff                	0xff
+20000858:	0000                	unimp
+2000085a:	0000                	unimp
+2000085c:	0000                	unimp
+2000085e:	00ff                	0xff
+20000860:	0000                	unimp
+20000862:	0000                	unimp
+20000864:	0000                	unimp
+20000866:	ff00                	fsw	fs0,56(a4)
+20000868:	0000                	unimp
+2000086a:	0000                	unimp
+2000086c:	ff00                	fsw	fs0,56(a4)
+	...
+20000876:	00ff                	0xff
+	...
+200008a0:	00ff                	0xff
+200008a2:	0000                	unimp
+200008a4:	ff00                	fsw	fs0,56(a4)
+200008a6:	ffff                	0xffff
+200008a8:	0000                	unimp
+200008aa:	0000                	unimp
+200008ac:	0000                	unimp
+200008ae:	00ff                	0xff
+200008b0:	0000                	unimp
+200008b2:	0000                	unimp
+200008b4:	ff00                	fsw	fs0,56(a4)
+200008b6:	ffff                	0xffff
+200008b8:	0000                	unimp
+200008ba:	0000                	unimp
+200008bc:	ffff                	0xffff
+200008be:	ffff                	0xffff
+200008c0:	00ff                	0xff
+200008c2:	0000                	unimp
+200008c4:	0000                	unimp
+200008c6:	ff00                	fsw	fs0,56(a4)
+200008c8:	0000                	unimp
+200008ca:	0000                	unimp
+200008cc:	ffff                	0xffff
+200008ce:	ffff                	0xffff
+200008d0:	00ff                	0xff
+200008d2:	0000                	unimp
+200008d4:	0000                	unimp
+200008d6:	ffff                	0xffff
+200008d8:	0000                	unimp
+200008da:	0000                	unimp
+200008dc:	ffff                	0xffff
+200008de:	ffff                	0xffff
+200008e0:	00ff                	0xff
+200008e2:	0000                	unimp
+200008e4:	ff00                	fsw	fs0,56(a4)
+200008e6:	ffff                	0xffff
+200008e8:	0000                	unimp
+200008ea:	0000                	unimp
+200008ec:	ff00                	fsw	fs0,56(a4)
+200008ee:	ffff                	0xffff
+	...
+2000091c:	0000                	unimp
+2000091e:	ffff                	0xffff
+	...
+2000092c:	0000                	unimp
+2000092e:	00ff                	0xff
+20000930:	0000                	unimp
+20000932:	0000                	unimp
+20000934:	ff00                	fsw	fs0,56(a4)
+20000936:	ff00                	fsw	fs0,56(a4)
+20000938:	0000                	unimp
+2000093a:	0000                	unimp
+2000093c:	ffff                	0xffff
+2000093e:	ffff                	0xffff
+20000940:	00ff                	0xff
+20000942:	0000                	unimp
+20000944:	00ff                	0xff
+20000946:	00ff                	0xff
+20000948:	00ff                	0xff
+2000094a:	0000                	unimp
+2000094c:	00ff                	0xff
+2000094e:	00ff                	0xff
+20000950:	00ff                	0xff
+20000952:	0000                	unimp
+20000954:	ff00                	fsw	fs0,56(a4)
+20000956:	ff00                	fsw	fs0,56(a4)
+20000958:	0000                	unimp
+2000095a:	0000                	unimp
+2000095c:	0000                	unimp
+2000095e:	00ff                	0xff
+20000960:	0000                	unimp
+20000962:	0000                	unimp
+20000964:	0000                	unimp
+20000966:	00ff                	0xff
+20000968:	0000                	unimp
+2000096a:	0000                	unimp
+2000096c:	0000                	unimp
+2000096e:	00ff                	0xff
+20000970:	0000                	unimp
+20000972:	0000                	unimp
+20000974:	00ff                	0xff
+20000976:	00ff                	0xff
+20000978:	00ff                	0xff
+2000097a:	0000                	unimp
+2000097c:	0000                	unimp
+2000097e:	00ff                	0xff
+	...
+200009a0:	00ff                	0xff
+200009a2:	0000                	unimp
+200009a4:	00ff                	0xff
+200009a6:	0000                	unimp
+200009a8:	00ff                	0xff
+200009aa:	0000                	unimp
+200009ac:	ff00                	fsw	fs0,56(a4)
+200009ae:	00ff                	0xff
+200009b0:	0000                	unimp
+200009b2:	0000                	unimp
+200009b4:	00ff                	0xff
+200009b6:	0000                	unimp
+200009b8:	00ff                	0xff
+200009ba:	0000                	unimp
+200009bc:	0000                	unimp
+200009be:	ff00                	fsw	fs0,56(a4)
+200009c0:	0000                	unimp
+200009c2:	0000                	unimp
+200009c4:	0000                	unimp
+200009c6:	ffff                	0xffff
+200009c8:	0000                	unimp
+200009ca:	0000                	unimp
+200009cc:	00ff                	0xff
+200009ce:	0000                	unimp
+200009d0:	0000                	unimp
+200009d2:	0000                	unimp
+200009d4:	ff00                	fsw	fs0,56(a4)
+	...
+200009de:	0000                	unimp
+200009e0:	00ff                	0xff
+200009e2:	0000                	unimp
+200009e4:	00ff                	0xff
+200009e6:	0000                	unimp
+200009e8:	00ff                	0xff
+200009ea:	0000                	unimp
+200009ec:	00ff                	0xff
+200009ee:	0000                	unimp
+200009f0:	00ff                	0xff
+	...
+20000a06:	ff00                	fsw	fs0,56(a4)
+	...
+20000a14:	ff00                	fsw	fs0,56(a4)
+20000a16:	0000                	unimp
+20000a18:	0000                	unimp
+20000a1a:	0000                	unimp
+20000a1c:	ff00                	fsw	fs0,56(a4)
+20000a1e:	0000                	unimp
+20000a20:	00ff                	0xff
+	...
+20000a2e:	00ff                	0xff
+	...
+20000a3c:	ff00                	fsw	fs0,56(a4)
+20000a3e:	ff00                	fsw	fs0,56(a4)
+20000a40:	0000                	unimp
+20000a42:	0000                	unimp
+20000a44:	00ff                	0xff
+20000a46:	00ff                	0xff
+20000a48:	0000                	unimp
+20000a4a:	0000                	unimp
+20000a4c:	00ff                	0xff
+20000a4e:	ffff                	0xffff
+20000a50:	0000                	unimp
+20000a52:	0000                	unimp
+20000a54:	0000                	unimp
+20000a56:	00ff                	0xff
+	...
+20000a64:	ff00                	fsw	fs0,56(a4)
+	...
+20000a6e:	ff00                	fsw	fs0,56(a4)
+20000a70:	0000                	unimp
+20000a72:	0000                	unimp
+20000a74:	ff00                	fsw	fs0,56(a4)
+20000a76:	ffff                	0xffff
+20000a78:	0000                	unimp
+20000a7a:	0000                	unimp
+20000a7c:	0000                	unimp
+20000a7e:	00ff                	0xff
+	...
+20000a9c:	0000                	unimp
+20000a9e:	ff00                	fsw	fs0,56(a4)
+20000aa0:	0000                	unimp
+20000aa2:	0000                	unimp
+20000aa4:	00ff                	0xff
+20000aa6:	ff00                	fsw	fs0,56(a4)
+20000aa8:	00ff                	0xff
+20000aaa:	0000                	unimp
+20000aac:	0000                	unimp
+20000aae:	00ff                	0xff
+	...
+20000ab8:	00ff                	0xff
+20000aba:	0000                	unimp
+20000abc:	0000                	unimp
+20000abe:	00ff                	0xff
+20000ac0:	0000                	unimp
+20000ac2:	0000                	unimp
+20000ac4:	ff00                	fsw	fs0,56(a4)
+20000ac6:	ff00                	fsw	fs0,56(a4)
+20000ac8:	0000                	unimp
+20000aca:	0000                	unimp
+20000acc:	ffff                	0xffff
+20000ace:	ffff                	0xffff
+20000ad0:	0000                	unimp
+20000ad2:	0000                	unimp
+20000ad4:	00ff                	0xff
+	...
+20000ade:	ff00                	fsw	fs0,56(a4)
+20000ae0:	0000                	unimp
+20000ae2:	0000                	unimp
+20000ae4:	00ff                	0xff
+20000ae6:	0000                	unimp
+20000ae8:	00ff                	0xff
+20000aea:	0000                	unimp
+20000aec:	00ff                	0xff
+20000aee:	0000                	unimp
+20000af0:	00ff                	0xff
+20000af2:	0000                	unimp
+20000af4:	0000                	unimp
+20000af6:	00ff                	0xff
+20000af8:	0000                	unimp
+20000afa:	0000                	unimp
+20000afc:	0000                	unimp
+20000afe:	00ff                	0xff
+20000b00:	0000                	unimp
+20000b02:	0000                	unimp
+20000b04:	0000                	unimp
+20000b06:	00ff                	0xff
+20000b08:	0000                	unimp
+20000b0a:	0000                	unimp
+20000b0c:	ffff                	0xffff
+20000b0e:	ffff                	0xffff
+20000b10:	00ff                	0xff
+20000b12:	0000                	unimp
+20000b14:	0000                	unimp
+20000b16:	00ff                	0xff
+	...
+20000b20:	00ff                	0xff
+	...
+20000b2e:	00ff                	0xff
+	...
+20000b3c:	ffff                	0xffff
+20000b3e:	ffff                	0xffff
+20000b40:	00ff                	0xff
+20000b42:	0000                	unimp
+20000b44:	ff00                	fsw	fs0,56(a4)
+20000b46:	ffff                	0xffff
+20000b48:	0000                	unimp
+20000b4a:	0000                	unimp
+20000b4c:	ff00                	fsw	fs0,56(a4)
+20000b4e:	ffff                	0xffff
+20000b50:	00ff                	0xff
+20000b52:	0000                	unimp
+20000b54:	ff00                	fsw	fs0,56(a4)
+20000b56:	ff00                	fsw	fs0,56(a4)
+20000b58:	ff00                	fsw	fs0,56(a4)
+	...
+20000b62:	0000                	unimp
+20000b64:	ff00                	fsw	fs0,56(a4)
+	...
+20000b6e:	ff00                	fsw	fs0,56(a4)
+20000b70:	0000                	unimp
+20000b72:	0000                	unimp
+20000b74:	ff00                	fsw	fs0,56(a4)
+20000b76:	ff00                	fsw	fs0,56(a4)
+20000b78:	0000                	unimp
+20000b7a:	0000                	unimp
+20000b7c:	ffff                	0xffff
+20000b7e:	ffff                	0xffff
+20000b80:	00ff                	0xff
+	...
+20000b8a:	0000                	unimp
+20000b8c:	ff00                	fsw	fs0,56(a4)
+20000b8e:	ffff                	0xffff
+20000b90:	00ff                	0xff
+	...
+20000b9e:	ff00                	fsw	fs0,56(a4)
+20000ba0:	0000                	unimp
+20000ba2:	0000                	unimp
+20000ba4:	00ff                	0xff
+20000ba6:	00ff                	0xff
+20000ba8:	00ff                	0xff
+20000baa:	0000                	unimp
+20000bac:	0000                	unimp
+20000bae:	00ff                	0xff
+20000bb0:	0000                	unimp
+20000bb2:	0000                	unimp
+20000bb4:	0000                	unimp
+20000bb6:	ff00                	fsw	fs0,56(a4)
+20000bb8:	0000                	unimp
+20000bba:	0000                	unimp
+20000bbc:	ff00                	fsw	fs0,56(a4)
+20000bbe:	ffff                	0xffff
+20000bc0:	0000                	unimp
+20000bc2:	0000                	unimp
+20000bc4:	00ff                	0xff
+20000bc6:	ff00                	fsw	fs0,56(a4)
+	...
+20000bd0:	00ff                	0xff
+20000bd2:	0000                	unimp
+20000bd4:	ffff                	0xffff
+20000bd6:	ffff                	0xffff
+20000bd8:	0000                	unimp
+20000bda:	0000                	unimp
+20000bdc:	0000                	unimp
+20000bde:	ff00                	fsw	fs0,56(a4)
+20000be0:	0000                	unimp
+20000be2:	0000                	unimp
+20000be4:	ff00                	fsw	fs0,56(a4)
+20000be6:	ffff                	0xffff
+20000be8:	0000                	unimp
+20000bea:	0000                	unimp
+20000bec:	ff00                	fsw	fs0,56(a4)
+20000bee:	ffff                	0xffff
+20000bf0:	00ff                	0xff
+	...
+20000c02:	0000                	unimp
+20000c04:	ff00                	fsw	fs0,56(a4)
+	...
+20000c16:	ff00                	fsw	fs0,56(a4)
+20000c18:	0000                	unimp
+20000c1a:	0000                	unimp
+20000c1c:	0000                	unimp
+20000c1e:	ff00                	fsw	fs0,56(a4)
+	...
+20000c2c:	0000                	unimp
+20000c2e:	00ff                	0xff
+	...
+20000c3c:	00ff                	0xff
+20000c3e:	00ff                	0xff
+20000c40:	0000                	unimp
+20000c42:	0000                	unimp
+20000c44:	0000                	unimp
+20000c46:	00ff                	0xff
+20000c48:	00ff                	0xff
+20000c4a:	0000                	unimp
+20000c4c:	0000                	unimp
+20000c4e:	ffff                	0xffff
+20000c50:	ff00                	fsw	fs0,56(a4)
+20000c52:	0000                	unimp
+20000c54:	00ff                	0xff
+20000c56:	0000                	unimp
+20000c58:	00ff                	0xff
+	...
+20000c62:	0000                	unimp
+20000c64:	ff00                	fsw	fs0,56(a4)
+	...
+20000c6e:	ff00                	fsw	fs0,56(a4)
+20000c70:	0000                	unimp
+20000c72:	0000                	unimp
+20000c74:	00ff                	0xff
+20000c76:	0000                	unimp
+20000c78:	00ff                	0xff
+20000c7a:	0000                	unimp
+20000c7c:	0000                	unimp
+20000c7e:	00ff                	0xff
+	...
+20000c9c:	0000                	unimp
+20000c9e:	00ff                	0xff
+20000ca0:	0000                	unimp
+20000ca2:	0000                	unimp
+20000ca4:	ffff                	0xffff
+20000ca6:	0000                	unimp
+20000ca8:	00ff                	0xff
+20000caa:	0000                	unimp
+20000cac:	0000                	unimp
+20000cae:	00ff                	0xff
+20000cb0:	0000                	unimp
+20000cb2:	0000                	unimp
+20000cb4:	0000                	unimp
+20000cb6:	00ff                	0xff
+	...
+20000cc0:	00ff                	0xff
+20000cc2:	0000                	unimp
+20000cc4:	ffff                	0xffff
+20000cc6:	ffff                	0xffff
+20000cc8:	00ff                	0xff
+20000cca:	0000                	unimp
+20000ccc:	0000                	unimp
+20000cce:	0000                	unimp
+20000cd0:	00ff                	0xff
+20000cd2:	0000                	unimp
+20000cd4:	00ff                	0xff
+20000cd6:	0000                	unimp
+20000cd8:	00ff                	0xff
+20000cda:	0000                	unimp
+20000cdc:	0000                	unimp
+20000cde:	00ff                	0xff
+20000ce0:	0000                	unimp
+20000ce2:	0000                	unimp
+20000ce4:	00ff                	0xff
+20000ce6:	0000                	unimp
+20000ce8:	00ff                	0xff
+20000cea:	0000                	unimp
+20000cec:	0000                	unimp
+20000cee:	0000                	unimp
+20000cf0:	00ff                	0xff
+	...
+20000d06:	00ff                	0xff
+20000d08:	0000                	unimp
+20000d0a:	0000                	unimp
+20000d0c:	ffff                	0xffff
+20000d0e:	ffff                	0xffff
+20000d10:	00ff                	0xff
+20000d12:	0000                	unimp
+20000d14:	0000                	unimp
+20000d16:	00ff                	0xff
+20000d18:	0000                	unimp
+20000d1a:	0000                	unimp
+20000d1c:	0000                	unimp
+20000d1e:	00ff                	0xff
+	...
+20000d44:	00ff                	0xff
+20000d46:	00ff                	0xff
+20000d48:	00ff                	0xff
+20000d4a:	0000                	unimp
+20000d4c:	ff00                	fsw	fs0,56(a4)
+20000d4e:	ff00                	fsw	fs0,56(a4)
+20000d50:	ff00                	fsw	fs0,56(a4)
+20000d52:	0000                	unimp
+20000d54:	00ff                	0xff
+20000d56:	0000                	unimp
+20000d58:	00ff                	0xff
+	...
+20000d62:	0000                	unimp
+20000d64:	ff00                	fsw	fs0,56(a4)
+	...
+20000d6e:	ff00                	fsw	fs0,56(a4)
+	...
+20000d7c:	0000                	unimp
+20000d7e:	00ff                	0xff
+20000d80:	0000                	unimp
+20000d82:	0000                	unimp
+20000d84:	0000                	unimp
+20000d86:	00ff                	0xff
+	...
+20000d9c:	0000                	unimp
+20000d9e:	00ff                	0xff
+20000da0:	0000                	unimp
+20000da2:	0000                	unimp
+20000da4:	00ff                	0xff
+20000da6:	0000                	unimp
+20000da8:	00ff                	0xff
+20000daa:	0000                	unimp
+20000dac:	0000                	unimp
+20000dae:	00ff                	0xff
+20000db0:	0000                	unimp
+20000db2:	0000                	unimp
+20000db4:	ff00                	fsw	fs0,56(a4)
+20000db6:	0000                	unimp
+20000db8:	0000                	unimp
+20000dba:	0000                	unimp
+20000dbc:	00ff                	0xff
+20000dbe:	0000                	unimp
+20000dc0:	00ff                	0xff
+20000dc2:	0000                	unimp
+20000dc4:	0000                	unimp
+20000dc6:	ff00                	fsw	fs0,56(a4)
+20000dc8:	0000                	unimp
+20000dca:	0000                	unimp
+20000dcc:	00ff                	0xff
+20000dce:	0000                	unimp
+20000dd0:	00ff                	0xff
+20000dd2:	0000                	unimp
+20000dd4:	00ff                	0xff
+20000dd6:	0000                	unimp
+20000dd8:	00ff                	0xff
+20000dda:	0000                	unimp
+20000ddc:	0000                	unimp
+20000dde:	00ff                	0xff
+20000de0:	0000                	unimp
+20000de2:	0000                	unimp
+20000de4:	00ff                	0xff
+20000de6:	0000                	unimp
+20000de8:	00ff                	0xff
+20000dea:	0000                	unimp
+20000dec:	0000                	unimp
+20000dee:	ff00                	fsw	fs0,56(a4)
+	...
+20000dfc:	0000                	unimp
+20000dfe:	00ff                	0xff
+20000e00:	0000                	unimp
+20000e02:	0000                	unimp
+20000e04:	0000                	unimp
+20000e06:	ff00                	fsw	fs0,56(a4)
+	...
+20000e14:	ff00                	fsw	fs0,56(a4)
+	...
+20000e2e:	00ff                	0xff
+	...
+20000e44:	ff00                	fsw	fs0,56(a4)
+20000e46:	ffff                	0xffff
+20000e48:	0000                	unimp
+20000e4a:	0000                	unimp
+20000e4c:	ff00                	fsw	fs0,56(a4)
+20000e4e:	0000                	unimp
+20000e50:	00ff                	0xff
+20000e52:	0000                	unimp
+20000e54:	ff00                	fsw	fs0,56(a4)
+20000e56:	ffff                	0xffff
+20000e58:	ff00                	fsw	fs0,56(a4)
+	...
+20000e66:	00ff                	0xff
+20000e68:	0000                	unimp
+20000e6a:	0000                	unimp
+20000e6c:	0000                	unimp
+20000e6e:	00ff                	0xff
+	...
+20000e84:	0000                	unimp
+20000e86:	00ff                	0xff
+	...
+20000e94:	0000                	unimp
+20000e96:	00ff                	0xff
+20000e98:	0000                	unimp
+20000e9a:	0000                	unimp
+20000e9c:	ff00                	fsw	fs0,56(a4)
+20000e9e:	0000                	unimp
+20000ea0:	0000                	unimp
+20000ea2:	0000                	unimp
+20000ea4:	ff00                	fsw	fs0,56(a4)
+20000ea6:	ffff                	0xffff
+20000ea8:	0000                	unimp
+20000eaa:	0000                	unimp
+20000eac:	0000                	unimp
+20000eae:	00ff                	0xff
+20000eb0:	0000                	unimp
+20000eb2:	0000                	unimp
+20000eb4:	ffff                	0xffff
+20000eb6:	ffff                	0xffff
+20000eb8:	00ff                	0xff
+20000eba:	0000                	unimp
+20000ebc:	ff00                	fsw	fs0,56(a4)
+20000ebe:	ffff                	0xffff
+20000ec0:	0000                	unimp
+20000ec2:	0000                	unimp
+20000ec4:	0000                	unimp
+20000ec6:	ff00                	fsw	fs0,56(a4)
+20000ec8:	0000                	unimp
+20000eca:	0000                	unimp
+20000ecc:	ff00                	fsw	fs0,56(a4)
+20000ece:	ffff                	0xffff
+20000ed0:	0000                	unimp
+20000ed2:	0000                	unimp
+20000ed4:	ff00                	fsw	fs0,56(a4)
+20000ed6:	ffff                	0xffff
+20000ed8:	0000                	unimp
+20000eda:	0000                	unimp
+20000edc:	0000                	unimp
+20000ede:	00ff                	0xff
+20000ee0:	0000                	unimp
+20000ee2:	0000                	unimp
+20000ee4:	ff00                	fsw	fs0,56(a4)
+20000ee6:	ffff                	0xffff
+20000ee8:	0000                	unimp
+20000eea:	0000                	unimp
+20000eec:	ff00                	fsw	fs0,56(a4)
+20000eee:	00ff                	0xff
+20000ef0:	0000                	unimp
+20000ef2:	0000                	unimp
+20000ef4:	0000                	unimp
+20000ef6:	00ff                	0xff
+20000ef8:	0000                	unimp
+20000efa:	0000                	unimp
+20000efc:	0000                	unimp
+20000efe:	00ff                	0xff
+	...
+20000f1c:	0000                	unimp
+20000f1e:	00ff                	0xff
+	...
+20000f44:	0000                	unimp
+20000f46:	00ff                	0xff
+	...
+20000f64:	0000                	unimp
+20000f66:	ff00                	fsw	fs0,56(a4)
+20000f68:	0000                	unimp
+20000f6a:	0000                	unimp
+20000f6c:	ff00                	fsw	fs0,56(a4)
+	...
+20000f82:	0000                	unimp
+20000f84:	ff00                	fsw	fs0,56(a4)
+	...
+20000f9a:	0000                	unimp
+20000f9c:	ff00                	fsw	fs0,56(a4)
+	...
+20000ffa:	0000                	unimp
+20000ffc:	ff00                	fsw	fs0,56(a4)
+	...
+20001026:	ffff                	0xffff
+20001028:	0000                	unimp
+2000102a:	0000                	unimp
+2000102c:	0000                	unimp
+2000102e:	00ff                	0xff
+20001030:	0000                	unimp
+20001032:	0000                	unimp
+20001034:	ffff                	0xffff
+20001036:	ffff                	0xffff
+20001038:	0000                	unimp
+2000103a:	0000                	unimp
+2000103c:	ff00                	fsw	fs0,56(a4)
+2000103e:	ffff                	0xffff
+20001040:	0000                	unimp
+20001042:	0000                	unimp
+20001044:	ffff                	0xffff
+20001046:	00ff                	0xff
+20001048:	0000                	unimp
+2000104a:	0000                	unimp
+2000104c:	ff00                	fsw	fs0,56(a4)
+2000104e:	ffff                	0xffff
+20001050:	00ff                	0xff
+20001052:	0000                	unimp
+20001054:	ff00                	fsw	fs0,56(a4)
+20001056:	ffff                	0xffff
+20001058:	00ff                	0xff
+2000105a:	0000                	unimp
+2000105c:	ff00                	fsw	fs0,56(a4)
+2000105e:	ffff                	0xffff
+20001060:	0000                	unimp
+20001062:	0000                	unimp
+20001064:	00ff                	0xff
+20001066:	0000                	unimp
+20001068:	00ff                	0xff
+2000106a:	0000                	unimp
+2000106c:	0000                	unimp
+2000106e:	00ff                	0xff
+	...
+20001078:	00ff                	0xff
+2000107a:	0000                	unimp
+2000107c:	00ff                	0xff
+2000107e:	0000                	unimp
+20001080:	00ff                	0xff
+20001082:	0000                	unimp
+20001084:	ff00                	fsw	fs0,56(a4)
+20001086:	0000                	unimp
+20001088:	0000                	unimp
+2000108a:	0000                	unimp
+2000108c:	00ff                	0xff
+2000108e:	0000                	unimp
+20001090:	00ff                	0xff
+20001092:	0000                	unimp
+20001094:	ffff                	0xffff
+20001096:	0000                	unimp
+20001098:	00ff                	0xff
+2000109a:	0000                	unimp
+2000109c:	ff00                	fsw	fs0,56(a4)
+2000109e:	ffff                	0xffff
+200010a0:	0000                	unimp
+200010a2:	0000                	unimp
+200010a4:	ffff                	0xffff
+200010a6:	ffff                	0xffff
+200010a8:	0000                	unimp
+200010aa:	0000                	unimp
+200010ac:	ff00                	fsw	fs0,56(a4)
+200010ae:	ffff                	0xffff
+200010b0:	0000                	unimp
+200010b2:	0000                	unimp
+200010b4:	ffff                	0xffff
+200010b6:	ffff                	0xffff
+200010b8:	0000                	unimp
+200010ba:	0000                	unimp
+200010bc:	ff00                	fsw	fs0,56(a4)
+200010be:	ffff                	0xffff
+200010c0:	0000                	unimp
+200010c2:	0000                	unimp
+200010c4:	ffff                	0xffff
+200010c6:	ffff                	0xffff
+200010c8:	00ff                	0xff
+200010ca:	0000                	unimp
+200010cc:	00ff                	0xff
+200010ce:	0000                	unimp
+200010d0:	00ff                	0xff
+200010d2:	0000                	unimp
+200010d4:	00ff                	0xff
+200010d6:	0000                	unimp
+200010d8:	00ff                	0xff
+200010da:	0000                	unimp
+200010dc:	00ff                	0xff
+200010de:	0000                	unimp
+200010e0:	00ff                	0xff
+200010e2:	0000                	unimp
+200010e4:	00ff                	0xff
+200010e6:	0000                	unimp
+200010e8:	00ff                	0xff
+200010ea:	0000                	unimp
+200010ec:	00ff                	0xff
+200010ee:	0000                	unimp
+200010f0:	00ff                	0xff
+200010f2:	0000                	unimp
+200010f4:	ff00                	fsw	fs0,56(a4)
+200010f6:	ffff                	0xffff
+200010f8:	00ff                	0xff
+200010fa:	0000                	unimp
+200010fc:	0000                	unimp
+200010fe:	ffff                	0xffff
+20001100:	0000                	unimp
+20001102:	0000                	unimp
+20001104:	ff00                	fsw	fs0,56(a4)
+20001106:	0000                	unimp
+20001108:	0000                	unimp
+2000110a:	0000                	unimp
+2000110c:	ff00                	fsw	fs0,56(a4)
+2000110e:	00ff                	0xff
+20001110:	0000                	unimp
+20001112:	0000                	unimp
+20001114:	0000                	unimp
+20001116:	00ff                	0xff
+	...
+20001124:	ff00                	fsw	fs0,56(a4)
+20001126:	0000                	unimp
+20001128:	00ff                	0xff
+2000112a:	0000                	unimp
+2000112c:	0000                	unimp
+2000112e:	00ff                	0xff
+20001130:	0000                	unimp
+20001132:	0000                	unimp
+20001134:	00ff                	0xff
+20001136:	0000                	unimp
+20001138:	00ff                	0xff
+2000113a:	0000                	unimp
+2000113c:	00ff                	0xff
+2000113e:	0000                	unimp
+20001140:	00ff                	0xff
+20001142:	0000                	unimp
+20001144:	00ff                	0xff
+20001146:	ff00                	fsw	fs0,56(a4)
+20001148:	0000                	unimp
+2000114a:	0000                	unimp
+2000114c:	ff00                	fsw	fs0,56(a4)
+2000114e:	0000                	unimp
+20001150:	0000                	unimp
+20001152:	0000                	unimp
+20001154:	ff00                	fsw	fs0,56(a4)
+20001156:	0000                	unimp
+20001158:	0000                	unimp
+2000115a:	0000                	unimp
+2000115c:	00ff                	0xff
+2000115e:	0000                	unimp
+20001160:	00ff                	0xff
+20001162:	0000                	unimp
+20001164:	00ff                	0xff
+20001166:	0000                	unimp
+20001168:	00ff                	0xff
+2000116a:	0000                	unimp
+2000116c:	0000                	unimp
+2000116e:	00ff                	0xff
+	...
+20001178:	00ff                	0xff
+2000117a:	0000                	unimp
+2000117c:	00ff                	0xff
+2000117e:	ff00                	fsw	fs0,56(a4)
+20001180:	0000                	unimp
+20001182:	0000                	unimp
+20001184:	ff00                	fsw	fs0,56(a4)
+20001186:	0000                	unimp
+20001188:	0000                	unimp
+2000118a:	0000                	unimp
+2000118c:	ffff                	0xffff
+2000118e:	ff00                	fsw	fs0,56(a4)
+20001190:	00ff                	0xff
+20001192:	0000                	unimp
+20001194:	ffff                	0xffff
+20001196:	0000                	unimp
+20001198:	00ff                	0xff
+2000119a:	0000                	unimp
+2000119c:	00ff                	0xff
+2000119e:	0000                	unimp
+200011a0:	00ff                	0xff
+200011a2:	0000                	unimp
+200011a4:	00ff                	0xff
+200011a6:	0000                	unimp
+200011a8:	00ff                	0xff
+200011aa:	0000                	unimp
+200011ac:	00ff                	0xff
+200011ae:	0000                	unimp
+200011b0:	00ff                	0xff
+200011b2:	0000                	unimp
+200011b4:	00ff                	0xff
+200011b6:	0000                	unimp
+200011b8:	00ff                	0xff
+200011ba:	0000                	unimp
+200011bc:	00ff                	0xff
+200011be:	0000                	unimp
+200011c0:	00ff                	0xff
+200011c2:	0000                	unimp
+200011c4:	0000                	unimp
+200011c6:	00ff                	0xff
+200011c8:	0000                	unimp
+200011ca:	0000                	unimp
+200011cc:	00ff                	0xff
+200011ce:	0000                	unimp
+200011d0:	00ff                	0xff
+200011d2:	0000                	unimp
+200011d4:	00ff                	0xff
+200011d6:	0000                	unimp
+200011d8:	00ff                	0xff
+200011da:	0000                	unimp
+200011dc:	00ff                	0xff
+200011de:	0000                	unimp
+200011e0:	00ff                	0xff
+200011e2:	0000                	unimp
+200011e4:	00ff                	0xff
+200011e6:	0000                	unimp
+200011e8:	00ff                	0xff
+200011ea:	0000                	unimp
+200011ec:	00ff                	0xff
+200011ee:	0000                	unimp
+200011f0:	00ff                	0xff
+200011f2:	0000                	unimp
+200011f4:	0000                	unimp
+200011f6:	0000                	unimp
+200011f8:	00ff                	0xff
+200011fa:	0000                	unimp
+200011fc:	0000                	unimp
+200011fe:	00ff                	0xff
+20001200:	0000                	unimp
+20001202:	0000                	unimp
+20001204:	ff00                	fsw	fs0,56(a4)
+	...
+2000120e:	00ff                	0xff
+20001210:	0000                	unimp
+20001212:	0000                	unimp
+20001214:	ff00                	fsw	fs0,56(a4)
+20001216:	ff00                	fsw	fs0,56(a4)
+	...
+20001224:	00ff                	0xff
+20001226:	ffff                	0xffff
+20001228:	ff00                	fsw	fs0,56(a4)
+2000122a:	0000                	unimp
+2000122c:	ff00                	fsw	fs0,56(a4)
+2000122e:	ff00                	fsw	fs0,56(a4)
+20001230:	0000                	unimp
+20001232:	0000                	unimp
+20001234:	00ff                	0xff
+20001236:	0000                	unimp
+20001238:	00ff                	0xff
+2000123a:	0000                	unimp
+2000123c:	00ff                	0xff
+2000123e:	0000                	unimp
+20001240:	0000                	unimp
+20001242:	0000                	unimp
+20001244:	00ff                	0xff
+20001246:	0000                	unimp
+20001248:	00ff                	0xff
+2000124a:	0000                	unimp
+2000124c:	ff00                	fsw	fs0,56(a4)
+2000124e:	0000                	unimp
+20001250:	0000                	unimp
+20001252:	0000                	unimp
+20001254:	ff00                	fsw	fs0,56(a4)
+20001256:	0000                	unimp
+20001258:	0000                	unimp
+2000125a:	0000                	unimp
+2000125c:	00ff                	0xff
+2000125e:	0000                	unimp
+20001260:	0000                	unimp
+20001262:	0000                	unimp
+20001264:	00ff                	0xff
+20001266:	0000                	unimp
+20001268:	00ff                	0xff
+2000126a:	0000                	unimp
+2000126c:	0000                	unimp
+2000126e:	00ff                	0xff
+	...
+20001278:	00ff                	0xff
+2000127a:	0000                	unimp
+2000127c:	00ff                	0xff
+2000127e:	00ff                	0xff
+20001280:	0000                	unimp
+20001282:	0000                	unimp
+20001284:	ff00                	fsw	fs0,56(a4)
+20001286:	0000                	unimp
+20001288:	0000                	unimp
+2000128a:	0000                	unimp
+2000128c:	00ff                	0xff
+2000128e:	00ff                	0xff
+20001290:	00ff                	0xff
+20001292:	0000                	unimp
+20001294:	00ff                	0xff
+20001296:	00ff                	0xff
+20001298:	00ff                	0xff
+2000129a:	0000                	unimp
+2000129c:	00ff                	0xff
+2000129e:	0000                	unimp
+200012a0:	00ff                	0xff
+200012a2:	0000                	unimp
+200012a4:	00ff                	0xff
+200012a6:	0000                	unimp
+200012a8:	00ff                	0xff
+200012aa:	0000                	unimp
+200012ac:	00ff                	0xff
+200012ae:	0000                	unimp
+200012b0:	00ff                	0xff
+200012b2:	0000                	unimp
+200012b4:	00ff                	0xff
+200012b6:	0000                	unimp
+200012b8:	00ff                	0xff
+200012ba:	0000                	unimp
+200012bc:	00ff                	0xff
+	...
+200012c6:	00ff                	0xff
+200012c8:	0000                	unimp
+200012ca:	0000                	unimp
+200012cc:	00ff                	0xff
+200012ce:	0000                	unimp
+200012d0:	00ff                	0xff
+200012d2:	0000                	unimp
+200012d4:	00ff                	0xff
+200012d6:	0000                	unimp
+200012d8:	00ff                	0xff
+200012da:	0000                	unimp
+200012dc:	00ff                	0xff
+200012de:	00ff                	0xff
+200012e0:	00ff                	0xff
+200012e2:	0000                	unimp
+200012e4:	ff00                	fsw	fs0,56(a4)
+200012e6:	ff00                	fsw	fs0,56(a4)
+200012e8:	0000                	unimp
+200012ea:	0000                	unimp
+200012ec:	ff00                	fsw	fs0,56(a4)
+200012ee:	ff00                	fsw	fs0,56(a4)
+200012f0:	0000                	unimp
+200012f2:	0000                	unimp
+200012f4:	0000                	unimp
+200012f6:	ff00                	fsw	fs0,56(a4)
+200012f8:	0000                	unimp
+200012fa:	0000                	unimp
+200012fc:	0000                	unimp
+200012fe:	00ff                	0xff
+20001300:	0000                	unimp
+20001302:	0000                	unimp
+20001304:	0000                	unimp
+20001306:	00ff                	0xff
+20001308:	0000                	unimp
+2000130a:	0000                	unimp
+2000130c:	0000                	unimp
+2000130e:	00ff                	0xff
+	...
+20001324:	ffff                	0xffff
+20001326:	ff00                	fsw	fs0,56(a4)
+20001328:	ff00                	fsw	fs0,56(a4)
+2000132a:	0000                	unimp
+2000132c:	ff00                	fsw	fs0,56(a4)
+2000132e:	ff00                	fsw	fs0,56(a4)
+20001330:	0000                	unimp
+20001332:	0000                	unimp
+20001334:	ffff                	0xffff
+20001336:	ffff                	0xffff
+20001338:	0000                	unimp
+2000133a:	0000                	unimp
+2000133c:	00ff                	0xff
+2000133e:	0000                	unimp
+20001340:	0000                	unimp
+20001342:	0000                	unimp
+20001344:	00ff                	0xff
+20001346:	0000                	unimp
+20001348:	00ff                	0xff
+2000134a:	0000                	unimp
+2000134c:	ff00                	fsw	fs0,56(a4)
+2000134e:	ffff                	0xffff
+20001350:	0000                	unimp
+20001352:	0000                	unimp
+20001354:	ff00                	fsw	fs0,56(a4)
+20001356:	ffff                	0xffff
+20001358:	0000                	unimp
+2000135a:	0000                	unimp
+2000135c:	00ff                	0xff
+2000135e:	ff00                	fsw	fs0,56(a4)
+20001360:	00ff                	0xff
+20001362:	0000                	unimp
+20001364:	ffff                	0xffff
+20001366:	ffff                	0xffff
+20001368:	00ff                	0xff
+2000136a:	0000                	unimp
+2000136c:	0000                	unimp
+2000136e:	00ff                	0xff
+	...
+20001378:	00ff                	0xff
+2000137a:	0000                	unimp
+2000137c:	ffff                	0xffff
+2000137e:	0000                	unimp
+20001380:	0000                	unimp
+20001382:	0000                	unimp
+20001384:	ff00                	fsw	fs0,56(a4)
+20001386:	0000                	unimp
+20001388:	0000                	unimp
+2000138a:	0000                	unimp
+2000138c:	00ff                	0xff
+2000138e:	0000                	unimp
+20001390:	00ff                	0xff
+20001392:	0000                	unimp
+20001394:	00ff                	0xff
+20001396:	00ff                	0xff
+20001398:	00ff                	0xff
+2000139a:	0000                	unimp
+2000139c:	00ff                	0xff
+2000139e:	0000                	unimp
+200013a0:	00ff                	0xff
+200013a2:	0000                	unimp
+200013a4:	ffff                	0xffff
+200013a6:	ffff                	0xffff
+200013a8:	0000                	unimp
+200013aa:	0000                	unimp
+200013ac:	00ff                	0xff
+200013ae:	0000                	unimp
+200013b0:	00ff                	0xff
+200013b2:	0000                	unimp
+200013b4:	ffff                	0xffff
+200013b6:	ffff                	0xffff
+200013b8:	0000                	unimp
+200013ba:	0000                	unimp
+200013bc:	ff00                	fsw	fs0,56(a4)
+200013be:	ffff                	0xffff
+200013c0:	0000                	unimp
+200013c2:	0000                	unimp
+200013c4:	0000                	unimp
+200013c6:	00ff                	0xff
+200013c8:	0000                	unimp
+200013ca:	0000                	unimp
+200013cc:	00ff                	0xff
+200013ce:	0000                	unimp
+200013d0:	00ff                	0xff
+200013d2:	0000                	unimp
+200013d4:	ff00                	fsw	fs0,56(a4)
+200013d6:	ff00                	fsw	fs0,56(a4)
+200013d8:	0000                	unimp
+200013da:	0000                	unimp
+200013dc:	00ff                	0xff
+200013de:	00ff                	0xff
+200013e0:	00ff                	0xff
+200013e2:	0000                	unimp
+200013e4:	0000                	unimp
+200013e6:	00ff                	0xff
+200013e8:	0000                	unimp
+200013ea:	0000                	unimp
+200013ec:	0000                	unimp
+200013ee:	00ff                	0xff
+200013f0:	0000                	unimp
+200013f2:	0000                	unimp
+200013f4:	0000                	unimp
+200013f6:	00ff                	0xff
+200013f8:	0000                	unimp
+200013fa:	0000                	unimp
+200013fc:	0000                	unimp
+200013fe:	00ff                	0xff
+20001400:	0000                	unimp
+20001402:	0000                	unimp
+20001404:	0000                	unimp
+20001406:	00ff                	0xff
+20001408:	0000                	unimp
+2000140a:	0000                	unimp
+2000140c:	0000                	unimp
+2000140e:	00ff                	0xff
+	...
+20001424:	ffff                	0xffff
+20001426:	ff00                	fsw	fs0,56(a4)
+20001428:	ff00                	fsw	fs0,56(a4)
+2000142a:	0000                	unimp
+2000142c:	ffff                	0xffff
+2000142e:	ffff                	0xffff
+20001430:	00ff                	0xff
+20001432:	0000                	unimp
+20001434:	00ff                	0xff
+20001436:	0000                	unimp
+20001438:	00ff                	0xff
+2000143a:	0000                	unimp
+2000143c:	00ff                	0xff
+2000143e:	0000                	unimp
+20001440:	0000                	unimp
+20001442:	0000                	unimp
+20001444:	00ff                	0xff
+20001446:	0000                	unimp
+20001448:	00ff                	0xff
+2000144a:	0000                	unimp
+2000144c:	ff00                	fsw	fs0,56(a4)
+2000144e:	0000                	unimp
+20001450:	0000                	unimp
+20001452:	0000                	unimp
+20001454:	ff00                	fsw	fs0,56(a4)
+20001456:	0000                	unimp
+20001458:	0000                	unimp
+2000145a:	0000                	unimp
+2000145c:	00ff                	0xff
+2000145e:	0000                	unimp
+20001460:	00ff                	0xff
+20001462:	0000                	unimp
+20001464:	00ff                	0xff
+20001466:	0000                	unimp
+20001468:	00ff                	0xff
+2000146a:	0000                	unimp
+2000146c:	0000                	unimp
+2000146e:	00ff                	0xff
+20001470:	0000                	unimp
+20001472:	0000                	unimp
+20001474:	00ff                	0xff
+20001476:	0000                	unimp
+20001478:	00ff                	0xff
+2000147a:	0000                	unimp
+2000147c:	00ff                	0xff
+2000147e:	00ff                	0xff
+20001480:	0000                	unimp
+20001482:	0000                	unimp
+20001484:	ff00                	fsw	fs0,56(a4)
+20001486:	0000                	unimp
+20001488:	0000                	unimp
+2000148a:	0000                	unimp
+2000148c:	00ff                	0xff
+2000148e:	0000                	unimp
+20001490:	00ff                	0xff
+20001492:	0000                	unimp
+20001494:	00ff                	0xff
+20001496:	ff00                	fsw	fs0,56(a4)
+20001498:	00ff                	0xff
+2000149a:	0000                	unimp
+2000149c:	00ff                	0xff
+2000149e:	0000                	unimp
+200014a0:	00ff                	0xff
+200014a2:	0000                	unimp
+200014a4:	00ff                	0xff
+200014a6:	0000                	unimp
+200014a8:	0000                	unimp
+200014aa:	0000                	unimp
+200014ac:	00ff                	0xff
+200014ae:	0000                	unimp
+200014b0:	00ff                	0xff
+200014b2:	0000                	unimp
+200014b4:	00ff                	0xff
+200014b6:	00ff                	0xff
+	...
+200014c0:	00ff                	0xff
+200014c2:	0000                	unimp
+200014c4:	0000                	unimp
+200014c6:	00ff                	0xff
+200014c8:	0000                	unimp
+200014ca:	0000                	unimp
+200014cc:	00ff                	0xff
+200014ce:	0000                	unimp
+200014d0:	00ff                	0xff
+200014d2:	0000                	unimp
+200014d4:	ff00                	fsw	fs0,56(a4)
+200014d6:	ff00                	fsw	fs0,56(a4)
+200014d8:	0000                	unimp
+200014da:	0000                	unimp
+200014dc:	ff00                	fsw	fs0,56(a4)
+200014de:	ff00                	fsw	fs0,56(a4)
+200014e0:	0000                	unimp
+200014e2:	0000                	unimp
+200014e4:	ff00                	fsw	fs0,56(a4)
+200014e6:	ff00                	fsw	fs0,56(a4)
+200014e8:	0000                	unimp
+200014ea:	0000                	unimp
+200014ec:	0000                	unimp
+200014ee:	00ff                	0xff
+200014f0:	0000                	unimp
+200014f2:	0000                	unimp
+200014f4:	ff00                	fsw	fs0,56(a4)
+	...
+200014fe:	00ff                	0xff
+20001500:	0000                	unimp
+20001502:	0000                	unimp
+20001504:	0000                	unimp
+20001506:	ff00                	fsw	fs0,56(a4)
+20001508:	0000                	unimp
+2000150a:	0000                	unimp
+2000150c:	0000                	unimp
+2000150e:	00ff                	0xff
+	...
+20001524:	00ff                	0xff
+20001526:	ffff                	0xffff
+20001528:	00ff                	0xff
+2000152a:	0000                	unimp
+2000152c:	00ff                	0xff
+2000152e:	0000                	unimp
+20001530:	00ff                	0xff
+20001532:	0000                	unimp
+20001534:	00ff                	0xff
+20001536:	0000                	unimp
+20001538:	00ff                	0xff
+2000153a:	0000                	unimp
+2000153c:	00ff                	0xff
+2000153e:	0000                	unimp
+20001540:	00ff                	0xff
+20001542:	0000                	unimp
+20001544:	00ff                	0xff
+20001546:	ff00                	fsw	fs0,56(a4)
+20001548:	0000                	unimp
+2000154a:	0000                	unimp
+2000154c:	ff00                	fsw	fs0,56(a4)
+2000154e:	0000                	unimp
+20001550:	0000                	unimp
+20001552:	0000                	unimp
+20001554:	ff00                	fsw	fs0,56(a4)
+20001556:	0000                	unimp
+20001558:	0000                	unimp
+2000155a:	0000                	unimp
+2000155c:	00ff                	0xff
+2000155e:	0000                	unimp
+20001560:	00ff                	0xff
+20001562:	0000                	unimp
+20001564:	00ff                	0xff
+20001566:	0000                	unimp
+20001568:	00ff                	0xff
+2000156a:	0000                	unimp
+2000156c:	0000                	unimp
+2000156e:	00ff                	0xff
+20001570:	0000                	unimp
+20001572:	0000                	unimp
+20001574:	00ff                	0xff
+20001576:	0000                	unimp
+20001578:	00ff                	0xff
+2000157a:	0000                	unimp
+2000157c:	00ff                	0xff
+2000157e:	ff00                	fsw	fs0,56(a4)
+20001580:	0000                	unimp
+20001582:	0000                	unimp
+20001584:	ff00                	fsw	fs0,56(a4)
+20001586:	0000                	unimp
+20001588:	0000                	unimp
+2000158a:	0000                	unimp
+2000158c:	00ff                	0xff
+2000158e:	0000                	unimp
+20001590:	00ff                	0xff
+20001592:	0000                	unimp
+20001594:	00ff                	0xff
+20001596:	ff00                	fsw	fs0,56(a4)
+20001598:	00ff                	0xff
+2000159a:	0000                	unimp
+2000159c:	00ff                	0xff
+2000159e:	0000                	unimp
+200015a0:	00ff                	0xff
+200015a2:	0000                	unimp
+200015a4:	00ff                	0xff
+200015a6:	0000                	unimp
+200015a8:	0000                	unimp
+200015aa:	0000                	unimp
+200015ac:	00ff                	0xff
+200015ae:	00ff                	0xff
+200015b0:	00ff                	0xff
+200015b2:	0000                	unimp
+200015b4:	00ff                	0xff
+200015b6:	ff00                	fsw	fs0,56(a4)
+200015b8:	0000                	unimp
+200015ba:	0000                	unimp
+200015bc:	00ff                	0xff
+200015be:	0000                	unimp
+200015c0:	00ff                	0xff
+200015c2:	0000                	unimp
+200015c4:	0000                	unimp
+200015c6:	00ff                	0xff
+200015c8:	0000                	unimp
+200015ca:	0000                	unimp
+200015cc:	00ff                	0xff
+200015ce:	0000                	unimp
+200015d0:	00ff                	0xff
+200015d2:	0000                	unimp
+200015d4:	0000                	unimp
+200015d6:	00ff                	0xff
+200015d8:	0000                	unimp
+200015da:	0000                	unimp
+200015dc:	ff00                	fsw	fs0,56(a4)
+200015de:	ff00                	fsw	fs0,56(a4)
+200015e0:	0000                	unimp
+200015e2:	0000                	unimp
+200015e4:	00ff                	0xff
+200015e6:	0000                	unimp
+200015e8:	00ff                	0xff
+200015ea:	0000                	unimp
+200015ec:	0000                	unimp
+200015ee:	00ff                	0xff
+200015f0:	0000                	unimp
+200015f2:	0000                	unimp
+200015f4:	ff00                	fsw	fs0,56(a4)
+	...
+200015fe:	00ff                	0xff
+20001600:	0000                	unimp
+20001602:	0000                	unimp
+20001604:	0000                	unimp
+20001606:	ff00                	fsw	fs0,56(a4)
+20001608:	0000                	unimp
+2000160a:	0000                	unimp
+2000160c:	0000                	unimp
+2000160e:	00ff                	0xff
+	...
+20001624:	ff00                	fsw	fs0,56(a4)
+20001626:	0000                	unimp
+20001628:	0000                	unimp
+2000162a:	0000                	unimp
+2000162c:	00ff                	0xff
+2000162e:	0000                	unimp
+20001630:	00ff                	0xff
+20001632:	0000                	unimp
+20001634:	ffff                	0xffff
+20001636:	ffff                	0xffff
+20001638:	0000                	unimp
+2000163a:	0000                	unimp
+2000163c:	ff00                	fsw	fs0,56(a4)
+2000163e:	ffff                	0xffff
+20001640:	0000                	unimp
+20001642:	0000                	unimp
+20001644:	ffff                	0xffff
+20001646:	00ff                	0xff
+20001648:	0000                	unimp
+2000164a:	0000                	unimp
+2000164c:	ff00                	fsw	fs0,56(a4)
+2000164e:	ffff                	0xffff
+20001650:	00ff                	0xff
+20001652:	0000                	unimp
+20001654:	ff00                	fsw	fs0,56(a4)
+20001656:	0000                	unimp
+20001658:	0000                	unimp
+2000165a:	0000                	unimp
+2000165c:	ff00                	fsw	fs0,56(a4)
+2000165e:	ffff                	0xffff
+20001660:	0000                	unimp
+20001662:	0000                	unimp
+20001664:	00ff                	0xff
+20001666:	0000                	unimp
+20001668:	00ff                	0xff
+2000166a:	0000                	unimp
+2000166c:	0000                	unimp
+2000166e:	00ff                	0xff
+20001670:	0000                	unimp
+20001672:	0000                	unimp
+20001674:	ff00                	fsw	fs0,56(a4)
+20001676:	ffff                	0xffff
+20001678:	0000                	unimp
+2000167a:	0000                	unimp
+2000167c:	00ff                	0xff
+2000167e:	0000                	unimp
+20001680:	00ff                	0xff
+20001682:	0000                	unimp
+20001684:	ff00                	fsw	fs0,56(a4)
+20001686:	ffff                	0xffff
+20001688:	00ff                	0xff
+2000168a:	0000                	unimp
+2000168c:	00ff                	0xff
+2000168e:	0000                	unimp
+20001690:	00ff                	0xff
+20001692:	0000                	unimp
+20001694:	00ff                	0xff
+20001696:	0000                	unimp
+20001698:	00ff                	0xff
+2000169a:	0000                	unimp
+2000169c:	ff00                	fsw	fs0,56(a4)
+2000169e:	ffff                	0xffff
+200016a0:	0000                	unimp
+200016a2:	0000                	unimp
+200016a4:	00ff                	0xff
+200016a6:	0000                	unimp
+200016a8:	0000                	unimp
+200016aa:	0000                	unimp
+200016ac:	ff00                	fsw	fs0,56(a4)
+200016ae:	ffff                	0xffff
+200016b0:	0000                	unimp
+200016b2:	0000                	unimp
+200016b4:	00ff                	0xff
+200016b6:	0000                	unimp
+200016b8:	00ff                	0xff
+200016ba:	0000                	unimp
+200016bc:	ff00                	fsw	fs0,56(a4)
+200016be:	ffff                	0xffff
+200016c0:	0000                	unimp
+200016c2:	0000                	unimp
+200016c4:	0000                	unimp
+200016c6:	00ff                	0xff
+200016c8:	0000                	unimp
+200016ca:	0000                	unimp
+200016cc:	ff00                	fsw	fs0,56(a4)
+200016ce:	ffff                	0xffff
+200016d0:	0000                	unimp
+200016d2:	0000                	unimp
+200016d4:	0000                	unimp
+200016d6:	00ff                	0xff
+200016d8:	0000                	unimp
+200016da:	0000                	unimp
+200016dc:	ff00                	fsw	fs0,56(a4)
+200016de:	ff00                	fsw	fs0,56(a4)
+200016e0:	0000                	unimp
+200016e2:	0000                	unimp
+200016e4:	00ff                	0xff
+200016e6:	0000                	unimp
+200016e8:	00ff                	0xff
+200016ea:	0000                	unimp
+200016ec:	0000                	unimp
+200016ee:	00ff                	0xff
+200016f0:	0000                	unimp
+200016f2:	0000                	unimp
+200016f4:	ff00                	fsw	fs0,56(a4)
+200016f6:	ffff                	0xffff
+200016f8:	00ff                	0xff
+200016fa:	0000                	unimp
+200016fc:	0000                	unimp
+200016fe:	00ff                	0xff
+	...
+20001708:	00ff                	0xff
+2000170a:	0000                	unimp
+2000170c:	0000                	unimp
+2000170e:	00ff                	0xff
+	...
+20001724:	0000                	unimp
+20001726:	ffff                	0xffff
+	...
+200017ac:	0000                	unimp
+200017ae:	ff00                	fsw	fs0,56(a4)
+	...
+200017fc:	0000                	unimp
+200017fe:	ffff                	0xffff
+	...
+20001808:	00ff                	0xff
+2000180a:	0000                	unimp
+2000180c:	ff00                	fsw	fs0,56(a4)
+2000180e:	00ff                	0xff
+	...
+2000181c:	ffff                	0xffff
+2000181e:	ffff                	0xffff
+20001820:	ffff                	0xffff
+20001822:	0000                	unimp
+20001824:	0000                	unimp
+20001826:	ffff                	0xffff
+	...
+20001834:	ff00                	fsw	fs0,56(a4)
+	...
+20001846:	0000                	unimp
+20001848:	00ff                	0xff
+	...
+20001856:	ff00                	fsw	fs0,56(a4)
+20001858:	00ff                	0xff
+	...
+20001862:	0000                	unimp
+20001864:	ff00                	fsw	fs0,56(a4)
+	...
+2000186e:	00ff                	0xff
+20001870:	0000                	unimp
+20001872:	0000                	unimp
+20001874:	0000                	unimp
+20001876:	ff00                	fsw	fs0,56(a4)
+20001878:	0000                	unimp
+2000187a:	0000                	unimp
+2000187c:	ff00                	fsw	fs0,56(a4)
+	...
+20001886:	00ff                	0xff
+	...
+200018c4:	0000                	unimp
+200018c6:	00ff                	0xff
+	...
+200018fc:	0000                	unimp
+200018fe:	ff00                	fsw	fs0,56(a4)
+20001900:	0000                	unimp
+20001902:	0000                	unimp
+20001904:	0000                	unimp
+20001906:	00ff                	0xff
+20001908:	0000                	unimp
+2000190a:	0000                	unimp
+2000190c:	ff00                	fsw	fs0,56(a4)
+2000190e:	0000                	unimp
+20001910:	0000                	unimp
+20001912:	0000                	unimp
+20001914:	ff00                	fsw	fs0,56(a4)
+20001916:	00ff                	0xff
+20001918:	00ff                	0xff
+2000191a:	0000                	unimp
+2000191c:	0000                	unimp
+2000191e:	ffff                	0xffff
+20001920:	0000                	unimp
+20001922:	0000                	unimp
+20001924:	ff00                	fsw	fs0,56(a4)
+	...
+20001932:	0000                	unimp
+20001934:	ff00                	fsw	fs0,56(a4)
+	...
+20001946:	0000                	unimp
+20001948:	00ff                	0xff
+	...
+20001956:	00ff                	0xff
+	...
+20001964:	ff00                	fsw	fs0,56(a4)
+	...
+2000197a:	0000                	unimp
+2000197c:	ff00                	fsw	fs0,56(a4)
+	...
+20001986:	00ff                	0xff
+	...
+200019c4:	0000                	unimp
+200019c6:	00ff                	0xff
+	...
+200019fc:	0000                	unimp
+200019fe:	00ff                	0xff
+20001a00:	0000                	unimp
+20001a02:	0000                	unimp
+20001a04:	0000                	unimp
+20001a06:	00ff                	0xff
+20001a08:	0000                	unimp
+20001a0a:	0000                	unimp
+20001a0c:	0000                	unimp
+20001a0e:	00ff                	0xff
+20001a10:	0000                	unimp
+20001a12:	0000                	unimp
+20001a14:	00ff                	0xff
+20001a16:	ffff                	0xffff
+20001a18:	0000                	unimp
+20001a1a:	0000                	unimp
+20001a1c:	ff00                	fsw	fs0,56(a4)
+20001a1e:	0000                	unimp
+20001a20:	00ff                	0xff
+20001a22:	0000                	unimp
+20001a24:	ff00                	fsw	fs0,56(a4)
+	...
+20001a2e:	ffff                	0xffff
+20001a30:	0000                	unimp
+20001a32:	0000                	unimp
+20001a34:	ff00                	fsw	fs0,56(a4)
+20001a36:	ffff                	0xffff
+20001a38:	0000                	unimp
+20001a3a:	0000                	unimp
+20001a3c:	0000                	unimp
+20001a3e:	ffff                	0xffff
+20001a40:	0000                	unimp
+20001a42:	0000                	unimp
+20001a44:	0000                	unimp
+20001a46:	ffff                	0xffff
+20001a48:	00ff                	0xff
+20001a4a:	0000                	unimp
+20001a4c:	0000                	unimp
+20001a4e:	ffff                	0xffff
+20001a50:	0000                	unimp
+20001a52:	0000                	unimp
+20001a54:	ff00                	fsw	fs0,56(a4)
+20001a56:	ffff                	0xffff
+20001a58:	0000                	unimp
+20001a5a:	0000                	unimp
+20001a5c:	0000                	unimp
+20001a5e:	ffff                	0xffff
+20001a60:	00ff                	0xff
+20001a62:	0000                	unimp
+20001a64:	ff00                	fsw	fs0,56(a4)
+20001a66:	ffff                	0xffff
+20001a68:	0000                	unimp
+20001a6a:	0000                	unimp
+20001a6c:	0000                	unimp
+20001a6e:	00ff                	0xff
+20001a70:	0000                	unimp
+20001a72:	0000                	unimp
+20001a74:	0000                	unimp
+20001a76:	ff00                	fsw	fs0,56(a4)
+20001a78:	0000                	unimp
+20001a7a:	0000                	unimp
+20001a7c:	ff00                	fsw	fs0,56(a4)
+20001a7e:	0000                	unimp
+20001a80:	00ff                	0xff
+20001a82:	0000                	unimp
+20001a84:	0000                	unimp
+20001a86:	00ff                	0xff
+20001a88:	0000                	unimp
+20001a8a:	0000                	unimp
+20001a8c:	ffff                	0xffff
+20001a8e:	ff00                	fsw	fs0,56(a4)
+20001a90:	0000                	unimp
+20001a92:	0000                	unimp
+20001a94:	ff00                	fsw	fs0,56(a4)
+20001a96:	ffff                	0xffff
+20001a98:	0000                	unimp
+20001a9a:	0000                	unimp
+20001a9c:	0000                	unimp
+20001a9e:	ffff                	0xffff
+20001aa0:	0000                	unimp
+20001aa2:	0000                	unimp
+20001aa4:	ff00                	fsw	fs0,56(a4)
+20001aa6:	ffff                	0xffff
+20001aa8:	0000                	unimp
+20001aaa:	0000                	unimp
+20001aac:	0000                	unimp
+20001aae:	ffff                	0xffff
+20001ab0:	00ff                	0xff
+20001ab2:	0000                	unimp
+20001ab4:	ff00                	fsw	fs0,56(a4)
+20001ab6:	ff00                	fsw	fs0,56(a4)
+20001ab8:	00ff                	0xff
+20001aba:	0000                	unimp
+20001abc:	0000                	unimp
+20001abe:	ffff                	0xffff
+20001ac0:	00ff                	0xff
+20001ac2:	0000                	unimp
+20001ac4:	ff00                	fsw	fs0,56(a4)
+20001ac6:	ffff                	0xffff
+20001ac8:	0000                	unimp
+20001aca:	0000                	unimp
+20001acc:	ff00                	fsw	fs0,56(a4)
+20001ace:	0000                	unimp
+20001ad0:	00ff                	0xff
+20001ad2:	0000                	unimp
+20001ad4:	00ff                	0xff
+20001ad6:	0000                	unimp
+20001ad8:	00ff                	0xff
+20001ada:	0000                	unimp
+20001adc:	00ff                	0xff
+20001ade:	0000                	unimp
+20001ae0:	00ff                	0xff
+20001ae2:	0000                	unimp
+20001ae4:	00ff                	0xff
+20001ae6:	0000                	unimp
+20001ae8:	00ff                	0xff
+20001aea:	0000                	unimp
+20001aec:	00ff                	0xff
+20001aee:	0000                	unimp
+20001af0:	00ff                	0xff
+20001af2:	0000                	unimp
+20001af4:	ff00                	fsw	fs0,56(a4)
+20001af6:	ffff                	0xffff
+20001af8:	00ff                	0xff
+20001afa:	0000                	unimp
+20001afc:	0000                	unimp
+20001afe:	00ff                	0xff
+20001b00:	0000                	unimp
+20001b02:	0000                	unimp
+20001b04:	0000                	unimp
+20001b06:	00ff                	0xff
+20001b08:	0000                	unimp
+20001b0a:	0000                	unimp
+20001b0c:	0000                	unimp
+20001b0e:	00ff                	0xff
+	...
+20001b1c:	00ff                	0xff
+20001b1e:	ffff                	0xffff
+20001b20:	ff00                	fsw	fs0,56(a4)
+20001b22:	0000                	unimp
+20001b24:	ffff                	0xffff
+20001b26:	00ff                	0xff
+	...
+20001b30:	00ff                	0xff
+20001b32:	0000                	unimp
+20001b34:	ff00                	fsw	fs0,56(a4)
+20001b36:	0000                	unimp
+20001b38:	00ff                	0xff
+20001b3a:	0000                	unimp
+20001b3c:	ff00                	fsw	fs0,56(a4)
+20001b3e:	0000                	unimp
+20001b40:	00ff                	0xff
+20001b42:	0000                	unimp
+20001b44:	ff00                	fsw	fs0,56(a4)
+20001b46:	0000                	unimp
+20001b48:	00ff                	0xff
+20001b4a:	0000                	unimp
+20001b4c:	ff00                	fsw	fs0,56(a4)
+20001b4e:	0000                	unimp
+20001b50:	00ff                	0xff
+20001b52:	0000                	unimp
+20001b54:	0000                	unimp
+20001b56:	00ff                	0xff
+20001b58:	0000                	unimp
+20001b5a:	0000                	unimp
+20001b5c:	ff00                	fsw	fs0,56(a4)
+20001b5e:	0000                	unimp
+20001b60:	00ff                	0xff
+20001b62:	0000                	unimp
+20001b64:	ff00                	fsw	fs0,56(a4)
+20001b66:	0000                	unimp
+20001b68:	00ff                	0xff
+20001b6a:	0000                	unimp
+20001b6c:	0000                	unimp
+20001b6e:	00ff                	0xff
+20001b70:	0000                	unimp
+20001b72:	0000                	unimp
+20001b74:	0000                	unimp
+20001b76:	ff00                	fsw	fs0,56(a4)
+20001b78:	0000                	unimp
+20001b7a:	0000                	unimp
+20001b7c:	ff00                	fsw	fs0,56(a4)
+20001b7e:	ff00                	fsw	fs0,56(a4)
+20001b80:	0000                	unimp
+20001b82:	0000                	unimp
+20001b84:	0000                	unimp
+20001b86:	00ff                	0xff
+20001b88:	0000                	unimp
+20001b8a:	0000                	unimp
+20001b8c:	00ff                	0xff
+20001b8e:	00ff                	0xff
+20001b90:	00ff                	0xff
+20001b92:	0000                	unimp
+20001b94:	ff00                	fsw	fs0,56(a4)
+20001b96:	0000                	unimp
+20001b98:	00ff                	0xff
+20001b9a:	0000                	unimp
+20001b9c:	ff00                	fsw	fs0,56(a4)
+20001b9e:	0000                	unimp
+20001ba0:	00ff                	0xff
+20001ba2:	0000                	unimp
+20001ba4:	ff00                	fsw	fs0,56(a4)
+20001ba6:	0000                	unimp
+20001ba8:	00ff                	0xff
+20001baa:	0000                	unimp
+20001bac:	ff00                	fsw	fs0,56(a4)
+20001bae:	0000                	unimp
+20001bb0:	00ff                	0xff
+20001bb2:	0000                	unimp
+20001bb4:	ff00                	fsw	fs0,56(a4)
+20001bb6:	00ff                	0xff
+20001bb8:	0000                	unimp
+20001bba:	0000                	unimp
+20001bbc:	ff00                	fsw	fs0,56(a4)
+	...
+20001bc6:	00ff                	0xff
+20001bc8:	0000                	unimp
+20001bca:	0000                	unimp
+20001bcc:	ff00                	fsw	fs0,56(a4)
+20001bce:	0000                	unimp
+20001bd0:	00ff                	0xff
+20001bd2:	0000                	unimp
+20001bd4:	ff00                	fsw	fs0,56(a4)
+20001bd6:	ff00                	fsw	fs0,56(a4)
+20001bd8:	0000                	unimp
+20001bda:	0000                	unimp
+20001bdc:	00ff                	0xff
+20001bde:	0000                	unimp
+20001be0:	00ff                	0xff
+20001be2:	0000                	unimp
+20001be4:	ff00                	fsw	fs0,56(a4)
+20001be6:	ff00                	fsw	fs0,56(a4)
+20001be8:	0000                	unimp
+20001bea:	0000                	unimp
+20001bec:	ff00                	fsw	fs0,56(a4)
+20001bee:	ff00                	fsw	fs0,56(a4)
+20001bf0:	0000                	unimp
+20001bf2:	0000                	unimp
+20001bf4:	0000                	unimp
+20001bf6:	ff00                	fsw	fs0,56(a4)
+20001bf8:	0000                	unimp
+20001bfa:	0000                	unimp
+20001bfc:	ff00                	fsw	fs0,56(a4)
+	...
+20001c0e:	ff00                	fsw	fs0,56(a4)
+	...
+20001c1c:	ffff                	0xffff
+20001c1e:	0000                	unimp
+20001c20:	ff00                	fsw	fs0,56(a4)
+20001c22:	0000                	unimp
+20001c24:	ff00                	fsw	fs0,56(a4)
+	...
+20001c2e:	ffff                	0xffff
+20001c30:	00ff                	0xff
+20001c32:	0000                	unimp
+20001c34:	ff00                	fsw	fs0,56(a4)
+20001c36:	0000                	unimp
+20001c38:	00ff                	0xff
+20001c3a:	0000                	unimp
+20001c3c:	ff00                	fsw	fs0,56(a4)
+20001c3e:	0000                	unimp
+20001c40:	0000                	unimp
+20001c42:	0000                	unimp
+20001c44:	ff00                	fsw	fs0,56(a4)
+20001c46:	0000                	unimp
+20001c48:	00ff                	0xff
+20001c4a:	0000                	unimp
+20001c4c:	ff00                	fsw	fs0,56(a4)
+20001c4e:	ffff                	0xffff
+20001c50:	00ff                	0xff
+20001c52:	0000                	unimp
+20001c54:	0000                	unimp
+20001c56:	00ff                	0xff
+20001c58:	0000                	unimp
+20001c5a:	0000                	unimp
+20001c5c:	ff00                	fsw	fs0,56(a4)
+20001c5e:	0000                	unimp
+20001c60:	00ff                	0xff
+20001c62:	0000                	unimp
+20001c64:	ff00                	fsw	fs0,56(a4)
+20001c66:	0000                	unimp
+20001c68:	00ff                	0xff
+20001c6a:	0000                	unimp
+20001c6c:	0000                	unimp
+20001c6e:	00ff                	0xff
+20001c70:	0000                	unimp
+20001c72:	0000                	unimp
+20001c74:	0000                	unimp
+20001c76:	ff00                	fsw	fs0,56(a4)
+20001c78:	0000                	unimp
+20001c7a:	0000                	unimp
+20001c7c:	ff00                	fsw	fs0,56(a4)
+20001c7e:	00ff                	0xff
+20001c80:	0000                	unimp
+20001c82:	0000                	unimp
+20001c84:	0000                	unimp
+20001c86:	00ff                	0xff
+20001c88:	0000                	unimp
+20001c8a:	0000                	unimp
+20001c8c:	00ff                	0xff
+20001c8e:	00ff                	0xff
+20001c90:	00ff                	0xff
+20001c92:	0000                	unimp
+20001c94:	ff00                	fsw	fs0,56(a4)
+20001c96:	0000                	unimp
+20001c98:	00ff                	0xff
+20001c9a:	0000                	unimp
+20001c9c:	ff00                	fsw	fs0,56(a4)
+20001c9e:	0000                	unimp
+20001ca0:	00ff                	0xff
+20001ca2:	0000                	unimp
+20001ca4:	ff00                	fsw	fs0,56(a4)
+20001ca6:	0000                	unimp
+20001ca8:	00ff                	0xff
+20001caa:	0000                	unimp
+20001cac:	ff00                	fsw	fs0,56(a4)
+20001cae:	0000                	unimp
+20001cb0:	00ff                	0xff
+20001cb2:	0000                	unimp
+20001cb4:	ff00                	fsw	fs0,56(a4)
+	...
+20001cbe:	ffff                	0xffff
+20001cc0:	0000                	unimp
+20001cc2:	0000                	unimp
+20001cc4:	0000                	unimp
+20001cc6:	00ff                	0xff
+20001cc8:	0000                	unimp
+20001cca:	0000                	unimp
+20001ccc:	ff00                	fsw	fs0,56(a4)
+20001cce:	0000                	unimp
+20001cd0:	00ff                	0xff
+20001cd2:	0000                	unimp
+20001cd4:	ff00                	fsw	fs0,56(a4)
+20001cd6:	ff00                	fsw	fs0,56(a4)
+20001cd8:	0000                	unimp
+20001cda:	0000                	unimp
+20001cdc:	00ff                	0xff
+20001cde:	00ff                	0xff
+20001ce0:	00ff                	0xff
+20001ce2:	0000                	unimp
+20001ce4:	0000                	unimp
+20001ce6:	00ff                	0xff
+20001ce8:	0000                	unimp
+20001cea:	0000                	unimp
+20001cec:	ff00                	fsw	fs0,56(a4)
+20001cee:	ff00                	fsw	fs0,56(a4)
+20001cf0:	0000                	unimp
+20001cf2:	0000                	unimp
+20001cf4:	0000                	unimp
+20001cf6:	00ff                	0xff
+20001cf8:	0000                	unimp
+20001cfa:	0000                	unimp
+20001cfc:	0000                	unimp
+20001cfe:	00ff                	0xff
+	...
+20001d0c:	0000                	unimp
+20001d0e:	00ff                	0xff
+	...
+20001d1c:	ffff                	0xffff
+20001d1e:	0000                	unimp
+20001d20:	ff00                	fsw	fs0,56(a4)
+20001d22:	0000                	unimp
+20001d24:	ff00                	fsw	fs0,56(a4)
+20001d26:	0000                	unimp
+20001d28:	00ff                	0xff
+20001d2a:	0000                	unimp
+20001d2c:	ff00                	fsw	fs0,56(a4)
+20001d2e:	0000                	unimp
+20001d30:	00ff                	0xff
+20001d32:	0000                	unimp
+20001d34:	ff00                	fsw	fs0,56(a4)
+20001d36:	0000                	unimp
+20001d38:	00ff                	0xff
+20001d3a:	0000                	unimp
+20001d3c:	ff00                	fsw	fs0,56(a4)
+20001d3e:	0000                	unimp
+20001d40:	00ff                	0xff
+20001d42:	0000                	unimp
+20001d44:	ff00                	fsw	fs0,56(a4)
+20001d46:	0000                	unimp
+20001d48:	00ff                	0xff
+20001d4a:	0000                	unimp
+20001d4c:	ff00                	fsw	fs0,56(a4)
+	...
+20001d56:	00ff                	0xff
+20001d58:	0000                	unimp
+20001d5a:	0000                	unimp
+20001d5c:	0000                	unimp
+20001d5e:	ffff                	0xffff
+20001d60:	00ff                	0xff
+20001d62:	0000                	unimp
+20001d64:	ff00                	fsw	fs0,56(a4)
+20001d66:	0000                	unimp
+20001d68:	00ff                	0xff
+20001d6a:	0000                	unimp
+20001d6c:	0000                	unimp
+20001d6e:	00ff                	0xff
+20001d70:	0000                	unimp
+20001d72:	0000                	unimp
+20001d74:	0000                	unimp
+20001d76:	ff00                	fsw	fs0,56(a4)
+20001d78:	0000                	unimp
+20001d7a:	0000                	unimp
+20001d7c:	ff00                	fsw	fs0,56(a4)
+20001d7e:	ff00                	fsw	fs0,56(a4)
+20001d80:	0000                	unimp
+20001d82:	0000                	unimp
+20001d84:	0000                	unimp
+20001d86:	00ff                	0xff
+20001d88:	0000                	unimp
+20001d8a:	0000                	unimp
+20001d8c:	00ff                	0xff
+20001d8e:	00ff                	0xff
+20001d90:	00ff                	0xff
+20001d92:	0000                	unimp
+20001d94:	ff00                	fsw	fs0,56(a4)
+20001d96:	0000                	unimp
+20001d98:	00ff                	0xff
+20001d9a:	0000                	unimp
+20001d9c:	ff00                	fsw	fs0,56(a4)
+20001d9e:	0000                	unimp
+20001da0:	00ff                	0xff
+20001da2:	0000                	unimp
+20001da4:	ff00                	fsw	fs0,56(a4)
+20001da6:	ffff                	0xffff
+20001da8:	0000                	unimp
+20001daa:	0000                	unimp
+20001dac:	0000                	unimp
+20001dae:	ffff                	0xffff
+20001db0:	00ff                	0xff
+20001db2:	0000                	unimp
+20001db4:	ff00                	fsw	fs0,56(a4)
+	...
+20001dbe:	0000                	unimp
+20001dc0:	00ff                	0xff
+20001dc2:	0000                	unimp
+20001dc4:	0000                	unimp
+20001dc6:	00ff                	0xff
+20001dc8:	0000                	unimp
+20001dca:	0000                	unimp
+20001dcc:	ff00                	fsw	fs0,56(a4)
+20001dce:	0000                	unimp
+20001dd0:	00ff                	0xff
+20001dd2:	0000                	unimp
+20001dd4:	0000                	unimp
+20001dd6:	00ff                	0xff
+20001dd8:	0000                	unimp
+20001dda:	0000                	unimp
+20001ddc:	ff00                	fsw	fs0,56(a4)
+20001dde:	ff00                	fsw	fs0,56(a4)
+20001de0:	0000                	unimp
+20001de2:	0000                	unimp
+20001de4:	ff00                	fsw	fs0,56(a4)
+20001de6:	ff00                	fsw	fs0,56(a4)
+20001de8:	0000                	unimp
+20001dea:	0000                	unimp
+20001dec:	0000                	unimp
+20001dee:	00ff                	0xff
+20001df0:	0000                	unimp
+20001df2:	0000                	unimp
+20001df4:	ff00                	fsw	fs0,56(a4)
+	...
+20001dfe:	00ff                	0xff
+20001e00:	0000                	unimp
+20001e02:	0000                	unimp
+20001e04:	0000                	unimp
+20001e06:	00ff                	0xff
+20001e08:	0000                	unimp
+20001e0a:	0000                	unimp
+20001e0c:	0000                	unimp
+20001e0e:	00ff                	0xff
+	...
+20001e1c:	00ff                	0xff
+20001e1e:	ffff                	0xffff
+20001e20:	ff00                	fsw	fs0,56(a4)
+20001e22:	0000                	unimp
+20001e24:	ffff                	0xffff
+20001e26:	ffff                	0xffff
+20001e28:	0000                	unimp
+20001e2a:	0000                	unimp
+20001e2c:	0000                	unimp
+20001e2e:	ffff                	0xffff
+20001e30:	00ff                	0xff
+20001e32:	0000                	unimp
+20001e34:	ff00                	fsw	fs0,56(a4)
+20001e36:	ffff                	0xffff
+20001e38:	0000                	unimp
+20001e3a:	0000                	unimp
+20001e3c:	0000                	unimp
+20001e3e:	ffff                	0xffff
+20001e40:	0000                	unimp
+20001e42:	0000                	unimp
+20001e44:	0000                	unimp
+20001e46:	ffff                	0xffff
+20001e48:	00ff                	0xff
+20001e4a:	0000                	unimp
+20001e4c:	0000                	unimp
+20001e4e:	ffff                	0xffff
+20001e50:	0000                	unimp
+20001e52:	0000                	unimp
+20001e54:	0000                	unimp
+20001e56:	00ff                	0xff
+	...
+20001e60:	00ff                	0xff
+20001e62:	0000                	unimp
+20001e64:	ff00                	fsw	fs0,56(a4)
+20001e66:	0000                	unimp
+20001e68:	00ff                	0xff
+20001e6a:	0000                	unimp
+20001e6c:	0000                	unimp
+20001e6e:	00ff                	0xff
+20001e70:	0000                	unimp
+20001e72:	0000                	unimp
+20001e74:	0000                	unimp
+20001e76:	ff00                	fsw	fs0,56(a4)
+20001e78:	0000                	unimp
+20001e7a:	0000                	unimp
+20001e7c:	ff00                	fsw	fs0,56(a4)
+20001e7e:	0000                	unimp
+20001e80:	00ff                	0xff
+20001e82:	0000                	unimp
+20001e84:	0000                	unimp
+20001e86:	ff00                	fsw	fs0,56(a4)
+20001e88:	0000                	unimp
+20001e8a:	0000                	unimp
+20001e8c:	00ff                	0xff
+20001e8e:	00ff                	0xff
+20001e90:	00ff                	0xff
+20001e92:	0000                	unimp
+20001e94:	ff00                	fsw	fs0,56(a4)
+20001e96:	0000                	unimp
+20001e98:	00ff                	0xff
+20001e9a:	0000                	unimp
+20001e9c:	0000                	unimp
+20001e9e:	ffff                	0xffff
+20001ea0:	0000                	unimp
+20001ea2:	0000                	unimp
+20001ea4:	ff00                	fsw	fs0,56(a4)
+	...
+20001eae:	0000                	unimp
+20001eb0:	00ff                	0xff
+20001eb2:	0000                	unimp
+20001eb4:	ff00                	fsw	fs0,56(a4)
+20001eb6:	0000                	unimp
+20001eb8:	0000                	unimp
+20001eba:	0000                	unimp
+20001ebc:	ff00                	fsw	fs0,56(a4)
+20001ebe:	ffff                	0xffff
+20001ec0:	0000                	unimp
+20001ec2:	0000                	unimp
+20001ec4:	0000                	unimp
+20001ec6:	ff00                	fsw	fs0,56(a4)
+20001ec8:	0000                	unimp
+20001eca:	0000                	unimp
+20001ecc:	0000                	unimp
+20001ece:	ffff                	0xffff
+20001ed0:	0000                	unimp
+20001ed2:	0000                	unimp
+20001ed4:	0000                	unimp
+20001ed6:	00ff                	0xff
+20001ed8:	0000                	unimp
+20001eda:	0000                	unimp
+20001edc:	ff00                	fsw	fs0,56(a4)
+20001ede:	ff00                	fsw	fs0,56(a4)
+20001ee0:	0000                	unimp
+20001ee2:	0000                	unimp
+20001ee4:	00ff                	0xff
+20001ee6:	0000                	unimp
+20001ee8:	00ff                	0xff
+20001eea:	0000                	unimp
+20001eec:	0000                	unimp
+20001eee:	00ff                	0xff
+20001ef0:	0000                	unimp
+20001ef2:	0000                	unimp
+20001ef4:	ff00                	fsw	fs0,56(a4)
+20001ef6:	ffff                	0xffff
+20001ef8:	00ff                	0xff
+20001efa:	0000                	unimp
+20001efc:	0000                	unimp
+20001efe:	00ff                	0xff
+20001f00:	0000                	unimp
+20001f02:	0000                	unimp
+20001f04:	0000                	unimp
+20001f06:	00ff                	0xff
+20001f08:	0000                	unimp
+20001f0a:	0000                	unimp
+20001f0c:	0000                	unimp
+20001f0e:	00ff                	0xff
+	...
+20001f1c:	ff00                	fsw	fs0,56(a4)
+20001f1e:	0000                	unimp
+20001f20:	00ff                	0xff
+	...
+20001f5e:	ffff                	0xffff
+	...
+20001f74:	ff00                	fsw	fs0,56(a4)
+20001f76:	00ff                	0xff
+	...
+20001fa4:	ff00                	fsw	fs0,56(a4)
+	...
+20001fae:	0000                	unimp
+20001fb0:	00ff                	0xff
+	...
+20001fea:	0000                	unimp
+20001fec:	ffff                	0xffff
+	...
+20001ffe:	ff00                	fsw	fs0,56(a4)
+20002000:	0000                	unimp
+20002002:	0000                	unimp
+20002004:	0000                	unimp
+20002006:	00ff                	0xff
+20002008:	0000                	unimp
+2000200a:	0000                	unimp
+2000200c:	ff00                	fsw	fs0,56(a4)
+	...
+2000201e:	ffff                	0xffff
+20002020:	0000                	unimp
+20002022:	0000                	unimp
+20002024:	4c20371b          	0x4c20371b
+20002028:	6964616f          	jal	sp,200486be <__global_pointer$+0x4589e>
+2000202c:	676e                	flw	fa4,216(sp)
+2000202e:	5b20                	lw	s0,112(a4)
+20002030:	0000                	unimp
+20002032:	0000                	unimp
+20002034:	205d                	jal	200020da <__init_array_end+0x3e>
+20002036:	0000381b          	0x381b
+2000203a:	0000                	unimp
+2000203c:	003a                	c.slli	zero,0xe
+2000203e:	0000                	unimp
+20002040:	0020                	addi	s0,sp,8
+20002042:	0000                	unimp
+20002044:	730a                	flw	ft6,160(sp)
+20002046:	6174                	flw	fa3,68(a0)
+20002048:	7472                	flw	fs0,60(sp)
+2000204a:	6e69                	lui	t3,0x1a
+2000204c:	2e2e2e67          	0x2e2e2e67
+20002050:	000a                	c.slli	zero,0x2
+20002052:	0000                	unimp
+20002054:	4a325b1b          	0x4a325b1b
+20002058:	4e0a                	lw	t3,128(sp)
+2000205a:	6b65                	lui	s6,0x19
+2000205c:	20694e6f          	jal	t3,20096262 <__global_pointer$+0x93442>
+20002060:	3030765b          	0x3030765b
+20002064:	5d31                	li	s10,-20
+20002066:	5b20                	lw	s0,112(a4)
+20002068:	5652                	lw	a2,52(sp)
+2000206a:	5a493233          	0x5a493233
+2000206e:	6369                	lui	t1,0x1a
+20002070:	2b5d7273          	csrrci	tp,0x2b5,26
+20002074:	5550475b          	0x5550475b
+20002078:	0a5d                	addi	s4,s4,23
+2000207a:	a9c2                	fsd	fa6,208(sp)
+2000207c:	3220                	fld	fs0,96(a2)
+2000207e:	3230                	fld	fa2,96(a2)
+20002080:	2031                	jal	2000208c <_GLOBAL__sub_I_gpu.cpp+0x1884>
+20002082:	6e45                	lui	t3,0x11
+20002084:	206e6967          	0x206e6967
+20002088:	616c6943          	fmadd.s	fs2,fs8,fs6,fa2,unknown
+2000208c:	0a6e7573          	csrrci	a0,0xa6,28
+	...
+
+Disassembly of section .srodata:
+
+20002094 <_global_impure_ptr>:
+20002094:	21b0                	fld	fa2,64(a1)
+20002096:	2000                	fld	fs0,0(s0)
+
+Disassembly of section .init_array:
+
+20002098 <__init_array_start>:
+20002098:	0808                	addi	a0,sp,16
+2000209a:	2000                	fld	fs0,0(s0)
+
+Disassembly of section .eh_frame:
+
+2000209c <.eh_frame>:
+2000209c:	0010                	0x10
+2000209e:	0000                	unimp
+200020a0:	0000                	unimp
+200020a2:	0000                	unimp
+200020a4:	00527a03          	0x527a03
+200020a8:	7c01                	lui	s8,0xfffe0
+200020aa:	0101                	addi	sp,sp,0
+200020ac:	00020d1b          	0x20d1b
+200020b0:	0010                	0x10
+200020b2:	0000                	unimp
+200020b4:	0018                	0x18
+200020b6:	0000                	unimp
+200020b8:	df48                	sw	a0,60(a4)
+200020ba:	ffff                	0xffff
+200020bc:	0064                	addi	s1,sp,12
+200020be:	0000                	unimp
+200020c0:	0000                	unimp
+200020c2:	0000                	unimp
+200020c4:	0010                	0x10
+200020c6:	0000                	unimp
+200020c8:	002c                	addi	a1,sp,8
+200020ca:	0000                	unimp
+200020cc:	df98                	sw	a4,56(a5)
+200020ce:	ffff                	0xffff
+	...
+200020d8:	004c                	addi	a1,sp,4
+200020da:	0000                	unimp
+200020dc:	0040                	addi	s0,sp,4
+200020de:	0000                	unimp
+200020e0:	e3e4                	fsw	fs1,68(a5)
+200020e2:	ffff                	0xffff
+200020e4:	01d0                	addi	a2,sp,196
+200020e6:	0000                	unimp
+200020e8:	4400                	lw	s0,8(s0)
+200020ea:	600e                	flw	ft0,192(sp)
+200020ec:	9548                	0x9548
+200020ee:	02089607          	0x2089607
+200020f2:	814c                	0x814c
+200020f4:	8801                	andi	s0,s0,0
+200020f6:	8902                	jr	s2
+200020f8:	93049203          	lh	tp,-1744(s1)
+200020fc:	9405                	srai	s0,s0,0x21
+200020fe:	9706                	add	a4,a4,ra
+20002100:	9809                	andi	s0,s0,-30
+20002102:	990a                	add	s2,s2,sp
+20002104:	9b0c9a0b          	0x9b0c9a0b
+20002108:	030d                	addi	t1,t1,3
+2000210a:	0138                	addi	a4,sp,136
+2000210c:	44c8                	lw	a0,12(s1)
+2000210e:	44c1                	li	s1,16
+20002110:	44c9                	li	s1,18
+20002112:	44d2                	lw	s1,20(sp)
+20002114:	44d444d3          	0x44d444d3
+20002118:	44d5                	li	s1,21
+2000211a:	44d6                	lw	s1,84(sp)
+2000211c:	44d844d7          	0x44d844d7
+20002120:	44d9                	li	s1,22
+20002122:	44da                	lw	s1,148(sp)
+20002124:	000e4cdb          	0xe4cdb
+20002128:	001c                	0x1c
+2000212a:	0000                	unimp
+2000212c:	0090                	addi	a2,sp,64
+2000212e:	0000                	unimp
+20002130:	e564                	fsw	fs1,76(a0)
+20002132:	ffff                	0xffff
+20002134:	0074                	addi	a3,sp,12
+20002136:	0000                	unimp
+20002138:	4c00                	lw	s0,24(s0)
+2000213a:	300e                	fld	ft0,224(sp)
+2000213c:	8158                	0x8158
+2000213e:	0201                	addi	tp,tp,0
+20002140:	c148                	sw	a0,4(a0)
+20002142:	0e44                	addi	s1,sp,788
+20002144:	0000                	unimp
+20002146:	0000                	unimp
+20002148:	0020                	addi	s0,sp,8
+2000214a:	0000                	unimp
+2000214c:	00b0                	addi	a2,sp,72
+2000214e:	0000                	unimp
+20002150:	e5b8                	fsw	fa4,72(a1)
+20002152:	ffff                	0xffff
+20002154:	00a0                	addi	s0,sp,72
+20002156:	0000                	unimp
+20002158:	4400                	lw	s0,8(s0)
+2000215a:	200e                	fld	ft0,192(sp)
+2000215c:	8964                	0x8964
+2000215e:	93049203          	lh	tp,-1744(s1)
+20002162:	9405                	srai	s0,s0,0x21
+20002164:	9506                	add	a0,a0,ra
+20002166:	88018107          	0x88018107
+2000216a:	0002                	c.slli64	zero
+2000216c:	0010                	0x10
+2000216e:	0000                	unimp
+20002170:	00d4                	addi	a3,sp,68
+20002172:	0000                	unimp
+20002174:	e634                	fsw	fa3,72(a2)
+20002176:	ffff                	0xffff
+20002178:	002c                	addi	a1,sp,8
+2000217a:	0000                	unimp
+2000217c:	0000                	unimp
+2000217e:	0000                	unimp
+20002180:	0018                	0x18
+20002182:	0000                	unimp
+20002184:	00e8                	addi	a0,sp,76
+20002186:	0000                	unimp
+20002188:	e64c                	fsw	fa1,12(a2)
+2000218a:	ffff                	0xffff
+2000218c:	0034                	addi	a3,sp,8
+2000218e:	0000                	unimp
+20002190:	5400                	lw	s0,40(s0)
+20002192:	100e                	c.slli	zero,0x23
+20002194:	8150                	0x8150
+20002196:	4801                	li	a6,0
+20002198:	44c1                	li	s1,16
+2000219a:	000e                	c.slli	zero,0x3
+2000219c:	0010                	0x10
+2000219e:	0000                	unimp
+200021a0:	0104                	addi	s1,sp,128
+200021a2:	0000                	unimp
+200021a4:	e664                	fsw	fs1,76(a2)
+200021a6:	ffff                	0xffff
+200021a8:	001c                	0x1c
+200021aa:	0000                	unimp
+200021ac:	0000                	unimp
+	...
+
+Disassembly of section .data:
+
+200021b0 <impure_data>:
+200021b0:	0000                	unimp
+200021b2:	0000                	unimp
+200021b4:	249c                	fld	fa5,8(s1)
+200021b6:	2000                	fld	fs0,0(s0)
+200021b8:	2504                	fld	fs1,8(a0)
+200021ba:	2000                	fld	fs0,0(s0)
+200021bc:	256c                	fld	fa1,200(a0)
+200021be:	2000                	fld	fs0,0(s0)
+	...
+20002258:	0001                	nop
+2000225a:	0000                	unimp
+2000225c:	0000                	unimp
+2000225e:	0000                	unimp
+20002260:	330e                	fld	ft6,224(sp)
+20002262:	abcd                	j	20002854 <_end+0x224>
+20002264:	1234                	addi	a3,sp,296
+20002266:	e66d                	bnez	a2,20002350 <impure_data+0x1a0>
+20002268:	deec                	sw	a1,124(a3)
+2000226a:	0005                	c.nop	1
+2000226c:	0000000b          	0xb
+	...
+
+200025d8 <IO_UARTRX>:
+200025d8:	0008                	0x8
+200025da:	8000                	0x8000
+
+200025dc <IO_UARTRXByteCount>:
+200025dc:	0004                	0x4
+200025de:	8000                	0x8000
+
+200025e0 <IO_UARTTX>:
+200025e0:	000c                	0xc
+200025e2:	8000                	0x8000
+
+200025e4 <GraphicsFontStart>:
+200025e4:	e800                	fsw	fs0,16(s0)
+200025e6:	1001                	c.nop	-32
+
+Disassembly of section .got:
+
+200025e8 <_GLOBAL_OFFSET_TABLE_>:
+200025e8:	0000                	unimp
+200025ea:	0000                	unimp
+200025ec:	2e20                	fld	fs0,88(a2)
+200025ee:	2000                	fld	fs0,0(s0)
+200025f0:	25e4                	fld	fs1,200(a1)
+200025f2:	2000                	fld	fs0,0(s0)
+200025f4:	25d8                	fld	fa4,136(a1)
+200025f6:	2000                	fld	fs0,0(s0)
+200025f8:	2628                	fld	fa0,72(a2)
+200025fa:	2000                	fld	fs0,0(s0)
+200025fc:	0078                	addi	a4,sp,12
+200025fe:	2000                	fld	fs0,0(s0)
+20002600:	261c                	fld	fa5,8(a2)
+20002602:	2000                	fld	fs0,0(s0)
+20002604:	0064                	addi	s1,sp,12
+20002606:	2000                	fld	fs0,0(s0)
+20002608:	25e0                	fld	fs0,200(a1)
+2000260a:	2000                	fld	fs0,0(s0)
+2000260c:	25dc                	fld	fa5,136(a1)
+2000260e:	2000                	fld	fs0,0(s0)
+20002610:	262c                	fld	fa1,72(a2)
+20002612:	2000                	fld	fs0,0(s0)
+
+Disassembly of section .got.plt:
+
+20002614 <.got.plt>:
+20002614:	ffff                	0xffff
+20002616:	ffff                	0xffff
+20002618:	0000                	unimp
+	...
+
+Disassembly of section .sbss:
+
+2000261c <__malloc_max_total_mem>:
+2000261c:	0000                	unimp
+	...
+
+20002620 <__malloc_max_sbrked_mem>:
+20002620:	0000                	unimp
+	...
+
+20002624 <__malloc_top_pad>:
+20002624:	0000                	unimp
+	...
+
+Disassembly of section .bss:
+
+20002628 <font>:
+20002628:	0000                	unimp
+	...
+
+Disassembly of section .comment:
+
+00000000 <.comment>:
+   0:	3a434347          	fmsub.d	ft6,ft6,ft4,ft7,rmm
+   4:	2820                	fld	fs0,80(s0)
+   6:	29554e47          	fmsub.s	ft8,fa0,fs5,ft5,rmm
+   a:	3120                	fld	fs0,96(a0)
+   c:	2e30                	fld	fa2,88(a2)
+   e:	2e32                	fld	ft8,264(sp)
+  10:	0030                	addi	a2,sp,8
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	1f41                	addi	t5,t5,-16
+   2:	0000                	unimp
+   4:	7200                	flw	fs0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <_STACK_SIZE-0x9ec>
+   c:	0015                	c.nop	5
+   e:	0000                	unimp
+  10:	1004                	addi	s1,sp,32
+  12:	7205                	lui	tp,0xfffe1
+  14:	3376                	fld	ft6,376(sp)
+  16:	6932                	flw	fs2,12(sp)
+  18:	7032                	flw	ft0,44(sp)
+  1a:	0030                	addi	a2,sp,8
+  1c:	0108                	addi	a0,sp,128
+  1e:	0b0a                	slli	s6,s6,0x2
