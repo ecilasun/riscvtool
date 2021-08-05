@@ -168,11 +168,32 @@ void RunBinaryBlob()
    );
 }
 
+/*void DDR3CacheTest()
+{
+   // Write something on tag #800 line #0
+   for (uint32_t m=0x00010000; m<0x00010020; m+=4)
+      *(uint32_t*)m = 0xFAFEF0F1 ^ m;
+
+   // Write something on tag #808 line #0 (overlaps same cache line, forces flush)
+   for (uint32_t m=0x01010000; m<0x01010020; m+=4)
+      *(uint32_t*)m = 0xFAFEF0F1 ^ m;
+
+   // Go back to initial tag #800 to see if what we've written is still intact
+   for (uint32_t m=0x00010000; m<0x00010020; m+=4)
+   {
+      EchoUART(":");
+      EchoHex(*(uint32_t*)m);
+      EchoUART("\n");
+   }
+}*/
+
 int main()
 {
    InstallIllegalInstructionHandler();
 
-   EchoUART("\033[2J\nNekoNi [v001] [RV32IZicsr]+[GPU]\n\u00A9 2021 Engin Cilasun\n");
+   //DDR3CacheTest();
+
+   EchoUART("\033[2J\nNekoNi [v002] [RV32IZicsr]+[GPU]\n\u00A9 2021 Engin Cilasun\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;

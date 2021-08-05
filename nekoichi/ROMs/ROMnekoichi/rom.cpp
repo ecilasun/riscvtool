@@ -341,15 +341,6 @@ void ListDir(const char *path)
 
 int main()
 {
-   EchoUART("Clearing 64Mbytes: "); // 0x00000000 - 0x0FFFFFFF
-   uint64_t startclock = ReadClock();
-   for (uint32_t m=0x00040000; m<0x03FF0000; m+=4)
-      *((uint32_t*)m) = 0x00000000;
-   uint64_t endclock = ReadClock();
-   uint32_t deltams = ClockToMs(endclock-startclock);
-   int rate = (1024*64*1024) / deltams;
-   EchoHex(rate);
-   EchoUART(" ms\n");
 
    // Read switch state at startup
    hardwareswitchstates = oldhardwareswitchstates = *IO_SwitchState;
