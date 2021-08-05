@@ -122,7 +122,7 @@ void RunBinaryBlob()
       }
    }
 
-   EchoUART("\nStarting @0x\n");
+   EchoUART("\nStarting @0x");
    EchoHex(branchaddress);
    EchoUART("\n");
 
