@@ -19,15 +19,16 @@ void __attribute__((interrupt("machine"))) illegal_instruction_exception()
    // to see why we're here
 
    // Grab address of illegal instruction exception
-   register uint32_t at;
-   asm volatile("csrr %0, mtval" : "=r"(at));
+   register uint32_t at, instr;
+   asm volatile("csrr %0, mtval" : "=r"(at));         // Exception address
+   asm volatile("csrr %0, mscratch" : "=r"(instr));   // Offending instruction
 
    // Show the address and the failing instruction
-   EchoUART("Illegal instruction @0x");
+   EchoUART("EXCEPTION: illegal instruction ");
+   EchoHex((uint32_t)instr);
+   EchoUART(" at ");
    EchoHex((uint32_t)at);
-   EchoUART(" 0x");
-   EchoHex(*(uint32_t*)at);
-   EchoUART(" 0x\n");
+   EchoUART("\n");
 
    // Deadlock
    while(1) { }
@@ -94,7 +95,7 @@ void LoadBinaryBlob()
          EchoUART("\0337 Loading [");
          for (int i=0;i<percent;++i)
             EchoUART(":");
-         for (int i=0;i<20-percent;++i)
+         for (int i=0;i<19-percent;++i)
             EchoUART(" ");
          EchoUART("] \0338");
          percent = (20*(writecursor+511)/512)/chunks;
@@ -121,7 +122,9 @@ void RunBinaryBlob()
       }
    }
 
-   EchoUART("\nstarting...\n");
+   EchoUART("\nStarting @0x\n");
+   EchoHex(branchaddress);
+   EchoUART("\n");
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
    // NOTE: Assuming a one-way trip here for now since we live in ARAM and might
@@ -168,30 +171,9 @@ void RunBinaryBlob()
    );
 }
 
-/*void DDR3CacheTest()
-{
-   // Write something on tag #800 line #0
-   for (uint32_t m=0x00010000; m<0x00010020; m+=4)
-      *(uint32_t*)m = 0xFAFEF0F1 ^ m;
-
-   // Write something on tag #808 line #0 (overlaps same cache line, forces flush)
-   for (uint32_t m=0x01010000; m<0x01010020; m+=4)
-      *(uint32_t*)m = 0xFAFEF0F1 ^ m;
-
-   // Go back to initial tag #800 to see if what we've written is still intact
-   for (uint32_t m=0x00010000; m<0x00010020; m+=4)
-   {
-      EchoUART(":");
-      EchoHex(*(uint32_t*)m);
-      EchoUART("\n");
-   }
-}*/
-
 int main()
 {
    InstallIllegalInstructionHandler();
-
-   //DDR3CacheTest();
 
    EchoUART("\033[2J\nNekoNi [v002] [RV32IZicsr]+[GPU]\n\u00A9 2021 Engin Cilasun\n");
 

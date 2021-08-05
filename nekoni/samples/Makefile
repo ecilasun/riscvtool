@@ -22,9 +22,9 @@ folders = \
 RISCV_PREFIX ?= riscv64-unknown-elf-
 RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
-#RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC
+#RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC
 # Currently NekoNi is at I phase
-RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 -Wall -Ofast -march=rv32i -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC
+RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32i -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC
 
 incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
 objs  :=
