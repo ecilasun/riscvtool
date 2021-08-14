@@ -173,9 +173,24 @@ void RunBinaryBlob()
 
 int main()
 {
+   // Illegal instruction trap
    InstallIllegalInstructionHandler();
 
-   EchoUART("\033[2J\nNekoNi [v002] [RV32IZicsr]+[GPU]\n\u00A9 2021 Engin Cilasun\n");
+   // Show splash
+   EchoUART("\033[2J\n");
+   EchoUART("+-------------------------+\n");
+   EchoUART("|          ************** |\n");
+   EchoUART("| ########   ************ |\n");
+   EchoUART("| #########  ************ |\n");
+   EchoUART("| ########   ***********  |\n");
+   EchoUART("| #        ***********    |\n");
+   EchoUART("| ##   *************   ## |\n");
+   EchoUART("| ####   *********   #### |\n");
+   EchoUART("| ######   *****   ###### |\n");
+   EchoUART("| ########   *   ######## |\n");
+   EchoUART("| ##########   ########## |\n");
+   EchoUART("+-------------------------+\n");
+   EchoUART("NekoNi [v003] [RV32IZicsr] [GPU] [SPI]\n\u00A9 2021 Engin Cilasun\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;
@@ -204,3 +219,4 @@ int main()
 
    return 0;
 }
+

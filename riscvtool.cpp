@@ -81,7 +81,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
     if (groupsize == 4) // 32bit groups (4 bytes)
     {
         unsigned char *litteendian = (unsigned char *)(_elfbinary+pheader->m_Offset);
-        for (unsigned int i=0;i<pheader->m_MemSz;++i)
+        for (unsigned int i=0; i<pheader->m_MemSz; ++i)
         {
             if (i!=0 && ((i%16) == 0))
                 printf("\n");
@@ -215,7 +215,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     tty.c_lflag &= ~ECHO;
     tty.c_lflag &= ~ISIG;
     tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);
+    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|INPCK);
 
     tty.c_oflag &= ~OPOST;
     tty.c_oflag &= ~ONLCR;
@@ -316,15 +316,15 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             // Send the string "B\r"
             byteswritten += write(serial_port, commandtosend, commandlength);
             // Wait a bit for the receiving end to start accepting
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
 
             // Send 8 byte header
             byteswritten += write(serial_port, blobheader, 8);
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
 
             // Send data
             byteswritten += write(serial_port, bytestoread+sheader->m_Offset, sheader->m_Size);
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             if (byteswritten != 0)
                 ;//printf("done (0x%.8X+0xC bytes written)\n", byteswritten-0xC);

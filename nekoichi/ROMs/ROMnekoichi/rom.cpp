@@ -138,6 +138,9 @@ void LoadBinaryBlob()
       }
    }
 
+   int percent = 0;
+   long chunks = (loadlen+511)/512;
+
    // Read binary blob
    writecursor = 0;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
@@ -149,7 +152,18 @@ void LoadBinaryBlob()
          unsigned char readdata = *IO_UARTRX;
          target[writecursor++] = readdata;
       }
+      if ((writecursor%512) == 0)
+      {
+         EchoUART("\0337 Loading [");
+         for (int i=0;i<percent;++i)
+            EchoUART(":");
+         for (int i=0;i<19-percent;++i)
+            EchoUART(" ");
+         EchoUART("] \0338");
+         percent = (20*(writecursor+511)/512)/chunks;
+      }
    }
+   EchoUART("\n");
 }
 
 void LaunchELF(uint32_t branchaddress)
@@ -157,40 +171,71 @@ void LaunchELF(uint32_t branchaddress)
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
    // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
    asm (
+      //"mv x1, x0\n" // Return address will be set below
+      //"mv x2, x0\n" // Stack pointer will be set below
+      "mv x3, x0\n"
+      "mv x4, x0\n"
+      "mv x5, x0\n"
+      "mv x6, x0\n"
+      "mv x7, x0\n"
+      "mv x8, x0\n"
+      "mv x9, x0\n"
+      "mv x10, x0\n"
+      "mv x11, x0\n"
+      "mv x12, x0\n"
+      "mv x13, x0\n"
+      "mv x14, x0\n"
+      "mv x15, x0\n"
+      "mv x16, x0\n"
+      "mv x17, x0\n"
+      "mv x18, x0\n"
+      "mv x19, x0\n"
+      "mv x20, x0\n"
+      "mv x21, x0\n"
+      "mv x22, x0\n"
+      "mv x23, x0\n"
+      "mv x24, x0\n"
+      "mv x25, x0\n"
+      "mv x26, x0\n"
+      "mv x27, x0\n"
+      "mv x28, x0\n"
+      "mv x29, x0\n"
+      "mv x30, x0\n"
+      "mv x31, x0\n"
+      "fmv.w.x	f0, zero\n"
+      "fmv.w.x	f1, zero\n"
+      "fmv.w.x	f2, zero\n"
+      "fmv.w.x	f3, zero\n"
+      "fmv.w.x	f4, zero\n"
+      "fmv.w.x	f5, zero\n"
+      "fmv.w.x	f6, zero\n"
+      "fmv.w.x	f7, zero\n"
+      "fmv.w.x	f8, zero\n"
+      "fmv.w.x	f9, zero\n"
+      "fmv.w.x	f10, zero\n"
+      "fmv.w.x	f11, zero\n"
+      "fmv.w.x	f12, zero\n"
+      "fmv.w.x	f13, zero\n"
+      "fmv.w.x	f14, zero\n"
+      "fmv.w.x	f15, zero\n"
+      "fmv.w.x	f16, zero\n"
+      "fmv.w.x	f17, zero\n"
+      "fmv.w.x	f18, zero\n"
+      "fmv.w.x	f19, zero\n"
+      "fmv.w.x	f20, zero\n"
+      "fmv.w.x	f21, zero\n"
+      "fmv.w.x	f22, zero\n"
+      "fmv.w.x	f23, zero\n"
+      "fmv.w.x	f24, zero\n"
+      "fmv.w.x	f25, zero\n"
+      "fmv.w.x	f26, zero\n"
+      "fmv.w.x	f27, zero\n"
+      "fmv.w.x	f28, zero\n"
+      "fmv.w.x	f29, zero\n"
+      "fmv.w.x	f30, zero\n"
+      "fmv.w.x	f31, zero\n"
       "lw ra, %0 \n"
-      /*"fmv.w.x	f0, zero \n"
-      "fmv.w.x	f1, zero \n"
-      "fmv.w.x	f2, zero \n"
-      "fmv.w.x	f3, zero \n"
-      "fmv.w.x	f4, zero \n"
-      "fmv.w.x	f5, zero \n"
-      "fmv.w.x	f6, zero \n"
-      "fmv.w.x	f7, zero \n"
-      "fmv.w.x	f8, zero \n"
-      "fmv.w.x	f9, zero \n"
-      "fmv.w.x	f10, zero \n"
-      "fmv.w.x	f11, zero \n"
-      "fmv.w.x	f12, zero \n"
-      "fmv.w.x	f13, zero \n"
-      "fmv.w.x	f14, zero \n"
-      "fmv.w.x	f15, zero \n"
-      "fmv.w.x	f16, zero \n"
-      "fmv.w.x	f17, zero \n"
-      "fmv.w.x	f18, zero \n"
-      "fmv.w.x	f19, zero \n"
-      "fmv.w.x	f20, zero \n"
-      "fmv.w.x	f21, zero \n"
-      "fmv.w.x	f22, zero \n"
-      "fmv.w.x	f23, zero \n"
-      "fmv.w.x	f24, zero \n"
-      "fmv.w.x	f25, zero \n"
-      "fmv.w.x	f26, zero \n"
-      "fmv.w.x	f27, zero \n"
-      "fmv.w.x	f28, zero \n"
-      "fmv.w.x	f29, zero \n"
-      "fmv.w.x	f30, zero \n"
-      "fmv.w.x	f31, zero \n"*/
-      "li x12, 0x0FFFF000 \n" // we're not coming back to the loader, set SP to near the end of DDR3
+      "li x12, 0x0FFF0000\n" // Stack pointer at 0x0FFF0000
       "mv sp, x12 \n"
       "ret \n"
       : 
@@ -217,7 +262,10 @@ void RunBinaryBlob()
       }
    }
 
-   EchoUART("'remote.elf' starting\n");
+   EchoUART("\nStarting @0x");
+   EchoHex(branchaddress);
+   EchoUART("\n");
+
    LaunchELF(branchaddress);
 
    // Unfortunately, if I use 'noreturn' attribute with above code, it doesn't work
@@ -287,7 +335,9 @@ int LoadAndRunELF(int selection)
       uint32_t branchaddress;
       ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
       f_close(&fp);
-      EchoUART("starting\n");
+      EchoUART("\nStarting @0x");
+      EchoHex(branchaddress);
+      EchoUART("\n");
       LaunchELF(branchaddress);
       return 0;
    }
@@ -339,8 +389,42 @@ void ListDir(const char *path)
       EchoUART(FRtoString[re]);
 }
 
+void __attribute__((interrupt("machine"))) illegal_instruction_exception()
+{
+   // We only have illegal instruction handler installed,
+   // therefore won't need to check the mcause register
+   // to see why we're here
+
+   // Grab address of illegal instruction exception
+   register uint32_t at, instr;
+   asm volatile("csrr %0, mtval" : "=r"(at));         // Exception address
+   asm volatile("csrr %0, mscratch" : "=r"(instr));   // Offending instruction
+
+   // Show the address and the failing instruction
+   EchoUART("EXCEPTION: illegal instruction ");
+   EchoHex((uint32_t)instr);
+   EchoUART(" at ");
+   EchoHex((uint32_t)at);
+   EchoUART("\n");
+
+   // Deadlock
+   while(1) { }
+}
+
+void InstallIllegalInstructionHandler()
+{
+   int msie = (1 << 2); // Enable illegal instruction exception
+   int mstatus = (1 << 3); // Enable machine interrupts
+
+   asm volatile("csrrw zero, mtvec, %0" :: "r" (illegal_instruction_exception));
+   asm volatile("csrrw zero, mie,%0" :: "r" (msie));
+   asm volatile("csrrw zero, mstatus,%0" :: "r" (mstatus));
+}
+
 int main()
 {
+   // Illegal instruction trap
+   InstallIllegalInstructionHandler();
 
    // Read switch state at startup
    hardwareswitchstates = oldhardwareswitchstates = *IO_SwitchState;
@@ -358,7 +442,7 @@ int main()
    EchoUART("| ########   *   ######## |\r\n");
    EchoUART("| ##########   ########## |\r\n");
    EchoUART("+-------------------------+\r\n");
-   EchoUART("\nNekoIchi [0x000C] [RV32IMFZicsr]\n\u00A9 2021 Engin Cilasun\n");
+   EchoUART("\nNekoIchi [0x000D] [RV32IMFZicsr]\n\u00A9 2021 Engin Cilasun\n");
 
    uint32_t sdcardavailable = 0;
    FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
