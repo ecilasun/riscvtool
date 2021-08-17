@@ -1,5 +1,6 @@
 #include "core.h"
 #include "audio.h"
+#include "leds.h"
 
 #include "sdcard.h"
 #include "fat32/ff.h"
@@ -158,6 +159,9 @@ static long play_module( signed char *module )
 			for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
 				*IO_AudioFIFO = src[i];
 
+			// LED indicator
+			*IO_LEDRW = src[0]&0xF;
+
 			if( samples_remaining <= 0 || result != 0 )
 				playing = 0;
 		}
@@ -196,6 +200,9 @@ void PlayMODFile(const char *fname)
 
 int main( int argc, char **argv )
 {
+	// Save LED status
+	uint32_t oldledstatus = *IO_LEDRW;
+
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 		return -1;
@@ -204,5 +211,7 @@ int main( int argc, char **argv )
 	PlayMODFile("sd:test.mod");
 	printf("Done.\n");
 
+	// Restore LED status
+	*IO_LEDRW = oldledstatus;
 	return 0;
 }

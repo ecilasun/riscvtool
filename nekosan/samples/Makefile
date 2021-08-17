@@ -19,6 +19,7 @@ folders = \
 	ddr3test \
 	modplayer \
 	audiotest \
+	interrupttest \
 
 # Rules
 
