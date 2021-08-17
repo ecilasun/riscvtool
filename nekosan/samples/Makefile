@@ -18,6 +18,7 @@ folders = \
 	sdcard \
 	ddr3test \
 	modplayer \
+	audiotest \
 
 # Rules
 

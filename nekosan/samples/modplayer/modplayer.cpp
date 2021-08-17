@@ -178,7 +178,7 @@ void PlayMODFile(const char *fname)
 	if( length > 0 )
 	{
 		printf( "Module Data Length: %li bytes.\n", length );
-		module = (signed char*)calloc( length, 1 );
+		module = (signed char*)malloc( length );
 		if( module != NULL )
 		{
 			count = read_file( fname, module, length );
@@ -186,6 +186,10 @@ void PlayMODFile(const char *fname)
 				printf("Module file is truncated. %li bytes missing.\n", length - count );
 			play_module( module );
 			free( module );
+		}
+		else
+		{
+			printf("Error: Could not allocate memory for module\n");
 		}
 	}
 }
