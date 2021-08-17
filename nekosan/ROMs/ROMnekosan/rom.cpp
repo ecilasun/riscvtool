@@ -11,6 +11,7 @@
 #include "rvcrt0.h"
 
 #include "core.h"
+#include "audio.h"
 #include "uart.h"
 #include "leds.h"
 
@@ -165,6 +166,9 @@ void RunBinaryBlob()
 
 int main()
 {
+   // Write silence to audio output
+   *IO_AudioFIFO = 0x0;
+
    // Turn off all LEDs
    *IO_LEDRW = 0x0;
 

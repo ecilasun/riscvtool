@@ -200,7 +200,7 @@ int main( int argc, char **argv )
 	if (mountattempt != FR_OK)
 		return -1;
 
-	printf("Playing song.mod...\n");
+	printf("Playing sd:test.mod...\n");
 	PlayMODFile("sd:test.mod");
 	printf("Done.\n");
 

@@ -9,5 +9,5 @@ To run the mod player sample:
 7) Finally, use the following command from a terminal to send the modplayer.elf to the SoC
    build/release/riscvtool modplayer.elf -sendelf 0x10000 /dev/ttyUSB1
    where ttyUSB1 should match the USB port that your A7 board is attached to
-8) You should now see 'Playing' message and some information about the mod file on the terminal
+8) You should now see 'Playing sd:test.mod' message and some information about the mod file on the terminal
 9) After the message, audio playback will start. Gradually increase the volume on your headphones/speakers to hear the music.
