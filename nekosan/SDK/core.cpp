@@ -7,6 +7,10 @@
 #include "core.h"
 #include "uart.h"
 
+#ifndef DISABLE_FILESYSTEM
+#include "fat32/ff.h"
+#endif
+
 volatile uint32_t *DDR3Start = (uint32_t* )0x00000000;                     // Start of DDR3 RAM region (inclusive, 256Mbytes)
 volatile uint32_t *DDR3End = (uint32_t* )0x10000000;                       // End of DDR3 RAM region (non-inclusive)
 
@@ -73,6 +77,11 @@ static uint8_t *heap_start  = (uint8_t*)0x01000000;
 static uint8_t *heap_end    = (uint8_t*)0x06FFFFFF;
 
 extern "C" {
+
+#ifndef DISABLE_FILESYSTEM
+   FIL s_filehandles[32];
+   int s_numhandles = 0;
+#endif
 
    /*int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
    {

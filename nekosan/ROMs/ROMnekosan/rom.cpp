@@ -87,8 +87,8 @@ void LoadBinaryBlob()
          loadlenaschar[writecursor++] = *IO_UARTRXTX;
    }
 
-   int percent = 0;
-   long chunks = (loadlen+511)/512;
+   //int percent = 0;
+   //long chunks = (loadlen+511)/512;
 
    // Read binary blob
    writecursor = 0;
@@ -98,7 +98,7 @@ void LoadBinaryBlob()
       uint32_t bytecount = *IO_UARTRXByteCount;
       if (bytecount != 0)
          target[writecursor++] = *IO_UARTRXTX;
-      if ((writecursor%512) == 0 || (writecursor==loadlen))
+      /*if ((writecursor%512) == 0 || (writecursor==loadlen))
       {
          EchoUART("\0337 @0x");
          EchoHex(loadtarget);
@@ -109,9 +109,9 @@ void LoadBinaryBlob()
             EchoUART(" ");
          EchoUART("] \0338");
          percent = (20*(writecursor+511)/512)/chunks;
-      }
+      }*/
    }
-   EchoUART("\n");
+   //EchoUART("\n");
 }
 
 void RunBinaryBlob()
@@ -139,9 +139,9 @@ void RunBinaryBlob()
       EchoUART("\n");
    }*/
 
-   EchoUART("\nStarting @0x");
-   EchoHex(branchaddress);
-   EchoUART("\n");
+   //EchoUART("\nStarting @0x");
+   //EchoHex(branchaddress);
+   //EchoUART("\n");
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
    // NOTE: Assuming a one-way trip here for now since we live in ARAM and might
@@ -193,8 +193,24 @@ int main()
    // Illegal instruction trap
    InstallIllegalInstructionHandler();
 
-   // Show splash
-   EchoUART("\033[2J\nNekoSan [v001] [RV32I]\n\u00A9 2021 Engin Cilasun\n");
+   // Show startup info
+   EchoUART("\033[2J\r\n");
+   EchoUART("+-------------------------+\r\n");
+   EchoUART("|          ************** |\r\n");
+   EchoUART("| ########   ************ |\r\n");
+   EchoUART("| #########  ************ |\r\n");
+   EchoUART("| ########   ***********  |\r\n");
+   EchoUART("| #        ***********    |\r\n");
+   EchoUART("| ##   *************   ## |\r\n");
+   EchoUART("| ####   *********   #### |\r\n");
+   EchoUART("| ######   *****   ###### |\r\n");
+   EchoUART("| ########   *   ######## |\r\n");
+   EchoUART("| ##########   ########## |\r\n");
+   EchoUART("+-------------------------+\r\n");
+   EchoUART("\nNekoSan version 0001\n");
+   EchoUART("RV32IZicsr\n");
+   EchoUART("Devices: UART, SDCard\n");
+   EchoUART("\u00A9 2021 Engin Cilasun\n\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;

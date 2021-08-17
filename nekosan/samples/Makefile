@@ -14,6 +14,7 @@ thirdparty_libs = ../../3rdparty
 
 folders = \
 	helloworld \
+	sdcard \
 	ddr3test \
 
 # Rules
@@ -28,11 +29,9 @@ RISCV_GCC_OPTS ?= -mcmodel=medany -DDISABLE_FILESYSTEM -std=c++14 -Wall -Ofast -
 incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
 objs  :=
 
-# $(wildcard $(thirdparty_libs)/**/*.c)
-
 define compile_template
 $(1).elf: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
-	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) $(wildcard $(corelib_dir)/*.cpp) $(wildcard $(thirdparty_libs)/memtest/*.c)
+	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) $(wildcard $(corelib_dir)/*.cpp) $(wildcard $(thirdparty_libs)/**/*.c)
 $(1).txt: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
 	$$(RISCV_OBJDUMP) $(src_dir)/$(1).elf -x -D -S >>  $(src_dir)/$(1).txt
 endef
