@@ -5,8 +5,6 @@
 #include "sdcard.h"
 #include "fat32/ff.h"
 
-#include <stdio.h>
-
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -41,7 +39,7 @@ void ListDir(const char *path)
          re = f_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
-            int fidx=0;
+            /*int fidx=0;
             char flags[64]="";
             if (finf.fattrib&0x01) flags[fidx++]='r';
             if (finf.fattrib&0x02) flags[fidx++]='h';
@@ -50,14 +48,15 @@ void ListDir(const char *path)
             if (finf.fattrib&0x0F) flags[fidx++]='L';
             if (finf.fattrib&0x10) flags[fidx++]='d';
             if (finf.fattrib&0x20) flags[fidx++]='a';
-            flags[fidx++]=0;
-            printf("%s %d %s\r\n", finf.fname, (int)finf.fsize, flags);
+            flags[fidx++]=0;*/
+            EchoUART(finf.fname);//, (int)finf.fsize, flags);
+			EchoUART("\n");
          }
       } while(re == FR_OK && dir.sect!=0);
       f_closedir(&dir);
    }
    else
-      printf("%s", FRtoString[re]);
+      EchoUART(FRtoString[re]);
 }
 
 int main()
