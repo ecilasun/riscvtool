@@ -186,7 +186,7 @@ int main()
    EchoUART("| ##########   ########## |\r\n");
    EchoUART("+-------------------------+\r\n");
    EchoUART("\nNekoSan version 0001\n");
-   EchoUART("RV32IZicsr\n");
+   EchoUART("RV32IMZicsr\n");
    EchoUART("Devices: UART, SPI, SWTCH, LED\n");
    EchoUART("\u00A9 2021 Engin Cilasun\n\n");
 
