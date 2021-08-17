@@ -97,7 +97,7 @@ void LoadBinaryBlob()
       if (bytecount != 0)
       {
          target[writecursor++] = *IO_UARTRXTX;
-         *IO_LEDRW = (writecursor>>7)&0xF; // Use only the mono LEDs as UART indicator
+         *IO_LEDRW = (writecursor>>9)&0x1; // Blink rightmost LED as status indicator
       }
    }
    *IO_LEDRW = 0x0; // Turn all LEDs off
