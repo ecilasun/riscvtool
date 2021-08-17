@@ -17,6 +17,7 @@ folders = \
 	leds \
 	sdcard \
 	ddr3test \
+	modplayer \
 
 # Rules
 
@@ -25,7 +26,7 @@ RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 #RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lc -lgloss -lgcc -lm -ffreestanding -fomit-frame-pointer
 # Currently NekoSan is at I phase
-RISCV_GCC_OPTS ?= -mcmodel=medany -DDISABLE_FILESYSTEM -std=c++14 -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections
+RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections
 
 incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
 objs  :=

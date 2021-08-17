@@ -32,18 +32,18 @@ void __attribute__((interrupt("machine"))) illegal_instruction_exception()
       uint32_t opcode = read_csr(mscratch);
 
       // Show the address and the failing instruction's opcode field
-      EchoUART("EXCEPTION: Illegal instruction I$(0x");
+      EchoStr("EXCEPTION: Illegal instruction I$(0x");
       EchoHex((uint32_t)opcode);
-      EchoUART(") D$(0x");
+      EchoStr(") D$(0x");
       EchoHex(*(uint32_t*)at);
-      EchoUART(") at 0x");
+      EchoStr(") at 0x");
       EchoHex((uint32_t)at);
-      EchoUART("\n");
+      EchoStr("\n");
    }
    else
    {
       // We've hit a breakpoint
-      EchoUART("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
+      EchoStr("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
    }
 
    // Deadlock
@@ -172,23 +172,23 @@ int main()
    InstallIllegalInstructionHandler();
 
    // Show startup info
-   EchoUART("\033[2J\r\n");
-   EchoUART("+-------------------------+\r\n");
-   EchoUART("|          ************** |\r\n");
-   EchoUART("| ########   ************ |\r\n");
-   EchoUART("| #########  ************ |\r\n");
-   EchoUART("| ########   ***********  |\r\n");
-   EchoUART("| #        ***********    |\r\n");
-   EchoUART("| ##   *************   ## |\r\n");
-   EchoUART("| ####   *********   #### |\r\n");
-   EchoUART("| ######   *****   ###### |\r\n");
-   EchoUART("| ########   *   ######## |\r\n");
-   EchoUART("| ##########   ########## |\r\n");
-   EchoUART("+-------------------------+\r\n");
-   EchoUART("\nNekoSan version 0001\n");
-   EchoUART("RV32IMZicsr\n");
-   EchoUART("Devices: UART, SPI, SWTCH, LED\n");
-   EchoUART("\u00A9 2021 Engin Cilasun\n\n");
+   EchoStr("\033[2J\r\n");
+   EchoStr("+-------------------------+\r\n");
+   EchoStr("|          ************** |\r\n");
+   EchoStr("| ########   ************ |\r\n");
+   EchoStr("| #########  ************ |\r\n");
+   EchoStr("| ########   ***********  |\r\n");
+   EchoStr("| #        ***********    |\r\n");
+   EchoStr("| ##   *************   ## |\r\n");
+   EchoStr("| ####   *********   #### |\r\n");
+   EchoStr("| ######   *****   ###### |\r\n");
+   EchoStr("| ########   *   ######## |\r\n");
+   EchoStr("| ##########   ########## |\r\n");
+   EchoStr("+-------------------------+\r\n");
+   EchoStr("\nNekoSan version 0001\n");
+   EchoStr("RV32IMZicsr\n");
+   EchoStr("Devices: UART, SPI, SWTCH, LED\n");
+   EchoStr("\u00A9 2021 Engin Cilasun\n\n");
 
    // UART communication section
    uint8_t prevchar = 0xFF;

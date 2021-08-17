@@ -7,7 +7,7 @@
 
 int main()
 {
-    EchoUART("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
+    printf("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
     int i=0;
     uint64_t startclock = ReadClock();
     for (uint32_t m=0x01000000; m<0x03000000; m+=4)

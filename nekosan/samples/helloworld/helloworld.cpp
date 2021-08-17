@@ -3,7 +3,7 @@
 
 int main()
 {
-    EchoUART("Hello, world!\n");
+    EchoStr("Hello, world!\n");
 
     // Stay here, as we don't have anywhere else to go back to
     while (1) { }

@@ -4,7 +4,7 @@
 
 int main()
 {
-    EchoUART("IO Test!\n");
+    EchoStr("LED IO Test\n");
 
     *IO_LEDRW = 0x0;
 

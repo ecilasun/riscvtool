@@ -49,28 +49,30 @@ void ListDir(const char *path)
             if (finf.fattrib&0x10) flags[fidx++]='d';
             if (finf.fattrib&0x20) flags[fidx++]='a';
             flags[fidx++]=0;*/
-            EchoUART(finf.fname);//, (int)finf.fsize, flags);
-			EchoUART("\n");
+            EchoStr(finf.fname);
+			EchoStr(" ");
+			EchoDec((int32_t)finf.fsize);//, flags);
+			EchoStr("b\n");
          }
       } while(re == FR_OK && dir.sect!=0);
       f_closedir(&dir);
    }
    else
-      EchoUART(FRtoString[re]);
+      EchoStr(FRtoString[re]);
 }
 
 int main()
 {
-    EchoUART("SD Card test\n\n");
+    EchoStr("SD Card test\n\n");
 
 	// Init file system
 	FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
-		EchoUART(FRtoString[mountattempt]);
+		EchoStr(FRtoString[mountattempt]);
 	else
 	{
-		EchoUART("Mounted volume SD:\n");
+		EchoStr("Mounted volume SD:\n");
 		ListDir("sd:");
 	}
 
