@@ -12,6 +12,7 @@
 
 #include "core.h"
 #include "uart.h"
+#include "leds.h"
 
 // NOTE: Trap handler's always aligned to 256 bytes
 void __attribute__((interrupt("machine"))) illegal_instruction_exception()
@@ -87,9 +88,6 @@ void LoadBinaryBlob()
          loadlenaschar[writecursor++] = *IO_UARTRXTX;
    }
 
-   //int percent = 0;
-   //long chunks = (loadlen+511)/512;
-
    // Read binary blob
    writecursor = 0;
    volatile uint8_t* target = (volatile uint8_t* )loadtarget;
@@ -97,21 +95,12 @@ void LoadBinaryBlob()
    {
       uint32_t bytecount = *IO_UARTRXByteCount;
       if (bytecount != 0)
-         target[writecursor++] = *IO_UARTRXTX;
-      /*if ((writecursor%512) == 0 || (writecursor==loadlen))
       {
-         EchoUART("\0337 @0x");
-         EchoHex(loadtarget);
-         EchoUART(" [");
-         for (int i=0;i<percent;++i)
-            EchoUART(":");
-         for (int i=0;i<19-percent;++i)
-            EchoUART(" ");
-         EchoUART("] \0338");
-         percent = (20*(writecursor+511)/512)/chunks;
-      }*/
+         target[writecursor++] = *IO_UARTRXTX;
+         *IO_LEDRW = writecursor&0xF; // Only the mono LEDs
+      }
    }
-   //EchoUART("\n");
+   *IO_LEDRW = 0x0; // Turn all LEDs off
 }
 
 void RunBinaryBlob()
@@ -128,20 +117,6 @@ void RunBinaryBlob()
       if (bytecount != 0)
          branchaddressaschar[writecursor++] = *IO_UARTRXTX;
    }
-
-   // Debug dump program bytes
-   /*for (uint32_t i=0; i<64; ++i)
-   {
-      uint32_t V = *((uint32_t*)(i*4+branchaddress));
-      EchoHex(i*4+branchaddress);
-      EchoUART(" : ");
-      EchoHex(V);
-      EchoUART("\n");
-   }*/
-
-   //EchoUART("\nStarting @0x");
-   //EchoHex(branchaddress);
-   //EchoUART("\n");
 
    // Set up stack pointer and branch to loaded executable's entry point (noreturn)
    // NOTE: Assuming a one-way trip here for now since we live in ARAM and might
@@ -190,6 +165,9 @@ void RunBinaryBlob()
 
 int main()
 {
+   // Turn off all LEDs
+   *IO_LEDRW = 0x0;
+
    // Illegal instruction trap
    InstallIllegalInstructionHandler();
 
@@ -209,7 +187,7 @@ int main()
    EchoUART("+-------------------------+\r\n");
    EchoUART("\nNekoSan version 0001\n");
    EchoUART("RV32IZicsr\n");
-   EchoUART("Devices: UART, SDCard\n");
+   EchoUART("Devices: UART, SPI, SWTCH, LED\n");
    EchoUART("\u00A9 2021 Engin Cilasun\n\n");
 
    // UART communication section

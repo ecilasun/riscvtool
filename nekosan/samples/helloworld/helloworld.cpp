@@ -1,6 +1,5 @@
 #include "core.h"
 #include "uart.h"
-#include <stdio.h>
 
 int main()
 {
