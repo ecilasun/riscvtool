@@ -9,7 +9,7 @@
 #include "gpu.h"
 
 uint32_t vramPage = 0;
-uint8_t *GRAM = (uint8_t *)GraphicsRAMStart;
+uint8_t *rtbuffer = (uint8_t*)GraphicsRAMStart;
 
 struct Light {
     vec3 position;
@@ -108,16 +108,16 @@ vec3 cast_ray(const vec3 &orig, const vec3 &dir, const std::vector<Sphere> &sphe
     return material.diffuse_color * diffuse_light_intensity * material.albedo[0] + vec3{1., 1., 1.}*specular_light_intensity * material.albedo[1] + reflect_color*material.albedo[2] + refract_color*material.albedo[3];
 }
 
-void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights, int phase) {
-    const int   width    = 160;
-    const int   height   = 100;
+void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights) {
+    const int   width    = 320;
+    const int   height   = 200;
     const float fov      = 3.1415927f/3.f;
 
     for (size_t j = 0; j<height; j++)
     {
-        for (size_t i = 0; i<width; i+=4)
+        for (size_t i = 0; i<width; i++)
         {
-            float dir_x =  (i+phase + 0.5f) - width/2.f;
+            float dir_x =  (i + 0.5f) - width/2.f;
             float dir_y = -(j + 0.5f) + height/2.f;    // this flips the image at the same time
             float dir_z = -height/(2.f*tan(fov/2.f));
             vec3 V = cast_ray(vec3{0,0,0}, vec3{dir_x, dir_y, dir_z}.normalize(), spheres, lights);
@@ -128,15 +128,30 @@ void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights
             int G = int(255.f*V[1]) / 32;
             int B = int(255.f*V[2]) / 64;
             int RGB = (B<<6) | (G<<3) | R;
-            uint32_t addrs = (i+j*512)>>2;
-            uint32_t val = (RGB<<24)|(RGB<<16)|(RGB<<8)|RGB;
-            GPUSetRegister(2, val);
-            GPUSetRegister(3, addrs);
-            GPUWriteVRAM(3, 2, 1<<phase);
+            rtbuffer[i+j*width] = (RGB<<24)|(RGB<<16)|(RGB<<8)|RGB;
         }
-    vramPage = (vramPage+1)%2;
-    GPUSetRegister(2, vramPage);
-    GPUSetVideoPage(2);
+
+        // DMA
+        const int xoffset = 0;
+        const int yoffset = 0;
+        for (int L=0;L<height;++L)
+        {
+            // Source address in GRAM
+            uint32_t sysramsource = uint32_t(rtbuffer+L*width);
+            GPUSetRegister(4, sysramsource);
+
+            // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
+            uint32_t vramramtarget = ((L+yoffset)*512>>2)+xoffset;
+            GPUSetRegister(5, vramramtarget);
+
+            // Length of copy, in DWORDs
+            uint32_t dmacount = (width)>>2;
+            GPUKickDMA(4, 5, dmacount, false);
+        }
+
+        vramPage = (vramPage+1)%2;
+        GPUSetRegister(2, vramPage);
+        GPUSetVideoPage(2);
     }
 }
 
@@ -176,21 +191,7 @@ int main()
         {{ 30, 20,  30}, 1.7}
     };
 
-    for (uint32_t i=0;i<4;++i)
-    {
-        EchoStr("Phase ");
-        EchoDec(i);
-        EchoStr("\n");
-        render(spheres, lights, i);
-    }
-
-    // Keep flipping to overlay the two interleaved images
-    while(1)
-    {
-        vramPage = (vramPage+1)%2;
-        GPUSetRegister(2, vramPage);
-        GPUSetVideoPage(2);
-    }
+    render(spheres, lights);
 
     return 0;
 }
