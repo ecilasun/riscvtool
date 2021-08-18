@@ -191,7 +191,7 @@ int main()
    EchoStr("+-------------------------+\r\n");
    EchoStr("\nNekoSan version 0001\n");
    EchoStr("RV32IMZicsr\n");
-   EchoStr("Devices: URT/SPI/SWH/LED/SND/GPU\n");
+   EchoStr("Devices: UART/SPI/SWITCH/LED/AUDIO/GPU\n");
    EchoStr("\u00A9 2021 Engin Cilasun\n\n");
 
    // UART communication section

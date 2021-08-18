@@ -44,3 +44,43 @@ void InitFont()
    // Copy the 256x24 (3 rows, 32 characters on each row) font to Fast RAM so that GPU can draw with it
    __builtin_memcpy(font, residentfont, 256*24);
 }
+
+
+void PrintDMA(const int col, const int row, const char *message, bool masked)
+{
+   int i=0;
+   while (message[i] != 0)
+   {
+      int currentchar = message[i]-32;
+      if (masked && (currentchar==0))
+      {
+         ++i;
+         continue;
+      }
+      if (currentchar<0)
+      {
+         ++i;
+         continue;
+      }
+
+      int charrow = (currentchar>>5)*8;
+      int charcol = (currentchar%32)*8;
+
+      for (int y=0;y<8;++y)
+      {
+         // Source address in SYSRAM (NOTE: The address has to be in multiples of DWORD)
+         uint32_t sysramsource = uint32_t(font+(charcol+0+((charrow+y)*256)));
+         GPUSetRegister(4, sysramsource);
+
+         // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
+         int py = ((y+row)*512);
+         uint32_t vramramtarget = (i*8+0+col+py)>>2;
+         GPUSetRegister(5, vramramtarget);
+
+         // Length of copy in DWORDs
+         uint32_t dmacount = 2;
+         GPUKickDMA(4, 5, dmacount, masked);
+      }
+      ++i;
+   }
+}

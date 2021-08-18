@@ -23,7 +23,7 @@ extern volatile uint32_t *GraphicsFontStart;
 #define GPUSETREGHI     0x09
 #define GPUSETPALENT    0x02
 #define GPUUNUSED3      0x03
-#define GPUUNUSED4      0x04
+#define GPUSYSDMA       0x04
 #define GPUVMEMOUT      0x05
 #define GPUGMEMOUT      0x06
 #define GPUSETVPAGE     0x07
@@ -52,3 +52,12 @@ inline void GPUSetPaletteEntry(const uint8_t palindexreg, const uint8_t palcolor
     // Use MAKERGBPALETTECOLOR() to pass packed colors to this function
     *IO_GPUCommandFIFO = GPUOPCODE20(GPUSETPALENT, palindexreg, palcolorreg, 0);
 }
+
+inline void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAlignedTargetReg, const uint16_t DMALengthInDWORDs, const uint8_t masked)
+{
+    *IO_GPUCommandFIFO = GPUOPCODE20(GPUSYSDMA, VRAMDWORDAlignedTargetReg, SYSRAMSourceReg, ((DMALengthInDWORDs&0x7FFF) | (masked ? 0x8000 : 0x0000)));
+}
+
+// Utilities
+void InitFont();
+void PrintDMA(const int col, const int row, const char *message, bool masked);

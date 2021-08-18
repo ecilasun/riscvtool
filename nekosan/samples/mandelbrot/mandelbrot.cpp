@@ -1,8 +1,15 @@
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <memory.h>
+#include <math.h>
+#include <cmath>
 #include "core.h"
 #include "uart.h"
 #include "gpu.h"
-#include <math.h>
-#include <stdio.h>
+
+// Place the offscreen buffer in GPU accessible memory
+uint8_t *mandelbuffer = (uint8_t*)GraphicsRAMStart;
 
 int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
@@ -29,73 +36,130 @@ int mandelbrotFloat(float ox, float oy, float sx)
 {
    int R = 32;//int(27.71f-5.156f*logf(sx));
 
-   for (int row = 0; row < 128; ++row)
+   static int row = 0;
+   //for (int row = 0; row < 128; ++row)
    {
-      for (int col = 0; col < 128; col+=4)
+      for (int col = 0; col < 128; ++col)
       {
-        int c[4];
-        for (int i=0;i<4;++i)
-        {
-            int M = evalMandel(R, col+i, row, ox, oy, sx);
-            if (M < 2)
-            {
-                c[i] = 0;
-            }
-            else
-            {
-                float ratio = float(M)/float(R);
-                c[i] = 0xFF&int(1.f*ratio*255);
-            }
-        }
+         int M = evalMandel(R, col, row, ox, oy, sx);
+         int c;
+         if (M < 2)
+         {
+            c = 0;
+         }
+         else
+         {
+            float ratio = float(M)/float(R);
+            c = int(1.f*ratio*255);
+         }
 
-        uint32_t a = (col+row*512)>>2;
-        uint32_t v = (c[3]<<24)|(c[2]<<16)|(c[1]<<8)|c[0];
-
-        GPUSetRegister(2, v);
-        GPUSetRegister(3, a);
-        GPUWriteVRAM(3, 2, 0xF);
+         mandelbuffer[col + (row<<7)] = c;
       }
    }
-   return 1;
+   row = row+1;
+   if (row == 128)
+   {
+       row = 0;
+       return 1;
+   }
+   return 0;
 }
 
-int main()
+int main(int argc, char ** argv)
 {
-    float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
-    float X = -0.235125f;
-    float Y = 0.827215f;
+   InitFont();
 
-    EchoStr("Mandelbrot\n");
+   // Set initial page
+   uint32_t page = 0;
+   GPUSetRegister(0, page);
+   GPUSetVideoPage(0);
 
-    // Set grayscale palette
-    for (uint32_t i=0;i<256;++i)
+   float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
+   float X = -0.235125f;
+   float Y = 0.827215f;
+
+   // Make sure this lands in some unused area of the GraphicsRAM
+   volatile uint32_t *gpustate = (volatile uint32_t *)GraphicsFontStart-8;
+   *gpustate = 0x0;
+   uint32_t cnt = 0x0;
+
+   // Set grayscale palette
+   for (uint32_t i=0;i<256;++i)
+   {
+      int j=255-i;
+      uint32_t color = MAKERGBPALETTECOLOR(j, j, j);
+      GPUSetRegister(0, i);
+      GPUSetRegister(1, color);
+      GPUSetPaletteEntry(0, 1);
+   }
+
+   uint64_t prevreti = ReadRetiredInstructions();
+   uint32_t prevms = ClockToMs(ReadClock());
+   uint32_t ips = 0;
+   while(1)
+   {
+      // Generate one line of mandelbrot into offscreen buffer
+      // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
+      if (mandelbrotFloat(X,Y,R) != 0)
+         R += 0.01f; // Zoom
+
+      uint32_t ms = ClockToMs(ReadClock());
+
+    if (ms-prevms > 1000)
     {
-        int j=255-i;
-        uint32_t color = MAKERGBPALETTECOLOR(j, j, j);
-        GPUSetRegister(0, i);
-        GPUSetRegister(1, color);
-        GPUSetPaletteEntry(0, 1);
+        prevms += 1000; // So that we have the leftover time carried over
+        uint64_t reti = ReadRetiredInstructions();
+        ips = (reti-prevreti);
+        prevreti = reti;
+
+        EchoStr("IPS: ");
+        EchoDec(ips);
+        EchoStr("\n");
     }
 
-    // Activate page 0 for write (which will then set page 1 to display)
-    int page = 0;
-    GPUSetRegister(2, page%2);
-    GPUSetVideoPage(2);
-
-    while (1)
+    //if (*gpustate == cnt) // GPU work complete, push more
     {
-        mandelbrotFloat(X,Y,R);
-        // Activate page 1 to write (which will then set page 0 to display)
-        page++;
-        GPUSetRegister(2, page%2);
-        GPUSetVideoPage(2);
+        ++cnt;
 
-        R += 0.01f; // Zoom
-        EchoStr("step...\n");
-    }
+        //ClearScreen(0x12);
 
-    // Stay here, as we don't have anywhere else to go back to
-    while (1) { }
+        // DMA
+        for (int L=0;L<128;++L)
+        {
+            // Source address in GRAM
+            uint32_t sysramsource = uint32_t(mandelbuffer+L*128);
+            GPUSetRegister(4, sysramsource);
 
-    return 0;
+            // Copy to top of the VRAM (Same rule here, address has to be in multiples of DWORD)
+            uint32_t vramramtarget = ((L+64)*512>>2)+32;
+            GPUSetRegister(5, vramramtarget);
+
+            // Length of copy, in DWORDs
+            uint32_t dmacount = (128)>>2;
+            GPUKickDMA(4, 5, dmacount, false);
+        }
+
+        //PrintDMA(0, 200, "IPS: ", false);
+        //PrintDMADecimal(5*8, 200, ips, false);
+
+         // Stall GPU until vsync is reached
+         //GPUWaitForVsync();
+
+         page = (page + 1)%2;
+         GPUSetRegister(0, page);
+         GPUSetVideoPage(0);
+
+         // GPU status address in G1
+         //uint32_t gpustateDWORDaligned = uint32_t(gpustate);
+         //GPUSetRegister(1, gpustateDWORDaligned);
+
+         // Write 'end of processing' from GPU so that CPU can resume its work
+         //GPUSetRegister(2, cnt);
+         //GPUWriteVRAM(2, 1, 0xF);
+
+         *gpustate = 0;
+      }
+   }
+
+   return 0;
 }
