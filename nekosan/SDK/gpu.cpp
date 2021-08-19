@@ -42,9 +42,8 @@ uint8_t *font = (uint8_t*)GraphicsFontStart;
 void InitFont()
 {
    // Copy the 256x24 (3 rows, 32 characters on each row) font to Fast RAM so that GPU can draw with it
-   __builtin_memcpy(font, residentfont, 256*24);
+   __builtin_memcpy(font, residentfont, GPUFontSize);
 }
-
 
 void PrintDMA(const int col, const int row, const char *message, bool masked)
 {

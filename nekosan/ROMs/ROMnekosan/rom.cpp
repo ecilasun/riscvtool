@@ -89,7 +89,9 @@ uint32_t vramPage = 0;
 
 void CLS()
 {
-   // Clear screen
+   // Clear screen (actual framebuffer is 320x208 pixels, the lower 8 pixels are imagined to be a menu/status bar of sorts)
+
+   // Clear the actual screen area
    for (int y=0;y<200;++y)
    {
       for (int x=0;x<320;x+=4)
@@ -100,14 +102,34 @@ void CLS()
          GPUWriteVRAM(0, 1, 0xF);
       }
    }
+
+   // Clear the status bar
+   for (int y=200;y<208;++y)
+   {
+      for (int x=0;x<320;x+=4)
+      {
+         uint32_t addrs = x+y*512;
+         GPUSetRegister(0, addrs >> 2);
+         GPUSetRegister(1, 0x02020202); // 4 pixels of status bar palette entry 0x2
+         GPUWriteVRAM(0, 1, 0xF);
+      }
+   }
 }
 
 void FLIP()
 {
    // Swap to other page to reveal previous render
-   vramPage = (vramPage+1)%2;
-   GPUSetRegister(2, vramPage);
+   GPUSetRegister(2, vramPage^0x1);
    GPUSetVideoPage(2);
+   vramPage++;
+}
+
+void STATUS()
+{
+   // TODO: show other status
+
+   // ROM version
+   //PrintDMA(0, 200, "NekoSan ROM v0001 build 0004", false);
 }
 
 void ShowSplashOrDirectoryListing()
@@ -128,6 +150,8 @@ void ShowSplashOrDirectoryListing()
       }
    }
 
+   STATUS();
+
    FLIP();
 }
 
@@ -137,20 +161,9 @@ void ShowLoadingScreen()
 
    PrintDMA(120, 92, "Loading...", false);
 
+   STATUS();
+
    FLIP();
-}
-
-void SubmitBlankFrameNoWait()
-{
-   GPUSetRegister(1, 0x10101010);
-   //GPUClearVRAMPage(1);
-   // Stall GPU until vsync is reached
-   //GPUWaitForVsync();
-
-   // Swap to other page to reveal previous render
-   vramPage = (vramPage+1)%2;
-   GPUSetRegister(2, vramPage);
-   GPUSetVideoPage(2);
 }
 
 void LoadBinaryBlob()
@@ -191,82 +204,23 @@ void LoadBinaryBlob()
    *IO_LEDRW = 0x0; // Turn all LEDs off
 }
 
+typedef int (*t_mainfunction)();
+
 void LaunchELF(uint32_t branchaddress)
 {
-   // Set up stack pointer and branch to loaded executable's entry point (noreturn)
-   // TODO: Can we work out the stack pointer to match the loaded ELF's layout?
-   asm (
-      //"mv x1, x0\n" // Return address will be set below
-      //"mv x2, x0\n" // Stack pointer will be set below
-      "mv x3, x0\n"
-      "mv x4, x0\n"
-      "mv x5, x0\n"
-      "mv x6, x0\n"
-      "mv x7, x0\n"
-      "mv x8, x0\n"
-      "mv x9, x0\n"
-      "mv x10, x0\n"
-      "mv x11, x0\n"
-      "mv x12, x0\n"
-      "mv x13, x0\n"
-      "mv x14, x0\n"
-      "mv x15, x0\n"
-      "mv x16, x0\n"
-      "mv x17, x0\n"
-      "mv x18, x0\n"
-      "mv x19, x0\n"
-      "mv x20, x0\n"
-      "mv x21, x0\n"
-      "mv x22, x0\n"
-      "mv x23, x0\n"
-      "mv x24, x0\n"
-      "mv x25, x0\n"
-      "mv x26, x0\n"
-      "mv x27, x0\n"
-      "mv x28, x0\n"
-      "mv x29, x0\n"
-      "mv x30, x0\n"
-      "mv x31, x0\n"
-      /*"fmv.w.x	f0, zero\n"
-      "fmv.w.x	f1, zero\n"
-      "fmv.w.x	f2, zero\n"
-      "fmv.w.x	f3, zero\n"
-      "fmv.w.x	f4, zero\n"
-      "fmv.w.x	f5, zero\n"
-      "fmv.w.x	f6, zero\n"
-      "fmv.w.x	f7, zero\n"
-      "fmv.w.x	f8, zero\n"
-      "fmv.w.x	f9, zero\n"
-      "fmv.w.x	f10, zero\n"
-      "fmv.w.x	f11, zero\n"
-      "fmv.w.x	f12, zero\n"
-      "fmv.w.x	f13, zero\n"
-      "fmv.w.x	f14, zero\n"
-      "fmv.w.x	f15, zero\n"
-      "fmv.w.x	f16, zero\n"
-      "fmv.w.x	f17, zero\n"
-      "fmv.w.x	f18, zero\n"
-      "fmv.w.x	f19, zero\n"
-      "fmv.w.x	f20, zero\n"
-      "fmv.w.x	f21, zero\n"
-      "fmv.w.x	f22, zero\n"
-      "fmv.w.x	f23, zero\n"
-      "fmv.w.x	f24, zero\n"
-      "fmv.w.x	f25, zero\n"
-      "fmv.w.x	f26, zero\n"
-      "fmv.w.x	f27, zero\n"
-      "fmv.w.x	f28, zero\n"
-      "fmv.w.x	f29, zero\n"
-      "fmv.w.x	f30, zero\n"
-      "fmv.w.x	f31, zero\n"*/
-      "lw ra, %0 \n"
-      "li x12, 0x0FFF0000\n" // Stack pointer at 0x0FFF0000
-      "mv sp, x12 \n"
-      "ret \n"
+   // Branch to loaded executable's entry point
+   ((t_mainfunction)branchaddress)();
+   /*asm (
+      "lw x31, %0 \n"
+      "jalr ra, 0(x31) \n"
       : 
       : "m" (branchaddress)
       : 
-   );
+   );*/
+
+   // Done, back in our world
+   EchoStr("Run complete.\n");
+   ShowSplashOrDirectoryListing();
 }
 
 void RunBinaryBlob()
@@ -352,6 +306,8 @@ int LoadAndRunELF(int selection)
    FRESULT fr = f_open(&fp, executables[selection], FA_READ);
    if (fr == FR_OK)
    {
+      ShowLoadingScreen();
+
       // File size: Fs.fsize
       // Read header
       SElfFileHeader32 fheader;
@@ -466,20 +422,22 @@ int main()
    else
       sdcardavailable = 1;
 
-   // Initialize video page
-   GPUSetRegister(2, vramPage);
-   GPUSetVideoPage(2);
-   //*gpuSideSubmitCounter = 0;
+   // Set color palette entries used by ROM
 
-   // Make text color white and text background color light blue
    GPUSetRegister(1, MAKERGBPALETTECOLOR(255, 255, 255));
    GPUSetRegister(0, 255); // index 255: text color (white)
    GPUSetPaletteEntry(0, 1);
+
    GPUSetRegister(1, MAKERGBPALETTECOLOR(128, 128, 255));
    GPUSetRegister(0, 0); // index 0: selection color (light blue)
    GPUSetPaletteEntry(0, 1);
+
    GPUSetRegister(1, MAKERGBPALETTECOLOR(128, 128, 128));
    GPUSetRegister(0, 1); // index 1: background color (gray)
+   GPUSetPaletteEntry(0, 1);
+
+   GPUSetRegister(1, MAKERGBPALETTECOLOR(32, 32, 32));
+   GPUSetRegister(0, 2); // index 2: status bar color (dark gray)
    GPUSetPaletteEntry(0, 1);
 
    // UART communication section
@@ -533,10 +491,7 @@ int main()
          while (*IO_SWITCHREADY)
             hardwareswitchstates = *IO_SWITCHES;
          
-         // Draw frame again for each switch/button change
-         if (hardwareswitchstates ^ oldhardwareswitchstates)
-            ShowSplashOrDirectoryListing();
-
+         // Capture button states
          int down = 0, up = 0, sel = 0;
          switch(hardwareswitchstates ^ oldhardwareswitchstates)
          {
@@ -548,11 +503,15 @@ int main()
 
          oldhardwareswitchstates = hardwareswitchstates;
 
+         // Update selection
+         if (up || down || sel)
+            ShowSplashOrDirectoryListing();
+
          if (up) selectedexecutable--;
          if (down) selectedexecutable++;
          if (selectedexecutable>=numexecutables) selectedexecutable = 0;
          if (selectedexecutable<0) selectedexecutable = numexecutables-1;
-         if (sel) { SubmitBlankFrameNoWait(); LoadAndRunELF(selectedexecutable); }
+         if (sel) LoadAndRunELF(selectedexecutable);
       }
    }
 

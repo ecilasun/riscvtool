@@ -20,7 +20,7 @@ extern "C"
 
          // Set up stack pointer and align it to 16 bytes
          //"la sp, __stack_top;"
-         "li sp, 0x20007FF0;" // 32K startup code space, stack at end of 32K region
+         "li sp, 0x0FFF0000;" // Stack is set to the end of DDR3 memory by default
          "mv s0, sp;"
 
          // Clear BSS

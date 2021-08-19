@@ -49,8 +49,8 @@ I_Init(void)
 byte *
 I_ZoneBase(int *size)
 {
-	/* Give 12M to DOOM */
-	*size = 12 * 1024 * 1024;
+	/* Give 24M to DOOM */
+	*size = 24 * 1024 * 1024;
 	return (byte *) malloc (*size);
 }
 
@@ -131,64 +131,40 @@ I_GetEvent(void)
 
 		uint32_t deltastate = hardwareswitchstates ^ oldhardwareswitchstates;
 
-		// if (deltastate&0x01)
-		// {
-		// 	event.type = (hardwareswitchstates&0x01) ? ev_keydown : ev_keyup;
-		// 	event.data1 = 'w';
-		// 	D_PostEvent(&event);
-		// }
-
-		// if (deltastate&0x02)
-		// {
-		// 	event.type = (hardwareswitchstates&0x02) ? ev_keydown : ev_keyup;
-		// 	event.data1 = 's';
-		// 	D_PostEvent(&event);
-		// }
-
-		// if (deltastate&0x04)
-		// {
-		// 	event.type = (hardwareswitchstates&0x04) ? ev_keydown : ev_keyup;
-		// 	event.data1 = 'd';
-		// 	D_PostEvent(&event);
-		// }
-
-		// if (deltastate&0x08)
-		// {
-		// 	event.type = (hardwareswitchstates&0x08) ? ev_keydown : ev_keyup;
-		// 	event.data1 = 'a';
-		// 	D_PostEvent(&event);
-		// }
-
-		if (deltastate&0x10)
+		if (deltastate&0x01)
 		{
 			event.type =  ev_joystick;
-			event.data1 = (hardwareswitchstates&0x10) ? 1:0;
+			event.data1 = 0; // buttons (1: fire)
 			event.data2 = 0;
-			event.data3 = 0;
+			event.data3 = (hardwareswitchstates&0x01) ? 3 : 0;
 			D_PostEvent(&event);
 		}
 
-		if ((deltastate&0x20))
+		if ((deltastate&0x02))
 		{
 			event.type =  ev_joystick;
 			event.data1 = 0; // buttons
-			event.data2 = (hardwareswitchstates&0x20) ? 3 : 0;
+			event.data2 = (hardwareswitchstates&0x02) ? 3 : 0;
 			event.data3 = 0;
 			D_PostEvent(&event);
 		}
 
-		if ((deltastate&0x40))
+		if ((deltastate&0x04))
 		{
 			event.type = ev_joystick;
 			event.data1 = 0; // buttons
-			event.data2 = (hardwareswitchstates&0x40) ? -3 : 0;
+			event.data2 = (hardwareswitchstates&0x04) ? -3 : 0;
 			event.data3 = 0;
 			D_PostEvent(&event);
 		}
 
-		if (deltastate&0x80)
+		if (deltastate&0x08)
 		{
-			// SDCARD
+			event.type =  ev_joystick;
+			event.data1 = 0; // buttons
+			event.data2 = 0;
+			event.data3 = (hardwareswitchstates&0x08) ? -3 : 0;
+			D_PostEvent(&event);
 		}
 
 		oldhardwareswitchstates = hardwareswitchstates;
