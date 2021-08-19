@@ -2,8 +2,8 @@
 
 #include <math.h> // For abs()
 
-volatile uint8_t *IO_UARTRXTX = (volatile uint8_t* )0x80000008;            // UART send/receive port (write/read)
-volatile uint32_t *IO_UARTRXByteCount = (volatile uint32_t* )0x80000004;   // UART input status (read)
+volatile uint8_t *IO_UARTRXTX = (volatile uint8_t* )0x80000008;                // UART send/receive port (write/read)
+volatile uint32_t *IO_UARTRXByteAvailable = (volatile uint32_t* )0x80000004;   // UART input status (read)
 
 void EchoStr(const char *_message)
 {

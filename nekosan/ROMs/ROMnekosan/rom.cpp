@@ -84,25 +84,35 @@ int numexecutables = 0;
 char *executables[64];
 
 FATFS Fs;
-volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-8;
-uint32_t gpuSubmitCounter = 0;
+//volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-8;
+//uint32_t gpuSubmitCounter = 0;
 uint32_t vramPage = 0;
 
 void SubmitGPUFrame()
 {
    // Do not submit more work if the GPU is not ready
-   if (*gpuSideSubmitCounter == gpuSubmitCounter)
+   //if (*gpuSideSubmitCounter == gpuSubmitCounter)
    {
       // Next frame
-      ++gpuSubmitCounter;
+      //++gpuSubmitCounter;
 
       // CLS
-      GPUSetRegister(1, 0x16161616); // 4 dark gray pixels
+      //GPUSetRegister(1, 0x16161616); // 4 dark gray pixels
       //GPUClearVRAMPage(1);
+      for (int y=0;y<320;++y)
+      {
+         for (int x=0;x<320;x+=4)
+         {
+            uint32_t addrs = x+y*512;
+            GPUSetRegister(0, addrs >> 2);
+            GPUSetRegister(1, 0x01010101); // Clear to background palette entry
+            GPUWriteVRAM(0, 1, 0xF);
+         }
+      }
 
       if (numexecutables == 0)
       {
-         PrintDMA(96, 92, "NEKOSAN", false);
+         PrintDMA(96, 92, "NekoSan", false);
       }
       else
       {
@@ -123,12 +133,12 @@ void SubmitGPUFrame()
       GPUSetVideoPage(2);
 
       // GPU will write value in G2 to address in G3 in the future
-      GPUSetRegister(3, uint32_t(gpuSideSubmitCounter));
-      GPUSetRegister(2, gpuSubmitCounter);
-      GPUWriteVRAM(2, 3, 0xF);
+      //GPUSetRegister(3, uint32_t(gpuSideSubmitCounter));
+      //GPUSetRegister(2, gpuSubmitCounter);
+      //GPUWriteVRAM(2, 3, 0xF);
 
       // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
-      *gpuSideSubmitCounter = 0;
+      //*gpuSideSubmitCounter = 0;
    }
 }
 
@@ -157,8 +167,8 @@ void LoadBinaryBlob()
    uint32_t writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t bytecount = *IO_UARTRXByteCount;
-      if (bytecount != 0)
+      uint32_t byteavailable = *IO_UARTRXByteAvailable;
+      if (byteavailable != 0)
          loadtargetaschar[writecursor++] = *IO_UARTRXTX;
    }
 
@@ -166,8 +176,8 @@ void LoadBinaryBlob()
    writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t bytecount = *IO_UARTRXByteCount;
-      if (bytecount != 0)
+      uint32_t byteavailable = *IO_UARTRXByteAvailable;
+      if (byteavailable != 0)
          loadlenaschar[writecursor++] = *IO_UARTRXTX;
    }
 
@@ -176,8 +186,8 @@ void LoadBinaryBlob()
    volatile uint8_t* target = (volatile uint8_t* )loadtarget;
    while(writecursor < loadlen)
    {
-      uint32_t bytecount = *IO_UARTRXByteCount;
-      if (bytecount != 0)
+      uint32_t byteavailable = *IO_UARTRXByteAvailable;
+      if (byteavailable != 0)
       {
          target[writecursor++] = *IO_UARTRXTX;
          *IO_LEDRW = (writecursor>>9)&0x1; // Blink rightmost LED as status indicator
@@ -274,8 +284,8 @@ void RunBinaryBlob()
    uint32_t writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t bytecount = *IO_UARTRXByteCount;
-      if (bytecount != 0)
+      uint32_t byteavailable = *IO_UARTRXByteAvailable;
+      if (byteavailable != 0)
       {
          unsigned char readdata = *IO_UARTRXTX;
          branchaddressaschar[writecursor++] = readdata;
@@ -355,8 +365,8 @@ int LoadAndRunELF(int selection)
       uint32_t branchaddress;
       ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
       f_close(&fp);
-      EchoStr("\nStarting @0x");
-      EchoHex(branchaddress);
+      EchoStr("\nStarting ");
+      EchoStr(executables[selection]);
       EchoStr("\n");
       LaunchELF(branchaddress);
       return 0;
@@ -454,43 +464,44 @@ int main()
    EchoStr("Devices: UART/SPI/SWITCH/LED/AUDIO/GPU\n");
    EchoStr("\u00A9 2021 Engin Cilasun\n\n");
 
-   //uint32_t sdcardavailable = 0;
+   uint32_t sdcardavailable = 0;
    FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
    if (mountattempt!=FR_OK)
       EchoStr(FRtoString[mountattempt]);
-   /*else
-      sdcardavailable = 1;*/
+   else
+      sdcardavailable = 1;
 
    // Initialize video page
    GPUSetRegister(2, vramPage);
    GPUSetVideoPage(2);
-   *gpuSideSubmitCounter = 0;
+   //*gpuSideSubmitCounter = 0;
 
    // Make text color white and text background color light blue
    GPUSetRegister(1, MAKERGBPALETTECOLOR(255, 255, 255));
-   GPUSetRegister(0, 255); // index 255: text color
+   GPUSetRegister(0, 255); // index 255: text color (white)
    GPUSetPaletteEntry(0, 1);
-   GPUSetRegister(1, MAKERGBPALETTECOLOR(128, 255, 255));
-   GPUSetRegister(0, 0); // index 0: background color
+   GPUSetRegister(1, MAKERGBPALETTECOLOR(128, 128, 255));
+   GPUSetRegister(0, 0); // index 0: selection color (light blue)
+   GPUSetPaletteEntry(0, 1);
+   GPUSetRegister(1, MAKERGBPALETTECOLOR(128, 128, 128));
+   GPUSetRegister(0, 1); // index 1: background color (gray)
    GPUSetPaletteEntry(0, 1);
 
    // UART communication section
    uint8_t prevchar = 0xFF;
 
-   ListDir("sd:");
-
    //uint64_t clk = ReadClock();
    //uint32_t old_milliseconds = ClockToMs(clk);
-   //uint32_t dirListed = 0;
+   uint32_t dirListed = 0;
 
    InitFont();
    while(1)
    {
       // Step 1: Read UART FIFO byte count
-      uint32_t bytecount = *IO_UARTRXByteCount;
+      uint32_t byteavailable = *IO_UARTRXByteAvailable;
 
       // Step 2: Check to see if we have something in the FIFO
-      if (bytecount != 0)
+      if (byteavailable != 0)
       {
          // Step 3: Read the data on UARTRX memory location
          char checkchar = *IO_UARTRXTX;
@@ -509,13 +520,14 @@ int main()
       //clk = ReadClock();
       //uint32_t new_milliseconds = ClockToMs(clk);
 
-      /*if (sdcardavailable && !dirListed && ((new_milliseconds-old_milliseconds) > 1500))
+      if (sdcardavailable && !dirListed)// && ((new_milliseconds-old_milliseconds) > 1500))
       {
          ListDir("sd:");
          dirListed = 1;
+         //old_milliseconds = new_milliseconds;
       }
 
-      if (dirListed)*/
+      if (dirListed)
       {
          while (*IO_SWITCHREADY)
             hardwareswitchstates = *IO_SWITCHES;
@@ -538,7 +550,12 @@ int main()
          if (sel) { SubmitBlankFrameNoWait(); LoadAndRunELF(selectedexecutable); }
       }
 
-      SubmitGPUFrame();
+      // Submit every 120ms (until we get our vsync hw back)
+      //if ((new_milliseconds-old_milliseconds) > 120)
+      {
+         SubmitGPUFrame();
+         //old_milliseconds = new_milliseconds;
+      }
    }
 
    return 0;
