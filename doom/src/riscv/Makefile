@@ -5,9 +5,11 @@ OBJCOPY = $(CROSS)objcopy
 SIZE = $(CROSS)size
 ICEPROG = iceprog
 
-#-ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug 
+# -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug 
+# -ffunction-sections -fdata-sections -Wl,--gc-sections
+# --specs=nano.specs
 
-CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -I..
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32imf -mabi=ilp32f -ffreestanding -flto -fomit-frame-pointer -I..
 
 CFLAGS += \
 	-DNORMALUNIX \

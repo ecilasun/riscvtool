@@ -22,7 +22,7 @@ python waf clean
 
 # Building the ROM and samples for Neko series
 
-To build the ROM file and the samples, either switch to the 'ROMs' or 'samples' directory under nekoichi / nekoni or nekosan depending on the device you are running, and run:
+To build the ROM file and the samples, either switch to the 'ROMs' or 'samples' directory under nekoichi or nekosan depending on the device you are running, and run:
 
 ```
 make
@@ -30,7 +30,7 @@ make
 
 You can also do the same with 'doom/src/riscv' and 'dhrystone' directories to build those programs.
 
-This will create ROMneko*.coe file which is the ROM image for Neko*, alongside some samples that riscvtool can upload to test the device. You can copy the ROMneko*.COE files contents over the BIOS.COE file in the source directory of Neko* HDL code, which you can find at either of https://github.com/ecilasun/NekoIchi, https://github.com/ecilasun/NekoNi or https://github.com/ecilasun/NekoSan
+This will create ROMneko*.coe file which is the ROM image for Neko*, alongside some samples that riscvtool can upload to test the device. You can copy the ROMneko*.COE files contents over the BIOS.COE file in the source directory of Neko* HDL code, which you can find at either of https://github.com/ecilasun/NekoIchi or https://github.com/ecilasun/NekoSan
 
 With the exception of the ROM image, you can use a fair amount of C++14 code at some level, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file. This means in normal situations you should not require a custom linker script to run ELF files.
 

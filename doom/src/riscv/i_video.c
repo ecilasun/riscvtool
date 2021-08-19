@@ -33,7 +33,7 @@ static uint32_t vramPage = 0;
 
 uint8_t video_pal[256];
 
-volatile uint32_t *gpustate = (volatile uint32_t*)0x1001FFF0; // End of GRAM-16
+//volatile uint32_t *gpustate = (volatile uint32_t*)0x1001FFF0; // End of GRAM-16
 unsigned int cnt = 0x00000000;
 
 void flippage()
@@ -46,7 +46,7 @@ void flippage()
 void
 I_InitGraphics(void)
 {
-	*gpustate = 0;
+	//*gpustate = 0;
 
 	GPUSetRegister(2, vramPage);
 	GPUSetVideoPage(2);
@@ -54,8 +54,8 @@ I_InitGraphics(void)
 	// Clear one of the pages to color palette entry at 0xFF
 	// so that we may see the rate at which the game renders
 	// when using debug mode to draw less than full height.
-    GPUSetRegister(1, 0xFFFFFFFF);
-    GPUClearVRAMPage(1);
+    //GPUSetRegister(1, 0xFFFFFFFF);
+    //GPUClearVRAMPage(1);
 
 	// Show the result
 	flippage();
@@ -79,8 +79,9 @@ I_SetPalette(byte* palette)
 		r = gammatable[usegamma][*palette++];
 		g = gammatable[usegamma][*palette++];
 		b = gammatable[usegamma][*palette++];
+		GPUSetRegister(0, i);
     	GPUSetRegister(1, ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b);
-	    GPUSetPaletteEntry(1, i);
+	    GPUSetPaletteEntry(0, 1);
 	}
 }
 
@@ -117,7 +118,7 @@ I_FinishUpdate (void)
 		//++cnt;
 
 		// Two buffers
-		uint8_t *bramvideobuffers[2] = {(uint8_t*)0x10000000, (uint8_t*)0x10002000}; // Two slices from top of GRAM
+		uint8_t *g_ram_videobuffers[2] = {(uint8_t*)0x10000000, (uint8_t*)0x10002000}; // Two slices from top of GRAM
 
 		// Fake screen buffer in BRAM (overwrites loader in BIOS)
 		// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
@@ -126,10 +127,10 @@ I_FinishUpdate (void)
 		{
 			// The out buffer needs a stride of 512 instead of 320
 			for (int L=0;L<16;++L)
-				__builtin_memcpy((void*)bramvideobuffers[vB]+512*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 320);
+				__builtin_memcpy((void*)g_ram_videobuffers[vB]+512*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 320);
 
 			// Single DMA because backbuffer is same size as display
-			uint32_t sysramsource = (uint32_t)bramvideobuffers[vB];
+			uint32_t sysramsource = (uint32_t)g_ram_videobuffers[vB];
 			GPUSetRegister(4, sysramsource);
 			uint32_t vramramtarget = (512*16*slice)>>2;
 			GPUSetRegister(5, vramramtarget);

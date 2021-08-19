@@ -78,28 +78,30 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
     SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinary+fheader->m_PHOff);
 
     printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
+    //uint32_t sz = pheader->m_MemSz < pheader->m_FileSz ? pheader->m_MemSz : pheader->m_FileSz;
     if (groupsize == 4) // 32bit groups (4 bytes)
     {
         unsigned char *litteendian = (unsigned char *)(_elfbinary+pheader->m_Offset);
-        for (unsigned int i=0; i<pheader->m_MemSz; ++i)
+        for (unsigned int i=0; i<pheader->m_FileSz; ++i)
         {
             if (i!=0 && ((i%16) == 0))
                 printf("\n");
             printf("%.2X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
-            if (((i+1)%4)==0 && i!=pheader->m_MemSz-1)
+            if (((i+1)%4)==0 && i!=pheader->m_FileSz-1)
                 printf(" "); // 32bit separator
         }
     }
     else // 128bit groups (16 bytes)
     {
         unsigned int *litteendian = (unsigned int *)(_elfbinary+pheader->m_Offset);
-        for (unsigned int i=0;i<pheader->m_MemSz/4;++i)
+        for (unsigned int i=0;i<pheader->m_FileSz/4;++i)
         {
             if (i!=0 && ((i%4) == 0))
                 printf("\n");
             printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
         }
     }
+
     printf(";");
 }
 

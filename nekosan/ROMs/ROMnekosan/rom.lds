@@ -5,10 +5,10 @@ OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 
 GROUP( -lc -lgloss -lgcc )
 
-_STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0xA00;
+_STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x1F0;
 
 MEMORY{
-   RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x05000
+   RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x10000
 }
 
 ENTRY(_start)

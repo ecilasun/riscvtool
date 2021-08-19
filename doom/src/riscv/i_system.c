@@ -80,9 +80,7 @@ I_GetEvent(void)
 		// first byte: 1:down 2:up
 		// second byte: x11 keysymbol
 
-		// For each character that was received,
-		// create a 'down' event, and an 'up' event
-		// for the one before it if they're different
+		// The packet contains up/down state in first byte
 		event.type = keydata[0] ? ev_keydown : ev_keyup;
 
 		switch (keydata[1])
@@ -133,33 +131,33 @@ I_GetEvent(void)
 
 		uint32_t deltastate = hardwareswitchstates ^ oldhardwareswitchstates;
 
-		/*if (deltastate&0x01)
-		{
-			event.type = (hardwareswitchstates&0x01) ? ev_keydown : ev_keyup;
-			event.data1 = 'w';
-			D_PostEvent(&event);
-		}
+		// if (deltastate&0x01)
+		// {
+		// 	event.type = (hardwareswitchstates&0x01) ? ev_keydown : ev_keyup;
+		// 	event.data1 = 'w';
+		// 	D_PostEvent(&event);
+		// }
 
-		if (deltastate&0x02)
-		{
-			event.type = (hardwareswitchstates&0x02) ? ev_keydown : ev_keyup;
-			event.data1 = 's';
-			D_PostEvent(&event);
-		}
+		// if (deltastate&0x02)
+		// {
+		// 	event.type = (hardwareswitchstates&0x02) ? ev_keydown : ev_keyup;
+		// 	event.data1 = 's';
+		// 	D_PostEvent(&event);
+		// }
 
-		if (deltastate&0x04)
-		{
-			event.type = (hardwareswitchstates&0x04) ? ev_keydown : ev_keyup;
-			event.data1 = 'd';
-			D_PostEvent(&event);
-		}
+		// if (deltastate&0x04)
+		// {
+		// 	event.type = (hardwareswitchstates&0x04) ? ev_keydown : ev_keyup;
+		// 	event.data1 = 'd';
+		// 	D_PostEvent(&event);
+		// }
 
-		if (deltastate&0x08)
-		{
-			event.type = (hardwareswitchstates&0x08) ? ev_keydown : ev_keyup;
-			event.data1 = 'a';
-			D_PostEvent(&event);
-		}*/
+		// if (deltastate&0x08)
+		// {
+		// 	event.type = (hardwareswitchstates&0x08) ? ev_keydown : ev_keyup;
+		// 	event.data1 = 'a';
+		// 	D_PostEvent(&event);
+		// }
 
 		if (deltastate&0x10)
 		{

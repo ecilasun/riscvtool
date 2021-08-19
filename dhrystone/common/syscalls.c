@@ -76,7 +76,7 @@ void abort()
 
 void printstr(const char* s)
 {
-  volatile uint8_t *IO_UARTTX=(volatile uint8_t* )0x8000000C;
+  volatile uint8_t *IO_UARTTX=(volatile uint8_t* )0x80000008;
   //syscall(SYS_write, 1, (uintptr_t)s, strlen(s));
   char *out = (char*)s;
   while(*out!=0) { *IO_UARTTX = *out; out++; }
@@ -135,7 +135,7 @@ int putchar(int ch)
 
   if (ch == '\n' || buflen == sizeof(buf))
   {
-    volatile unsigned char *IO_UARTTX=(volatile unsigned char* )0x8000000C;
+    volatile unsigned char *IO_UARTTX=(volatile unsigned char* )0x80000008;
     char *out = buf;
     int cnt = 0;
     while(*out!=0 && buflen!=cnt) { *IO_UARTTX = *out; out++; cnt++; }
