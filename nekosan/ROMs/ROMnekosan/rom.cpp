@@ -84,62 +84,60 @@ int numexecutables = 0;
 char *executables[64];
 
 FATFS Fs;
-//volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-8;
-//uint32_t gpuSubmitCounter = 0;
+
 uint32_t vramPage = 0;
 
-void SubmitGPUFrame()
+void CLS()
 {
-   // Do not submit more work if the GPU is not ready
-   //if (*gpuSideSubmitCounter == gpuSubmitCounter)
+   // Clear screen
+   for (int y=0;y<200;++y)
    {
-      // Next frame
-      //++gpuSubmitCounter;
-
-      // CLS
-      //GPUSetRegister(1, 0x16161616); // 4 dark gray pixels
-      //GPUClearVRAMPage(1);
-      for (int y=0;y<320;++y)
+      for (int x=0;x<320;x+=4)
       {
-         for (int x=0;x<320;x+=4)
-         {
-            uint32_t addrs = x+y*512;
-            GPUSetRegister(0, addrs >> 2);
-            GPUSetRegister(1, 0x01010101); // Clear to background palette entry
-            GPUWriteVRAM(0, 1, 0xF);
-         }
+         uint32_t addrs = x+y*512;
+         GPUSetRegister(0, addrs >> 2);
+         GPUSetRegister(1, 0x01010101); // 4 pixels of background palette entry 0x1
+         GPUWriteVRAM(0, 1, 0xF);
       }
-
-      if (numexecutables == 0)
-      {
-         PrintDMA(96, 92, "NekoSan", false);
-      }
-      else
-      {
-         int line = 0;
-         for (int i=0;i<numexecutables;++i)
-         {
-            PrintDMA(8, line, executables[i], (selectedexecutable == i) ? false : true);
-            line += 8;
-         }
-      }
-
-      // Stall GPU until vsync is reached
-      // GPUWaitForVsync();
-
-      // Swap to other page to reveal previous render
-      vramPage = (vramPage+1)%2;
-      GPUSetRegister(2, vramPage);
-      GPUSetVideoPage(2);
-
-      // GPU will write value in G2 to address in G3 in the future
-      //GPUSetRegister(3, uint32_t(gpuSideSubmitCounter));
-      //GPUSetRegister(2, gpuSubmitCounter);
-      //GPUWriteVRAM(2, 3, 0xF);
-
-      // Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
-      //*gpuSideSubmitCounter = 0;
    }
+}
+
+void FLIP()
+{
+   // Swap to other page to reveal previous render
+   vramPage = (vramPage+1)%2;
+   GPUSetRegister(2, vramPage);
+   GPUSetVideoPage(2);
+}
+
+void ShowSplashOrDirectoryListing()
+{
+   CLS();
+
+   if (numexecutables == 0)
+   {
+      PrintDMA(132, 92, "NekoSan", false);
+   }
+   else
+   {
+      int line = 0;
+      for (int i=0;i<numexecutables;++i)
+      {
+         PrintDMA(8, line, executables[i], (selectedexecutable == i) ? false : true);
+         line += 8;
+      }
+   }
+
+   FLIP();
+}
+
+void ShowLoadingScreen()
+{
+   CLS();
+
+   PrintDMA(120, 92, "Loading...", false);
+
+   FLIP();
 }
 
 void SubmitBlankFrameNoWait()
@@ -167,8 +165,7 @@ void LoadBinaryBlob()
    uint32_t writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t byteavailable = *IO_UARTRXByteAvailable;
-      if (byteavailable != 0)
+      if (*IO_UARTRXByteAvailable)
          loadtargetaschar[writecursor++] = *IO_UARTRXTX;
    }
 
@@ -176,8 +173,7 @@ void LoadBinaryBlob()
    writecursor = 0;
    while(writecursor < 4)
    {
-      uint32_t byteavailable = *IO_UARTRXByteAvailable;
-      if (byteavailable != 0)
+      if (*IO_UARTRXByteAvailable)
          loadlenaschar[writecursor++] = *IO_UARTRXTX;
    }
 
@@ -186,8 +182,7 @@ void LoadBinaryBlob()
    volatile uint8_t* target = (volatile uint8_t* )loadtarget;
    while(writecursor < loadlen)
    {
-      uint32_t byteavailable = *IO_UARTRXByteAvailable;
-      if (byteavailable != 0)
+      if (*IO_UARTRXByteAvailable)
       {
          target[writecursor++] = *IO_UARTRXTX;
          *IO_LEDRW = (writecursor>>9)&0x1; // Blink rightmost LED as status indicator
@@ -490,47 +485,57 @@ int main()
    // UART communication section
    uint8_t prevchar = 0xFF;
 
-   //uint64_t clk = ReadClock();
-   //uint32_t old_milliseconds = ClockToMs(clk);
    uint32_t dirListed = 0;
 
    InitFont();
+
+   // Draw initial frame with NekoSan logo
+   ShowSplashOrDirectoryListing();
+
    while(1)
    {
-      // Step 1: Read UART FIFO byte count
-      uint32_t byteavailable = *IO_UARTRXByteAvailable;
-
-      // Step 2: Check to see if we have something in the FIFO
-      if (byteavailable != 0)
+      // Step 1: Check to see if we have something in the FIFO
+      if (*IO_UARTRXByteAvailable)
       {
-         // Step 3: Read the data on UARTRX memory location
+         // Step 2: Read the data on UARTRX memory location
          char checkchar = *IO_UARTRXTX;
 
-         if (checkchar == 13) // Enter followed by B (binary blob) or R (run blob)
+         // Step 3: Proceed to load binary blobs or run the incoming ELF
+         // if we received a 'B\n' or 'R\n' sequence
+         if (checkchar == 13)
          {
+            ShowLoadingScreen();
+
             // Load the incoming binary
             if (prevchar=='B')
                LoadBinaryBlob();
             if (prevchar=='R')
                RunBinaryBlob();
          }
+
+         // Step 4: Remember this character for the next round
          prevchar = checkchar;
       }
 
-      //clk = ReadClock();
-      //uint32_t new_milliseconds = ClockToMs(clk);
-
-      if (sdcardavailable && !dirListed)// && ((new_milliseconds-old_milliseconds) > 1500))
+      // If we haven't listed the directory yet and if we have an SDCard,
+      // list the directory into an internal buffer
+      if (sdcardavailable && !dirListed)
       {
          ListDir("sd:");
          dirListed = 1;
-         //old_milliseconds = new_milliseconds;
+         // Show the directory listing
+         ShowSplashOrDirectoryListing();
       }
 
+      // Handle keys for when we do have a directory listing
       if (dirListed)
       {
          while (*IO_SWITCHREADY)
             hardwareswitchstates = *IO_SWITCHES;
+         
+         // Draw frame again for each switch/button change
+         if (hardwareswitchstates ^ oldhardwareswitchstates)
+            ShowSplashOrDirectoryListing();
 
          int down = 0, up = 0, sel = 0;
          switch(hardwareswitchstates ^ oldhardwareswitchstates)
@@ -548,13 +553,6 @@ int main()
          if (selectedexecutable>=numexecutables) selectedexecutable = 0;
          if (selectedexecutable<0) selectedexecutable = numexecutables-1;
          if (sel) { SubmitBlankFrameNoWait(); LoadAndRunELF(selectedexecutable); }
-      }
-
-      // Submit every 120ms (until we get our vsync hw back)
-      //if ((new_milliseconds-old_milliseconds) > 120)
-      {
-         SubmitGPUFrame();
-         //old_milliseconds = new_milliseconds;
       }
    }
 

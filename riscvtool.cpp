@@ -217,7 +217,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     tty.c_lflag &= ~ECHO;
     tty.c_lflag &= ~ISIG;
     tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|INPCK);
+    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);
 
     tty.c_oflag &= ~OPOST;
     tty.c_oflag &= ~ONLCR;
@@ -235,39 +235,6 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
         printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
         return;
     }
-
-    /*serialParams.DCBlength = sizeof(serialParams);
-    if (GetCommState(hComm, &serialParams))
-    {
-        serialParams.BaudRate = CBR_115200;
-        serialParams.ByteSize = 8;
-        serialParams.StopBits = ONESTOPBIT;
-        serialParams.Parity = NOPARITY;
-
-        if (SetCommState(hComm, &serialParams) != 0)
-        {
-            timeouts.ReadIntervalTimeout = 50;
-            timeouts.ReadTotalTimeoutConstant = 50;
-            timeouts.ReadTotalTimeoutMultiplier = 10;
-            timeouts.WriteTotalTimeoutConstant = 50;
-            timeouts.WriteTotalTimeoutMultiplier = 10;
-            if (SetCommTimeouts(hComm, &timeouts) == 0)
-            {
-                printf("ERROR: can't open comm on port COM4\n");
-                return;
-            }
-        }
-        else
-        {
-            printf("ERROR: can't open comm on port COM4\n");
-            return;
-        }
-    }
-    else
-    {
-        printf("ERROR: can't open comm on port COM4\n");
-        return;
-    }*/
 
     printf("Sending ELF binary over COM4 @115200 bps\n");
 
@@ -318,15 +285,15 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             // Send the string "B\r"
             byteswritten += write(serial_port, commandtosend, commandlength);
             // Wait a bit for the receiving end to start accepting
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send 8 byte header
             byteswritten += write(serial_port, blobheader, 8);
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send data
             byteswritten += write(serial_port, bytestoread+sheader->m_Offset, sheader->m_Size);
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             if (byteswritten != 0)
                 ;//printf("done (0x%.8X+0xC bytes written)\n", byteswritten-0xC);

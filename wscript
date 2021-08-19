@@ -27,7 +27,7 @@ def build(bld):
     # RELEASE
     sdk_lib_path = []
     libs = []
-    compile_flags = ['-std=c++14', '-Og']
+    compile_flags = []
     linker_flags = []
 
     # Build risctool
