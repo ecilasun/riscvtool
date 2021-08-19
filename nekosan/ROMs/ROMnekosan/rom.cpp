@@ -197,7 +197,7 @@ int main()
    EchoStr("| ##########   ########## |\r\n");
    EchoStr("+-------------------------+\r\n");
    EchoStr("\nNekoSan version 0001\n");
-   EchoStr("RV32IMZicsr\n");
+   EchoStr("rv32imfZicsr\n");
    EchoStr("Devices: UART/SPI/SWITCH/LED/AUDIO/GPU\n");
    EchoStr("\u00A9 2021 Engin Cilasun\n\n");
 
