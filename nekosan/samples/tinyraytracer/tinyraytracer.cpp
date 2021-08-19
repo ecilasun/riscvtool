@@ -10,6 +10,7 @@
 
 uint32_t vramPage = 0;
 uint8_t *rtbuffer = (uint8_t*)GraphicsRAMStart;
+uint64_t totaltime = 0;
 
 struct Light {
     vec3 position;
@@ -115,6 +116,7 @@ void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights
 
     for (size_t j = 0; j<height; j++)
     {
+        uint64_t startclock = ReadClock();
         for (size_t i = 0; i<width; i++)
         {
             float dir_x =  (i + 0.5f) - width/2.f;
@@ -130,6 +132,8 @@ void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights
             int RGB = (B<<6) | (G<<3) | R;
             rtbuffer[i+j*width] = (RGB<<24)|(RGB<<16)|(RGB<<8)|RGB;
         }
+        uint64_t endclock = ReadClock();
+        totaltime += (endclock-startclock);
 
         // DMA
         const int xoffset = 0;
@@ -192,6 +196,11 @@ int main()
     };
 
     render(spheres, lights);
+
+    EchoStr("Total time: ~");
+    uint32_t totalms = ClockToMs(totaltime);
+    EchoDec(totalms/1000);
+    EchoStr(" seconds\n");
 
     return 0;
 }
