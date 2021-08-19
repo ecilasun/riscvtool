@@ -172,6 +172,13 @@ int main()
    // Turn off all LEDs
    *IO_LEDRW = 0x0;
 
+   // At startup, both video buffers are set to 0x04040404 (red)
+   // This indicates a hardware and/or firmware startup issue (hang)
+   // TODO: Clear both video buffers to 0x14141414 (gray)
+   //GPUSetRegister(0, vramaddrs);
+   //GPUSetRegister(1, 0x14141414);
+   //GPUWriteVRAM(0, 1, 0xF);
+
    // Illegal instruction trap
    InstallIllegalInstructionHandler();
 
