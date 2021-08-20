@@ -118,13 +118,46 @@ void CLS()
 
 void FLIP()
 {
-   // Swap to other page to reveal previous render
-   GPUSetRegister(2, vramPage^0x1);
-   GPUSetVideoPage(2);
+   // Selecting vramPage 0 will set scanoutPage to 1
+   // Selecting vramPage 1 will set scanoutPage to 0
+   GPUSetRegister(0, vramPage^0x1);
+   GPUSetVideoPage(0);
    vramPage++;
 }
 
-void STATUS()
+void PostLoadCLS()
+{
+   // Restore VGA palette and clear both frame buffers
+
+   ResetVGAPalette();
+
+   for (int y=0;y<208;++y)
+   {
+      for (int x=0;x<320;x+=4)
+      {
+         uint32_t addrs = x+y*512;
+         GPUSetRegister(0, addrs >> 2);
+         GPUSetRegister(1, 0x00000000); // Blank screen post-VGA-palette reset
+         GPUWriteVRAM(0, 1, 0xF);
+      }
+   }
+
+   FLIP();
+
+   for (int y=0;y<208;++y)
+   {
+      for (int x=0;x<320;x+=4)
+      {
+         uint32_t addrs = x+y*512;
+         GPUSetRegister(0, addrs >> 2);
+         GPUSetRegister(1, 0x00000000); // Blank screen post-VGA-palette reset
+         GPUWriteVRAM(0, 1, 0xF);
+      }
+   }
+   FLIP();
+}
+
+void ShowStatusText()
 {
    // TODO: show other status
 
@@ -150,7 +183,7 @@ void ShowSplashOrDirectoryListing()
       }
    }
 
-   STATUS();
+   ShowStatusText();
 
    FLIP();
 }
@@ -161,7 +194,7 @@ void ShowLoadingScreen()
 
    PrintDMA(120, 92, "Loading...", false);
 
-   STATUS();
+   ShowStatusText();
 
    FLIP();
 }
@@ -208,6 +241,8 @@ typedef int (*t_mainfunction)();
 
 void LaunchELF(uint32_t branchaddress)
 {
+   PostLoadCLS();
+
    // Branch to loaded executable's entry point
    ((t_mainfunction)branchaddress)();
    /*asm (
@@ -393,6 +428,9 @@ int main()
    // Turn off all LEDs
    *IO_LEDRW = 0x0;
 
+   // Set current 'write' video page (by setting current scan-out video page)
+   FLIP();
+
    // Read switch state at startup
    hardwareswitchstates = oldhardwareswitchstates = *IO_SWITCHES;
 
@@ -503,14 +541,15 @@ int main()
 
          oldhardwareswitchstates = hardwareswitchstates;
 
-         // Update selection
-         if (up || down || sel)
-            ShowSplashOrDirectoryListing();
-
          if (up) selectedexecutable--;
          if (down) selectedexecutable++;
          if (selectedexecutable>=numexecutables) selectedexecutable = 0;
          if (selectedexecutable<0) selectedexecutable = numexecutables-1;
+
+         // Update selection display
+         if (up || down || sel)
+            ShowSplashOrDirectoryListing();
+
          if (sel) LoadAndRunELF(selectedexecutable);
       }
    }

@@ -61,4 +61,5 @@ inline void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAli
 
 // Utilities
 void InitFont();
+void ResetVGAPalette();
 void PrintDMA(const int col, const int row, const char *message, bool masked);
