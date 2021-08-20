@@ -36,6 +36,7 @@ extern volatile unsigned char *IO_UARTTX;
 extern volatile unsigned char *IO_UARTRX;
 extern volatile unsigned int *IO_UARTRXByteCount;
 extern volatile unsigned int *IO_GPUFIFO;
+extern volatile unsigned int *IO_LEDRW;
 
 uint64_t ReadClock();
 uint64_t ClockToMs(uint64_t clock);

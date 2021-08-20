@@ -3,7 +3,7 @@
 #include <inttypes.h>
 
 // 1ms default task switch interval
-#define DEFAULT_TIMESLICE 10000
+#define DEFAULT_TIMESLICE 25000
 
 // Currently supporting this many tasks
 #define MAX_TASKS 16

@@ -9,6 +9,7 @@ volatile unsigned char *IO_UARTTX = (volatile unsigned char* )0x80000008;       
 volatile unsigned char *IO_UARTRX = (volatile unsigned char* )0x80000008;          // UART receive data (read)
 volatile unsigned int *IO_UARTRXByteCount = (volatile unsigned int* )0x80000004;   // UART input status (read)
 volatile unsigned int *IO_GPUFIFO = (volatile unsigned int* )0x80000000;           // GPU control FIFO
+volatile unsigned int *IO_LEDRW = (volatile unsigned int*)0x8000001C;              // LED r/w
 
 uint64_t ReadClock()
 {
