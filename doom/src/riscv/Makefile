@@ -2,11 +2,12 @@ CROSS ?= riscv64-unknown-elf-
 
 CC = $(CROSS)gcc
 OBJCOPY = $(CROSS)objcopy
+OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
-ICEPROG = iceprog
+UPLOADER = ../../../build/release/riscvtool
 
 #-ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug 
-CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -Ofast -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,--gc-sections --specs=nano.specs -I..
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,--gc-sections --specs=nano.specs -I..
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -42,24 +43,22 @@ SOURCES_doom_arch := \
 
 # start.S
 
-all: doom-riscv.elf
+all: doom-riscv.elf doom-riscv.txt
 
 doom-riscv.elf: $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
 	$(CC) $(CFLAGS) -o $@ $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
 	$(SIZE) $@
 
 clean:
-	rm -f *.bin *.hex *.elf *.o *.gen.h
+	rm -f *.bin *.hex *.elf *.o *.gen.h doom-riscv.txt
 
+%.txt: %.elf
+	$(OBJDUMP) -x -D -S $< >> $@
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-prog: doom-riscv.bin
-	$(ICEPROG) -o 1M $<
+upload: doom-riscv.elf
+	$(UPLOADER) $< -sendelf 0x10000 /dev/ttyUSB1
 
-prog_wad: data/doomu.wad
-	$(ICEPROG) -o 2M $<
-
-
-.PHONY: all clean prog prog_wad
+.PHONY: all clean upload

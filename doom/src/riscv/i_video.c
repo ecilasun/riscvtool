@@ -118,15 +118,18 @@ I_FinishUpdate (void)
 		//++cnt;
 
 		// Two buffers
-		uint8_t *g_ram_videobuffers[2] = {(uint8_t*)0x10000000, (uint8_t*)0x10002000}; // Two slices from top of GRAM
+		uint8_t *g_ram_videobuffers[2] = {(uint8_t*)0x10000000, (uint8_t*)0x10002000}; // Two 8K slices from top of GRAM (512*16 pixels each)
 
 		// Fake screen buffer in BRAM (overwrites loader in BIOS)
 		// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
 		static int vB = 0;
 		for (int slice = 0; slice<13; ++slice)
 		{
+			int H=16;
+			if (slice==12)
+				H = 8;
 			// The out buffer needs a stride of 512 instead of 320
-			for (int L=0;L<16;++L)
+			for (int L=0;L<H;++L)
 				__builtin_memcpy((void*)g_ram_videobuffers[vB]+512*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 320);
 
 			// Single DMA because backbuffer is same size as display
@@ -134,7 +137,7 @@ I_FinishUpdate (void)
 			GPUSetRegister(4, sysramsource);
 			uint32_t vramramtarget = (512*16*slice)>>2;
 			GPUSetRegister(5, vramramtarget);
-			uint32_t dmacount = (512*16)>>2;
+			uint32_t dmacount = (512*H)>>2; //2048 DWORD writes or 1024 for end slice
 			GPUKickDMA(4, 5, dmacount, 0);
 
 			// Go to next buffer as the current one is busy copying to the GPU

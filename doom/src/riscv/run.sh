@@ -1,1 +1,2 @@
-../../../build/release/riscvtool doom-riscv.elf -sendelf 0x10000 /dev/ttyUSB1
+make upload
+../../../keyserver/keyserver

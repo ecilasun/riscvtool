@@ -45,7 +45,7 @@ void hardware_interrupt(uint16_t device_mask)
     // handling code to track state changes without jitter
 
     EchoStr("HWI: devicemask=");
-    EchoDec(device_mask);
+    EchoHex(device_mask);
     EchoStr(" switches=");
     EchoHex(*IO_SWITCHES);
     EchoStr("\n");
@@ -124,6 +124,7 @@ int main()
     EchoStr("Timer interrupt test\n");
 
     SetupInterruptHandlers();
+
     EchoStr("Interrupt handlers installed\n");
 
     // At this point, a timer interrupt will be fired every second
