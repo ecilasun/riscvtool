@@ -19,11 +19,11 @@ extern volatile uint32_t *GraphicsFontStart;
 
 // GPU opcodes (only lower 3 bits out of 4 used)
 
-#define GPUUNUSED0      0x00
+#define GPUVSYNC        0x00
 #define GPUSETREGLO     0x01
 #define GPUSETREGHI     0x09
 #define GPUSETPALENT    0x02
-#define GPUUNUSED3      0x03
+#define GPUCLEAR        0x03
 #define GPUSYSDMA       0x04
 #define GPUVMEMOUT      0x05
 #define GPUGMEMOUT      0x06
@@ -34,6 +34,11 @@ inline void GPUSetRegister(const uint8_t reg, uint32_t val) {
     *IO_GPUCommandFIFO = GPUOPCODE24(GPUSETREGHI, reg, GPU24BITIMMHI(val));
     // Set lower 8 bits
     *IO_GPUCommandFIFO = GPUOPCODE24(GPUSETREGLO, reg, GPU8BITIMMLO(val));
+}
+
+inline void GPUWaitForVsync()
+{
+    *IO_GPUCommandFIFO = GPUOPCODE20(GPUVSYNC, 0, 0, 0);
 }
 
 inline void GPUSetVideoPage(const uint8_t videoPageRegister)
@@ -57,6 +62,11 @@ inline void GPUSetPaletteEntry(const uint8_t palindexreg, const uint8_t palcolor
 inline void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAlignedTargetReg, const uint16_t DMALengthInDWORDs, const uint8_t masked)
 {
     *IO_GPUCommandFIFO = GPUOPCODE20(GPUSYSDMA, VRAMDWORDAlignedTargetReg, SYSRAMSourceReg, ((DMALengthInDWORDs&0x7FFF) | (masked ? 0x8000 : 0x0000)));
+}
+
+inline void GPUClearVideoPage(const uint8_t colorreg)
+{
+    *IO_GPUCommandFIFO = GPUOPCODE20(GPUCLEAR, 0, colorreg, 0);
 }
 
 // Utilities

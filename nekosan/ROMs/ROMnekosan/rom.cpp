@@ -20,6 +20,8 @@
 #include "elf.h"
 #include "fat32/ff.h"
 
+const char *rootpath = "sd:";
+
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
    // We only have illegal instruction handler installed,
@@ -81,7 +83,7 @@ const char *FRtoString[]={
 uint32_t hardwareswitchstates, oldhardwareswitchstates;
 int selectedexecutable = 0;
 int numexecutables = 0;
-char *executables[64];
+char *executables[128];
 
 FATFS Fs;
 
@@ -89,31 +91,9 @@ uint32_t vramPage = 0;
 
 void CLS()
 {
-   // Clear screen (actual framebuffer is 320x208 pixels, the lower 8 pixels are imagined to be a menu/status bar of sorts)
-
-   // Clear the actual screen area
-   for (int y=0;y<200;++y)
-   {
-      for (int x=0;x<320;x+=4)
-      {
-         uint32_t addrs = x+y*512;
-         GPUSetRegister(0, addrs >> 2);
-         GPUSetRegister(1, 0x01010101); // 4 pixels of background palette entry 0x1
-         GPUWriteVRAM(0, 1, 0xF);
-      }
-   }
-
-   // Clear the status bar
-   for (int y=200;y<208;++y)
-   {
-      for (int x=0;x<320;x+=4)
-      {
-         uint32_t addrs = x+y*512;
-         GPUSetRegister(0, addrs >> 2);
-         GPUSetRegister(1, 0x02020202); // 4 pixels of status bar palette entry 0x2
-         GPUWriteVRAM(0, 1, 0xF);
-      }
-   }
+   // Clear all of the VRAM area (all 208 lines)
+   GPUSetRegister(0, 0x01010101);
+   GPUClearVideoPage(0);
 }
 
 void FLIP()
@@ -131,38 +111,15 @@ void PostLoadCLS()
 
    ResetVGAPalette();
 
-   for (int y=0;y<208;++y)
-   {
-      for (int x=0;x<320;x+=4)
-      {
-         uint32_t addrs = x+y*512;
-         GPUSetRegister(0, addrs >> 2);
-         GPUSetRegister(1, 0x00000000); // Blank screen post-VGA-palette reset
-         GPUWriteVRAM(0, 1, 0xF);
-      }
-   }
+   // Erase both pages to black
 
+   GPUSetRegister(0, 0x00000000);
+   GPUClearVideoPage(0);
    FLIP();
 
-   for (int y=0;y<208;++y)
-   {
-      for (int x=0;x<320;x+=4)
-      {
-         uint32_t addrs = x+y*512;
-         GPUSetRegister(0, addrs >> 2);
-         GPUSetRegister(1, 0x00000000); // Blank screen post-VGA-palette reset
-         GPUWriteVRAM(0, 1, 0xF);
-      }
-   }
+   GPUSetRegister(0, 0x00000000);
+   GPUClearVideoPage(0);
    FLIP();
-}
-
-void ShowStatusText()
-{
-   // TODO: show other status
-
-   // ROM version
-   //PrintDMA(0, 200, "NekoSan ROM v0001 build 0004", false);
 }
 
 void ShowSplashOrDirectoryListing()
@@ -183,8 +140,6 @@ void ShowSplashOrDirectoryListing()
       }
    }
 
-   ShowStatusText();
-
    FLIP();
 }
 
@@ -193,8 +148,6 @@ void ShowLoadingScreen()
    CLS();
 
    PrintDMA(120, 92, "Loading...", false);
-
-   ShowStatusText();
 
    FLIP();
 }
@@ -338,7 +291,10 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 int LoadAndRunELF(int selection)
 {
    FIL fp;
-   FRESULT fr = f_open(&fp, executables[selection], FA_READ);
+   char fullpath[255];
+   strcpy(fullpath, rootpath);
+   strcat(fullpath, executables[selection]);
+   FRESULT fr = f_open(&fp, fullpath, FA_READ);
    if (fr == FR_OK)
    {
       ShowLoadingScreen();
@@ -391,8 +347,7 @@ void ListDir(const char *path)
                flags[fidx++]=0;*/
                int olen = strlen(finf.fname) + 3;
                executables[numexecutables] = (char*)malloc(olen+1);
-               strcpy(executables[numexecutables], "sd:");
-               strcat(executables[numexecutables], finf.fname);
+               strcpy(executables[numexecutables], finf.fname);
                executables[numexecutables][olen] = 0;
                ++numexecutables;
                //printf("%s %d %s\r\n", finf.fname, (int)finf.fsize, flags);
@@ -454,7 +409,7 @@ int main()
    EchoStr("\u00A9 2021 Engin Cilasun\n\n");
 
    uint32_t sdcardavailable = 0;
-   FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+   FRESULT mountattempt = f_mount(&Fs, rootpath, 1);
    if (mountattempt!=FR_OK)
       EchoStr(FRtoString[mountattempt]);
    else
@@ -517,7 +472,7 @@ int main()
       // list the directory into an internal buffer
       if (sdcardavailable && !dirListed)
       {
-         ListDir("sd:");
+         ListDir(rootpath);
          dirListed = 1;
          // Show the directory listing
          ShowSplashOrDirectoryListing();

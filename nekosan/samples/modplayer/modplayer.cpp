@@ -1,18 +1,128 @@
-#include "core.h"
-#include "audio.h"
-#include "leds.h"
-
-#include "sdcard.h"
-#include "fat32/ff.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
+#include "core.h"
+#include "audio.h"
+#include "gpu.h"
+#include "switches.h"
+#include "sdcard.h"
+#include "fat32/ff.h"
+
 #include "micromod/micromod.h"
 
 FATFS Fs;
+uint32_t hardwareswitchstates, oldhardwareswitchstates;
+//volatile uint32_t *gpuSideSubmitCounter = (volatile uint32_t *)GraphicsFontStart-32;
+//uint32_t gpuSubmitCounter;
+uint32_t vramPage = 0;
+int selectedmodfile = 0;
+int nummodfiles = 0;
+char *modfiles[64];
+int currenthistogram = 0; // The one to show on screen
+int histogram[2][80];
+
+uint32_t *writepixel = (uint32_t *)GraphicsRAMStart;
+uint32_t *trailpixel = (uint32_t *)(GraphicsRAMStart+4);
+
+void CLS(uint32_t color)
+{
+   GPUSetRegister(0, color);
+   GPUClearVideoPage(0);
+}
+
+void FLIP()
+{
+	vramPage = (vramPage+1)%2;
+	GPUSetRegister(2, vramPage);
+	GPUSetVideoPage(2);
+}
+
+void SubmitPlaybackFrame()
+{
+	//if (*gpuSideSubmitCounter == gpuSubmitCounter)
+	{
+      // Next frame
+      //++gpuSubmitCounter;
+
+		// CLS
+		CLS(0x10101010);
+
+		// Show trail for previous histogram
+		for (int i=0;i<80;++i)
+		{
+			int py = 96+histogram[(currenthistogram+1)%2][i];
+			uint32_t sysramsource = uint32_t(trailpixel);
+			GPUSetRegister(4, sysramsource);
+			uint32_t vramramtarget = (i*4+py*512)>>2;
+			GPUSetRegister(5, vramramtarget);
+			uint32_t dmadwordcount = 1;
+			GPUKickDMA(4, 5, dmadwordcount, false);
+		}
+
+		// Show current histogram
+		for (int i=0;i<80;++i)
+		{
+			int py = 96+histogram[currenthistogram][i];
+			uint32_t sysramsource = uint32_t(writepixel);
+			GPUSetRegister(4, sysramsource);
+			uint32_t vramramtarget = (i*4+py*512)>>2;
+			GPUSetRegister(5, vramramtarget);
+			uint32_t dmadwordcount = 1;
+			GPUKickDMA(4, 5, dmadwordcount, false);
+		}
+
+		FLIP();
+
+		// GPU will write value in G2 to address in G3 in the future
+		//GPUSetRegister(3, uint32_t(gpuSideSubmitCounter));
+		//GPUSetRegister(2, gpuSubmitCounter);
+		//GPUWriteGRAM(2, 3, 0xF);
+
+		// Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
+		//*gpuSideSubmitCounter = 0;
+	}
+}
+
+void SubmitGPUFrame()
+{
+	// Do not submit more work if the GPU is not ready
+	//if (*gpuSideSubmitCounter == gpuSubmitCounter)
+	{
+		// Next frame
+		//++gpuSubmitCounter;
+
+		CLS(0x16161616);
+
+		if (nummodfiles == 0)
+		{
+			PrintDMA(88, 92, "mod player", false);
+		}
+		else
+		{
+			int line = 0;
+			for (int i=0;i<nummodfiles;++i)
+			{
+			PrintDMA(8, line, modfiles[i], (selectedmodfile == i) ? false : true);
+			line += 8;
+			}
+		}
+
+		// Stall GPU until vsync is reached
+		GPUWaitForVsync();
+
+		FLIP();
+
+		// GPU will write value in G2 to address in G3 in the future
+		//GPUSetRegister(3, uint32_t(gpuSideSubmitCounter));
+		//GPUSetRegister(2, gpuSubmitCounter);
+		//GPUWriteGRAM(2, 3);
+
+		// Clear state, GPU will overwrite this when it reaches GPUSYSMEMOUT
+		//*gpuSideSubmitCounter = 0;
+	}
+}
 
 #define SAMPLING_FREQ  44000  /* 44khz. */
 #define REVERB_BUF_LEN 1100    /* 12.5ms. */
@@ -22,7 +132,7 @@ FATFS Fs;
 
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
 static short reverb_buffer[ REVERB_BUF_LEN ];
-short *buffer = (short*)ARAMStart;
+short *buffer = (short*)ARAMStart;//[ BUFFER_SAMPLES * NUM_CHANNELS ];
 static long reverb_len, reverb_idx, filt_l, filt_r;
 static long samples_remaining;
 
@@ -149,6 +259,13 @@ static long play_module( signed char *module )
 			reverb( buffer, BUFFER_SAMPLES );
 			samples_remaining -= count;
 
+			// Generate 255-wide histogram
+			//__builtin_memset( histogram, 0, 64*sizeof(uint32_t) );
+			for (int i=0;i<80/*BUFFER_SAMPLES*/;++i)
+				histogram[currenthistogram][i] = (buffer[i*6+0]+buffer[i*6+1])/512;
+			
+			currenthistogram = (currenthistogram+1)%2;
+
 			// TODO: If 'buffer' is placed in AudioRAM, the APU
 			// could kick the synchronized copy so we can free the CPU
 
@@ -159,11 +276,24 @@ static long play_module( signed char *module )
 			for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
 				*IO_AudioFIFO = src[i];
 
-			// LED indicator
-			*IO_LEDRW = src[0]&0xF;
+			// Press down arrow to stop
+			int stop = 0;
+			if (*IO_SWITCHREADY)
+			{
+				hardwareswitchstates = *IO_SWITCHES;
+				switch(hardwareswitchstates ^ oldhardwareswitchstates)
+				{
+					case 0x02: stop = hardwareswitchstates&0x02 ? 0 : 1; break;
+					default: break;
+				};
+				oldhardwareswitchstates = hardwareswitchstates;
+			}
+			if (stop) playing = 0;
 
 			if( samples_remaining <= 0 || result != 0 )
 				playing = 0;
+
+			SubmitPlaybackFrame();
 		}
 	}
 	else
@@ -172,46 +302,122 @@ static long play_module( signed char *module )
 	return result;
 }
 
-void PlayMODFile(const char *fname)
+void ListDir(const char *path)
+{
+   nummodfiles = 0;
+   DIR dir;
+   FRESULT re = f_opendir(&dir, path);
+   if (re == FR_OK)
+   {
+      FILINFO finf;
+      do{
+         re = f_readdir(&dir, &finf);
+         if (re == FR_OK && dir.sect!=0)
+         {
+            // We're only interested in MOD files
+            if (strstr(finf.fname,".mod"))
+            {
+               int olen = strlen(finf.fname) + 3;
+               modfiles[nummodfiles] = (char*)malloc(olen+1);
+               strcpy(modfiles[nummodfiles], "sd:");
+               strcat(modfiles[nummodfiles], finf.fname);
+               modfiles[nummodfiles][olen] = 0;
+               ++nummodfiles;
+            }
+         }
+      } while(re == FR_OK && dir.sect!=0);
+      f_closedir(&dir);
+   }
+}
+
+void PlayMODFile(int file)
 {
 	signed char *module;
 	long count, length;
 
 	/* Read module file.*/
-	length = read_module_length( fname );
+	length = read_module_length( modfiles[file] );
 	if( length > 0 )
 	{
 		printf( "Module Data Length: %li bytes.\n", length );
-		module = (signed char*)malloc( length );
+		module = (signed char*)calloc( length, 1 );
 		if( module != NULL )
 		{
-			count = read_file( fname, module, length );
+			count = read_file( modfiles[file], module, length );
 			if( count < length )
 				printf("Module file is truncated. %li bytes missing.\n", length - count );
 			play_module( module );
 			free( module );
-		}
-		else
-		{
-			printf("Error: Could not allocate memory for module\n");
 		}
 	}
 }
 
 int main( int argc, char **argv )
 {
-	// Save LED status
-	uint32_t oldledstatus = *IO_LEDRW;
+	// Read switch state at startup
+	hardwareswitchstates = oldhardwareswitchstates = *IO_SWITCHES;
+
+	// Copy font to GRAM
+	InitFont();
+
+	// Initialize video page
+	GPUSetRegister(2, vramPage);
+	GPUSetVideoPage(2);
+	//*gpuSideSubmitCounter = 0;
+	//gpuSubmitCounter = 0;
+
+	// Make text color white and text background color light blue
+	uint32_t colorwhite = MAKERGBPALETTECOLOR(255, 255, 255);
+	uint32_t colorblue = MAKERGBPALETTECOLOR(128, 128, 255);
+	GPUSetRegister(1, colorwhite);
+	GPUSetRegister(2, colorblue);
+	GPUSetRegister(0, 255);
+	GPUSetPaletteEntry(0, 1);
+	GPUSetRegister(0, 0);
+	GPUSetPaletteEntry(0, 2);
+
+	// Colors for the playback histogram
+	*writepixel = 0x2A2A2A2A; // primary color
+	*trailpixel = 0x06060606; // trail color
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 		return -1;
 
-	printf("Playing sd:test.mod...\n");
-	PlayMODFile("sd:test.mod");
-	printf("Done.\n");
+    ListDir("sd:");
+	SubmitGPUFrame();
 
-	// Restore LED status
-	*IO_LEDRW = oldledstatus;
+	while(1)
+	{
+		if (*IO_SWITCHREADY)
+		{
+			hardwareswitchstates = *IO_SWITCHES;
+
+			int down = 0, up = 0, sel = 0;
+			switch(hardwareswitchstates ^ oldhardwareswitchstates)
+			{
+				case 0x01: sel = hardwareswitchstates&0x01 ? 0 : 1; break;
+				case 0x02: down = hardwareswitchstates&0x02 ? 0 : 1; break;
+				case 0x04: up = hardwareswitchstates&0x04 ? 0 : 1; break;
+				default: break;
+			};
+
+			oldhardwareswitchstates = hardwareswitchstates;
+
+			if (up) selectedmodfile--;
+			if (down) selectedmodfile++;
+			if (selectedmodfile>=nummodfiles) selectedmodfile = 0;
+			if (selectedmodfile<0) selectedmodfile = nummodfiles-1;
+			if (sel) {
+				CLS(0x10101010);
+				FLIP();
+				CLS(0x10101010);
+				PlayMODFile(selectedmodfile);
+			}
+
+			SubmitGPUFrame();
+		}
+	}
+
 	return 0;
 }

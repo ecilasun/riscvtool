@@ -122,6 +122,8 @@ int main(int argc, char ** argv)
         ++cnt;
 
         //ClearScreen(0x12);
+        //GPUSetRegister(0, 0x12121212);
+        //GPUClearVideoPage(0);
 
         // DMA
         for (int L=0;L<128;++L)
