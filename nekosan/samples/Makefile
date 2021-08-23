@@ -20,6 +20,7 @@ folders = \
 	modplayer \
 	audiotest \
 	interrupttest \
+	threadtest \
 	mandelbrot \
 	tinyraytracer \
 

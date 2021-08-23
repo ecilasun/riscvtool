@@ -73,3 +73,4 @@ inline void GPUClearVideoPage(const uint8_t colorreg)
 void InitFont();
 void ResetVGAPalette();
 void PrintDMA(const int col, const int row, const char *message, bool masked);
+void PrintNDMA(const int col, const int row, const int count, const char *message, bool masked);
