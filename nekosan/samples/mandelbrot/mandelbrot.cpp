@@ -63,6 +63,12 @@ int mandelbrotFloat(float ox, float oy, float sx)
        return 1;
    }
    return 0;
+
+
+   // distance	(via iq's shadertoy sample https://www.shadertoy.com/view/lsX3W4)
+	// d(c) = |Z|·log|Z|/|Z'|
+	//float d = 0.5*sqrt(dot(z,z)/dot(dz,dz))*log(dot(z,z));
+   //if( di>0.5 ) d=0.0;
 }
 
 int main(int argc, char ** argv)
