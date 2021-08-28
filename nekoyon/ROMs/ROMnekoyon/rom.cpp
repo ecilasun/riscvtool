@@ -40,9 +40,11 @@ void LoadBinaryBlob()
 
    //int percent = 0;
    //long chunks = (loadlen+511)/512;
-   UARTWrite("\0337 Loading @0x");
+   UARTWrite("\0337 Loading 0x");
+   UARTWriteHex(loadlen);
+   UARTWrite(" bytes @0x");
    UARTWriteHex(loadtarget);
-   UARTWrite("\n");
+   UARTWrite("...");
 
    // Read binary blob
    writecursor = 0;
@@ -52,6 +54,8 @@ void LoadBinaryBlob()
       if (*IO_UARTRXByteAvailable)
          target[writecursor++] = *IO_UARTRXTX;
    }
+
+   UARTWrite("done.\n");
 }
 
 typedef int (*t_mainfunction)();
@@ -135,7 +139,7 @@ int main()
          char checkchar = *IO_UARTRXTX;
 
          // Step 3: Echo back what we've got
-         *IO_UARTRXTX = checkchar;
+         // *IO_UARTRXTX = checkchar;
 
          // Step 4: Proceed to load binary blobs or run the incoming ELF
          // if we received a 'B\n' or 'R\n' sequence

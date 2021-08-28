@@ -17,7 +17,7 @@ void UARTWrite(const char *_message)
     int i = 0;
     while (_message[i]!=0)
     {
-        // Do not write and spin if output fifo is full
+        // Do not write and wait until output fifo has space before next character
         if (*IO_UARTTXFIFOFull)
             continue;
         *IO_UARTRXTX = _message[i];
