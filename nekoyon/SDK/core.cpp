@@ -58,7 +58,7 @@ uint64_t ReadRetiredInstructions()
 
 uint32_t ClockToMs(uint64_t clock)
 {
-   return clock / 25000;
+   return clock / 10000;
 }
 
 void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &seconds)
