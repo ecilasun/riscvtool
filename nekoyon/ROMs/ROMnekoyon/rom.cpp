@@ -110,7 +110,7 @@ int main()
    UARTWrite("+-------------------------+\r\n");
    UARTWrite("\nNekoYon version 0001\n");
    UARTWrite("rv32i\n");
-   UARTWrite("Devices: UART\n");
+   UARTWrite("Devices: UART,DDR3\n");
    UARTWrite("\u00A9 2021 Engin Cilasun\n\n");
 
    // UART communication section
