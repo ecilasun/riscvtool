@@ -38,14 +38,6 @@ void LoadBinaryBlob()
          loadlenaschar[writecursor++] = *IO_UARTRXTX;
    }
 
-   //int percent = 0;
-   //long chunks = (loadlen+511)/512;
-   UARTWrite("\0337 Loading 0x");
-   UARTWriteHex(loadlen);
-   UARTWrite(" bytes @0x");
-   UARTWriteHex(loadtarget);
-   UARTWrite("...");
-
    // Read binary blob
    writecursor = 0;
    volatile unsigned char* target = (volatile unsigned char* )loadtarget;
@@ -54,8 +46,6 @@ void LoadBinaryBlob()
       if (*IO_UARTRXByteAvailable)
          target[writecursor++] = *IO_UARTRXTX;
    }
-
-   UARTWrite("done.\n");
 }
 
 typedef int (*t_mainfunction)();
@@ -95,10 +85,6 @@ void RunBinaryBlob()
          branchaddressaschar[writecursor++] = readdata;
       }
    }
-
-   UARTWrite("\nStarting @0x");
-   UARTWriteHex(branchaddress);
-   UARTWrite("\n");
 
    LaunchELF(branchaddress);
 

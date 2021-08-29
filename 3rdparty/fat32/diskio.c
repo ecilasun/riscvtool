@@ -9,7 +9,9 @@
 
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
+#if !defined(DISABLE_FILESYSTEM)
 #include "sdcard.h"
+#endif
 #include "stdio.h"
 
 /* Definitions of physical drive number for each drive */
@@ -73,9 +75,11 @@ DSTATUS disk_initialize (
 		return stat;
 
 	case DEV_MMC :
+#if !defined(DISABLE_FILESYSTEM)
 		if (SDCardStartup() != -1)
 			stat = 0x0;
 		else
+#endif
 			stat = STA_NOINIT;
 
 		// translate the reslut code here
@@ -120,9 +124,11 @@ DRESULT disk_read (
 	case DEV_MMC :
 		// translate the arguments here
 
+#if !defined(DISABLE_FILESYSTEM)
 		if (SDReadMultipleBlocks(buff, count, sector) != -1)
 			res = RES_OK;
 		else
+#endif
 			res = RES_ERROR;
 
 		// translate the reslut code here
