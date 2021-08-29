@@ -14,6 +14,53 @@
 #include "uart.h"
 #include "elf.h"
 
+void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
+{
+   // We only have illegal instruction handler installed,
+   // therefore won't need to check the mcause register
+   // to see why we're here
+
+   uint32_t at = read_csr(mtval);
+   uint32_t cause = read_csr(mcause);
+
+   // This is an illegal instruction exception
+   // If cause&1==0 then it's an ebreak instruction
+   if ((cause&1) != 0)
+   {
+      // Offending instruction's opcode field
+      uint32_t opcode = read_csr(mscratch);
+
+      // Show the address and the failing instruction's opcode field
+      UARTWrite("EXCEPTION: Illegal instruction I$(0x");
+      UARTWriteHex((uint32_t)opcode);
+      UARTWrite(") D$(0x");
+      UARTWriteHex(*(uint32_t*)at);
+      UARTWrite(") at 0x");
+      UARTWriteHex((uint32_t)at);
+      UARTWrite("\n");
+   }
+   else
+   {
+      // We've hit a breakpoint
+      UARTWrite("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
+   }
+
+   // Deadlock
+   while(1) { }
+}
+
+void InstallIllegalInstructionHandler()
+{
+   // Set machine software interrupt handler
+   swap_csr(mtvec, illegal_instruction_exception);
+
+   // Enable machine software interrupt (breakpoint/illegal instruction)
+   swap_csr(mie, MIP_MSIP);
+
+   // Enable machine interrupts
+   swap_csr(mstatus, MSTATUS_MIE);
+}
+
 void LoadBinaryBlob()
 {
    // Header data
@@ -94,6 +141,8 @@ void RunBinaryBlob()
 
 int main()
 {
+   InstallIllegalInstructionHandler();
+
    // Show startup info
    UARTWrite("\033[2J\r\n");
    UARTWrite("+-------------------------+\r\n");
@@ -108,8 +157,8 @@ int main()
    UARTWrite("| ########   *   ######## |\r\n");
    UARTWrite("| ##########   ########## |\r\n");
    UARTWrite("+-------------------------+\r\n");
-   UARTWrite("\nNekoYon version 0001\n");
-   UARTWrite("rv32i\n");
+   UARTWrite("\nNekoYon ROM version N4:0001\n");
+   UARTWrite("rv32iZicsr\n");
    UARTWrite("Devices: UART,DDR3\n");
    UARTWrite("\u00A9 2021 Engin Cilasun\n\n");
 
