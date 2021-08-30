@@ -1,8 +1,41 @@
 #include "core.h"
 #include "uart.h"
+#include "encoding.h"
 //#include "switches.h"
 
+volatile uint32_t crashhint = 0;
 uint32_t seconds = 1;
+
+void software_interrupt()
+{
+   uint32_t at = read_csr(mtval);
+   uint32_t cause = read_csr(mcause);
+
+   // This is an illegal instruction exception
+   // If cause&1==0 then it's an ebreak instruction
+   if ((cause&1) != 0)
+   {
+      // Offending instruction's opcode field
+      uint32_t opcode = read_csr(mscratch);
+
+      // Show the address and the failing instruction's opcode field
+      UARTWrite("\nEXCEPTION: Illegal instruction I$(0x");
+      UARTWriteHex((uint32_t)opcode);
+      UARTWrite(") D$(0x");
+      UARTWriteHex(*(uint32_t*)at);
+      UARTWrite(") at 0x");
+      UARTWriteHex((uint32_t)at);
+      UARTWrite("\n");
+   }
+   else
+   {
+      // We've hit a breakpoint
+      UARTWrite("\nEXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
+   }
+
+   // Deadlock
+   while(1) { }
+}
 
 void timer_interrupt()
 {
@@ -10,6 +43,13 @@ void timer_interrupt()
     UARTWrite("TMI: ");
     UARTWriteDecimal(seconds++);
     UARTWrite(" seconds\n");
+
+    // At 15 second mark, we'll hit for main() to trigger an illegal instruction exception
+    if (seconds == 15)
+    {
+       UARTWrite("Should crash about now...\n");
+       crashhint = 1;
+    }
 
     // NOTE: If one stores registers and restores them to saved registers of a task,
     // a simple task manager can be implemented using timer interrupts only.
@@ -28,7 +68,7 @@ void timer_interrupt()
         : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
     );
     uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-    uint64_t future = now + 10000000; // One second into the future
+    uint64_t future = now + 10'000'000; // One second into the future
     asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
     asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
 }
@@ -81,7 +121,7 @@ void __attribute__((interrupt("machine"))) interrupt_handler()
       case 3: // Software exceptions (breakpoint/illegal instruction)
          // Note that this sample turns off these exceptions
          // which are turned on by the ROM at startup.
-         //software_interrupt();
+         software_interrupt();
          break;
       case 7: // Timer events
          timer_interrupt();
@@ -113,7 +153,7 @@ void SetupInterruptHandlers()
       : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
    uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-   uint64_t future = now + 10000000; // One second into the future
+   uint64_t future = now + 10'000'000; // One second into the future
    // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
    asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
@@ -121,8 +161,8 @@ void SetupInterruptHandlers()
    // Set trap handler address
    asm volatile("csrrw zero, mtvec, %0" :: "r" (interrupt_handler));
 
-   // Enable machine timer and machine external interrupts
-   int msie = (1 << 7) | (1 << 11);
+   // Enable machine timer and machine external interrupts, as well as software interrupts (ebreak and illegal instruction)
+   int msie = (1 << 7) | (1 << 11) | (1 << 3);
    asm volatile("csrrw zero, mie,%0" :: "r" (msie));
 
    // Enable machine interrupts
@@ -134,17 +174,27 @@ void SetupInterruptHandlers()
 int main()
 {
     UARTWrite("Timer interrupt test\n");
+    UARTWrite("NOTE: Will force a crash at 15 seconds\n\n");
 
     SetupInterruptHandlers();
 
-    UARTWrite("Interrupt handlers installed\n");
+    UARTWrite("Interrupt handlers installed\n\n");
 
     // At this point, a timer interrupt will be fired every second
     // which will interrupt current work and call the interrupt
     // service routine, then resume current work.
 
     // Stay here, as we don't have anywhere else to go back to
-    while (1) { }
+    while (1) {
+       if (crashhint)
+       {
+         UARTWrite("Deliberately crashing to test handler\n");
+         UARTWrite("I$ and D$ should both show 0x012345FF\n");
+         // Emit two illegal instructions to test proper crash handling
+         asm volatile(".dword 0x012345FF");
+         asm volatile(".dword 0xFFFFFFFF");
+       }
+    }
 
     return 0;
 }
