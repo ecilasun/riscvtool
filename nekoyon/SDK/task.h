@@ -26,8 +26,7 @@ struct break_point_t
 // Entry for a task's state
 struct cpu_context
 {
-   const char *name{0};
-   uint32_t reg[64]{0}; // Task's saved registers (not storing float registers yet)
+   uint32_t reg[32]{0}; // Task's saved registers (not storing float registers yet)
    uint32_t PC{0}; // Task's saved program counter
    uint32_t quantum{DEFAULT_TIMESLICE}; // Run time for this task
    break_point_t breakpoints[8];
