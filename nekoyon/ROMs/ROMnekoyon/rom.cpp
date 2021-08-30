@@ -115,6 +115,20 @@ void LaunchELF(uint32_t branchaddress)
    UARTWrite("Run complete.\n");
 }
 
+void FlushDataCache()
+{
+   // Force data cache flush so that D$ contents are visible by I$
+   // We do this by forcing a dummy load of DWORDs from 0 to 256
+   // so that previous contents are evicted and written back.   
+   for (uint32_t i=0; i<256; ++i)
+   {
+      uint32_t dummyread = DDR3Start[i];
+      // This is to make sure compiler doesn't eat our reads
+      // and shuts up about unused variable
+      asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
+   }
+}
+
 void RunBinaryBlob()
 {
    // Header data
@@ -132,6 +146,8 @@ void RunBinaryBlob()
          branchaddressaschar[writecursor++] = readdata;
       }
    }
+
+   FlushDataCache();
 
    LaunchELF(branchaddress);
 
