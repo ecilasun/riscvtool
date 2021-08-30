@@ -15,6 +15,7 @@ thirdparty_libs = ../../3rdparty
 folders = \
 	helloworld \
 	ddr3test \
+	interrupttest \
 
 # Rules
 
