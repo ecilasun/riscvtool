@@ -113,7 +113,7 @@ void SetupInterruptHandlers()
       : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
    uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-   uint64_t future = now + 25000000; // One second into the future
+   uint64_t future = now + 10000000; // One second into the future
    // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
    asm volatile("csrrw zero, 0x801, %0" :: "r" ((future&0xFFFFFFFF00000000)>>32));
    asm volatile("csrrw zero, 0x800, %0" :: "r" (uint32_t(future&0x00000000FFFFFFFF)));
