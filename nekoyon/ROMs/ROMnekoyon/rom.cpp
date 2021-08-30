@@ -118,9 +118,9 @@ void LaunchELF(uint32_t branchaddress)
 void FlushDataCache()
 {
    // Force data cache flush so that D$ contents are visible by I$
-   // We do this by forcing a dummy load of DWORDs from 0 to 256
+   // We do this by forcing a dummy load of DWORDs from 0 to 2048
    // so that previous contents are evicted and written back.   
-   for (uint32_t i=0; i<256; ++i)
+   for (uint32_t i=0; i<2048; ++i)
    {
       uint32_t dummyread = DDR3Start[i];
       // This is to make sure compiler doesn't eat our reads
