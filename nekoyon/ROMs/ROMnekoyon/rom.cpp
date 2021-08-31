@@ -215,7 +215,6 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
          // ...place it in memory
          uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
          f_lseek(fp, sheader.m_Offset);
-         UARTWrite(".");
          f_read(fp, elfsectionpointer, sheader.m_Size, &bytesread);
       }
    }
@@ -240,11 +239,48 @@ int LoadAndRunELF(const char *fname)
       LaunchELF(branchaddress);
       return 0;
    }
-   else
-   {
-      UARTWrite(FRtoString[fr]);
+   else // File not found but we'd prefer to be quiet about it
       return -1;
+}
+
+void ListDir(const char *path)
+{
+   DIR dir;
+   FRESULT re = f_opendir(&dir, path);
+   if (re == FR_OK)
+   {
+      FILINFO finf;
+      do{
+         re = f_readdir(&dir, &finf);
+         if (re == FR_OK && dir.sect!=0)
+         {
+            // We're only interested in executables
+            if (strstr(finf.fname, ".elf"))
+            {
+               UARTWrite(finf.fname);
+               UARTWrite("\n");
+            }
+         }
+      } while(re == FR_OK && dir.sect!=0);
+      f_closedir(&dir);
    }
+   else
+      UARTWrite(FRtoString[re]);
+}
+
+void ProcessCommand(const char *cmd)
+{
+   if (strstr(cmd, "load") != nullptr)
+   {
+      const char *fname = cmd + 6;
+      char fullpath[128];
+      strcpy(fullpath, "sd:");
+      strcat(fullpath, fname);
+      LoadAndRunELF(fullpath);
+   }
+
+   if (strstr(cmd, "dir") != nullptr)
+      ListDir("sd:");
 }
 
 int main()
@@ -274,6 +310,8 @@ int main()
 
    // Step B: UART Phase, fallback when no boot.elf is found
 
+   char commandline[128];
+   int commandlen = 0;
    if ((foundelf == -1) || (sdcardavailable == 0))
    {
       uint8_t prevchar = 0xFF;
@@ -284,16 +322,35 @@ int main()
          {
             // Step B2: Read the data on UARTRX memory location
             char checkchar = *IO_UARTRXTX;
+            *IO_UARTRXTX = checkchar; // Echo back
 
             // Step B3: Proceed to load binary blobs or run the incoming ELF
             // if we received a 'B\n' or 'R\n' sequence
             if (checkchar == 13)
             {
+               // Rewind command
+               commandlen = 0;
+
                // Load the incoming binary
                if (prevchar=='B')
                   LoadBinaryBlob();
-               if (prevchar=='R')
+               else if (prevchar=='R')
                   RunBinaryBlob();
+               else
+                  ProcessCommand(commandline);
+            }
+
+            // Backspace?
+            if (checkchar == 8)
+            {
+               commandline[commandlen--] = 0;
+               if (commandlen <= 0) commandlen = 0;
+            }
+            else
+            {
+               commandline[commandlen++] = checkchar;
+               commandline[commandlen] = 0;
+               if (commandlen > 126) commandlen = 126;
             }
 
             // Step B4: Remember this character for the next round
