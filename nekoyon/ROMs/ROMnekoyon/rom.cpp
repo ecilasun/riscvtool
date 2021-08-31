@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
-#include <math.h>
 
 #include <encoding.h>
 
@@ -20,15 +19,14 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    // therefore won't need to check the mcause register
    // to see why we're here
 
-   uint32_t at = read_csr(mtval);
-   uint32_t cause = read_csr(mcause);
+   uint32_t at = read_csr(mtval);      // PC
+   uint32_t cause = read_csr(mcause);  // Exception cause
 
    // This is an illegal instruction exception
    // If cause&1==0 then it's an ebreak instruction
    if ((cause&1) != 0)
    {
-      // Offending instruction's opcode field
-      uint32_t opcode = read_csr(mscratch);
+      uint32_t opcode = read_csr(mscratch);  // Instruction causing the exception
 
       // Show the address and the failing instruction's opcode field
       UARTWrite("EXCEPTION: Illegal instruction I$(0x");
@@ -42,10 +40,11 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    else
    {
       // We've hit a breakpoint
+      // TODO: Tie this into GDB routines (connected via UART)
       UARTWrite("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
    }
 
-   // Deadlock
+   // Deadlock in either case for now
    while(1) { }
 }
 
@@ -99,17 +98,10 @@ typedef int (*t_mainfunction)();
 
 void LaunchELF(uint32_t branchaddress)
 {
-   // TODO: Set up return before we branch into this routine
+   // TODO: Set up return environment before we branch into this routine
 
-   // Branch to loaded executable's entry point
+   // Branch to loaded ELF's entry point
    ((t_mainfunction)branchaddress)();
-   /*asm (
-      "lw x31, %0 \n"
-      "jalr ra, 0(x31) \n"
-      : 
-      : "m" (branchaddress)
-      : 
-   );*/
 
    // Done, back in our world
    UARTWrite("Run complete.\n");
@@ -117,9 +109,9 @@ void LaunchELF(uint32_t branchaddress)
 
 void FlushDataCache()
 {
-   // Force data cache flush so that D$ contents are visible by I$
+   // Force D$ flush so that contents are visible by I$
    // We do this by forcing a dummy load of DWORDs from 0 to 2048
-   // so that previous contents are evicted and written back.   
+   // to force previous contents to be written back to DDR3
    for (uint32_t i=0; i<2048; ++i)
    {
       uint32_t dummyread = DDR3Start[i];
@@ -147,12 +139,11 @@ void RunBinaryBlob()
       }
    }
 
+   // Force D$ to write contents back to DDR3
+   // so that I$ can load them.
    FlushDataCache();
 
    LaunchELF(branchaddress);
-
-   // Unfortunately, if I use 'noreturn' attribute with above code, it doesn't work
-   // and there'll be a redundant stack op and a ret generated here
 }
 
 int main()
@@ -160,22 +151,22 @@ int main()
    InstallIllegalInstructionHandler();
 
    // Show startup info
-   UARTWrite("\033[2J\r\n");
-   UARTWrite("+-------------------------+\r\n");
-   UARTWrite("|          ************** |\r\n");
-   UARTWrite("| ########   ************ |\r\n");
-   UARTWrite("| #########  ************ |\r\n");
-   UARTWrite("| ########   ***********  |\r\n");
-   UARTWrite("| #        ***********    |\r\n");
-   UARTWrite("| ##   *************   ## |\r\n");
-   UARTWrite("| ####   *********   #### |\r\n");
-   UARTWrite("| ######   *****   ###### |\r\n");
-   UARTWrite("| ########   *   ######## |\r\n");
-   UARTWrite("| ##########   ########## |\r\n");
-   UARTWrite("+-------------------------+\r\n");
-   UARTWrite("\nNekoYon ROM version N4:0001\n");
-   UARTWrite("rv32iZicsr\n");
-   UARTWrite("Devices: UART,DDR3\n");
+   UARTWrite("\033[2J\n");
+   UARTWrite("+-------------------------+\n");
+   UARTWrite("|          ************** |\n");
+   UARTWrite("| ########   ************ |\n");
+   UARTWrite("| #########  ************ |\n");
+   UARTWrite("| ########   ***********  |\n");
+   UARTWrite("| #        ***********    |\n");
+   UARTWrite("| ##   *************   ## |\n");
+   UARTWrite("| ####   *********   #### |\n");
+   UARTWrite("| ######   *****   ###### |\n");
+   UARTWrite("| ########   *   ######## |\n");
+   UARTWrite("| ##########   ########## |\n");
+   UARTWrite("+-------------------------+\n");
+   UARTWrite("\nNekoYon boot loader version N4:0002\n");
+   UARTWrite("RV32IZicsr\n");
+   UARTWrite("Devices: UART,DDR3,SPI\n");
    UARTWrite("\u00A9 2021 Engin Cilasun\n\n");
 
    // UART communication section
