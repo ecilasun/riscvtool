@@ -265,15 +265,17 @@ int main()
    else
       sdcardavailable = 1;
 
+   int foundelf = 0;
    if (sdcardavailable)
    {
       // Step A2: Check to see if we can find a 'boot.elf' in root directory and run it
-      LoadAndRunELF("sd:boot.elf");
+      foundelf = LoadAndRunELF("sd:boot.elf");
    }
-   else
-   {
-      // Step B: UART Phase, fallback when no boot.elf is found
 
+   // Step B: UART Phase, fallback when no boot.elf is found
+
+   if ((foundelf == -1) || (sdcardavailable == 0))
+   {
       uint8_t prevchar = 0xFF;
       while(1)
       {
