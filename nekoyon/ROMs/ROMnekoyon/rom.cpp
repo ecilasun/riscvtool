@@ -17,6 +17,7 @@
 #include "fat32/ff.h"
 
 FATFS Fs;
+uint32_t branchaddress = 0;
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -47,12 +48,12 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    // therefore won't need to check the mcause register
    // to see why we're here
 
-   uint32_t at = read_csr(mtval);      // PC
-   uint32_t cause = read_csr(mcause);  // Exception cause
+   uint32_t at = read_csr(mtval);         // PC
+   uint32_t cause = read_csr(mcause)>>16; // Exception cause on bits [18:16]
 
    // This is an illegal instruction exception
    // If cause&1==0 then it's an ebreak instruction
-   if ((cause&1) != 0)
+   if ((cause&1) != 0) // ILLEGALINSTRUCTION
    {
       uint32_t opcode = read_csr(mscratch);  // Instruction causing the exception
 
@@ -65,11 +66,18 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       UARTWriteHex((uint32_t)at);
       UARTWrite("\n");
    }
-   else
+
+   if ((cause&2) != 0) // EBREAK
    {
       // We've hit a breakpoint
       // TODO: Tie this into GDB routines (connected via UART)
       UARTWrite("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
+   }
+
+   if ((cause&4) != 0) // ECALL
+   {
+      // 93: terminate application
+      UARTWrite("ECALL: OS service request\n");
    }
 
    // Deadlock in either case for now
@@ -138,25 +146,42 @@ void FlushDataCache()
 
 typedef int (*t_mainfunction)();
 
-void LaunchELF(uint32_t branchaddress)
+void __attribute__((aligned(256))) __attribute__((naked)) LaunchELF(uint32_t jumptarget)
 {
-   // Force D$ to write contents back to DDR3
-   // so that I$ can load them.
-   FlushDataCache();
+   asm volatile(
+      // Save return address and s0
+      "addi sp,sp,-16;"
+      "sw ra,12(sp);"
+      "sw s0,8(sp);"
 
-   // TODO: Set up return environment before we branch into this routine
+      // Load jumptarget into s0
+      "mv s0,a0;"
 
-   // Branch to loaded ELF's entry point
-   ((t_mainfunction)branchaddress)();
+      // Call flush data cache
+      "jal ra, _Z14FlushDataCachev;"
 
-   // Done, back in our world
-   UARTWrite("Run complete.\n");
+      // Call function at jumptarget
+      // TODO: Save all states (sp, ra, registers etc)
+      // so that ECALL 93 can return us to ELFReturnSite
+      "la ra, ELFReturnSite;" // Remember where to return to
+      "jalr s0;" // This saves ra and should branch back to elf return site (somehow jalr ra, 0(s0) gets squished into jalr s0 by gcc)
+
+      // NOTE: It is not possible for an ordinary ELF to return
+      // here without a custom _start/_exit pair.
+      // ELF termination and return are handled in the interrupt service routine.
+
+   "ELFReturnSite:" // Return position for ELF when it's done
+      // Restore return address and s0
+      "lw s0,8(sp);"
+      "lw ra,12(sp);"
+      "addi sp,sp,16;"
+      "ret;"
+   );
 }
 
-void RunBinaryBlob()
+void LoadElfRunAddress()
 {
    // Header data
-   uint32_t branchaddress = 0;
    char *branchaddressaschar = (char*)&branchaddress;
 
    // Data length
@@ -170,11 +195,9 @@ void RunBinaryBlob()
          branchaddressaschar[writecursor++] = readdata;
       }
    }
-
-   LaunchELF(branchaddress);
 }
 
-void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &branchaddress)
+void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
 {
    if (fheader->m_Magic != 0x464C457F)
    {
@@ -182,7 +205,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
        return;
    }
 
-   branchaddress = fheader->m_Entry;
+   jumptarget = fheader->m_Entry;
 
    // Read program header
    SElfProgramHeader32 pheader;
@@ -233,7 +256,6 @@ int LoadAndRunELF(const char *fname)
       SElfFileHeader32 fheader;
       UINT readsize;
       f_read(&fp, &fheader, sizeof(fheader), &readsize);
-      uint32_t branchaddress;
       ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
       f_close(&fp);
       LaunchELF(branchaddress);
@@ -328,6 +350,7 @@ int main()
             // if we received a 'B\n' or 'R\n' sequence
             if (checkchar == 13)
             {
+               UARTWrite("\n");
                // Rewind command
                commandlen = 0;
 
@@ -335,7 +358,10 @@ int main()
                if (prevchar=='B')
                   LoadBinaryBlob();
                else if (prevchar=='R')
-                  RunBinaryBlob();
+               {
+                  LoadElfRunAddress();
+                  LaunchELF(branchaddress);
+               }
                else
                   ProcessCommand(commandline);
             }
