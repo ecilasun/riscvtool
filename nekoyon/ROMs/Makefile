@@ -21,16 +21,14 @@ RISCV_PREFIX ?= riscv64-unknown-elf-
 RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 RISCVTOOL ?= ../../build/release/riscvtool
-RISCV_GCC_OPTS ?= -DDISABLE_FILESYSTEM -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug --specs=nano.specs -fPIC -nostartfiles
+RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++11 -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug --specs=nano.specs -fPIC -nostartfiles
 
 incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
 objs  :=
 
-#$(wildcard $(thirdparty_libs)/**/*.c)
-
 define compile_ROM
 $(1).elf: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
-	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) $(wildcard $(corelib_dir)/*.cpp) -Wl,-T$(1)/rom.lds
+	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) $(wildcard $(corelib_dir)/*.cpp) -Wl,-T$(1)/rom.lds $(wildcard $(thirdparty_libs)/**/*.c)
 
 $(1).coe: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
 	$$(RISCVTOOL) $(src_dir)/$(1).elf -makerom 4 0 >> $(src_dir)/$(1).coe
