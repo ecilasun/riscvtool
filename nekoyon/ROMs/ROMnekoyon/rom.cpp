@@ -18,6 +18,7 @@
 
 FATFS Fs;
 uint32_t branchaddress = 0;
+uint32_t savedstackpointer = 0;
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -42,6 +43,119 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
+typedef int (*t_mainfunction)();
+
+void __attribute__((aligned(256))) __attribute__((naked)) LaunchELF(uint32_t jumptarget)
+{
+   asm volatile(
+      // Save return address and s0
+      "addi sp,sp,-16;"
+      "sw ra,12(sp);"
+      "sw s0,8(sp);"
+
+      // Load jumptarget into s0
+      "mv s0,a0;"
+
+      // Call flush data cache
+      "jal ra, _Z14FlushDataCachev;"
+
+      // Restore the return address and s0 as if we're returning from LaunchELF()
+      "lw ra,12(sp);"
+      //"lw s0,8(sp);"
+      "addi sp,sp,16;"
+
+      // Save all registers
+      "sw sp, %0;"
+      "addi	sp,sp,-128;"
+      "sw	 x1,120(sp);"  // ra -> this is the place where launchelf was called from
+      "sw	 x2,116(sp);"  // sp
+      "sw	 x3,112(sp);"  // gp
+      "sw	 x4,108(sp);"  // tp
+      "sw	 x5,104(sp);"  // t0
+      "sw	 x6,100(sp);"  // t1
+      "sw	 x7, 96(sp);"  // t2
+      "sw	 x8, 92(sp);"  // s0
+      "sw	 x9, 88(sp);"  // s1
+      "sw	x10, 84(sp);"  // a0
+      "sw	x11, 80(sp);"  // a1
+      "sw	x12, 76(sp);"  // a2
+      "sw	x13, 72(sp);"  // a3
+      "sw	x14, 68(sp);"  // a4
+      "sw	x15, 64(sp);"  // a5
+      "sw	x16, 60(sp);"  // a6
+      "sw	x17, 56(sp);"  // a7
+      "sw	x18, 52(sp);"  // s2
+      "sw	x19, 48(sp);"  // s3
+      "sw	x20, 44(sp);"  // s4
+      "sw	x21, 40(sp);"  // s5
+      "sw	x22, 36(sp);"  // s6
+      "sw	x23, 32(sp);"  // s7
+      "sw	x24, 28(sp);"  // s8
+      "sw	x25, 24(sp);"  // s9
+      "sw	x26, 20(sp);"  // s1
+      "sw	x27, 16(sp);"  // s1
+      "sw	x28, 12(sp);"  // t3
+      "sw	x29,  8(sp);"  // t4
+      "sw	x30,  4(sp);"  // t5
+      "sw	x31,  0(sp);"  // t6
+
+      // Call function at jumptarget
+      // Note that the ELF will not return back here but will do an ecall 93
+      // and check a0 return value, and if it's zero or greater, will go into
+      // an infinite loop (or if less than zero, throw error and then go to loop)
+      // We will resolve this by recovering our state through an interrupt handler.
+      "jalr s0;" : "=m" (savedstackpointer) : :
+   );
+}
+
+void __attribute__((aligned(256))) __attribute__((naked)) ReturnFromELF()
+{
+      // NOTE: It is not possible for an ordinary gcc ELF to return
+      // here without a custom _start/_exit pair.
+   asm volatile(
+      // Restore all registers
+      "lw sp, %0;"
+      "addi	sp,sp,-128;"   // land exactly where the SP was before
+      "lw	 x1,120(sp);"  // ra -> LaunchELF() return address
+      "lw	 x2,116(sp);"  // sp
+      "lw	 x3,112(sp);"  // gp
+      "lw	 x4,108(sp);"  // tp
+      "lw	 x5,104(sp);"  // t0
+      "lw	 x6,100(sp);"  // t1
+      "lw	 x7, 96(sp);"  // t2
+      "lw	 x8, 92(sp);"  // s0
+      "lw	 x9, 88(sp);"  // s1
+      "lw	x10, 84(sp);"  // a0
+      "lw	x11, 80(sp);"  // a1
+      "lw	x12, 76(sp);"  // a2
+      "lw	x13, 72(sp);"  // a3
+      "lw	x14, 68(sp);"  // a4
+      "lw	x15, 64(sp);"  // a5
+      "lw	x16, 60(sp);"  // a6
+      "lw	x17, 56(sp);"  // a7
+      "lw	x18, 52(sp);"  // s2
+      "lw	x19, 48(sp);"  // s3
+      "lw	x20, 44(sp);"  // s4
+      "lw	x21, 40(sp);"  // s5
+      "lw	x22, 36(sp);"  // s6
+      "lw	x23, 32(sp);"  // s7
+      "lw	x24, 28(sp);"  // s8
+      "lw	x25, 24(sp);"  // s9
+      "lw	x26, 20(sp);"  // s1
+      "lw	x27, 16(sp);"  // s1
+      "lw	x28, 12(sp);"  // t3
+      "lw	x29,  8(sp);"  // t4
+      "lw	x30,  4(sp);"  // t5
+      "lw	x31,  0(sp);"  // t6
+      "addi	sp,sp, 128;"   // Rewind SP to land at callee's SP
+      // Cheat by copying 'ra' into mret return register before we return
+      // This will effectively force the interrupt service that called us
+      // to return back to the next instruction after LaunchELF()
+      "csrrw zero, mepc, ra;"
+      "ret;" : : "m" (savedstackpointer) :
+   );
+}
+
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
    // We only have illegal instruction handler installed,
@@ -65,6 +179,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       UARTWrite(") at 0x");
       UARTWriteHex((uint32_t)at);
       UARTWrite("\n");
+      while(1) { }
    }
 
    if ((cause&2) != 0) // EBREAK
@@ -72,16 +187,17 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       // We've hit a breakpoint
       // TODO: Tie this into GDB routines (connected via UART)
       UARTWrite("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
+      while(1) { }
    }
 
    if ((cause&4) != 0) // ECALL
    {
-      // 93: terminate application
-      UARTWrite("ECALL: OS service request\n");
+      // register a7 contains the function code
+      // for instance, a7==93 -> terminate application
+      ReturnFromELF();
+      // on return, mret return address now contains the 'ra' of the call to LaunchELF()
+      // effectively tricking this interrupt handler to return to where we left off
    }
-
-   // Deadlock in either case for now
-   while(1) { }
 }
 
 void InstallIllegalInstructionHandler()
@@ -142,41 +258,6 @@ void FlushDataCache()
       // and shuts up about unused variable
       asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
    }
-}
-
-typedef int (*t_mainfunction)();
-
-void __attribute__((aligned(256))) __attribute__((naked)) LaunchELF(uint32_t jumptarget)
-{
-   asm volatile(
-      // Save return address and s0
-      "addi sp,sp,-16;"
-      "sw ra,12(sp);"
-      "sw s0,8(sp);"
-
-      // Load jumptarget into s0
-      "mv s0,a0;"
-
-      // Call flush data cache
-      "jal ra, _Z14FlushDataCachev;"
-
-      // Call function at jumptarget
-      // TODO: Save all states (sp, ra, registers etc)
-      // so that ECALL 93 can return us to ELFReturnSite
-      "la ra, ELFReturnSite;" // Remember where to return to
-      "jalr s0;" // This saves ra and should branch back to elf return site (somehow jalr ra, 0(s0) gets squished into jalr s0 by gcc)
-
-      // NOTE: It is not possible for an ordinary ELF to return
-      // here without a custom _start/_exit pair.
-      // ELF termination and return are handled in the interrupt service routine.
-
-   "ELFReturnSite:" // Return position for ELF when it's done
-      // Restore return address and s0
-      "lw s0,8(sp);"
-      "lw ra,12(sp);"
-      "addi sp,sp,16;"
-      "ret;"
-   );
 }
 
 void LoadElfRunAddress()
