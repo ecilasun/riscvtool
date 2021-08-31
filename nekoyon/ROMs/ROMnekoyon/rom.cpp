@@ -122,19 +122,6 @@ void LoadBinaryBlob()
    }
 }
 
-typedef int (*t_mainfunction)();
-
-void LaunchELF(uint32_t branchaddress)
-{
-   // TODO: Set up return environment before we branch into this routine
-
-   // Branch to loaded ELF's entry point
-   ((t_mainfunction)branchaddress)();
-
-   // Done, back in our world
-   UARTWrite("Run complete.\n");
-}
-
 void FlushDataCache()
 {
    // Force D$ flush so that contents are visible by I$
@@ -147,6 +134,23 @@ void FlushDataCache()
       // and shuts up about unused variable
       asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
    }
+}
+
+typedef int (*t_mainfunction)();
+
+void LaunchELF(uint32_t branchaddress)
+{
+   // Force D$ to write contents back to DDR3
+   // so that I$ can load them.
+   FlushDataCache();
+
+   // TODO: Set up return environment before we branch into this routine
+
+   // Branch to loaded ELF's entry point
+   ((t_mainfunction)branchaddress)();
+
+   // Done, back in our world
+   UARTWrite("Run complete.\n");
 }
 
 void RunBinaryBlob()
@@ -166,10 +170,6 @@ void RunBinaryBlob()
          branchaddressaschar[writecursor++] = readdata;
       }
    }
-
-   // Force D$ to write contents back to DDR3
-   // so that I$ can load them.
-   FlushDataCache();
 
    LaunchELF(branchaddress);
 }
@@ -242,7 +242,7 @@ int LoadAndRunELF(const char *fname)
    }
    else
    {
-      UARTWrite("boot.elf not found\n");
+      UARTWrite(FRtoString[fr]);
       return -1;
    }
 }
