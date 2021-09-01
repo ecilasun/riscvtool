@@ -392,7 +392,7 @@ int main()
 
    // Show startup info
    UARTWrite("\033[2J\n+-------------------------+\n|          ************** |\n| ########   ************ |\n| #########  ************ |\n| ########   ***********  |\n| #        ***********    |\n| ##   *************   ## |\n| ####   *********   #### |\n| ######   *****   ###### |\n| ########   *   ######## |\n| ##########   ########## |\n+-------------------------+\n");
-   UARTWrite("\nNekoYon boot loader version N4:0002\nSingle core RISC-V @150Mhz\narch: RV32IZicsr\nDevices: UART,DDR3,SPI\n\u00A9 2021 Engin Cilasun\n\n");
+   UARTWrite("\nNekoYon boot loader version N4:0002\nSingle core RISC-V(RV32IMZicsr) @150Mhz\nDevices: UART,DDR3,SPI\n\u00A9 2021 Engin Cilasun\n\n");
 
    // Step A: BOOT phase
 
