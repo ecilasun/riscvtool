@@ -11,8 +11,17 @@
 #include "fat32/ff.h"
 #endif
 
-volatile uint32_t *DDR3Start = (uint32_t* )0x00000000;     // Start of DDR3 RAM region (inclusive, 256Mbytes)
-volatile uint32_t *DDR3End = (uint32_t* )0x10000000;       // End of DDR3 RAM region (non-inclusive)
+// DDR3 (256Mbytes)
+volatile uint32_t *DDR3Start = (uint32_t *)0x00000000;
+volatile uint32_t *DDR3End = (uint32_t *)0x10000000;
+
+// S-RAM (64Kbytes)
+volatile uint32_t *SRAMStart = (uint32_t *)0x10000000;
+volatile uint32_t *SRAMEnd = (uint32_t *)0x10010000;
+
+// G-RAM (64Kbytes)
+volatile uint32_t *GRAMStart = (uint32_t *)0x20000000;
+volatile uint32_t *GRAMEnd = (uint32_t *)0x20010000;
 
 uint32_t seed = 7;
 uint32_t Random()

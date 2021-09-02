@@ -45,6 +45,12 @@ struct stat {
 // Device memory ranges
 extern volatile uint32_t *DDR3Start;
 extern volatile uint32_t *DDR3End;
+// S-RAM
+extern volatile uint32_t *SRAMStart;
+extern volatile uint32_t *SRAMEnd;
+// G-RAM
+extern volatile uint32_t *GRAMStart;
+extern volatile uint32_t *GRAMEnd;
 
 uint32_t Random();
 uint64_t ReadClock();

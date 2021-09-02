@@ -169,16 +169,13 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    // If cause&1==0 then it's an ebreak instruction
    if ((cause&1) != 0) // ILLEGALINSTRUCTION
    {
-      uint32_t opcode = read_csr(mscratch);  // Instruction causing the exception
-
       // Show the address and the failing instruction's opcode field
-      UARTWrite("EXCEPTION: Illegal instruction I$(0x");
-      UARTWriteHex((uint32_t)opcode);
-      UARTWrite(") D$(0x");
+      UARTWrite("EXCEPTION: Illegal instruction 0x");
       UARTWriteHex(*(uint32_t*)at);
-      UARTWrite(") at 0x");
+      UARTWrite(" at 0x");
       UARTWriteHex((uint32_t)at);
       UARTWrite("\n");
+      // Stall
       while(1) { }
    }
 
@@ -187,6 +184,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       // We've hit a breakpoint
       // TODO: Tie this into GDB routines (connected via UART)
       UARTWrite("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
+      // Stall
       while(1) { }
    }
 
@@ -384,17 +382,16 @@ void ProcessCommand(const char *cmd)
 
    if (strstr(cmd, "dir") != nullptr)
       ListDir("sd:");
+
+   if (strstr(cmd, "help") != nullptr)
+      UARTWrite("commands:\ndir:list SDCard root directory\nload prog.elf: load and run given program\n\n");
 }
 
 int main()
 {
    InstallIllegalInstructionHandler();
 
-   // Show startup info
-   UARTWrite("\033[2J\n+-------------------------+\n|          ************** |\n| ########   ************ |\n| #########  ************ |\n| ########   ***********  |\n| #        ***********    |\n| ##   *************   ## |\n| ####   *********   #### |\n| ######   *****   ###### |\n| ########   *   ######## |\n| ##########   ########## |\n+-------------------------+\n");
-   UARTWrite("\nNekoYon boot loader version N4:0002\nSingle core RISC-V(RV32IMFZicsr) @150Mhz\nDevices: UART,DDR3,SPI\n\u00A9 2021 Engin Cilasun\n\n");
-
-   // Step A: BOOT phase
+   // Step A: BOOTLOADER phase - attempt to load boot.elf
 
    // Step A1: Try to mount the SDCard
    uint32_t sdcardavailable = 0;
@@ -411,7 +408,14 @@ int main()
       foundelf = LoadAndRunELF("sd:boot.elf");
    }
 
-   // Step B: UART Phase, fallback when no boot.elf is found
+   // Step B: UART phase - fallback to listening to UART when no boot.elf is found
+
+   // Show startup info
+   // This is done _after_ bootloader phase to give bootloader a chance to show different
+   // or updated information, or none at all depending on system requirements.
+   UARTWrite("\033[2J\n+-------------------------+\n|          ************** |\n| ########   ************ |\n| #########  ************ |\n| ########   ***********  |\n| #        ***********    |\n| ##   *************   ## |\n| ####   *********   #### |\n| ######   *****   ###### |\n| ########   *   ######## |\n| ##########   ########## |\n+-------------------------+\n");
+   UARTWrite("\nNekoYon boot loader version N4:0003\nSingle core RISC-V(RV32IMFZicsr) @150Mhz\nDevices: UART,DDR3,SPI,GPU\n\u00A9 2021 Engin Cilasun\n\n");
+   UARTWrite("No boot.elf available.\nListening to UART instead.\nUse command 'help' to list available functions.\n\n");
 
    char commandline[128];
    int commandlen = 0;
