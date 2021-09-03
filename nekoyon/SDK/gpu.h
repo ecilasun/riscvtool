@@ -1,5 +1,6 @@
 #include "inttypes.h"
 
+// Instruction defines
 #define G_FLOWCTL   0x0
 #define G_SETREG    0x1
 #define G_STORE     0x2
@@ -49,7 +50,6 @@
 #define G_R14 0xE
 #define G_R15 0xF
 
-
 // setregi.h/l
 #define G_HIGHBITS 0x0
 #define G_LOWBITS  0x1
@@ -69,6 +69,7 @@
 #define G_VSYNC 0x1
 #define G_VPAGE 0x2
 
+// Helper macro to generate instruction words from instruction defines
 #define GPU_INSTRUCTION(_op_, _rs1_, _rs2_, _rd_, _immed_) ((_op_) | (_rs1_<<4) | (_rs2_<<8) | (_rd_<<12) | (_immed_<<16))
 
 // Program always has to start at this address
@@ -77,18 +78,34 @@
 // Mailbox slot for GPU->CPU communication
 #define GRAM_ADDRESS_GPUMAILBOX   0xFFF8
 
+// A very simple, short command package with static command space allocated
 struct GPUCommandPackage {
     volatile uint32_t m_commands[512];  // Command list, 512 instructions for now, limit is 64Kbytes-stack
     uint32_t m_wordcount{0};            // Length of command list in words
     uint32_t m_writecursor{0};          // Current write cursor
 };
 
+// Clean write cursor and submit count, and write prologue
 void GPUBeginCommandPackage(GPUCommandPackage *_cmd);
+
+// Close the command package, write epilogue and set submit word count
 void GPUEndCommandPackage(GPUCommandPackage *_cmd);
-void GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction);
+
+// Write instruction and return current cursor as a G-RAM address creation purposes
+uint32_t GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction);
+
+// Scan closed command buffer and test for errors, return -1 if an error is found
 int GPUValidateCommands(GPUCommandPackage *_cmd);
 
+// Write 0xFFFFFFFF to the mailbox address so that the GPU can clear it when it's done
 void GPUClearMailbox();
+
+// Submit the commands in a closed command package
 void GPUSubmitCommands(GPUCommandPackage *_cmd);
+
+// Overwrite first instruciton with noop to cause GPU to start processing the submitted commmand package
+// Can be repeated to re-kick the same command package if a change is not required
 void GPUKick();
-int GPUWaitMailbox(); // -1 on timeout
+
+// Wait for GPU to write non-0xFFFFFFFF value (preferably zero) at the mailbox address, return -1 on timeout
+int GPUWaitMailbox();

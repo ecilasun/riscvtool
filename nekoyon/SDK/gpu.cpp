@@ -48,6 +48,7 @@ void GPUKick()
 void GPUBeginCommandPackage(GPUCommandPackage *_cmd)
 {
     _cmd->m_writecursor = 0;
+    _cmd->m_wordcount = 0;
 
 //    _start @ 0x0000:
 //       halt                       // unconditional jump to 0x0000
@@ -72,9 +73,11 @@ void GPUEndCommandPackage(GPUCommandPackage *_cmd)
     _cmd->m_wordcount = _cmd->m_writecursor;
 }
 
-void GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction)
+uint32_t GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction)
 {
+    uint32_t currentCursorAsGRAMAddress = _cmd->m_writecursor*4; // Convert word index into memory byte offset
     _cmd->m_commands[_cmd->m_writecursor++] = _instruction;
+    return currentCursorAsGRAMAddress;
 }
 
 int GPUValidateCommands(GPUCommandPackage *_cmd)
