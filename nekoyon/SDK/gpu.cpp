@@ -67,8 +67,14 @@ void GPUSubmitCommands(GPUCommandPackage *_cmd)
     __builtin_memcpy((void*)GRAMStart, (void*)_cmd->m_commands, sizeof(uint32_t)*_cmd->m_wordcount);
 }
 
-void GPUWaitMailbox()
+int GPUWaitMailbox()
 {
+    uint32_t waitcounter = 0x0;
     // Ensure that the last instruction in the GPU program wrote a zero to the mailbox
-    while (GRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] == 0xFFFFFFFF) { asm volatile ("nop;"); }
+    while (GRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] == 0xFFFFFFFF) {
+        //asm volatile ("nop;");
+        if (waitcounter++ > 131072)
+            return -1;
+    }
+    return 0;
 }

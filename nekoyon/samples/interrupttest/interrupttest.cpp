@@ -15,13 +15,8 @@ void software_interrupt()
    // If cause&1==0 then it's an ebreak instruction
    if ((cause&1) != 0)
    {
-      // Offending instruction's opcode field
-      uint32_t opcode = read_csr(mscratch);
-
       // Show the address and the failing instruction's opcode field
-      UARTWrite("\nEXCEPTION: Illegal instruction I$(0x");
-      UARTWriteHex((uint32_t)opcode);
-      UARTWrite(") D$(0x");
+      UARTWrite("\nEXCEPTION: Illegal instruction D$(0x");
       UARTWriteHex(*(uint32_t*)at);
       UARTWrite(") at 0x");
       UARTWriteHex((uint32_t)at);
@@ -189,7 +184,7 @@ int main()
        if (crashhint)
        {
          UARTWrite("Deliberately crashing to test handler\n");
-         UARTWrite("I$ and D$ should both show 0x012345FF\n");
+         UARTWrite("D$ should show 0x012345FF\n");
          // Emit two illegal instructions to test proper crash handling
          asm volatile(".dword 0x012345FF");
          asm volatile(".dword 0xFFFFFFFF");
