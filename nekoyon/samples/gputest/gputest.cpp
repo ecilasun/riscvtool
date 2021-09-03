@@ -63,29 +63,37 @@ int main()
     GPUSubmitCommands(&cmd);
 
     UARTWrite(" -validating G-RAM contents\n");
+    int has_mismatch = 0;
     for (uint32_t i=0; i<cmd.m_wordcount; ++i)
     {
         if (GRAMStart[i] != cmd.m_commands[i])
+        {
+            ++has_mismatch;
             UARTWrite("MISMATCH ");
-        UARTWrite("@0x");
-        UARTWriteHex(i*4);
-        UARTWrite(": G-RAM->0x");
-        UARTWriteHex(GRAMStart[i]);
-        UARTWrite(" DDR3->0x");
-        UARTWriteHex(cmd.m_commands[i]);
-        UARTWrite("\n");
+            UARTWrite("@0x");
+            UARTWriteHex(i*4);
+            UARTWrite(": G-RAM->0x");
+            UARTWriteHex(GRAMStart[i]);
+            UARTWrite(" DDR3->0x");
+            UARTWriteHex(cmd.m_commands[i]);
+            UARTWrite("\n");
+        }
     }
-
-    UARTWrite(" -kicking GPU work\n");
-    GPUKick();
-
-    UARTWrite(" -waiting for GPU write to mailbox\n");
-    int retval = GPUWaitMailbox();
-
-    if (retval == 0)
-        UARTWrite(" -SUCCESS: GPU wrote to mailbox\n");
+    if (has_mismatch)
+        UARTWrite(" -ERROR: G-RAM mismatch vs DDR3\n");
     else
-        UARTWrite(" -ERROR: GPU mailbox write timed out\n");
+    {
+        UARTWrite(" -kicking GPU work\n");
+        GPUKick();
+
+        UARTWrite(" -waiting for GPU write to mailbox\n");
+        int retval = GPUWaitMailbox();
+
+        if (retval == 0)
+            UARTWrite(" -SUCCESS: GPU wrote to mailbox\n");
+        else
+            UARTWrite(" -ERROR: GPU mailbox write timed out\n");
+    }
 
     return 0;
 }
