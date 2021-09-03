@@ -18,6 +18,7 @@ folders = \
 	interrupttest \
 	sdcard \
 	floattest \
+	gputest \
 
 # Rules
 
