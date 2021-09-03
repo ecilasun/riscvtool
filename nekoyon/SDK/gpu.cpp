@@ -45,6 +45,44 @@ void GPUKick()
     GRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_MISC, 0x0, 0x0, 0x0, G_NOOP);
 }
 
+void GPUBeginCommandPackage(GPUCommandPackage *_cmd)
+{
+    _cmd->m_writecursor = 0;
+
+//    _start @ 0x0000:
+//       halt                       // unconditional jump to 0x0000
+    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);          // jmp zero
+}
+
+void GPUEndCommandPackage(GPUCommandPackage *_cmd)
+{
+//    _exit @ 0x????:
+//       store.w zero, zero         // write zero to address 0 (zero == register 0)
+//       setregi.h 0x0000, r1, r1   // set register r1 to 0x0000FFF8 (mailbox address)
+//       setregi.l 0xFFF8, r1, r1   //
+//       store.w zero, r1           // write zero to address 0xFFF8
+//       halt                       // unconditional jump to 0x0000
+    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R0, 0x0, G_WORD);         // store.w zero, zero
+    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_HIGHBITS, G_R1, 0x0000);
+    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_LOWBITS, G_R1, 0xFFF8);  // setregi r1, 0x0000FFF8
+    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R1, 0x0, G_WORD);         // store.w r1, zero
+    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);         // jmp zero
+
+    // Set submit word count
+    _cmd->m_wordcount = _cmd->m_writecursor;
+}
+
+void GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction)
+{
+    _cmd->m_commands[_cmd->m_writecursor++] = _instruction;
+}
+
+int GPUValidateCommands(GPUCommandPackage *_cmd)
+{
+    // TODO: return -1 on error in command package
+    return 0;
+}
+
 void GPUSubmitCommands(GPUCommandPackage *_cmd)
 {
     // NOTE: MUST NOT call this function a second time without a GPUWaitMailBox() in between

@@ -79,8 +79,14 @@
 
 struct GPUCommandPackage {
     volatile uint32_t m_commands[512];  // Command list, 512 instructions for now, limit is 64Kbytes-stack
-    uint32_t m_wordcount;               // Length of command list in words
+    uint32_t m_wordcount{0};            // Length of command list in words
+    uint32_t m_writecursor{0};          // Current write cursor
 };
+
+void GPUBeginCommandPackage(GPUCommandPackage *_cmd);
+void GPUEndCommandPackage(GPUCommandPackage *_cmd);
+void GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction);
+int GPUValidateCommands(GPUCommandPackage *_cmd);
 
 void GPUClearMailbox();
 void GPUSubmitCommands(GPUCommandPackage *_cmd);
