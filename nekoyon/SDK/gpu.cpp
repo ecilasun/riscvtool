@@ -28,18 +28,6 @@
 //       store.w zero, r1           // write zero to address 0xFFF8
 //       halt                       // unconditional jump to 0x0000
 
-GPUCommandPackage :: GPUCommandPackage(uint32_t _bufferLen)
-{
-    m_wordcount = _bufferLen;
-    m_commands = (uint32_t*)malloc(sizeof(uint32_t)*_bufferLen);
-    __builtin_memset((void*)m_commands, 0x00, sizeof(uint32_t)*_bufferLen);
-}
-
-GPUCommandPackage::~GPUCommandPackage()
-{
-    free((void*)m_commands);
-}
-
 void GPUClearMailbox()
 {
     GRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] = 0xFFFFFFFF;
@@ -48,13 +36,13 @@ void GPUClearMailbox()
 void GPUHalt()
 {
     // jmp zero to block GPU - NOTE: This is already built-in into each program
-    GRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, 0x0, 0x0, 0x0);
+    GRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);
 }
 
 void GPUKick()
 {
     // noop to unblock GPU
-    GRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_NOOP, 0x0, 0x0, 0x0, 0x0);
+    GRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_MISC, 0x0, 0x0, 0x0, G_NOOP);
 }
 
 void GPUSubmitCommands(GPUCommandPackage *_cmd)
