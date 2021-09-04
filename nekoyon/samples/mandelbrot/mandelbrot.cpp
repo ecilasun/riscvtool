@@ -129,9 +129,9 @@ int main(int argc, char ** argv)
     GPUSubmitCommands(&gpuSetupProg);
     GPUKick();
 
-    //uint64_t prevreti = ReadRetiredInstructions();
-    //uint32_t prevms = ClockToMs(ReadClock());
-    //uint32_t ips = 0;
+    uint64_t prevreti = ReadRetiredInstructions();
+    uint32_t prevms = ClockToMs(ReadClock());
+    uint32_t ips = 0;
     while(1)
     {
         // Generate one line of mandelbrot into offscreen buffer
@@ -139,9 +139,9 @@ int main(int argc, char ** argv)
         if (mandelbrotFloat(X,Y,R) != 0)
             R += 0.01f; // Zoom
 
-        //uint32_t ms = ClockToMs(ReadClock());
+        uint32_t ms = ClockToMs(ReadClock());
 
-        /*if (ms-prevms > 1000)
+        if (ms-prevms > 1000)
         {
             prevms += 1000; // So that we have the leftover time carried over
             uint64_t reti = ReadRetiredInstructions();
@@ -151,7 +151,7 @@ int main(int argc, char ** argv)
             UARTWrite("IPS: ");
             UARTWriteDecimal(ips);
             UARTWrite("\n");
-        }*/
+        }
 
         // Wait for previous work from end of last frame (or from the GPU setup program above) to be done.
         // Most likely they'll be complete by the time we get here due to the work involved in between frames.
