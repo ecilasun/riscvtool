@@ -80,10 +80,13 @@
 
 // A very simple, short command package with static command space allocated
 struct GPUCommandPackage {
-    volatile uint32_t m_commands[512];  // Command list, 512 instructions for now, limit is 64Kbytes-stack
+    volatile uint32_t m_commands[2048]; // Command list, 2048 instructions for now, limit is 64Kbytes-stack
     uint32_t m_wordcount{0};            // Length of command list in words
     uint32_t m_writecursor{0};          // Current write cursor
 };
+
+// Utility macro to build an RGB color to upload as a palette entry
+#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 
 // Clean write cursor and submit count, and write prologue
 void GPUBeginCommandPackage(GPUCommandPackage *_cmd);

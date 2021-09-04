@@ -19,6 +19,7 @@ folders = \
 	sdcard \
 	floattest \
 	gputest \
+	mandelbrot \
 
 # Rules
 
