@@ -53,11 +53,11 @@ int main()
     GPUEndCommandPackage(&cmd);
 
     // DEBUG: Dump command package
-    for (uint32_t i=0;i<cmd.m_wordcount;++i)
+    /*for (uint32_t i=0;i<cmd.m_wordcount;++i)
     {
         UARTWriteHex(cmd.m_commands[i]);
         UARTWrite("\n");
-    }
+    }*/
 
     UARTWrite(" -submitting command list\n");
     GPUClearMailbox();
