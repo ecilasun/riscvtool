@@ -16,8 +16,7 @@ int main()
     // Reset write cursor and write prologue
     GPUBeginCommandPackage(&cmd);
 
-//    _main @ 0x0004:
-    // Set video write page to 0 (while we're seeing page 1)
+    // Choose page#0 for writes (and page#1 for display output)
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE));           // vpage zero
 
     // Byte increment for VRAM writes
@@ -38,7 +37,7 @@ int main()
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_ALU, G_R5, G_R15, G_R5, G_ADD));          // add.w r5, r15, r5
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_STORE, G_R4, G_R5, 0x0, G_WORD));         // store.w r5, r4
 
-    // Set video write page to 1 (so that we can see page 0)
+    // Choose page#1 for writes (and page#0 for display output)
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R8, G_HIGHBITS, G_R8, 0x0000));
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R8, G_LOWBITS, G_R8, 0x0001));  // setregi r8, 0x00000001
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_MISC, G_R8, 0x0, 0x0, G_VPAGE));          // vpage r8
