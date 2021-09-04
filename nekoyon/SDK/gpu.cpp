@@ -28,6 +28,12 @@
 //       store.w zero, r1           // write zero to address 0xFFF8
 //       halt                       // unconditional jump to 0x0000
 
+// NOTE: For the time being, the GPU will skip over any unknown instructions without causing an exceptions
+// In the future this will trigger an IRQ on the CPU side with a GPU device flag so that recovery or error
+// reporting may be implemented.
+
+// NOTE: Currently, a hard GPU reset can be achieved by writing zeros to the entire G-RAM memory, forcing a 'jmp zero'.
+
 void GPUClearMailbox()
 {
     GRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] = 0xFFFFFFFF;
@@ -50,14 +56,15 @@ void GPUBeginCommandPackage(GPUCommandPackage *_cmd)
     _cmd->m_writecursor = 0;
     _cmd->m_wordcount = 0;
 
-//    _start @ 0x0000:
+//    @ORG 0x0000
+//    _start:
 //       halt                       // unconditional jump to 0x0000
     _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);          // jmp zero
 }
 
 void GPUEndCommandPackage(GPUCommandPackage *_cmd)
 {
-//    _exit @ 0x????:
+//    _exit:
 //       store.w zero, zero         // write zero to address 0 (zero == register 0)
 //       setregi.h 0x0000, r1, r1   // set register r1 to 0x0000FFF8 (mailbox address)
 //       setregi.l 0xFFF8, r1, r1   //

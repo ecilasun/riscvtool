@@ -34,8 +34,15 @@ int main()
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R4, G_HIGHBITS, G_R4, 0x0405));
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R4, G_LOWBITS, G_R4, 0x0607));  // setregi r4, 0x04050607
 
+    // Write 4 more pixels at next word address
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_ALU, G_R5, G_R15, G_R5, G_ADD));          // add.w r5, r15, r5
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_STORE, G_R4, G_R5, 0x0, G_WORD));         // store.w r5, r4
+
+    // DMA test (copy 32 words from G-RAM to V-RAM starting at current addres)
+    // This will end up copying the currently executing program to V-RAM as colors
+    GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R4, G_HIGHBITS, G_R4, 0x0000));
+    GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R4, G_LOWBITS, G_R4, 0x0000));  // setregi r4, 0x00000000
+    GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_DMA, G_R4, G_R5, 0x0, 0x0020));           // dma r4, r5, 0x0020
 
     // Choose page#1 for writes (and page#0 for display output)
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R8, G_HIGHBITS, G_R8, 0x0000));
@@ -44,6 +51,13 @@ int main()
 
     // Write epilogue
     GPUEndCommandPackage(&cmd);
+
+    // DEBUG: Dump command package
+    for (uint32_t i=0;i<cmd.m_wordcount;++i)
+    {
+        UARTWriteHex(cmd.m_commands[i]);
+        UARTWrite("\n");
+    }
 
     UARTWrite(" -submitting command list\n");
     GPUClearMailbox();
