@@ -92,7 +92,10 @@ struct GPUCommandPackage {
 void GPUBeginCommandPackage(GPUCommandPackage *_cmd);
 
 // Close the command package, write epilogue and set submit word count
-void GPUEndCommandPackage(GPUCommandPackage *_cmd);
+// If _noEpilogue is set to true, the program will be closed but won't
+// contain code to signal CPU and halt itself. This is to be used when
+// programs are to be chained together in the future.
+void GPUEndCommandPackage(GPUCommandPackage *_cmd, bool _noEpilogue = false);
 
 // Write instruction and return current cursor as a G-RAM address creation purposes
 uint32_t GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction);

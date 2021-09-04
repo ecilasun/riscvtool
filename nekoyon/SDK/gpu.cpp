@@ -62,7 +62,7 @@ void GPUBeginCommandPackage(GPUCommandPackage *_cmd)
     _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);          // jmp zero
 }
 
-void GPUEndCommandPackage(GPUCommandPackage *_cmd)
+void GPUEndCommandPackage(GPUCommandPackage *_cmd, bool _noEpilogue)
 {
 //    _exit:
 //       store.w zero, zero         // write zero to address 0 (zero == register 0)
@@ -70,11 +70,16 @@ void GPUEndCommandPackage(GPUCommandPackage *_cmd)
 //       setregi.l 0xFFF8, r1, r1   //
 //       store.w zero, r1           // write zero to address 0xFFF8
 //       halt                       // unconditional jump to 0x0000
-    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R0, 0x0, G_WORD);         // store.w zero, zero
-    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_HIGHBITS, G_R1, 0x0000);
-    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_LOWBITS, G_R1, 0xFFF8);  // setregi r1, 0x0000FFF8
-    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R1, 0x0, G_WORD);         // store.w r1, zero
-    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);         // jmp zero
+
+    // TO BE IMPLEMENTED IN THE FUTURE FOR CHAINING PROGRAMS OR PARTIALLY UPDATING ONLY ONE (ALSO NEEDS PROGRAM OFFSET SUPPORT)
+    // if (!_noEpilogue)
+    {
+        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R0, 0x0, G_WORD);         // store.w zero, zero
+        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_HIGHBITS, G_R1, 0x0000);
+        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_LOWBITS, G_R1, 0xFFF8);  // setregi r1, 0x0000FFF8
+        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R1, 0x0, G_WORD);         // store.w r1, zero
+        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);         // jmp zero
+    }
 
     // Set submit word count
     _cmd->m_wordcount = _cmd->m_writecursor;
