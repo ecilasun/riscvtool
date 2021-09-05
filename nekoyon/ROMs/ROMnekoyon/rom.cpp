@@ -18,7 +18,7 @@
 
 FATFS Fs;
 uint32_t branchaddress = 0;
-uint32_t savedstackpointer = 0;
+uint32_t returnaddress = 0;
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -57,102 +57,28 @@ void __attribute__((aligned(256))) __attribute__((naked)) LaunchELF(uint32_t jum
       "mv s0,a0;"
 
       // Call flush data cache
+      // This ensures we have D$ contents
+      // flushed to DDR3 memory so that
+      // I$ reads can pick them up.
+      //
+      // NOTE: This was easier than implementing
+      // an actual FENCE.I instruction in hardware.
       "jal ra, _Z14FlushDataCachev;"
 
-      // Restore the return address and s0 as if we're returning from LaunchELF()
+      // Restore the stack pointer to where it was, restore ra but ignore s0
       "lw ra,12(sp);"
-      //"lw s0,8(sp);"
       "addi sp,sp,16;"
 
-      // Save all registers
-      "sw sp, %0;"
-      "addi	sp,sp,-128;"
-      "sw	 x1,120(sp);"  // ra -> this is the place where launchelf was called from
-      "sw	 x2,116(sp);"  // sp
-      "sw	 x3,112(sp);"  // gp
-      "sw	 x4,108(sp);"  // tp
-      "sw	 x5,104(sp);"  // t0
-      "sw	 x6,100(sp);"  // t1
-      "sw	 x7, 96(sp);"  // t2
-      "sw	 x8, 92(sp);"  // s0
-      "sw	 x9, 88(sp);"  // s1
-      "sw	x10, 84(sp);"  // a0
-      "sw	x11, 80(sp);"  // a1
-      "sw	x12, 76(sp);"  // a2
-      "sw	x13, 72(sp);"  // a3
-      "sw	x14, 68(sp);"  // a4
-      "sw	x15, 64(sp);"  // a5
-      "sw	x16, 60(sp);"  // a6
-      "sw	x17, 56(sp);"  // a7
-      "sw	x18, 52(sp);"  // s2
-      "sw	x19, 48(sp);"  // s3
-      "sw	x20, 44(sp);"  // s4
-      "sw	x21, 40(sp);"  // s5
-      "sw	x22, 36(sp);"  // s6
-      "sw	x23, 32(sp);"  // s7
-      "sw	x24, 28(sp);"  // s8
-      "sw	x25, 24(sp);"  // s9
-      "sw	x26, 20(sp);"  // s1
-      "sw	x27, 16(sp);"  // s1
-      "sw	x28, 12(sp);"  // t3
-      "sw	x29,  8(sp);"  // t4
-      "sw	x30,  4(sp);"  // t5
-      "sw	x31,  0(sp);"  // t6
+      // Store return address
+      "sw ra, %0;"
 
       // Call function at jumptarget
       // Note that the ELF will not return back here but will do an ecall 93
       // and check a0 return value, and if it's zero or greater, will go into
       // an infinite loop (or if less than zero, throw error and then go to loop)
       // We will resolve this by recovering our state through an interrupt handler.
-      "jalr s0;" : "=m" (savedstackpointer) : :
-   );
-}
-
-void __attribute__((aligned(256))) __attribute__((naked)) ReturnFromELF()
-{
-      // NOTE: It is not possible for an ordinary gcc ELF to return
-      // here without a custom _start/_exit pair.
-   asm volatile(
-      // Restore all registers
-      "lw sp, %0;"
-      "addi	sp,sp,-128;"   // land exactly where the SP was before
-      "lw	 x1,120(sp);"  // ra -> LaunchELF() return address
-      "lw	 x2,116(sp);"  // sp
-      "lw	 x3,112(sp);"  // gp
-      "lw	 x4,108(sp);"  // tp
-      "lw	 x5,104(sp);"  // t0
-      "lw	 x6,100(sp);"  // t1
-      "lw	 x7, 96(sp);"  // t2
-      "lw	 x8, 92(sp);"  // s0
-      "lw	 x9, 88(sp);"  // s1
-      "lw	x10, 84(sp);"  // a0
-      "lw	x11, 80(sp);"  // a1
-      "lw	x12, 76(sp);"  // a2
-      "lw	x13, 72(sp);"  // a3
-      "lw	x14, 68(sp);"  // a4
-      "lw	x15, 64(sp);"  // a5
-      "lw	x16, 60(sp);"  // a6
-      "lw	x17, 56(sp);"  // a7
-      "lw	x18, 52(sp);"  // s2
-      "lw	x19, 48(sp);"  // s3
-      "lw	x20, 44(sp);"  // s4
-      "lw	x21, 40(sp);"  // s5
-      "lw	x22, 36(sp);"  // s6
-      "lw	x23, 32(sp);"  // s7
-      "lw	x24, 28(sp);"  // s8
-      "lw	x25, 24(sp);"  // s9
-      "lw	x26, 20(sp);"  // s1
-      "lw	x27, 16(sp);"  // s1
-      "lw	x28, 12(sp);"  // t3
-      "lw	x29,  8(sp);"  // t4
-      "lw	x30,  4(sp);"  // t5
-      "lw	x31,  0(sp);"  // t6
-      "addi	sp,sp, 128;"   // Rewind SP to land at callee's SP
-      // Cheat by copying 'ra' into mret return register before we return
-      // This will effectively force the interrupt service that called us
-      // to return back to the next instruction after LaunchELF()
-      "csrrw zero, mepc, ra;"
-      "ret;" : : "m" (savedstackpointer) :
+      "jalr s0;"
+         : "=m" (returnaddress) : :
    );
 }
 
@@ -197,12 +123,17 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       // a7: 0x5D terminate application
       // a7: 0x50 seems to be fread
 
-      UARTWrite("\n\nECALL: 0x");
-      UARTWriteHex(ecalltype);
-      UARTWrite("\n");
-      ReturnFromELF();
-      // on return, mret return address now contains the 'ra' of the call to LaunchELF()
-      // effectively tricking this interrupt handler to return to where we left off
+      if (ecalltype == 0x5D) // NOTE: We should not reach here under normal circumstances
+      {
+         // Now, store ra in stack for use by the target ELF
+         asm volatile("lw ra, %0; ret;" : : "m" (returnaddress));
+      }
+      else
+      {
+         UARTWrite("\n\nECALL: 0x");
+         UARTWriteHex(ecalltype);
+         UARTWrite("\n");
+      }
    }
 }
 
