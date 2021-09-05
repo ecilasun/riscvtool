@@ -36,7 +36,7 @@ void timer_interrupt()
 {
     // Output our message
     UARTWrite("TMI: ");
-    UARTWriteDecimal(seconds++);
+    UARTWriteDecimal(seconds);
     UARTWrite(" seconds\n");
 
     // At 15 second mark, we'll hit for main() to trigger an illegal instruction exception
@@ -45,6 +45,9 @@ void timer_interrupt()
        UARTWrite("Should crash about now...\n");
        crashhint = 1;
     }
+
+    // Advance time
+    ++seconds;
 
     // NOTE: If one stores registers and restores them to saved registers of a task,
     // a simple task manager can be implemented using timer interrupts only.
