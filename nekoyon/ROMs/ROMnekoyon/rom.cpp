@@ -170,7 +170,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    if ((cause&1) != 0) // ILLEGALINSTRUCTION
    {
       // Show the address and the failing instruction's opcode field
-      UARTWrite("EXCEPTION: Illegal instruction 0x");
+      UARTWrite("\n\nEXCEPTION: Illegal instruction 0x");
       UARTWriteHex(*(uint32_t*)at);
       UARTWrite(" at 0x");
       UARTWriteHex((uint32_t)at);
@@ -183,15 +183,23 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    {
       // We've hit a breakpoint
       // TODO: Tie this into GDB routines (connected via UART)
-      UARTWrite("EXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
+      UARTWrite("\n\nEXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
       // Stall
       while(1) { }
    }
 
    if ((cause&4) != 0) // ECALL
    {
+      uint32_t ecalltype = 0;
+      asm volatile ("sw a7, %0 ;" : "=m" (ecalltype) : :);
+
       // register a7 contains the function code
-      // for instance, a7==93 -> terminate application
+      // a7: 0x5D terminate application
+      // a7: 0x50 seems to be fread
+
+      UARTWrite("\n\nECALL: 0x");
+      UARTWriteHex(ecalltype);
+      UARTWrite("\n");
       ReturnFromELF();
       // on return, mret return address now contains the 'ra' of the call to LaunchELF()
       // effectively tricking this interrupt handler to return to where we left off

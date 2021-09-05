@@ -5,6 +5,9 @@
 #include "sdcard.h"
 #include "fat32/ff.h"
 
+#include <string.h>
+#include <stdio.h>
+
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -28,7 +31,7 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
-void ListDir(const char *path)
+void ListELF(const char *path)
 {
    DIR dir;
    FRESULT re = f_opendir(&dir, path);
@@ -39,10 +42,13 @@ void ListDir(const char *path)
          re = f_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
-            UARTWrite(finf.fname);
-			UARTWrite(" ");
-			UARTWriteDecimal((int32_t)finf.fsize);
-			UARTWrite("b\n");
+			if (strstr(finf.fname, ".elf"))
+			{
+            	UARTWrite(finf.fname);
+				UARTWrite(" ");
+				UARTWriteDecimal((int32_t)finf.fsize);
+				UARTWrite("b\n");
+			}
          }
       } while(re == FR_OK && dir.sect!=0);
       f_closedir(&dir);
@@ -62,8 +68,9 @@ int main()
 		UARTWrite(FRtoString[mountattempt]);
 	else
 	{
-		UARTWrite("Mounted volume SD:\n");
-		ListDir("sd:");
+		UARTWrite("Listing ELF files on sd:\n");
+		// List ELF files on the mounted volume
+		ListELF("sd:");
 	}
 
     return 0;

@@ -163,39 +163,32 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	DRESULT res;
-	int result;
+	DRESULT res = RES_PARERR;
 
 	switch (pdrv) {
-	case DEV_RAM :
-		// translate the arguments here
-
-		res = RES_NOTRDY;//RAM_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_MMC :
-		// translate the arguments here
-
-		res = RES_ERROR; //MMC_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_USB :
-		// translate the arguments here
-
-		res = RES_NOTRDY;//USB_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
+		case DEV_RAM :
+		{
+			res = RES_NOTRDY;//RAM_disk_write(buff, sector, count);
+		}
+		break;
+		case DEV_MMC :
+		{
+	#if !defined(DISABLE_FILESYSTEM)
+			if (SDWriteMultipleBlocks(buff, count, sector) != -1)
+				res = RES_OK;
+			else
+	#endif
+				res = RES_ERROR;
+		}
+		break;
+		case DEV_USB :
+		{
+			res = RES_NOTRDY;//USB_disk_write(buff, sector, count);
+		}
+		break;
 	}
 
-	return RES_PARERR;
+	return res;
 }
 
 #endif
@@ -222,6 +215,7 @@ DRESULT disk_ioctl (
 
 	case DEV_MMC :
 
+		// NOTE: What are the IOCTL codes to implement?
 		// Process of the command for the MMC/SD card
 
 		return res;
@@ -235,4 +229,3 @@ DRESULT disk_ioctl (
 
 	return RES_PARERR;
 }
-

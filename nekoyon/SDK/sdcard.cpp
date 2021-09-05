@@ -246,6 +246,14 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
    return response;
 }
 
+uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
+{
+   // TODO: 
+   UARTWrite("sdcard.cpp: SDWriteSingleBlock() not implemented yet.\n");
+
+   return 0xFF;
+}
+
 int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
    if (numblocks == 0)
@@ -256,7 +264,6 @@ int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blocka
    uint8_t tmp[512];
    uint8_t checksum[2];
 
-   //printf("SDReadMultipleBlocks: ptr:0x%.8X #:%d ba:0x%.8X\r\n", datablock, numblocks, blockaddress);
    for(uint32_t b=0; b<numblocks; ++b)
    {
       uint8_t response = SDReadSingleBlock(b+blockaddress, tmp, checksum);
@@ -268,6 +275,27 @@ int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blocka
 
    return cursor;
 }
+
+int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
+{
+   if (numblocks == 0)
+      return -1;
+
+   uint32_t cursor = 0;
+
+   uint8_t tmp[512];
+   uint8_t checksum[2];
+
+   for(uint32_t b=0; b<numblocks; ++b)
+   {
+      __builtin_memcpy(tmp, datablock+cursor, 512);
+      uint8_t response = SDWriteSingleBlock(b+blockaddress, tmp, checksum);
+      if (response != 0xFE)
+         return -1;
+      cursor += 512;
+   }
+
+   return cursor;}
 
 int SDCardStartup()
 {
@@ -298,6 +326,7 @@ int SDCardStartup()
    } // Repeat this until we receive a non-idle (0x00)
 
    // NOTE: Block size is already set to 512 for high speed and can't be changed
+   // Do I need to implement this one?
    //response[3] = SDSetBlockSize512();
    //EchoUART("SDSetBlockSize512()");
 

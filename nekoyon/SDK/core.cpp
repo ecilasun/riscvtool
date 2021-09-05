@@ -11,6 +11,9 @@
 #include "fat32/ff.h"
 #endif
 
+// Enabled this for diagnosis messages
+//#define FS_DEBUG
+
 // DDR3 (256Mbytes)
 volatile uint32_t *DDR3Start = (uint32_t *)0x00000000;
 volatile uint32_t *DDR3End = (uint32_t *)0x10000000;
@@ -198,7 +201,16 @@ extern "C" {
    {
 #ifndef DISABLE_FILESYSTEM
       int currenthandle = s_numhandles;
-      if (FR_OK == f_open(&s_filehandles[currenthandle], name, FA_READ)) //mode))
+#if defined(FS_DEBUG)
+      UARTWrite("\n _open(");
+      UARTWrite(name);
+      UARTWrite(", flags=0x");
+      UARTWriteHex(flags); // 0x0 -> rb, 0x601 -> wb
+      UARTWrite(", mode=0x");
+      UARTWriteHex(mode);
+      UARTWrite(")\n");
+#endif
+      if (FR_OK == f_open(&s_filehandles[currenthandle], name, flags == 0x0 ? FA_READ : FA_WRITE))
       {
          ++s_numhandles;
          return currenthandle;
@@ -215,6 +227,15 @@ extern "C" {
 
    int _openat(int dirfd, const char *name, int flags, int mode)
    {
+#if defined(FS_DEBUG)
+      UARTWrite("\n _openat(");
+      UARTWrite(name);
+      UARTWrite(", flags=0x");
+      UARTWriteHex(flags);
+      UARTWrite(", mode=0x");
+      UARTWriteHex(mode);
+      UARTWrite(")\n");
+#endif
       // https://linux.die.net/man/2/openat
       errno = ENOSYS;
       return -1;
@@ -222,9 +243,18 @@ extern "C" {
 
    ssize_t _read(int file, void *ptr, size_t len)
    {
+#if defined(FS_DEBUG)
+      UARTWrite("\n _read(file=");
+      UARTWriteDecimal(file);
+      UARTWrite(", ptr=0x");
+      UARTWriteHex((uint32_t)ptr);
+      UARTWrite(", len=0x");
+      UARTWriteHex(len);
+      UARTWrite(")\n");
+#endif
+
 #ifndef DISABLE_FILESYSTEM
       UINT readlen;
-      /*pf_read(file, ptr, len, &readlen);*/
       if (FR_OK == f_read(&s_filehandles[file], ptr, len, &readlen))
          return readlen;
       else
@@ -234,16 +264,28 @@ extern "C" {
 
    int _stat(const char *file, struct stat *st)
    {
+#if defined(FS_DEBUG)
+      UARTWrite("\n _stat(");
+      UARTWrite(")\n");
+#endif
       st->st_mode = S_IFCHR; // S_IFBLK for disk data?
       return 0;
    }
 
    ssize_t _write(int file, const void *ptr, size_t len)
    {
+#if defined(FS_DEBUG)
+      UARTWrite("\n _write(");
+      UARTWrite(")\n");
+#endif
       if (file != STDOUT_FILENO) {
-         // TODO: f_write
-         errno = ENOSYS;
-         return -1;
+         #if defined(FF_FS_READONLY)
+            return -1;
+         #else
+            UINT writelen = 0;
+            f_write(&s_filehandles[file], ptr, len, &writelen);
+            return writelen;
+         #endif
       }
 
       char *cptr = (char*)ptr;
@@ -258,15 +300,19 @@ extern "C" {
 
    int _wait(int *status)
    {
+#if defined(FS_DEBUG)
+      UARTWrite("\n _wait(");
+      UARTWrite(")\n");
+#endif
       errno = ECHILD;
       return -1;
    }
 
    void unimplemented_syscall()
    {
-      const char *p = "Unimplemented system call\n";
-      while (*p)
-         *IO_UARTRXTX = *(p++);
+#if defined(FS_DEBUG)
+      UARTWrite("Unimplemented system call\n");
+#endif
    }
 
    int _brk(void *addr)
