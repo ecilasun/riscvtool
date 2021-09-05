@@ -83,7 +83,7 @@ void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &sec
 //#undef errno
 //int nerrno;
 static uint8_t *heap_start  = (uint8_t*)0x01000000;
-static uint8_t *heap_end    = (uint8_t*)0x06FFFFFF;
+static uint8_t *heap_end    = (uint8_t*)0x0EFFFFFF;
 
 extern "C" {
 

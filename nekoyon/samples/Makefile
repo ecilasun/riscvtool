@@ -20,6 +20,7 @@ folders = \
 	floattest \
 	gputest \
 	mandelbrot \
+	tinyraytracer \
 
 # Rules
 

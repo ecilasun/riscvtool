@@ -9,15 +9,12 @@
 #include "uart.h"
 #include "gpu.h"
 
-#define HIHALF(_x_) ((_x_&0xFFFF0000)>>16)
-#define LOHALF(_x_) (_x_&0x0000FFFF)
-
 // Place the offscreen buffer in GPU accessible memory
 // This is a 128x128 back buffer to be DMAd to V-RAM
 uint8_t *mandelbuffer = (uint8_t*)(GRAMStart + 0x800); // Move 8196 bytes (2048 words) away from GPU programs
 
 GPUCommandPackage gpuSetupProg;
-GPUCommandPackage dmaMandelProg;
+GPUCommandPackage dmaProg;
 GPUCommandPackage swapProg;
 
 int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
@@ -95,22 +92,22 @@ void PrepareCommandPackages()
 
     int xoffset = 96;
     int yoffset = 32;
-    GPUBeginCommandPackage(&dmaMandelProg);
+    GPUBeginCommandPackage(&dmaProg);
     for (int L=0; L<128; ++L)
     {
         // Source in G-RAM (note, these are byte addresses, align appropriately as needed)
         uint32_t gramsource = uint32_t(mandelbuffer+L*128);
-        GPUWriteInstruction(&dmaMandelProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
-        GPUWriteInstruction(&dmaMandelProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
+        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
+        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
         // Target in V-RAM (note, these are byte addresses, align appropriately as needed)
         uint32_t vramramtarget = ((L+yoffset)*512)+xoffset;
-        GPUWriteInstruction(&dmaMandelProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
-        GPUWriteInstruction(&dmaMandelProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
+        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
+        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
         // DMA - 128/4 words
         uint32_t dmacount = 32;
-        GPUWriteInstruction(&dmaMandelProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
+        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
     }
-    GPUEndCommandPackage(&dmaMandelProg);
+    GPUEndCommandPackage(&dmaProg);
 }
 
 int main(int argc, char ** argv)
@@ -159,7 +156,7 @@ int main(int argc, char ** argv)
 
         // Show the mandelbrot image from G-RAM buffer
         GPUClearMailbox();
-        GPUSubmitCommands(&dmaMandelProg);
+        GPUSubmitCommands(&dmaProg);
         GPUKick();
 
         GPUWaitMailbox(); // Wait before kicking the swap program

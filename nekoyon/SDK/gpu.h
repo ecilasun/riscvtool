@@ -72,6 +72,10 @@
 // Helper macro to generate instruction words from instruction defines
 #define GPU_INSTRUCTION(_op_, _rs1_, _rs2_, _rd_, _immed_) ((_op_) | (_rs1_<<4) | (_rs2_<<8) | (_rd_<<12) | (_immed_<<16))
 
+// Helper macros to split words into halfwords
+#define HIHALF(_x_) ((_x_&0xFFFF0000)>>16)
+#define LOHALF(_x_) (_x_&0x0000FFFF)
+
 // Program always has to start at this address
 // 'halt' command will also always return here
 #define GRAM_ADDRESS_PROGRAMSTART 0x0000
