@@ -17,14 +17,29 @@
 // DDR3 (256Mbytes)
 volatile uint32_t *DDR3Start = (uint32_t *)0x00000000;
 volatile uint32_t *DDR3End = (uint32_t *)0x10000000;
+// GPU cannot see the DDR3
 
 // S-RAM (64Kbytes)
 volatile uint32_t *SRAMStart = (uint32_t *)0x10000000;
 volatile uint32_t *SRAMEnd = (uint32_t *)0x10010000;
+//GPU cannot see the S-RAM
 
 // G-RAM (64Kbytes)
 volatile uint32_t *GRAMStart = (uint32_t *)0x20000000;
 volatile uint32_t *GRAMEnd = (uint32_t *)0x20010000;
+// In GPU address space, G-RAM is at 0x40000000
+volatile uint32_t *GRAMStartGPUView = (uint32_t *)0x40000000;
+
+// P-RAM (64Kbytes)
+volatile uint32_t *PRAMStart = (uint32_t *)0x30000000;
+volatile uint32_t *PRAMEnd = (uint32_t *)0x30010000;
+// In GPU address space, P-RAM is at 0x00000000, not in CPU addres
+volatile uint32_t *PRAMStartGPUView = (uint32_t *)0x00000000;
+
+// V-RAM (13 slices of 512*16 bytes)
+// In GPU address space, V-RAM is at 0x80000000
+volatile uint32_t *VRAMStartGPUView = (uint32_t *)0x80000000;
+// CPU cannot see the V-RAM (this address in CPU space is device access memory instead)
 
 uint32_t seed = 7;
 uint32_t Random()

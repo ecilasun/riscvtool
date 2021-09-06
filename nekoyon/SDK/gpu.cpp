@@ -36,19 +36,19 @@
 
 void GPUClearMailbox()
 {
-    GRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] = 0xFFFFFFFF;
+    PRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] = 0xFFFFFFFF;
 }
 
 void GPUHalt()
 {
     // jmp zero to block GPU - NOTE: This is already built-in into each program
-    GRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);
+    PRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);
 }
 
 void GPUKick()
 {
     // noop to unblock GPU
-    GRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_MISC, 0x0, 0x0, 0x0, G_NOOP);
+    PRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_MISC, 0x0, 0x0, 0x0, G_NOOP);
 }
 
 void GPUBeginCommandPackage(GPUCommandPackage *_cmd)
@@ -105,14 +105,14 @@ void GPUSubmitCommands(GPUCommandPackage *_cmd)
 
     // Copy the program to G-RAM. First word must by default be a HALT instruction,
     // otherwise we risk immediate execution of the program, therefore a hang or corruption.
-    __builtin_memcpy((void*)GRAMStart, (void*)_cmd->m_commands, sizeof(uint32_t)*_cmd->m_wordcount);
+    __builtin_memcpy((void*)PRAMStart, (void*)_cmd->m_commands, sizeof(uint32_t)*_cmd->m_wordcount);
 }
 
 int GPUWaitMailbox()
 {
     uint32_t waitcounter = 0x0;
     // Ensure that the last instruction in the GPU program wrote a zero to the mailbox
-    while (GRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] == 0xFFFFFFFF) {
+    while (PRAMStart[GRAM_ADDRESS_GPUMAILBOX>>2] == 0xFFFFFFFF) {
         //asm volatile ("nop;");
         if (waitcounter++ > 131072)
             return -1;

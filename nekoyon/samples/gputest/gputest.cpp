@@ -45,6 +45,9 @@ int main()
     UARTWrite(" -resetting G-RAM contents to zero\n");
     __builtin_memset((void*)GRAMStart, 0x00, sizeof(uint32_t)*0xFFFF);
 
+    UARTWrite(" -resetting P-RAM contents to zero\n");
+    __builtin_memset((void*)PRAMStart, 0x00, sizeof(uint32_t)*0xFFFF);
+
     UARTWrite(" -uploading font\n");
     UploadFont();
 

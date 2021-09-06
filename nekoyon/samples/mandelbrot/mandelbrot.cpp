@@ -11,7 +11,7 @@
 
 // Place the offscreen buffer in GPU accessible memory
 // This is a 128x128 back buffer to be DMAd to V-RAM
-uint8_t *mandelbuffer = (uint8_t*)(GRAMStart + 0x800); // Move 8196 bytes (2048 words) away from GPU programs
+uint8_t *mandelbuffer = (uint8_t*)GRAMStart;
 
 GPUCommandPackage gpuSetupProg;
 GPUCommandPackage dmaProg;

@@ -51,6 +51,13 @@ extern volatile uint32_t *SRAMEnd;
 // G-RAM
 extern volatile uint32_t *GRAMStart;
 extern volatile uint32_t *GRAMEnd;
+extern volatile uint32_t *GRAMStartGPUView;
+// P-RAM
+extern volatile uint32_t *PRAMStart;
+extern volatile uint32_t *PRAMEnd;
+extern volatile uint32_t *PRAMStartGPUView;
+// V-RAM
+extern volatile uint32_t *VRAMStartGPUView;
 
 uint32_t Random();
 uint64_t ReadClock();

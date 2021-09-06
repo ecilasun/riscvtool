@@ -9,7 +9,7 @@
 #include "gpu.h"
 
 uint32_t vramPage = 0;
-uint8_t *rtbuffer = (uint8_t*)(GRAMStart + 0x800); // Move 8196 bytes (2048 words) away from GPU programs
+uint8_t *rtbuffer = (uint8_t*)GRAMStart; // We can use the whole G-RAM for graphics data, programs live in a separate memory, P-RAM
 uint64_t totaltime = 0;
 
 GPUCommandPackage gpuSetupProg;
@@ -43,7 +43,7 @@ void PrepareCommandPackages()
     int xoffset = 0;
     int yoffset = 0;
     GPUBeginCommandPackage(&dmaProg);
-    for (int L=0; L<174; ++L)
+    for (int L=0; L<200; ++L)
     {
         // Source in G-RAM (note, these are byte addresses, align appropriately as needed)
         uint32_t gramsource = uint32_t(rtbuffer+L*320);
@@ -159,7 +159,7 @@ vec3 cast_ray(const vec3 &orig, const vec3 &dir, const std::vector<Sphere> &sphe
 
 void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights) {
     const int   width    = 320;
-    const int   height   = 174;
+    const int   height   = 200;
     const float fov      = 3.1415927f/3.f;
 
     // Set up
