@@ -10,7 +10,7 @@
 #include "gpu.h"
 
 // Place the offscreen buffer in GPU accessible memory
-// This is a 128x128 back buffer to be DMAd to V-RAM
+// This is a 320x200 back buffer to be DMAd to V-RAM
 uint8_t *mandelbuffer = (uint8_t*)GRAMStart;
 
 // Labels for where the 'page' index is to be set
@@ -25,8 +25,8 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
 {
    int iteration = 0;
 
-   float c_re = (float(col) - 64.f) / 128.f * sx + ox;
-   float c_im = (float(row) - 64.f) / 128.f * sx + oy;
+   float c_re = (float(col) - 160.f) / 200.f * sx + ox; // Divide by shortest side of display for correct aspect ratio
+   float c_im = (float(row) - 100.f) / 200.f * sx + oy;
    float x = 0.f, y = 0.f;
    float x2 = 0.f, y2 = 0.f;
    while (x2+y2 < 4.f && iteration < maxiter)
@@ -44,11 +44,37 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
 // http://blog.recursiveprocess.com/2014/04/05/mandelbrot-fractal-v2/
 int mandelbrotFloat(float ox, float oy, float sx)
 {
+    // iterate
+    /*float di =  1.0;
+    vec2 z  = vec2(0.0);
+    float m2 = 0.0;
+    vec2 dz = vec2(0.0);
+    for( int i=0; i<300; i++ )
+    {
+        if( m2>1024.0 ) { di=0.0; break; }
+
+		// Z' -> 2·Z·Z' + 1
+        dz = 2.0*vec2(z.x*dz.x-z.y*dz.y, z.x*dz.y + z.y*dz.x) + vec2(1.0,0.0);
+			
+        // Z -> Z² + c			
+        z = vec2( z.x*z.x - z.y*z.y, 2.0*z.x*z.y ) + c;
+			
+        m2 = dot(z,z);
+    }
+
+    // distance	
+	// d(c) = |Z|·log|Z|/|Z'|
+	float d = 0.5*sqrt(dot(z,z)/dot(dz,dz))*log(dot(z,z));
+    if( di>0.5 ) d=0.0;
+	
+    return d;*/
+
+
    int R = int(27.71f-5.156f*logf(sx));
 
-   for (int row = 0; row < 128; ++row)
+   for (int row = 0; row < 200; ++row)
    {
-      for (int col = 0; col < 128; ++col)
+      for (int col = 0; col < 320; ++col)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          int c;
@@ -62,7 +88,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
             c = int(1.f*ratio*255);
          }
 
-         mandelbuffer[col + (row<<7)] = c;
+         mandelbuffer[col + (row*320)] = c;
       }
    }
 
@@ -93,22 +119,22 @@ void PrepareCommandPackages()
 
    // DMA program - program block #1
 
-   int xoffset = 96;
-   int yoffset = 32;
+   int xoffset = 0;
+   int yoffset = 0;
    GPUInitializeCommandPackage(&dmaProg, 0x0000);
    GPUWritePrologue(&dmaProg);
-   for (int L=0; L<128; ++L)
+   for (int L=0; L<200; ++L)
    {
       // Source in G-RAM (note, these are byte addresses, align appropriately as needed)
-      uint32_t gramsource = uint32_t(mandelbuffer+L*128);
+      uint32_t gramsource = uint32_t(mandelbuffer+L*320);
       GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
       GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
       // Target in V-RAM (note, these are byte addresses, align appropriately as needed)
       uint32_t vramramtarget = ((L+yoffset)*512)+xoffset;
       GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
       GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
-      // DMA - 128/4 words
-      uint32_t dmacount = 32;
+      // DMA - 320/4 words
+      uint32_t dmacount = 80;
       GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
    }
    GPUWriteEpilogue(&dmaProg);
