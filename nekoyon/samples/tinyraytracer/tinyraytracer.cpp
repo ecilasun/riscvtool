@@ -18,25 +18,22 @@ GPUCommandPackage swapProg;
 
 void PrepareCommandPackages()
 {
-    // GPU setup program
-
-    GPUInitializeCommandPackage(&gpuSetupProg);
-    GPUWritePrologue(&gpuSetupProg);
-    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
-
+    // RGB palette
     int target = 0;
     for (int b=0;b<4;++b)
     for (int g=0;g<8;++g)
     for (int r=0;r<8;++r)
     {
-        uint32_t color = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF(target)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(target)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));
+        GRAMStart[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
         ++target;
     }
+
+    // GPU setup program
+
+    GPUInitializeCommandPackage(&gpuSetupProg);
+    GPUWritePrologue(&gpuSetupProg);
+    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
+    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_DMA, G_R0, G_R0, G_DMAGRAMTOPALETTE, 0x100)); // move palette from top of G-RAM to palette memory at 0
     GPUWriteEpilogue(&gpuSetupProg);
     GPUCloseCommandPackage(&gpuSetupProg);
 
@@ -58,7 +55,7 @@ void PrepareCommandPackages()
         GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
         // DMA - 320/4 words
         uint32_t dmacount = 80;
-        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
+        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, G_DMAGRAMTOVRAM, dmacount));                                   // dma r15, r14, dmacount
     }
     GPUWriteEpilogue(&dmaProg);
     GPUCloseCommandPackage(&dmaProg);

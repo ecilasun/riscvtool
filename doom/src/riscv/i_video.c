@@ -91,26 +91,22 @@ I_ShutdownGraphics(void)
 void
 I_SetPalette(byte* palette)
 {
-	// Re-use setup program as palette setup
-	GPUInitializeCommandPackage(&gpuSetupProg);
-	GPUWritePrologue(&gpuSetupProg);
-	GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
-	GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, 0x0000)); // Upper half of palette index is always 0
-
+	// Copy palette to G-RAM
 	byte r, g, b;
 	for (int i=0 ; i<256 ; i++) {
 		r = gammatable[usegamma][*palette++];
 		g = gammatable[usegamma][*palette++];
 		b = gammatable[usegamma][*palette++];
-		uint32_t color = MAKERGBPALETTECOLOR(r, g, b);
-		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
-		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));
-		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(i)));
-		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));
+		GRAMStart[i] = MAKERGBPALETTECOLOR(r, g, b);
 	}
+
+	// Wire up and submit a 'palette upload' program
+	// NOTE: This could be a resident program
+	GPUInitializeCommandPackage(&gpuSetupProg);
+	GPUWritePrologue(&gpuSetupProg);
+    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_DMA, G_R0, G_R0, G_DMAGRAMTOPALETTE, 0x100)); // move palette from top of G-RAM to palette memory at 0
 	GPUWriteEpilogue(&gpuSetupProg);
 	GPUCloseCommandPackage(&gpuSetupProg);
-
 	GPUClearMailbox();
 	GPUSubmitCommands(&gpuSetupProg);
 	GPUKick();

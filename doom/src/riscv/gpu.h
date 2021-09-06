@@ -6,17 +6,17 @@
 #define G_STORE     0x2
 #define G_LOAD      0x3
 #define G_DMA       0x4
-#define G_WPAL      0x5
+#define G_UNUSED0   0x5
 #define G_ALU       0x6
 #define G_MISC      0x7
-#define G_UNUSED0   0x8
-#define G_UNUSED1   0x9
-#define G_UNUSED2   0xA
-#define G_UNUSED3   0xB
-#define G_UNUSED4   0xC
-#define G_UNUSED5   0xD
-#define G_UNUSED6   0xE
-#define G_UNUSED7   0xF
+#define G_UNUSED1   0x8
+#define G_UNUSED2   0x9
+#define G_UNUSED3   0xA
+#define G_UNUSED4   0xB
+#define G_UNUSED5   0xC
+#define G_UNUSED6   0xD
+#define G_UNUSED7   0xE
+#define G_UNUSED8   0xF
 
 // branch/jmp
 #define G_JMP 0x0
@@ -31,6 +31,10 @@
 #define G_WORD 0x0
 #define G_HALF 0x1
 #define G_BYTE 0x2
+
+// dma
+#define G_DMAGRAMTOVRAM    0x0
+#define G_DMAGRAMTOPALETTE 0x1
 
 // registers
 #define G_R0  0x0
