@@ -76,21 +76,18 @@ int mandelbrotFloat(float ox, float oy, float sx)
 
 void PrepareCommandPackages()
 {
+   for (uint32_t i=0;i<256;++i) // Set up color palette
+   {
+      int j=255-i;
+      GRAMStart[i] = MAKERGBPALETTECOLOR(j, j, j);
+   }
+
    // GPU setup program - program block #0
 
    GPUInitializeCommandPackage(&gpuSetupProg, 0x0000);
    GPUWritePrologue(&gpuSetupProg);
    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
-   for (uint32_t i=0;i<256;++i) // Set up color palette
-   {
-      int j=255-i;
-      uint32_t color = MAKERGBPALETTECOLOR(j, j, j);
-      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
-      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));   // setregi r15, color
-      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF(i)));
-      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(i)));       // setregi r14, i
-      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));                     // wpal r9, r10
-   }
+   GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_DMA, G_R0, G_R0, G_DMAGRAMTOPALETTE, 0x100));
    GPUWriteEpilogue(&gpuSetupProg);
    GPUCloseCommandPackage(&gpuSetupProg);
 
