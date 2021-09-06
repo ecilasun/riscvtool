@@ -92,24 +92,24 @@ void
 I_SetPalette(byte* palette)
 {
 	// Re-use setup program as palette setup
-    GPUInitializeCommandPackage(&gpuSetupProg);
-    GPUWritePrologue(&gpuSetupProg);
-    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
+	GPUInitializeCommandPackage(&gpuSetupProg);
+	GPUWritePrologue(&gpuSetupProg);
+	GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
 	GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, 0x0000)); // Upper half of palette index is always 0
 
-    byte r, g, b;
+	byte r, g, b;
 	for (int i=0 ; i<256 ; i++) {
 		r = gammatable[usegamma][*palette++];
 		g = gammatable[usegamma][*palette++];
 		b = gammatable[usegamma][*palette++];
-        uint32_t color = MAKERGBPALETTECOLOR(r, g, b);
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(i)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));
-    }
-    GPUWriteEpilogue(&gpuSetupProg);
-    GPUCloseCommandPackage(&gpuSetupProg);
+		uint32_t color = MAKERGBPALETTECOLOR(r, g, b);
+		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
+		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));
+		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(i)));
+		GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));
+	}
+	GPUWriteEpilogue(&gpuSetupProg);
+	GPUCloseCommandPackage(&gpuSetupProg);
 
 	GPUClearMailbox();
 	GPUSubmitCommands(&gpuSetupProg);
@@ -127,33 +127,31 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// User two temporary buffers
-	uint8_t *g_ram_videobuffers[2] = {(uint8_t*)GRAMStart, (uint8_t*)GRAMStart+0x800}; // Two 8K slices from top of GRAM (512*16 pixels each)
-
 	// Fake screen buffer in BRAM (overwrites loader in BIOS)
 	// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
-	static int vB = 0;
-	for (int slice = 0; slice<13; ++slice)
+	for (int slice = 0; slice<4; ++slice)
 	{
-		int H=16;
-		if (slice==12)
-			H = 8;
+		int H=64;
+		if (slice==4)
+			H = 16;
 
 		// The out buffer needs a stride of 512 instead of 320
 		for (int L=0;L<H;++L)
-			__builtin_memcpy((void*)g_ram_videobuffers[vB]+512*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 320);
+			__builtin_memcpy((void*)GRAMStart+512*L, screens[0]+SCREENWIDTH*64*slice+SCREENWIDTH*L, 320);
 
-		// DMA the long way around
 		GPUInitializeCommandPackage(&dmaProg);
 		GPUWritePrologue(&dmaProg);
-		uint32_t gramsource = (uint32_t)(g_ram_videobuffers[vB]);
+
+		// DMA the long way around
+		uint32_t gramsource = (uint32_t)(GRAMStart);
 		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
 		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
-		uint32_t vramramtarget = (512*16*slice);
+		uint32_t vramramtarget = (512*64*slice);
 		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
 		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
 		uint32_t dmacount = (512*H)>>2; //2048 DWORD writes or 1024 for end slice
 		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
+
 		GPUWriteEpilogue(&dmaProg);
 		GPUCloseCommandPackage(&dmaProg);
 
@@ -161,9 +159,6 @@ I_FinishUpdate (void)
 		GPUSubmitCommands(&dmaProg);
 		GPUKick();
 		GPUWaitMailbox();
-
-		// Go to next buffer as the current one is busy copying to the GPU
-		vB = (vB+1)%2;
 	}
 
 	// optional: wait for vsync
