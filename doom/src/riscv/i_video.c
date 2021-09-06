@@ -36,28 +36,46 @@ uint8_t video_pal[256];
 //volatile uint32_t *gpustate = (volatile uint32_t*)0x1001FFF0; // End of GRAM-16
 unsigned int cnt = 0x00000000;
 
+struct GPUCommandPackage swapProg;
+struct GPUCommandPackage gpuSetupProg;
+struct GPUCommandPackage gpuPaletteProg;
+struct GPUCommandPackage dmaProg;
+
 void flippage()
 {
 	vramPage = (vramPage+1)%2;
-	GPUSetRegister(2, vramPage);
-	GPUSetVideoPage(2);
+
+	// Wire up a 'swap' program on the fly to set current vram write page
+	GPUInitializeCommandPackage(&swapProg);
+	GPUWritePrologue(&swapProg);
+	GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(vramPage)));
+	GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(vramPage)));
+	GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_MISC, G_R15, 0x0, 0x0, G_VPAGE));
+	GPUWriteEpilogue(&swapProg);
+	GPUCloseCommandPackage(&swapProg);
+
+	GPUClearMailbox();
+	GPUSubmitCommands(&swapProg);
+	GPUKick();
+	GPUWaitMailbox();
 }
 
 void
 I_InitGraphics(void)
 {
-	//*gpustate = 0;
+	// Setup program doesn't do much at the moment except set v-ram page 0 for writes
+    GPUInitializeCommandPackage(&gpuSetupProg);
+    GPUWritePrologue(&gpuSetupProg);
+    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE));
+    GPUWriteEpilogue(&gpuSetupProg);
+    GPUCloseCommandPackage(&gpuSetupProg);
 
-	GPUSetRegister(2, vramPage);
-	GPUSetVideoPage(2);
+	GPUClearMailbox();
+	GPUSubmitCommands(&gpuSetupProg);
+	GPUKick();
+	GPUWaitMailbox();
 
-	// Clear one of the pages to color palette entry at 0xFF
-	// so that we may see the rate at which the game renders
-	// when using debug mode to draw less than full height.
-    //GPUSetRegister(1, 0xFFFFFFFF);
-    //GPUClearVRAMPage(1);
-
-	// Show the result
+	// Initial V-RAM write page select
 	flippage();
 
 	usegamma = 1;
@@ -73,16 +91,30 @@ I_ShutdownGraphics(void)
 void
 I_SetPalette(byte* palette)
 {
-	byte r, g, b;
+	// Re-use setup program as palette setup
+    GPUInitializeCommandPackage(&gpuSetupProg);
+    GPUWritePrologue(&gpuSetupProg);
+    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
+	GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, 0x0000)); // Upper half of palette index is always 0
 
+    byte r, g, b;
 	for (int i=0 ; i<256 ; i++) {
 		r = gammatable[usegamma][*palette++];
 		g = gammatable[usegamma][*palette++];
 		b = gammatable[usegamma][*palette++];
-		GPUSetRegister(0, i);
-    	GPUSetRegister(1, ((uint32_t)g << 16) | ((uint32_t)r << 8) | (uint32_t)b);
-	    GPUSetPaletteEntry(0, 1);
-	}
+        uint32_t color = MAKERGBPALETTECOLOR(r, g, b);
+        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
+        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));
+        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(i)));
+        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));
+    }
+    GPUWriteEpilogue(&gpuSetupProg);
+    GPUCloseCommandPackage(&gpuSetupProg);
+
+	GPUClearMailbox();
+	GPUSubmitCommands(&gpuSetupProg);
+	GPUKick();
+	GPUWaitMailbox();
 }
 
 
@@ -95,70 +127,49 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	/* Copy from RAM buffer to frame buffer */
+	// User two temporary buffers
+	uint8_t *g_ram_videobuffers[2] = {(uint8_t*)GRAMStart, (uint8_t*)GRAMStart+0x800}; // Two 8K slices from top of GRAM (512*16 pixels each)
 
-	// NOTE: Cannot DMA from extended memory (DDR3)
-	// So we need to either draw pixel by pixel or copy to BRAM first, then DMA out
-
-	/*{
-		static int lasttic = 0;
-       	int i = I_GetTime();
-        int tics = i - lasttic;
-        lasttic = i;
-        if (tics > 20) tics = 20;
-
-        for (i=0 ; i<tics*2 ; i+=2)
-            screens[0][ (SCREENHEIGHT-128)*SCREENWIDTH + i] = 0xff;
-        for ( ; i<20*2 ; i+=2)
-            screens[0][ (SCREENHEIGHT-128)*SCREENWIDTH + i] = 0x0;
-	}*/
-
-	//if (*gpustate == cnt)
+	// Fake screen buffer in BRAM (overwrites loader in BIOS)
+	// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
+	static int vB = 0;
+	for (int slice = 0; slice<13; ++slice)
 	{
-		//++cnt;
+		int H=16;
+		if (slice==12)
+			H = 8;
 
-		// Two buffers
-		uint8_t *g_ram_videobuffers[2] = {(uint8_t*)0x10000000, (uint8_t*)0x10002000}; // Two 8K slices from top of GRAM (512*16 pixels each)
+		// The out buffer needs a stride of 512 instead of 320
+		for (int L=0;L<H;++L)
+			__builtin_memcpy((void*)g_ram_videobuffers[vB]+512*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 320);
 
-		// Fake screen buffer in BRAM (overwrites loader in BIOS)
-		// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
-		static int vB = 0;
-		for (int slice = 0; slice<13; ++slice)
-		{
-			int H=16;
-			if (slice==12)
-				H = 8;
-			// The out buffer needs a stride of 512 instead of 320
-			for (int L=0;L<H;++L)
-				__builtin_memcpy((void*)g_ram_videobuffers[vB]+512*L, screens[0]+SCREENWIDTH*16*slice+SCREENWIDTH*L, 320);
+		// DMA the long way around
+		GPUInitializeCommandPackage(&dmaProg);
+		GPUWritePrologue(&dmaProg);
+		uint32_t gramsource = (uint32_t)(g_ram_videobuffers[vB]);
+		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
+		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
+		uint32_t vramramtarget = (512*16*slice);
+		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
+		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
+		uint32_t dmacount = (512*H)>>2; //2048 DWORD writes or 1024 for end slice
+		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
+		GPUWriteEpilogue(&dmaProg);
+		GPUCloseCommandPackage(&dmaProg);
 
-			// Single DMA because backbuffer is same size as display
-			uint32_t sysramsource = (uint32_t)g_ram_videobuffers[vB];
-			GPUSetRegister(4, sysramsource);
-			uint32_t vramramtarget = (512*16*slice)>>2;
-			GPUSetRegister(5, vramramtarget);
-			uint32_t dmacount = (512*H)>>2; //2048 DWORD writes or 1024 for end slice
-			GPUKickDMA(4, 5, dmacount, 0);
+		GPUClearMailbox();
+		GPUSubmitCommands(&dmaProg);
+		GPUKick();
+		GPUWaitMailbox();
 
-			// Go to next buffer as the current one is busy copying to the GPU
-			vB = (vB+1)%2;
-		}
-
-		//GPUWaitForVsync();
-
-		// Show the result
-		flippage();
-
-		// GPU status address in G1
-		//uint32_t gpustateDWORDaligned = (uint32_t)(gpustate);
-		//GPUSetRegister(1, gpustateDWORDaligned);
-
-		// Write 'end of processing' from GPU so that CPU can resume its work
-		//GPUSetRegister(2, cnt);
-		//GPUWriteSystemMemory(2, 1);
-
-		//*gpustate = 0;
+		// Go to next buffer as the current one is busy copying to the GPU
+		vB = (vB+1)%2;
 	}
+
+	// optional: wait for vsync
+
+	// Show the result
+	flippage();
 }
 
 

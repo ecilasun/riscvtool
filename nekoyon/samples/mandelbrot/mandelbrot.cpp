@@ -13,6 +13,10 @@
 // This is a 128x128 back buffer to be DMAd to V-RAM
 uint8_t *mandelbuffer = (uint8_t*)GRAMStart;
 
+// Labels for where the 'page' index is to be set
+uint32_t pageinstructionhi = 0;
+uint32_t pageinstructionlo = 0;
+
 GPUCommandPackage gpuSetupProg;
 GPUCommandPackage dmaProg;
 GPUCommandPackage swapProg;
@@ -72,42 +76,56 @@ int mandelbrotFloat(float ox, float oy, float sx)
 
 void PrepareCommandPackages()
 {
-    // GPU setup program
+   // GPU setup program - program block #0
 
-    GPUBeginCommandPackage(&gpuSetupProg);
-    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
-    for (uint32_t i=0;i<256;++i) // Set up color palette
-    {
-        int j=255-i;
-        uint32_t color = MAKERGBPALETTECOLOR(j, j, j);
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));   // setregi r15, color
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF(i)));
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(i)));       // setregi r14, i
-        GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));                     // wpal r9, r10
-    }
-    GPUEndCommandPackage(&gpuSetupProg);
+   GPUInitializeCommandPackage(&gpuSetupProg, 0x0000);
+   GPUWritePrologue(&gpuSetupProg);
+   GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
+   for (uint32_t i=0;i<256;++i) // Set up color palette
+   {
+      int j=255-i;
+      uint32_t color = MAKERGBPALETTECOLOR(j, j, j);
+      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(color)));
+      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(color)));   // setregi r15, color
+      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF(i)));
+      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF(i)));       // setregi r14, i
+      GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));                     // wpal r9, r10
+   }
+   GPUWriteEpilogue(&gpuSetupProg);
+   GPUCloseCommandPackage(&gpuSetupProg);
 
-    // DMA program
+   // DMA program - program block #1
 
-    int xoffset = 96;
-    int yoffset = 32;
-    GPUBeginCommandPackage(&dmaProg);
-    for (int L=0; L<128; ++L)
-    {
-        // Source in G-RAM (note, these are byte addresses, align appropriately as needed)
-        uint32_t gramsource = uint32_t(mandelbuffer+L*128);
-        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
-        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
-        // Target in V-RAM (note, these are byte addresses, align appropriately as needed)
-        uint32_t vramramtarget = ((L+yoffset)*512)+xoffset;
-        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
-        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
-        // DMA - 128/4 words
-        uint32_t dmacount = 32;
-        GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
-    }
-    GPUEndCommandPackage(&dmaProg);
+   int xoffset = 96;
+   int yoffset = 32;
+   GPUInitializeCommandPackage(&dmaProg, 0x0000);
+   GPUWritePrologue(&dmaProg);
+   for (int L=0; L<128; ++L)
+   {
+      // Source in G-RAM (note, these are byte addresses, align appropriately as needed)
+      uint32_t gramsource = uint32_t(mandelbuffer+L*128);
+      GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
+      GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
+      // Target in V-RAM (note, these are byte addresses, align appropriately as needed)
+      uint32_t vramramtarget = ((L+yoffset)*512)+xoffset;
+      GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
+      GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
+      // DMA - 128/4 words
+      uint32_t dmacount = 32;
+      GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
+   }
+   GPUWriteEpilogue(&dmaProg);
+   GPUCloseCommandPackage(&dmaProg);
+
+   // Swap program - program block #1
+
+   GPUInitializeCommandPackage(&swapProg, 0x0000);//0x0100);
+   GPUWritePrologue(&swapProg);
+   pageinstructionhi = GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, 0)); // page high half
+   pageinstructionlo = GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, 0)); // page low half
+   GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_MISC, G_R15, 0x0, 0x0, G_VPAGE));
+   GPUWriteEpilogue(&swapProg);
+   GPUCloseCommandPackage(&swapProg);
 }
 
 int main(int argc, char ** argv)
@@ -121,10 +139,15 @@ int main(int argc, char ** argv)
     float X = -0.235125f;
     float Y = 0.827215f;
 
-    // Set up
+    // Set up (synchronous, will not hog G-RAM as it's overwritten after first run)
     GPUClearMailbox();
     GPUSubmitCommands(&gpuSetupProg);
     GPUKick();
+    GPUWaitMailbox();
+
+    // Place programs for block #1 in memory
+    //GPUSubmitCommands(&dmaProg);  // @0x0000
+    //GPUSubmitCommands(&swapProg); // @0x0100
 
     uint64_t prevreti = ReadRetiredInstructions();
     uint32_t prevms = ClockToMs(ReadClock());
@@ -150,28 +173,25 @@ int main(int argc, char ** argv)
             UARTWrite("\n");
         }
 
-        // Wait for previous work from end of last frame (or from the GPU setup program above) to be done.
-        // Most likely they'll be complete by the time we get here due to the work involved in between frames.
-        GPUWaitMailbox();
-
         // Show the mandelbrot image from G-RAM buffer
         GPUClearMailbox();
         GPUSubmitCommands(&dmaProg);
         GPUKick();
-
-        GPUWaitMailbox(); // Wait before kicking the swap program
+        GPUWaitMailbox();
 
         // Wire up a 'swap' program on the fly
         page = (page + 1)%2;
-        GPUBeginCommandPackage(&swapProg);
-        GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(page)));
-        GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(page)));
-        GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_MISC, G_R15, 0x0, 0x0, G_VPAGE));
-        GPUEndCommandPackage(&swapProg);
+
+        // Update page address of swap program
+        GPUWriteInstructionAt(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(page)), pageinstructionhi);
+        GPUWriteInstructionAt(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(page)), pageinstructionlo);
+        // Reflect changes to P-RAM
+        //GPUSubmitRange(&swapProg, pageinstructionhi, 2);
 
         GPUClearMailbox();
         GPUSubmitCommands(&swapProg);
         GPUKick();
+        GPUWaitMailbox();
         // NOTE: We don't wait for GPU to be done here, which will be done on start of next iteration
     }
 

@@ -1,15 +1,12 @@
 #include "config.h"
 
-volatile unsigned int *IO_AudioOutput = (volatile unsigned int* )0x80000018;       // Two 16bit stereo samples to output (31:16->Right, 15:0->Left)
-volatile unsigned int *IO_SwitchByteCount = (volatile unsigned int* )0x80000014;   // Switch state byte count (read)
-volatile unsigned char *IO_SwitchState = (volatile unsigned char* )0x80000010;     // Device switch states (read)
-volatile unsigned char *IO_SPIOutput = (volatile unsigned char* )0x8000000C;       // SPU send data (write)
-volatile unsigned char *IO_SPIInput = (volatile unsigned char* )0x8000000C;        // SPI receive data (read)
-volatile unsigned char *IO_UARTTX = (volatile unsigned char* )0x80000008;          // UART send data (write)
-volatile unsigned char *IO_UARTRX = (volatile unsigned char* )0x80000008;          // UART receive data (read)
+volatile unsigned char *IO_SPIRXTX = (volatile unsigned char* )0x8000000C;       // SPU send data (write)
+volatile unsigned char *IO_UARTRXTX = (volatile unsigned char* )0x80000008;          // UART send data (write)
 volatile unsigned int *IO_UARTRXByteCount = (volatile unsigned int* )0x80000004;   // UART input status (read)
-volatile unsigned int *IO_GPUFIFO = (volatile unsigned int* )0x80000000;           // GPU control FIFO
-volatile unsigned int *IO_LEDRW = (volatile unsigned int*)0x8000001C;              // LED r/w
+volatile unsigned int *IO_UARTTXFifoFull = (volatile unsigned int* )0x80000000;
+volatile unsigned int *PRAMStart = (volatile unsigned int* )0x30000000;
+volatile unsigned int *GRAMStart = (volatile unsigned int* )0x20000000;
+volatile unsigned int *SRAMStart = (volatile unsigned int* )0x10000000;
 
 uint64_t ReadClock()
 {
@@ -31,10 +28,10 @@ uint64_t ReadClock()
 
 uint64_t ClockToMs(uint64_t clock)
 {
-   return clock / 25000;
+   return clock / 10000;
 }
 
 uint64_t ClockToUs(uint64_t clock)
 {
-   return clock / 25;
+   return clock / 10;
 }

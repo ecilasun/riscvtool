@@ -27,16 +27,13 @@
 
 #include <inttypes.h>
 
-extern volatile unsigned int *IO_AudioOutput;
-extern volatile unsigned int *IO_SwitchByteCount;
-extern volatile unsigned char *IO_SwitchState;
-extern volatile unsigned char *IO_SPIOutput;
-extern volatile unsigned char *IO_SPIInput;
-extern volatile unsigned char *IO_UARTTX;
-extern volatile unsigned char *IO_UARTRX;
+extern volatile unsigned char *IO_SPIRXTX;
+extern volatile unsigned char *IO_UARTRXTX;
 extern volatile unsigned int *IO_UARTRXByteCount;
-extern volatile unsigned int *IO_GPUFIFO;
-extern volatile unsigned int *IO_LEDRW;
+extern volatile unsigned int *IO_UARTTXFifoFull;
+extern volatile unsigned int *PRAMStart;
+extern volatile unsigned int *GRAMStart;
+extern volatile unsigned int *SRAMStart;
 
 uint64_t ReadClock();
 uint64_t ClockToMs(uint64_t clock);

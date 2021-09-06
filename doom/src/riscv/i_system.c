@@ -76,7 +76,7 @@ I_GetEvent(void)
 	if (*IO_UARTRXByteCount)
 	{
 		for (int i=0;i<2;++i)
-			keydata[i] = *IO_UARTRX;
+			keydata[i] = *IO_UARTRXTX;
 		// first byte: 1:down 2:up
 		// second byte: x11 keysymbol
 
@@ -124,7 +124,7 @@ I_GetEvent(void)
 		D_PostEvent(&event);
 	}
 
-	static uint32_t oldhardwareswitchstates = 0;
+	/*static uint32_t oldhardwareswitchstates = 0;
 	if (*IO_SwitchByteCount)
 	{
 		uint32_t hardwareswitchstates = *IO_SwitchState;
@@ -168,7 +168,7 @@ I_GetEvent(void)
 		}
 
 		oldhardwareswitchstates = hardwareswitchstates;
-	}
+	}*/
 }
 
 void

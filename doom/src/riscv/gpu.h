@@ -1,36 +1,131 @@
+#include "inttypes.h"
 
-#include <inttypes.h>
+// Instruction defines
+#define G_FLOWCTL   0x0
+#define G_SETREG    0x1
+#define G_STORE     0x2
+#define G_LOAD      0x3
+#define G_DMA       0x4
+#define G_WPAL      0x5
+#define G_ALU       0x6
+#define G_MISC      0x7
+#define G_UNUSED0   0x8
+#define G_UNUSED1   0x9
+#define G_UNUSED2   0xA
+#define G_UNUSED3   0xB
+#define G_UNUSED4   0xC
+#define G_UNUSED5   0xD
+#define G_UNUSED6   0xE
+#define G_UNUSED7   0xF
 
-extern volatile uint32_t *IO_GPUCommandFIFO;
-extern volatile uint32_t *GraphicsRAMStart;
-extern volatile uint32_t *GraphicsRAMEnd;
-extern volatile uint32_t *GraphicsFontStart;
+// branch/jmp
+#define G_JMP 0x0
+#define G_BNE 0x1
+#define G_BEQ 0x2
+#define G_BLE 0x3
+#define G_BL  0x4
+#define G_BG  0x5
+#define G_BGE 0x6
 
-// Utility macros
+// load/store
+#define G_WORD 0x0
+#define G_HALF 0x1
+#define G_BYTE 0x2
+
+// registers
+#define G_R0  0x0
+#define G_R1  0x1
+#define G_R2  0x2
+#define G_R3  0x3
+#define G_R4  0x4
+#define G_R5  0x5
+#define G_R6  0x6
+#define G_R7  0x7
+#define G_R8  0x8
+#define G_R9  0x9
+#define G_R10 0xA
+#define G_R11 0xB
+#define G_R12 0xC
+#define G_R13 0xD
+#define G_R14 0xE
+#define G_R15 0xF
+
+// setregi.h/l
+#define G_HIGHBITS 0x0
+#define G_LOWBITS  0x1
+
+// ALU ops
+#define G_CMP 0x0
+#define G_SUB 0x1
+#define G_DIV 0x2
+#define G_MUL 0x3
+#define G_ADD 0x4
+#define G_AND 0x5
+#define G_OR  0x6
+#define G_XOR 0x7
+
+// noop / vsync / vpage
+#define G_NOOP  0x0
+#define G_VSYNC 0x1
+#define G_VPAGE 0x2
+
+// Helper macro to generate instruction words from instruction defines
+#define GPU_INSTRUCTION(_op_, _rs1_, _rs2_, _rd_, _immed_) ((_op_) | (_rs1_<<4) | (_rs2_<<8) | (_rd_<<12) | (_immed_<<16))
+
+// Helper macros to split words into halfwords
+#define HIHALF(_x_) ((_x_&0xFFFF0000)>>16)
+#define LOHALF(_x_) (_x_&0x0000FFFF)
+
+// Program always has to start at this address
+// 'halt' command will also always return here
+#define GRAM_ADDRESS_PROGRAMSTART 0x0000
+// Mailbox slot for GPU->CPU communication
+#define GRAM_ADDRESS_GPUMAILBOX   0xFFF8
+
+// A very simple, short command package with static command space allocated
+struct GPUCommandPackage {
+    volatile uint32_t m_commands[2048]; // Command list, 2048 instructions for now, limit is 64Kbytes-stack
+    uint32_t m_programorigin;        // Offset of program in P-RAM
+    uint32_t m_wordcount;            // Length of command list in words
+    uint32_t m_writecursor;          // Current write cursor
+};
+
+// Utility macro to build an RGB color to upload as a palette entry
 #define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 
-// GPU command FIFO macros
-#define GPU8BITIMMLO(_immed_) (_immed_ & 0x000000FF)
-#define GPU24BITIMMHI(_immed_) ((_immed_ & 0xFFFFFF00) >> 8)
-#define GPU20BITIMMLO(_immed_) (_immed_ & 0x000FFFFF)
-#define GPUOPCODE20(_cmd_, _rd_, _rs_, _imm_) (_imm_<<12)|(_rs_<<8)|(_rd_<<4)|(_cmd_)
-#define GPUOPCODE24(_cmd_, _rd_, _imm_) (_imm_<<8)|(_rd_<<4)|(_cmd_)
+// Clean write cursor and submit count
+void GPUInitializeCommandPackage(struct GPUCommandPackage *_cmd);
 
-// GPU opcodes (only lower 3 bits out of 4 used)
+// Write the branch-to-self instruction at the top of program memory
+void GPUWritePrologue(struct GPUCommandPackage *_cmd);
 
-#define GPUUNUSED0      0x00
-#define GPUSETREGLO     0x01
-#define GPUSETREGHI     0x09
-#define GPUSETPALENT    0x02
-#define GPUUNUSED3      0x03
-#define GPUSYSDMA       0x04
-#define GPUVMEMOUT      0x05
-#define GPUGMEMOUT      0x06
-#define GPUSETVPAGE     0x07
+// Write instructions to put GPU into idle state again for next kick
+void GPUWriteEpilogue(struct GPUCommandPackage *_cmd);
 
-void GPUSetRegister(const uint8_t reg, uint32_t val);
-void GPUSetVideoPage(const uint8_t videoPageRegister);
-void GPUWriteGRAM(const uint8_t addrreg, const uint8_t valreg, const uint8_t wmask);
-void GPUWriteVRAM(const uint8_t addrreg, const uint8_t valreg, const uint8_t wmask);
-void GPUSetPaletteEntry(const uint8_t palindexreg, const uint8_t palcolorreg);
-void GPUKickDMA(const uint8_t SYSRAMSourceReg, const uint8_t VRAMDWORDAlignedTargetReg, const uint16_t DMALengthInDWORDs, const uint8_t masked);
+// End the command package
+void GPUCloseCommandPackage(struct GPUCommandPackage *_cmd);
+
+// Write instruction and return current cursor as a G-RAM address creation purposes
+uint32_t GPUWriteInstruction(struct GPUCommandPackage *_cmd, const uint32_t _instruction);
+
+// Same as writeinstruction, but will overwrite a memory location at _wordindex and won't step the write cursor
+void GPUWriteInstructionAt(struct GPUCommandPackage *_cmd, const uint32_t _instruction, const uint32_t _wordindex);
+
+// Scan closed command buffer and test for errors, return -1 if an error is found
+int GPUValidateCommands(struct GPUCommandPackage *_cmd);
+
+// Write 0xFFFFFFFF to the mailbox address so that the GPU can clear it when it's done
+void GPUClearMailbox();
+
+// Submit the commands in a closed command package
+void GPUSubmitCommands(struct GPUCommandPackage *_cmd);
+
+// Submits only a range of the current program to P-RAM, useful for updating parameters
+void GPUSubmitRange(struct GPUCommandPackage *_cmd, const uint32_t _start, const uint32_t _count);
+
+// Overwrite first instruciton with noop to cause GPU to start processing the submitted commmand package
+// Can be repeated to re-kick the same command package if a change is not required
+void GPUKick();
+
+// Wait for GPU to write non-0xFFFFFFFF value (preferably zero) at the mailbox address, return -1 on timeout
+int GPUWaitMailbox();

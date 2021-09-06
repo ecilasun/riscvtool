@@ -32,7 +32,8 @@ console_init(void)
 void
 console_putchar(char c)
 {
-	*IO_UARTTX = c;
+	while (*IO_UARTTXFifoFull) { }
+	*IO_UARTRXTX = c;
 }
 
 char
@@ -40,7 +41,7 @@ console_getchar(void)
 {
 	char c=0;
 	while (*IO_UARTRXByteCount)
-		c = (char)*IO_UARTRX;
+		c = (char)*IO_UARTRXTX;
 	return c;
 }
 
@@ -50,7 +51,7 @@ console_getchar_nowait(void)
 	char c=0;
 	unsigned int count = *IO_UARTRXByteCount;
 	if (count)
-		c = *IO_UARTRX;
+		c = *IO_UARTRXTX;
 
 	return count ? c&0xFF : -1;// & 0x80000000 ? -1 : (c & 0xff);
 }
@@ -60,7 +61,11 @@ console_puts(const char *p)
 {
 	char c;
 	while ((c = *(p++)) != 0x00)
-		*IO_UARTTX = c;
+	{
+		if (*IO_UARTTXFifoFull)
+			continue;
+		*IO_UARTRXTX = c;
+	}
 }
 
 int

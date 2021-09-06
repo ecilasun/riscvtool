@@ -20,7 +20,8 @@ void PrepareCommandPackages()
 {
     // GPU setup program
 
-    GPUBeginCommandPackage(&gpuSetupProg);
+    GPUInitializeCommandPackage(&gpuSetupProg);
+    GPUWritePrologue(&gpuSetupProg);
     GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE)); // Write to page 0
 
     int target = 0;
@@ -36,13 +37,15 @@ void PrepareCommandPackages()
         GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_WPAL, G_R15, G_R14, 0x0, 0x0));
         ++target;
     }
-    GPUEndCommandPackage(&gpuSetupProg);
+    GPUWriteEpilogue(&gpuSetupProg);
+    GPUCloseCommandPackage(&gpuSetupProg);
 
     // DMA program
 
     int xoffset = 0;
     int yoffset = 0;
-    GPUBeginCommandPackage(&dmaProg);
+    GPUInitializeCommandPackage(&dmaProg);
+    GPUWritePrologue(&dmaProg);
     for (int L=0; L<200; ++L)
     {
         // Source in G-RAM (note, these are byte addresses, align appropriately as needed)
@@ -57,7 +60,8 @@ void PrepareCommandPackages()
         uint32_t dmacount = 80;
         GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
     }
-    GPUEndCommandPackage(&dmaProg);
+    GPUWriteEpilogue(&dmaProg);
+    GPUCloseCommandPackage(&dmaProg);
 }
 
 struct Light {
@@ -201,11 +205,13 @@ void render(const std::vector<Sphere> &spheres, const std::vector<Light> &lights
 
         // Wire up a 'swap' program on the fly
         vramPage = (vramPage+1)%2;
-        GPUBeginCommandPackage(&swapProg);
+        GPUInitializeCommandPackage(&swapProg);
+        GPUWritePrologue(&swapProg);
         GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(vramPage)));
         GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(vramPage)));
         GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_MISC, G_R15, 0x0, 0x0, G_VPAGE));
-        GPUEndCommandPackage(&swapProg);
+        GPUWriteEpilogue(&swapProg);
+        GPUCloseCommandPackage(&swapProg);
 
         GPUClearMailbox();
         GPUSubmitCommands(&swapProg);

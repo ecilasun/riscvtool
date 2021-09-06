@@ -2,19 +2,6 @@
 #include "sdcard.h"
 #include <stdio.h>
 
-void SDStrobe8()
-{
-   /*
-   *IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = 0xFF;*/
-}
-
 static uint8_t CRC7(const uint8_t* data, uint8_t n) {
   uint8_t crc = 0;
   for (uint8_t i = 0; i < n; i++) {
@@ -41,9 +28,9 @@ void SDCmd(const SDCardCommand cmd, uint32_t args)
    buf[4] = (uint8_t)(args&0x000000FF);
    buf[5] = CRC7(buf, 5);
 
-   *IO_SPIOutput = 0xFF;
+   *IO_SPIRXTX = 0xFF;
    for (uint32_t i=0;i<6;++i)
-      *IO_SPIOutput = buf[i];
+      *IO_SPIRXTX = buf[i];
 }
 
 uint8_t SDIdle()
@@ -59,14 +46,12 @@ uint8_t SDIdle()
 
    int timeout=65536;
    do {
-      *IO_SPIOutput = 0xFF;
-      response = *IO_SPIInput;
+      *IO_SPIRXTX = 0xFF;
+      response = *IO_SPIRXTX;
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x01
-
-   SDStrobe8();
 
 	asm volatile("csrrw zero, mie,%0" :: "r" (oldmsie));
 
@@ -85,8 +70,8 @@ uint8_t SDCheckVoltageRange(uint32_t *databack)
 
    int timeout=65536;
    do {
-      *IO_SPIOutput = 0xFF;
-      response = *IO_SPIInput;
+      *IO_SPIRXTX = 0xFF;
+      response = *IO_SPIRXTX;
       if (response != 0xFF)
          break;
       --timeout;
@@ -94,16 +79,14 @@ uint8_t SDCheckVoltageRange(uint32_t *databack)
 
    // Read the 00 00 01 AA sequence back from the SD CARD
    *databack = 0x00000000;
-   *IO_SPIOutput = 0xFF;
-   *databack |= *IO_SPIInput;
-   *IO_SPIOutput = 0xFF;
-   *databack |= (*databack<<8)|(*IO_SPIInput);
-   *IO_SPIOutput = 0xFF;
-   *databack |= (*databack<<8)|(*IO_SPIInput);
-   *IO_SPIOutput = 0xFF;
-   *databack |= (*databack<<8)|(*IO_SPIInput);
-
-   SDStrobe8();
+   *IO_SPIRXTX = 0xFF;
+   *databack |= *IO_SPIRXTX;
+   *IO_SPIRXTX = 0xFF;
+   *databack |= (*databack<<8)|(*IO_SPIRXTX);
+   *IO_SPIRXTX = 0xFF;
+   *databack |= (*databack<<8)|(*IO_SPIRXTX);
+   *IO_SPIRXTX = 0xFF;
+   *databack |= (*databack<<8)|(*IO_SPIRXTX);
 
 	asm volatile("csrrw zero, mie,%0" :: "r" (oldmsie));
 
@@ -123,40 +106,38 @@ uint8_t SDCardInit()
 
    int timeout=65536;
    do {
-      *IO_SPIOutput = 0xFF;
-      response = *IO_SPIInput;
+      *IO_SPIRXTX = 0xFF;
+      response = *IO_SPIRXTX;
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x00?? - NOTE: Won't handle old cards!
 
    // Set high capacity mode on
-   *IO_SPIOutput = 0xFF;
+   *IO_SPIRXTX = 0xFF;
    SDCmd(ACMD41_SD_SEND_OP_COND, 0x40000000);
 
    timeout=65536;
    do {
-      *IO_SPIOutput = 0xFF;
-      response = *IO_SPIInput;
+      *IO_SPIRXTX = 0xFF;
+      response = *IO_SPIRXTX;
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x00 eventually, but will also get several 0x01 (idle)
 
-   SDStrobe8();
-
    // Initialize
-   /**IO_SPIOutput = 0xFF;
-   *IO_SPIOutput = SPI_CMD(CMD1_SEND_OP_COND);
-   *IO_SPIOutput = 0x00;
-   *IO_SPIOutput = 0x00;
-   *IO_SPIOutput = 0x00;
-   *IO_SPIOutput = 0x00;
-   *IO_SPIOutput = 0xFF; // checksum is not necessary at this point
+   /**IO_SPIRXTX = 0xFF;
+   *IO_SPIRXTX = SPI_CMD(CMD1_SEND_OP_COND);
+   *IO_SPIRXTX = 0x00;
+   *IO_SPIRXTX = 0x00;
+   *IO_SPIRXTX = 0x00;
+   *IO_SPIRXTX = 0x00;
+   *IO_SPIRXTX = 0xFF; // checksum is not necessary at this point
 
    do {
-      *IO_SPIOutput = 0xFF;
-      response = *IO_SPIInput;
+      *IO_SPIRXTX = 0xFF;
+      response = *IO_SPIRXTX;
       if (response != 0xFF)
          break;
    } while(1); // Expected: 0x00*/
@@ -179,14 +160,12 @@ uint8_t SDSetBlockSize512()
 
    int timeout=65536;
    do {
-      *IO_SPIOutput = 0xFF;
-      response = *IO_SPIInput;
+      *IO_SPIRXTX = 0xFF;
+      response = *IO_SPIRXTX;
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x00
-
-   SDStrobe8();
 
 	asm volatile("csrrw zero, mie,%0" :: "r" (oldmsie));
 
@@ -208,8 +187,8 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
    // R1: expect 0x00
    int timeout=65536;
    do {
-      *IO_SPIOutput = 0xFF;
-      response = *IO_SPIInput;
+      *IO_SPIRXTX = 0xFF;
+      response = *IO_SPIRXTX;
       if (response != 0xFF)
          break;
       --timeout;
@@ -220,8 +199,8 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
       // R2: expect 0xFE
       timeout=65536;
       do {
-         *IO_SPIOutput = 0xFF;
-         response = *IO_SPIInput;
+         *IO_SPIRXTX = 0xFF;
+         response = *IO_SPIRXTX;
          if (response != 0xFF)
             break;
          --timeout;
@@ -233,19 +212,17 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
          // 512 bytes of data followed by 16 bit CRC, total of 514 bytes
          int x=0;
          do {
-            *IO_SPIOutput = 0xFF;
-            datablock[x++] = *IO_SPIInput;
+            *IO_SPIRXTX = 0xFF;
+            datablock[x++] = *IO_SPIRXTX;
          } while(x<512);
 
          // Checksum
-         *IO_SPIOutput = 0xFF;
-         checksum[0] = *IO_SPIInput;
-         *IO_SPIOutput = 0xFF;
-         checksum[1] = *IO_SPIInput;
+         *IO_SPIRXTX = 0xFF;
+         checksum[0] = *IO_SPIRXTX;
+         *IO_SPIRXTX = 0xFF;
+         checksum[1] = *IO_SPIRXTX;
       }
    }
-
-   SDStrobe8();
 
 	asm volatile("csrrw zero, mie,%0" :: "r" (oldmsie));
 

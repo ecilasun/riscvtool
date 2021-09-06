@@ -55,8 +55,11 @@ int main()
     UARTWrite(" -creating command buffer\n");
     GPUCommandPackage cmd;
 
-    // Reset write cursor and write prologue
-    GPUBeginCommandPackage(&cmd);
+    // Reset write cursor and prepare package
+    GPUInitializeCommandPackage(&cmd);
+
+    // Write the prologue, since this is the first program and goes at 0x0000
+    GPUWritePrologue(&cmd);
 
     // Choose page#0 for writes (and page#1 for display output)
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE));           // vpage zero
@@ -97,8 +100,11 @@ int main()
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_SETREG, G_R8, G_LOWBITS, G_R8, 0x0001));  // setregi r8, 0x00000001
     GPUWriteInstruction(&cmd, GPU_INSTRUCTION(G_MISC, G_R8, 0x0, 0x0, G_VPAGE));          // vpage r8
 
-    // Write epilogue
-    GPUEndCommandPackage(&cmd);
+    // Write epilogue that will put the GPU into halt state once the program is complete
+    GPUWriteEpilogue(&cmd);
+
+    // Finish the package by updating the submit word count
+    GPUCloseCommandPackage(&cmd);
 
     // DEBUG: Dump command package
     /*for (uint32_t i=0;i<cmd.m_wordcount;++i)

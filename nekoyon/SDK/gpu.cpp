@@ -51,18 +51,22 @@ void GPUKick()
     PRAMStart[GRAM_ADDRESS_PROGRAMSTART>>2] = GPU_INSTRUCTION(G_MISC, 0x0, 0x0, 0x0, G_NOOP);
 }
 
-void GPUBeginCommandPackage(GPUCommandPackage *_cmd)
+void GPUInitializeCommandPackage(GPUCommandPackage *_cmd, uint32_t _origin)
 {
+    _cmd->m_programorigin = _origin;
     _cmd->m_writecursor = 0;
     _cmd->m_wordcount = 0;
-
-//    @ORG 0x0000
-//    _start:
-//       halt                       // unconditional jump to 0x0000
-    _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);          // jmp zero
 }
 
-void GPUEndCommandPackage(GPUCommandPackage *_cmd, bool _noEpilogue)
+void GPUWritePrologue(GPUCommandPackage *_cmd)
+{
+    //    @ORG 0x0000
+//    _start:
+//       halt                       // unconditional jump to 0x0000
+    _cmd->m_commands[_cmd->m_programorigin + _cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);          // jmp zero
+}
+
+void GPUWriteEpilogue(GPUCommandPackage *_cmd)
 {
 //    _exit:
 //       store.w zero, zero         // write zero to address 0 (zero == register 0)
@@ -71,25 +75,29 @@ void GPUEndCommandPackage(GPUCommandPackage *_cmd, bool _noEpilogue)
 //       store.w zero, r1           // write zero to address 0xFFF8
 //       halt                       // unconditional jump to 0x0000
 
-    // TO BE IMPLEMENTED IN THE FUTURE FOR CHAINING PROGRAMS OR PARTIALLY UPDATING ONLY ONE (ALSO NEEDS PROGRAM OFFSET SUPPORT)
-    // if (!_noEpilogue)
-    {
-        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R0, 0x0, G_WORD);         // store.w zero, zero
-        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_HIGHBITS, G_R1, 0x0000);
-        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_LOWBITS, G_R1, 0xFFF8);  // setregi r1, 0x0000FFF8
-        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R1, 0x0, G_WORD);         // store.w r1, zero
-        _cmd->m_commands[_cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);         // jmp zero
-    }
+    _cmd->m_commands[_cmd->m_programorigin + _cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R0, 0x0, G_WORD);         // store.w zero, zero
+    _cmd->m_commands[_cmd->m_programorigin + _cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_HIGHBITS, G_R1, 0x0000);
+    _cmd->m_commands[_cmd->m_programorigin + _cmd->m_writecursor++] = GPU_INSTRUCTION(G_SETREG, G_R1, G_LOWBITS, G_R1, 0xFFF8);  // setregi r1, 0x0000FFF8
+    _cmd->m_commands[_cmd->m_programorigin + _cmd->m_writecursor++] = GPU_INSTRUCTION(G_STORE, G_R0, G_R1, 0x0, G_WORD);         // store.w r1, zero
+    _cmd->m_commands[_cmd->m_programorigin + _cmd->m_writecursor++] = GPU_INSTRUCTION(G_FLOWCTL, 0x0, G_R0, 0x0, G_JMP);         // jmp zero
+}
 
+void GPUCloseCommandPackage(GPUCommandPackage *_cmd)
+{
     // Set submit word count
     _cmd->m_wordcount = _cmd->m_writecursor;
 }
 
+void GPUWriteInstructionAt(GPUCommandPackage *_cmd, const uint32_t _instruction, const uint32_t _wordindex)
+{
+    _cmd->m_commands[_cmd->m_programorigin +  _wordindex] = _instruction;
+}
+
 uint32_t GPUWriteInstruction(GPUCommandPackage *_cmd, const uint32_t _instruction)
 {
-    uint32_t currentCursorAsGRAMAddress = _cmd->m_writecursor*4; // Convert word index into memory byte offset
-    _cmd->m_commands[_cmd->m_writecursor++] = _instruction;
-    return currentCursorAsGRAMAddress;
+    uint32_t currentwriteoffset = _cmd->m_writecursor;
+    GPUWriteInstructionAt(_cmd, _instruction, _cmd->m_writecursor++);
+    return currentwriteoffset;
 }
 
 int GPUValidateCommands(GPUCommandPackage *_cmd)
@@ -98,14 +106,18 @@ int GPUValidateCommands(GPUCommandPackage *_cmd)
     return 0;
 }
 
+void GPUSubmitRange(GPUCommandPackage *_cmd, const uint32_t _start, const uint32_t _count)
+{
+    __builtin_memcpy((void*)(PRAMStart+_cmd->m_programorigin + _start), (void*)(_cmd->m_commands + _start), sizeof(uint32_t)*_count);
+}
+
 void GPUSubmitCommands(GPUCommandPackage *_cmd)
 {
     // NOTE: MUST NOT call this function a second time without a GPUWaitMailBox() in between
     // otherwise currently running program may hang/get corrupted.
 
-    // Copy the program to G-RAM. First word must by default be a HALT instruction,
-    // otherwise we risk immediate execution of the program, therefore a hang or corruption.
-    __builtin_memcpy((void*)PRAMStart, (void*)_cmd->m_commands, sizeof(uint32_t)*_cmd->m_wordcount);
+    // Copy the program to P-RAM, starting at program offset.
+    __builtin_memcpy((void*)(PRAMStart+_cmd->m_programorigin), (void*)_cmd->m_commands, sizeof(uint32_t)*_cmd->m_wordcount);
 }
 
 int GPUWaitMailbox()
