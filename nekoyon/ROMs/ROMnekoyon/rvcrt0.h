@@ -9,16 +9,16 @@ extern "C"
       asm volatile (
 
          // This is the entry point of CORE#1 (0x10000000)
-         "li sp, 0x1000EFF0;" // CPU#1 stack
-         "mv s0, sp;"
-         "infloop:"
-         "nop;" // TODO: How do we wake this CPU up from CPU#0 so it can run something? install interrupt handler, WFI in loop, and trap?
-         "j infloop;"
-         "nop;" // Alignment
-         "nop;" // Alignment
-         "nop;" // Alignment
+         //"li sp, 0x1000EFF0;" // CPU#1 stack
+         //"mv s0, sp;"
+         //"infloop:"
+         //"nop;" // TODO: How do we wake this CPU up from CPU#0 so it can run something? install interrupt handler, WFI in loop, and trap?
+         //"j infloop;"
+         //"nop;" // Alignment
+         //"nop;" // Alignment
+         //"nop;" // Alignment
 
-         // This is the entry point of CORE#0 (0x10000020)
+         // This is the entry point of CORE#0 (0x10000020 if above code is enabled)
          //".cfi_startproc;"
          //".cfi_undefined ra;"
          ".option push;"
