@@ -44,32 +44,6 @@ int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx
 // http://blog.recursiveprocess.com/2014/04/05/mandelbrot-fractal-v2/
 int mandelbrotFloat(float ox, float oy, float sx)
 {
-    // iterate
-    /*float di =  1.0;
-    vec2 z  = vec2(0.0);
-    float m2 = 0.0;
-    vec2 dz = vec2(0.0);
-    for( int i=0; i<300; i++ )
-    {
-        if( m2>1024.0 ) { di=0.0; break; }
-
-		// Z' -> 2·Z·Z' + 1
-        dz = 2.0*vec2(z.x*dz.x-z.y*dz.y, z.x*dz.y + z.y*dz.x) + vec2(1.0,0.0);
-			
-        // Z -> Z² + c			
-        z = vec2( z.x*z.x - z.y*z.y, 2.0*z.x*z.y ) + c;
-			
-        m2 = dot(z,z);
-    }
-
-    // distance	
-	// d(c) = |Z|·log|Z|/|Z'|
-	float d = 0.5*sqrt(dot(z,z)/dot(dz,dz))*log(dot(z,z));
-    if( di>0.5 ) d=0.0;
-	
-    return d;*/
-
-
    int R = int(27.71f-5.156f*logf(sx));
 
    for (int row = 0; row < 200; ++row)

@@ -8,6 +8,17 @@ extern "C"
    {
       asm volatile (
 
+         // This is the entry point of CORE#1 (0x10000000)
+         "li sp, 0x1000EFF0;" // CPU#1 stack
+         "mv s0, sp;"
+         "infloop:"
+         "nop;" // TODO: How do we wake this CPU up from CPU#0 so it can run something? install interrupt handler, WFI in loop, and trap?
+         "j infloop;"
+         "nop;" // Alignment
+         "nop;" // Alignment
+         "nop;" // Alignment
+
+         // This is the entry point of CORE#0 (0x10000020)
          //".cfi_startproc;"
          //".cfi_undefined ra;"
          ".option push;"
@@ -20,7 +31,7 @@ extern "C"
 
          // Set up stack pointer and align it to 16 bytes
          //"la sp, __stack_top;"
-         "li sp, 0x1000FFF0;" // Stack is set to the end of S-RAM memory
+         "li sp, 0x1000FFF0;" // CPU#0 stack
          "mv s0, sp;"
 
          // Clear BSS

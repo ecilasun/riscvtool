@@ -5,7 +5,7 @@ OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 
 GROUP( -lc -lgloss -lgcc )
 
-_STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x1F0;
+/*_STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x1F0;*/
 
 MEMORY{
    RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0x10000
@@ -21,13 +21,13 @@ SECTIONS
   /*--------------------------------------------------------------------*/
 
   /* boot code */
-   .boot :
-   {
-      /* _start */
-      . = 0x00000000;
-      *(.boot)
-      _boot = .;
-   }
+  .boot :
+  {
+     /* _start */
+     . = 0x00000000;
+     *(.boot)
+     _boot = .;
+  }
 
   /* Begining of code and text segment */
   /* . = 0x00010000; */

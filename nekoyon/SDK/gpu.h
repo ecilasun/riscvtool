@@ -9,23 +9,24 @@
 #define G_UNUSED0   0x5
 #define G_ALU       0x6
 #define G_MISC      0x7
-#define G_UNUSED1   0x8
-#define G_UNUSED2   0x9
-#define G_UNUSED3   0xA
-#define G_UNUSED4   0xB
-#define G_UNUSED5   0xC
-#define G_UNUSED6   0xD
-#define G_UNUSED7   0xE
-#define G_UNUSED8   0xF
+//#define G_UNUSED1   0x8
+//#define G_UNUSED2   0x9
+//#define G_UNUSED3   0xA
+//#define G_UNUSED4   0xB
+//#define G_UNUSED5   0xC
+//#define G_UNUSED6   0xD
+//#define G_UNUSED7   0xE
+//#define G_UNUSED8   0xF
 
-// branch/jmp
-#define G_JMP 0x0
-#define G_BNE 0x1
-#define G_BEQ 0x2
-#define G_BLE 0x3
-#define G_BL  0x4
-#define G_BG  0x5
-#define G_BGE 0x6
+// branch/jmp/rdpc4
+#define G_JMP   0x0
+#define G_BNE   0x1
+#define G_BEQ   0x2
+#define G_BLE   0x3
+#define G_BL    0x4
+#define G_BG    0x5
+#define G_BGE   0x6
+#define G_RDPC4 0x7
 
 // load/store
 #define G_WORD 0x0

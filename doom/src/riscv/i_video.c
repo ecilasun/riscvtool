@@ -40,6 +40,9 @@ struct GPUCommandPackage swapProg;
 struct GPUCommandPackage gpuSetupProg;
 struct GPUCommandPackage gpuPaletteProg;
 struct GPUCommandPackage dmaProg;
+int dmasourceSlot;
+int dmatargetSlot;
+int dmacountSlot;
 
 void flippage()
 {
@@ -77,6 +80,20 @@ I_InitGraphics(void)
 
 	// Initial V-RAM write page select
 	flippage();
+
+	// Prepare the DMA program, but leave the setreg instructions blank for now
+
+	GPUInitializeCommandPackage(&dmaProg);
+	GPUWritePrologue(&dmaProg);
+
+	dmasourceSlot = GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, 0));
+	GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, 0));
+	dmatargetSlot = GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, 0));
+	GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, 0));
+	dmacountSlot = GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, 0));
+
+	GPUWriteEpilogue(&dmaProg);
+	GPUCloseCommandPackage(&dmaProg);
 
 	usegamma = 1;
 }
@@ -135,21 +152,15 @@ I_FinishUpdate (void)
 		for (int L=0;L<H;++L)
 			__builtin_memcpy((void*)GRAMStart+512*L, screens[0]+SCREENWIDTH*64*slice+SCREENWIDTH*L, 320);
 
-		GPUInitializeCommandPackage(&dmaProg);
-		GPUWritePrologue(&dmaProg);
-
-		// DMA the long way around
+		// Only modify the changed parts of our dma program
 		uint32_t gramsource = (uint32_t)(GRAMStart);
-		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)));
-		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)));    // setregi r15, (uint32_t)mandelbuffer
+		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)), dmasourceSlot);
+		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)), dmasourceSlot+1);
 		uint32_t vramramtarget = (512*64*slice);
-		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)));
-		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)));   // setregi r14, (uint32_t)vramtarget
+		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)), dmatargetSlot);
+		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)), dmatargetSlot+1);
 		uint32_t dmacount = (512*H)>>2; //2048 DWORD writes or 1024 for end slice
-		GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount));                                   // dma r15, r14, dmacount
-
-		GPUWriteEpilogue(&dmaProg);
-		GPUCloseCommandPackage(&dmaProg);
+		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount), dmacountSlot);
 
 		GPUClearMailbox();
 		GPUSubmitCommands(&dmaProg);

@@ -353,7 +353,7 @@ int main()
    // This is done _after_ bootloader phase to give bootloader a chance to show different
    // or updated information, or none at all depending on system requirements.
    UARTWrite("\033[2J\n+-------------------------+\n|          ************** |\n| ########   ************ |\n| #########  ************ |\n| ########   ***********  |\n| #        ***********    |\n| ##   *************   ## |\n| ####   *********   #### |\n| ######   *****   ###### |\n| ########   *   ######## |\n| ##########   ########## |\n+-------------------------+\n");
-   UARTWrite("\nNekoYon boot loader version N4:0003\nSingle core RISC-V(RV32IMFZicsr) @150Mhz\nDevices: UART,DDR3,SPI,GPU\n\u00A9 2021 Engin Cilasun\n\n");
+   UARTWrite("\nNekoYon boot loader version N4:0004\nSingle hart\nH0:RISC-V(RV32IMFZicsr)\nDevices: UART,DDR3,SPI,GPU\n\u00A9 2021 Engin Cilasun\n\n");
    UARTWrite("No boot.elf available.\nListening to UART instead.\nUse command 'help' to list available functions.\n\n");
 
    char commandline[128];

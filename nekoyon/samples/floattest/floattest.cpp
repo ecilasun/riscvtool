@@ -411,5 +411,7 @@ int main()
     r = test_fmvwx();
     printf("fmv.w.x: %.8X -> %f\n", s, r);
 
+    printf("All tests done\n");
+
     return 0;
 }
