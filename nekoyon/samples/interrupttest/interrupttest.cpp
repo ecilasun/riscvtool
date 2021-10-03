@@ -184,14 +184,24 @@ int main()
 
     // Stay here, as we don't have anywhere else to go back to
     while (1) {
-       if (crashhint)
-       {
-         UARTWrite("Deliberately crashing to test handler\n");
-         UARTWrite("D$ should show 0x012345FF\n");
-         // Emit two illegal instructions to test proper crash handling
-         asm volatile(".dword 0x012345FF");
-         asm volatile(".dword 0xFFFFFFFF");
-       }
+
+      UARTWrite("Sleeping\n");
+      // This instruction will wait for an interrupt to occur
+      // and won't resume execution until woken up.
+      asm volatile("wfi;");
+
+      UARTWrite("Resuming\n");
+
+      // Once resumed, we can check for a forced crash hint
+      // for our demo.
+      if (crashhint)
+      {
+        UARTWrite("Deliberately crashing to test handler\n");
+        UARTWrite("D$ should show 0x012345FF\n");
+        // Emit two illegal instructions to test proper crash handling
+        asm volatile(".dword 0x012345FF");
+        asm volatile(".dword 0xFFFFFFFF");
+      }
     }
 
     return 0;
