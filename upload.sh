@@ -1,1 +1,1 @@
-./build/release/riscvtool nekosan/samples/modplayer.elf -sendelf 0x10000 /dev/ttyUSB1
+./build/release/riscvtool nekoyon/samples/interrupttest.elf -sendelf 0x10000 /dev/ttyUSB1

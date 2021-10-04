@@ -1,17 +1,158 @@
-// #include <windows.h>
+#if defined(CAT_LINUX)
+#include <termios.h>
+#include <unistd.h>
+#else
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <fcntl.h>
 #include <errno.h>
-#include <termios.h>
-#include <unistd.h>
 
 #include <chrono>
 #include <thread>
 
-char devicename[64] = "/dev/ttyUSB1";
+#if defined(CAT_LINUX)
+char devicename[512] = "/dev/ttyUSB1";
+#else // COM_WINDOWS
+char devicename[512] = "\\\\.\\COM4";
+#endif
+
+#if defined(CAT_LINUX)
+unsigned int getfilelength(const fpost_t &endpos)
+{
+	return (unsigned int)endpos.__pos;
+}
+#else // CAT_WINDOWS
+unsigned int getfilelength(const fpos_t &endpos)
+{
+    return (unsigned int)endpos;
+}
+#endif
+
+class CSerialPort{
+    public:
+
+    CSerialPort() { }
+    ~CSerialPort() { }
+
+    bool Open()
+    {
+#if defined(CAT_LINUX)
+        // Open COM port
+        int serial_port = open(devicename, O_RDWR);
+        if (serial_port < 0 )
+        {
+            printf("Error %i from open: %s\n", errno, strerror(errno));
+            return false;
+        }
+
+        struct termios tty;
+        if(tcgetattr(serial_port, &tty) != 0)
+        {
+            printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+            return false;
+        }
+
+        // Set tty. flags
+        tty.c_cflag &= ~PARENB; // No parity
+        tty.c_cflag &= ~CSTOPB; // One stop bit
+        tty.c_cflag &= ~CSIZE;
+        tty.c_cflag |= CS8; // 8 bits
+        tty.c_cflag &= ~CRTSCTS;
+        tty.c_cflag |= CREAD | CLOCAL; // Not model (local), write
+
+        tty.c_lflag &= ~ICANON;
+        tty.c_lflag &= ~ECHO;
+        tty.c_lflag &= ~ISIG;
+        tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+        tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);
+
+        tty.c_oflag &= ~OPOST;
+        tty.c_oflag &= ~ONLCR;
+        //tty.c_oflag &= ~OXTABS;
+        //tty.c_oflag &= ~ONOEOT;
+
+        tty.c_cc[VTIME] = 50;
+        tty.c_cc[VMIN] = 0;
+
+        cfsetispeed(&tty, B115200);
+        cfsetospeed(&tty, B115200); // or only cfsetspeed(&tty, B115200);
+
+        if (tcsetattr(serial_port, TCSANOW, &tty) == 0)
+            return true;
+
+        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+
+#else // CAT_WINDOWS
+        hComm = CreateFileA(devicename, GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (hComm != INVALID_HANDLE_VALUE)
+        {
+            serialParams.DCBlength = sizeof(serialParams);
+            if (GetCommState(hComm, &serialParams))
+            {
+                serialParams.BaudRate = CBR_115200;
+                serialParams.ByteSize = 8;
+                serialParams.StopBits = ONESTOPBIT;
+                serialParams.Parity = NOPARITY;
+
+                if (SetCommState(hComm, &serialParams) != 0)
+                {
+                    timeouts.ReadIntervalTimeout = 50;
+                    timeouts.ReadTotalTimeoutConstant = 50;
+                    timeouts.ReadTotalTimeoutMultiplier = 10;
+                    timeouts.WriteTotalTimeoutConstant = 50;
+                    timeouts.WriteTotalTimeoutMultiplier = 10;
+                    if (SetCommTimeouts(hComm, &timeouts) != 0)
+                        return true;
+                    else
+                        printf("ERROR: can't set communication timeouts\n");
+                    
+                }
+                else
+                    printf("ERROR: can't set communication parameters\n");
+            }
+            else
+                printf("ERROR: can't get communication parameters\n");
+        }
+        else
+            printf("ERROR: can't open COM port\n");
+#endif
+        return false;
+    }
+
+    unsigned int Send(void *_sendbytes, unsigned int _sendlength)
+    {
+#if defined(COM_LINUX)
+        unsigned int byteswritten = write(serial_port, _sendbytes, _sendlength);
+#else // COM_WINDOWS
+        DWORD byteswritten;
+        // Send the command
+        WriteFile(hComm, _sendbytes, _sendlength, &byteswritten, nullptr);
+        return (unsigned int)byteswritten;
+#endif
+    }
+
+    void Close()
+    {
+#if defined(COM_LINUX)
+        close(serial_port);
+#else // COM_WINDOWS
+        CloseHandle(hComm);
+#endif
+    }
+
+#if defined(CAT_LINUX)
+    int serial_port{-1};
+#else // CAT_WINDOWS
+    HANDLE hComm{INVALID_HANDLE_VALUE};
+    DCB serialParams{0};
+    COMMTIMEOUTS timeouts{0};
+#endif
+};
 
 #pragma pack(push,1)
 struct SElfFileHeader32
@@ -120,7 +261,7 @@ void dumpelf(char *_filename, unsigned int groupsize)
 	fseek(fp, 0, SEEK_END);
 	fgetpos(fp, &endpos);
 	fsetpos(fp, &pos);
-	filebytesize = (unsigned int)endpos.__pos;
+    filebytesize = getfilelength(endpos);
 
     // TODO: Actual binary to send starts at 0x1000
     unsigned char *bytestosend = new unsigned char[filebytesize];
@@ -174,7 +315,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 	fseek(fp, 0, SEEK_END);
 	fgetpos(fp, &endpos);
 	fsetpos(fp, &pos);
-	filebytesize = (unsigned int)endpos.__pos;
+    filebytesize = getfilelength(endpos);
 
     unsigned char *bytestoread = new unsigned char[filebytesize];
     unsigned char *bytestosend = new unsigned char[filebytesize];
@@ -190,51 +331,9 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
     SElfSectionHeader32 *stringtablesection = (SElfSectionHeader32 *)(bytestoread+fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
     char *names = (char*)(bytestoread+stringtablesection->m_Offset);
 
-    // Open COM port
-    int serial_port = open(devicename, O_RDWR);
-    if (serial_port <0 )
-    {
-        printf("Error %i from open: %s\n", errno, strerror(errno));
+    CSerialPort serial;
+    if (serial.Open() == false)
         return;
-    }
-
-    struct termios tty;
-    if(tcgetattr(serial_port, &tty) != 0)
-    {
-        printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
-        return;
-    }
-
-    // Set tty. flags
-    tty.c_cflag &= ~PARENB; // No parity
-    tty.c_cflag &= ~CSTOPB; // One stop bit
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8; // 8 bits
-    tty.c_cflag &= ~CRTSCTS;
-    tty.c_cflag |= CREAD | CLOCAL; // Not model (local), write
-
-    tty.c_lflag &= ~ICANON;
-    tty.c_lflag &= ~ECHO;
-    tty.c_lflag &= ~ISIG;
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);
-
-    tty.c_oflag &= ~OPOST;
-    tty.c_oflag &= ~ONLCR;
-    //tty.c_oflag &= ~OXTABS;
-    //tty.c_oflag &= ~ONOEOT;
-
-    tty.c_cc[VTIME] = 50;
-    tty.c_cc[VMIN] = 0;
-
-    cfsetispeed(&tty, B115200);
-    cfsetospeed(&tty, B115200); // or only cfsetspeed(&tty, B115200);
-
-    if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
-    {
-        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
-        return;
-    }
 
     printf("Sending ELF binary over COM4 @115200 bps\n");
 
@@ -283,16 +382,16 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             uint32_t byteswritten = 0;
 
             // Send the string "B\r"
-            byteswritten += write(serial_port, commandtosend, commandlength);
+            byteswritten += serial.Send(commandtosend, commandlength);
             // Wait a bit for the receiving end to start accepting
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send 8 byte header
-            byteswritten += write(serial_port, blobheader, 8);
+            byteswritten += serial.Send(blobheader, 8);
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send data
-            byteswritten += write(serial_port, bytestoread+sheader->m_Offset, sheader->m_Size);
+            byteswritten += serial.Send(bytestoread+sheader->m_Offset, sheader->m_Size);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             if (byteswritten != 0)
@@ -316,16 +415,16 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
         uint32_t byteswritten = 0;
 
         // Send the string "R\r"
-        byteswritten += write(serial_port, commandtosend, commandlength);
+        byteswritten += serial.Send(commandtosend, commandlength);
         // Wait a bit for the receiving end to start accepting
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         // Send start address
-        byteswritten += write(serial_port, blobheader, 4);
+        byteswritten += serial.Send(blobheader, 4);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    close(serial_port);
+    serial.Close();
 
     delete [] bytestoread;
     delete [] bytestosend;
@@ -337,7 +436,7 @@ int main(int argc, char **argv)
     {
         printf("RISCVTool\n");
         printf("Usage: riscvtool.exe binaryfilename [-sendelf hexaddress usbdevicename | -makerom groupbytesize]\n");
-        printf("NOTE: Default device name is /dev/ttyUSB1");
+        printf("NOTE: Default device name is %s", devicename);
         return -1;
     }
 
