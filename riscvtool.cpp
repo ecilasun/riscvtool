@@ -40,7 +40,7 @@ class CSerialPort{
     {
 #if defined(CAT_LINUX)
         // Open COM port
-        int serial_port = open(devicename, O_RDWR);
+        serial_port = open(devicename, O_RDWR);
         if (serial_port < 0 )
         {
             printf("Error %i from open: %s\n", errno, strerror(errno));
@@ -74,15 +74,16 @@ class CSerialPort{
         //tty.c_oflag &= ~ONOEOT;
 
         tty.c_cc[VTIME] = 50;
-        tty.c_cc[VMIN] = 0;
+        tty.c_cc[VMIN] = 10;
 
         cfsetispeed(&tty, B115200);
         cfsetospeed(&tty, B115200); // or only cfsetspeed(&tty, B115200);
 
-        if (tcsetattr(serial_port, TCSANOW, &tty) == 0)
-            return true;
+        if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
+            printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
 
-        printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+        printf("%s open\n", devicename);
+        return true;
 
 #else // CAT_WINDOWS
         hComm = CreateFileA(devicename, GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -117,19 +118,22 @@ class CSerialPort{
         }
         else
             printf("ERROR: can't open COM port\n");
-#endif
         return false;
+#endif
     }
 
-    unsigned int Send(void *_sendbytes, unsigned int _sendlength)
+    uint32_t Send(const char *_sendbytes, unsigned int _sendlength)
     {
 #if defined(CAT_LINUX)
-        return write(serial_port, _sendbytes, _sendlength);
+        int n = write(serial_port, _sendbytes, _sendlength);
+        if (n < 0)
+            printf("ERROR: write() failed\n");
+        return _sendlength;
 #else // CAT_WINDOWS
         DWORD byteswritten;
         // Send the command
         WriteFile(hComm, _sendbytes, _sendlength, &byteswritten, nullptr);
-        return (unsigned int)byteswritten;
+        return (uint32_t)byteswritten;
 #endif
     }
 
@@ -384,11 +388,11 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send 8 byte header
-            byteswritten += serial.Send(blobheader, 8);
+            byteswritten += serial.Send((char*)blobheader, 8);
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send data
-            byteswritten += serial.Send(bytestoread+sheader->m_Offset, sheader->m_Size);
+            byteswritten += serial.Send((char*)(bytestoread+sheader->m_Offset), sheader->m_Size);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             if (byteswritten != 0)
@@ -417,7 +421,7 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         // Send start address
-        byteswritten += serial.Send(blobheader, 4);
+        byteswritten += serial.Send((char*)blobheader, 4);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
