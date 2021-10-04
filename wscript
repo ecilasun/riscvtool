@@ -13,21 +13,21 @@ top = '.'
 
 def options(opt):
     # Prefers msvc, but could also use conf.load('clang++') instead
-    if ('.exe' in os.environ['COMSPEC']):
+    if ('COMSPEC' in os.environ):
         opt.load('msvc')
     else:
         opt.load('clang++')
 
 def configure(conf):
     # Prefers msvc, but could also use conf.load('clang++') instead
-    if ('.exe' in os.environ['COMSPEC']):
+    if ('COMSPEC' in os.environ):
         conf.load('msvc')
     else:
         conf.load('clang++')
 
 def build(bld):
 
-    if ('.exe' in os.environ['COMSPEC']):
+    if ('COMSPEC' in os.environ):
         platform_defines = ['_CRT_SECURE_NO_WARNINGS', 'CAT_WINDOWS']
     else:
         platform_defines = ['_CRT_SECURE_NO_WARNINGS', 'CAT_LINUX']

@@ -17,21 +17,18 @@
 
 #if defined(CAT_LINUX)
 char devicename[512] = "/dev/ttyUSB1";
-#else // COM_WINDOWS
+#else // CAT_WINDOWS
 char devicename[512] = "\\\\.\\COM4";
 #endif
 
-#if defined(CAT_LINUX)
-unsigned int getfilelength(const fpost_t &endpos)
-{
-	return (unsigned int)endpos.__pos;
-}
-#else // CAT_WINDOWS
 unsigned int getfilelength(const fpos_t &endpos)
 {
+#if defined(CAT_LINUX)
+	return (unsigned int)endpos.__pos;
+#else // CAT_WINDOWS
     return (unsigned int)endpos;
-}
 #endif
+}
 
 class CSerialPort{
     public:
@@ -126,9 +123,9 @@ class CSerialPort{
 
     unsigned int Send(void *_sendbytes, unsigned int _sendlength)
     {
-#if defined(COM_LINUX)
-        unsigned int byteswritten = write(serial_port, _sendbytes, _sendlength);
-#else // COM_WINDOWS
+#if defined(CAT_LINUX)
+        return write(serial_port, _sendbytes, _sendlength);
+#else // CAT_WINDOWS
         DWORD byteswritten;
         // Send the command
         WriteFile(hComm, _sendbytes, _sendlength, &byteswritten, nullptr);
@@ -138,9 +135,9 @@ class CSerialPort{
 
     void Close()
     {
-#if defined(COM_LINUX)
+#if defined(CAT_LINUX)
         close(serial_port);
-#else // COM_WINDOWS
+#else // CAT_WINDOWS
         CloseHandle(hComm);
 #endif
     }
