@@ -8,8 +8,8 @@ GROUP( -lc -lgloss -lgcc )
 /*_STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x1F0;*/
 
 MEMORY{
-  /* 8000 is where heap starts */
-   RAM (rwx) : ORIGIN = 0x00000000, LENGTH = 0x8000
+  /* 0x10008000 is where heap starts, total memory length is 64K */
+   RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0x8000
 }
 
 ENTRY(_start)
