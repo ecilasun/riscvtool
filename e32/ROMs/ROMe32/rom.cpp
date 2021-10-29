@@ -13,7 +13,7 @@
 
 int main()
 {
-   UARTWrite("E_32\n(c)Engin Cilasun 2022\n");
+   UARTWrite("\033[2J\nE32 v0001\n\u00A9 2022 Engin Cilasun\n");
 
    while(1)
    {
