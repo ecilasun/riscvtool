@@ -206,6 +206,10 @@ void LaunchELF(uint32_t branchaddress)
       : 
    );*/
 
+   // NOTE: Apps don't simply 'return' to caller, but rather
+   // use a syscall to exit, so we might never reach here
+   // unless the exit method is changed.
+
    // Done, back in our world
    EchoStr("Run complete.\n");
    ShowSplashOrDirectoryListing();
@@ -350,7 +354,7 @@ void ListDir(const char *path)
                strcpy(executables[numexecutables], finf.fname);
                executables[numexecutables][olen] = 0;
                ++numexecutables;
-               //printf("%s %d %s\r\n", finf.fname, (int)finf.fsize, flags);
+               //printf("%s %d %s\n", finf.fname, (int)finf.fsize, flags);
             }
          }
       } while(re == FR_OK && dir.sect!=0);
@@ -390,19 +394,19 @@ int main()
    hardwareswitchstates = oldhardwareswitchstates = *IO_SWITCHES;
 
    // Show startup info
-   EchoStr("\033[2J\r\n");
-   EchoStr("+-------------------------+\r\n");
-   EchoStr("|          ************** |\r\n");
-   EchoStr("| ########   ************ |\r\n");
-   EchoStr("| #########  ************ |\r\n");
-   EchoStr("| ########   ***********  |\r\n");
-   EchoStr("| #        ***********    |\r\n");
-   EchoStr("| ##   *************   ## |\r\n");
-   EchoStr("| ####   *********   #### |\r\n");
-   EchoStr("| ######   *****   ###### |\r\n");
-   EchoStr("| ########   *   ######## |\r\n");
-   EchoStr("| ##########   ########## |\r\n");
-   EchoStr("+-------------------------+\r\n");
+   EchoStr("\033[2J\n");
+   EchoStr("+-------------------------+\n");
+   EchoStr("|          ************** |\n");
+   EchoStr("| ########   ************ |\n");
+   EchoStr("| #########  ************ |\n");
+   EchoStr("| ########   ***********  |\n");
+   EchoStr("| #        ***********    |\n");
+   EchoStr("| ##   *************   ## |\n");
+   EchoStr("| ####   *********   #### |\n");
+   EchoStr("| ######   *****   ###### |\n");
+   EchoStr("| ########   *   ######## |\n");
+   EchoStr("| ##########   ########## |\n");
+   EchoStr("+-------------------------+\n");
    EchoStr("\nNekoSan version 0001\n");
    EchoStr("rv32imfZicsr\n");
    EchoStr("Devices: UART/SPI/SWITCH/LED/AUDIO/GPU\n");
