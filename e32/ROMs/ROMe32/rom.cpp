@@ -15,57 +15,42 @@
 
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
-   // We only have illegal instruction handler installed,
-   // therefore won't need to check the mcause register
-   // to see why we're here
+   // See https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf mcause section for the cause codes.
 
-   uint32_t at = read_csr(mtval);         // PC
-   uint32_t cause = read_csr(mcause)>>16; // Exception cause on bits [18:16]
+   uint32_t instr = read_csr(mtval);   // Instruction word
+   uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16]
+   uint32_t code = cause & 0x7FFFFFFF;
 
-   // This is an illegal instruction exception
-   // If cause&1==0 then it's an ebreak instruction
-   if ((cause&1) != 0) // ILLEGALINSTRUCTION
+   if (cause & 0x80000000) // Interrupt
    {
-      // Show the address and the failing instruction's opcode field
-      UARTWrite("\n\nEXCEPTION: Illegal instruction 0x");
-      UARTWriteHex(*(uint32_t*)at);
-      UARTWrite(" at 0x");
-      UARTWriteHex((uint32_t)at);
+      UARTWrite("\n\nINTERRUPT:  mcause = 0x\n");
+      UARTWriteHex((uint32_t)cause);
       UARTWrite("\n");
-      // Stall
-      while(1) { }
    }
-
-   if ((cause&2) != 0) // EBREAK
+   else // Exception
    {
-      // We've hit a breakpoint
-      // TODO: Tie this into GDB routines (connected via UART)
-      UARTWrite("\n\nEXCEPTION: Breakpoint hit (TBD, currently not handled)\n");
-      // Stall
-      while(1) { }
+      switch (code)
+      {
+         // Illegal instruction
+         case 2:
+         {
+            UARTWrite("\n\nEXCEPTION: Illegal instruction word 0x");
+            UARTWriteHex((uint32_t)instr);
+            UARTWrite("\n");
+            // Stall
+            while(1) { }
+         }
+
+         default:
+         {
+            UARTWrite("\n\nEXCEPTION:  mcause = 0x\n");
+            UARTWriteHex((uint32_t)cause);
+            UARTWrite("\n");
+            // Stall
+            while(1) { }
+         }
+      }
    }
-
-   /*if ((cause&4) != 0) // ECALL
-   {
-      uint32_t ecalltype = 0;
-      asm volatile ("sw a7, %0 ;" : "=m" (ecalltype) : :);
-
-      // register a7 contains the function code
-      // a7: 0x5D terminate application
-      // a7: 0x50 seems to be fread
-
-      if (ecalltype == 0x5D) // NOTE: We should not reach here under normal circumstances
-      {
-         // Now, store ra in stack for use by the target ELF
-         asm volatile("lw ra, %0; ret;" : : "m" (returnaddress));
-      }
-      else
-      {
-         UARTWrite("\n\nECALL: 0x");
-         UARTWriteHex(ecalltype);
-         UARTWrite("\n");
-      }
-   }*/
 }
 
 void InstallIllegalInstructionHandler()
