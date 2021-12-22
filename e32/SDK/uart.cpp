@@ -11,18 +11,19 @@ void UARTFlush()
     while (*IO_UARTTXFIFOFull) { asm volatile("nop;"); }
 }
 
+void UARTPutChar(const char _char)
+{
+    // Do not write and wait until output fifo has space before next character
+    while (*IO_UARTTXFIFOFull) { /*stall*/ }
+    *IO_UARTRXTX = _char;
+}
+
 void UARTWrite(const char *_message)
 {
     // Emit all characters
     int i = 0;
     while (_message[i]!=0)
-    {
-        // Do not write and wait until output fifo has space before next character
-        if (*IO_UARTTXFIFOFull)
-            continue;
-        *IO_UARTRXTX = _message[i];
-        ++i;
-    }
+        UARTPutChar(_message[i++]);
 }
 
 void UARTWriteHex(const uint32_t i)

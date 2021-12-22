@@ -23,7 +23,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
 
    if (cause & 0x80000000) // Interrupt
    {
-      UARTWrite("\n\nINTERRUPT:  mcause = 0x\n");
+      UARTWrite("\n\n\033[7mINTERRUPT:  mcause = 0x\n");
       UARTWriteHex((uint32_t)cause);
       UARTWrite("\n");
    }
@@ -31,10 +31,9 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    {
       switch (code)
       {
-         // Illegal instruction
-         case 2:
+         case CAUSE_ILLEGAL_INSTRUCTION:
          {
-            UARTWrite("\n\nEXCEPTION: Illegal instruction word 0x");
+            UARTWrite("\n\n\033[7mEXCEPTION: Illegal instruction word 0x");
             UARTWriteHex((uint32_t)instr);
             UARTWrite("\n");
             // Stall
@@ -43,7 +42,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
 
          default:
          {
-            UARTWrite("\n\nEXCEPTION:  mcause = 0x\n");
+            UARTWrite("\n\n\033[7mEXCEPTION:  mcause = 0x");
             UARTWriteHex((uint32_t)cause);
             UARTWrite("\n");
             // Stall
@@ -69,7 +68,8 @@ int main()
 {
    InstallIllegalInstructionHandler();
 
-   UARTWrite("\033[2J\nE32 v0002\n\u00A9 2022 Engin Cilasun\n");
+   // Clear all attributes, clear screen, print boot message
+   UARTWrite("\033[0m\033[2J\nE32: RV32iZicsr\nROM v0003\n");
 
    while(1)
    {
