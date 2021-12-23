@@ -13,19 +13,36 @@
 #include "core.h"
 #include "uart.h"
 
+static volatile int donotcrash = 0xDADED0D1;
+
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
    // See https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf mcause section for the cause codes.
 
-   uint32_t instr = read_csr(mtval);   // Instruction word
+   uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
    uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16]
    uint32_t code = cause & 0x7FFFFFFF;
 
    if (cause & 0x80000000) // Interrupt
    {
-      UARTWrite("\n\n\033[7mINTERRUPT:  mcause = 0x\n");
-      UARTWriteHex((uint32_t)cause);
-      UARTWrite("\n");
+      if (code == 0xB) // hardware
+      {
+         // Echo back incoming bytes
+         while (*IO_UARTRXByteAvailable)
+         {
+            // Read incoming character
+            uint8_t incoming = *IO_UARTRXTX;
+            // Force crash to test re-entering exception handler
+            donotcrash = (incoming == 'C') ? 0x00000000 : 0xDADED0D1;
+            // Write back to UART
+            *IO_UARTRXTX = incoming;
+            UARTFlush();
+         }
+      }
+      if (code == 0x7) // timer
+      {
+         UARTWrite("tick...\n");
+      }
    }
    else // Exception
    {
@@ -34,7 +51,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
          case CAUSE_ILLEGAL_INSTRUCTION:
          {
             UARTWrite("\n\n\033[7mEXCEPTION: Illegal instruction word 0x");
-            UARTWriteHex((uint32_t)instr);
+            UARTWriteHex((uint32_t)value);
             UARTWrite("\n");
             // Stall
             while(1) { }
@@ -44,6 +61,8 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
          {
             UARTWrite("\n\n\033[7mEXCEPTION:  mcause = 0x");
             UARTWriteHex((uint32_t)cause);
+            UARTWrite(" mtval = 0x");
+            UARTWriteHex((uint32_t)value);
             UARTWrite("\n");
             // Stall
             while(1) { }
@@ -57,8 +76,9 @@ void InstallIllegalInstructionHandler()
    // Set machine software interrupt handler
    swap_csr(mtvec, illegal_instruction_exception);
 
-   // Enable machine software interrupt (breakpoint/illegal instruction)
-   swap_csr(mie, MIP_MSIP);
+   // Enable machine software interrupts (breakpoint/illegal instruction)
+   // Enable machine hardware interrupts
+   swap_csr(mie, MIP_MSIP | MIP_MEIP);
 
    // Enable machine interrupts
    swap_csr(mstatus, MSTATUS_MIE);
@@ -73,19 +93,14 @@ int main()
 
    while(1)
    {
-      // Echo back incoming bytes
-      if (*IO_UARTRXByteAvailable)
+      // Interrupt handler will do all the work
+
+      // See if we're requested to forcibly crash
+      if (donotcrash == 0x00000000)
       {
-         // Read incoming character
-         uint8_t incoming = *IO_UARTRXTX;
-         if (incoming == 'C') // Force crash to test exception handler
-         {
-            asm volatile(".dword 0x012345FF");
-            asm volatile(".dword 0xFFFFFFFF");
-         }
-         // Write back to UART
-         UARTFlush();
-         *IO_UARTRXTX = incoming;
+         UARTWrite("\nForcing illegal instruction exception...\n");
+         asm volatile(".dword 0x012345FF");
+         asm volatile(".dword 0xFFFFFFFF");
       }
    }
 
