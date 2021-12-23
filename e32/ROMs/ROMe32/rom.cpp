@@ -41,7 +41,10 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       }
       if (code == 0x7) // timer
       {
-         UARTWrite("tick...\n");
+         UARTWrite("\n\033[7mTEST: One-shot timer trap\n\033[0m");
+         // Stop further timer interrupts
+         swap_csr(0x801, 0xFFFFFFFF);
+         swap_csr(0x800, 0xFFFFFFFF);
       }
    }
    else // Exception
@@ -50,22 +53,22 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       {
          case CAUSE_ILLEGAL_INSTRUCTION:
          {
+            // Trap and stop execution.
             UARTWrite("\n\n\033[7mEXCEPTION: Illegal instruction word 0x");
             UARTWriteHex((uint32_t)value);
-            UARTWrite("\n");
+            UARTWrite("\n\033[0m");
             // Stall
             while(1) { }
          }
 
          default:
          {
+            // Trap and resume execution, for the time being.
             UARTWrite("\n\n\033[7mEXCEPTION:  mcause = 0x");
             UARTWriteHex((uint32_t)cause);
             UARTWrite(" mtval = 0x");
             UARTWriteHex((uint32_t)value);
-            UARTWrite("\n");
-            // Stall
-            while(1) { }
+            UARTWrite("\n\033[0m");
          }
       }
    }
@@ -73,14 +76,31 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
 
 void InstallIllegalInstructionHandler()
 {
-   // Set machine software interrupt handler
+   // Set machine trap vector
    swap_csr(mtvec, illegal_instruction_exception);
+
+   // Set up timer interrupt one second into the future
+   uint32_t clockhigh, clocklow, tmp;
+   asm volatile(
+      "1:\n"
+      "rdtimeh %0\n"
+      "rdtime %1\n"
+      "rdtimeh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
+   );
+   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+   uint64_t future = now + 10'000'000; // One second into the future (based on 10MHz wall clock)
+   // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
+   swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));
+   swap_csr(0x800, (uint32_t(future&0x00000000FFFFFFFF)));
 
    // Enable machine software interrupts (breakpoint/illegal instruction)
    // Enable machine hardware interrupts
-   swap_csr(mie, MIP_MSIP | MIP_MEIP);
+   // Enable machine timer interrupts
+   swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 
-   // Enable machine interrupts
+   // Allow all machine interrupts to trigger
    swap_csr(mstatus, MSTATUS_MIE);
 }
 
