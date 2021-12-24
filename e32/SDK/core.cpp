@@ -6,6 +6,31 @@
 #include "core.h"
 #include "uart.h"
 
+// Utilities
+
+uint64_t E32ReadTime()
+{
+   uint32_t clockhigh, clocklow, tmp;
+   asm volatile(
+      "1:\n"
+      "rdtimeh %0\n"
+      "rdtime %1\n"
+      "rdtimeh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
+   );
+
+   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+   return now;
+}
+
+void E32SetTimeCompare(const uint64_t future)
+{
+   // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
+   swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));
+   swap_csr(0x800, (uint32_t(future&0x00000000FFFFFFFF)));
+}
+
 // C stdlib overrides
 
 // Place the heap into DDR3 memory

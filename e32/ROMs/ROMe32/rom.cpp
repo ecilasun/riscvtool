@@ -6,8 +6,6 @@
 #include <string.h>
 #include <memory.h>
 
-#include <encoding.h>
-
 #include "rvcrt0.h"
 
 #include "core.h"
@@ -27,6 +25,9 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    {
       if (code == 0xB) // hardware
       {
+         //*IO_UARTRXTX = 0x13; // XOFF
+         //UARTFlush();
+
          // Echo back incoming bytes
          while (*IO_UARTRXByteAvailable)
          {
@@ -38,6 +39,9 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
             *IO_UARTRXTX = incoming;
             UARTFlush();
          }
+
+         //*IO_UARTRXTX = 0x11; // XON
+         //UARTFlush();
       }
       if (code == 0x7) // timer
       {
@@ -82,20 +86,9 @@ void InstallIllegalInstructionHandler()
    swap_csr(mtvec, illegal_instruction_exception);
 
    // Set up timer interrupt one second into the future
-   uint32_t clockhigh, clocklow, tmp;
-   asm volatile(
-      "1:\n"
-      "rdtimeh %0\n"
-      "rdtime %1\n"
-      "rdtimeh %2\n"
-      "bne %0, %2, 1b\n"
-      : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
-   );
-   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
-   uint64_t future = now + 10'000'000; // One second into the future (based on 10MHz wall clock)
-   // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
-   swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));
-   swap_csr(0x800, (uint32_t(future&0x00000000FFFFFFFF)));
+   uint64_t now = E32ReadTime();
+   uint64_t future = now + ONE_SECOND_IN_TICKS; // One second into the future (based on 10MHz wall clock)
+   E32SetTimeCompare(future);
 
    // Enable machine software interrupts (breakpoint/illegal instruction)
    // Enable machine hardware interrupts
