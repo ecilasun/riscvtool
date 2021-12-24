@@ -19,7 +19,15 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
   return (crc << 1) | 1;
 }
 
-void SDCmd(const SDCardCommand cmd, uint32_t args)
+// A single SPI transaction is a write from master followed by a read from slave's output
+uint8_t SPITx(const uint8_t outbyte)
+{
+   *IO_SPIRXTX = outbyte;
+   uint8_t incoming = *IO_SPIRXTX;
+   return incoming;
+}
+
+uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
 {
    uint8_t buf[8];
 
@@ -30,9 +38,10 @@ void SDCmd(const SDCardCommand cmd, uint32_t args)
    buf[4] = (uint8_t)(args&0x000000FF);
    buf[5] = CRC7(buf, 5);
 
-   *IO_SPIRXTX = 0xFF;
+   uint8_t incoming = 0;
    for (uint32_t i=0;i<6;++i)
-      *IO_SPIRXTX = buf[i];
+      incoming = SPITx(buf[i]);
+   return incoming;
 }
 
 uint8_t SDIdle()
@@ -40,19 +49,18 @@ uint8_t SDIdle()
    uint8_t response;
 
    // Enter idle state
+   UARTWrite(">"); UARTWriteHex(0x00000000); UARTWrite("\n");
    SDCmd(CMD0_GO_IDLE_STATE, 0);
-   UARTWrite(">"); UARTWriteHex(0x00000000);
 
    int timeout=65536;
    do {
-      *IO_SPIRXTX = 0xFF;
-      response = *IO_SPIRXTX;
+      response = SPITx(0xFF);
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x01
 
-   UARTWriteHex(response);
+   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
@@ -60,13 +68,12 @@ uint8_t SDCheckVoltageRange(uint32_t *databack)
 {
    uint8_t response;
 
+   UARTWrite(">"); UARTWriteHex(0x10000000); UARTWrite("\n");
    SDCmd(CMD8_SEND_IF_COND, 0x000001AA);
-   UARTWrite(">"); UARTWriteHex(0x10000000);
 
    int timeout=65536;
    do {
-      *IO_SPIRXTX = 0xFF;
-      response = *IO_SPIRXTX;
+      response = SPITx(0xFF);
       if (response != 0xFF)
          break;
       --timeout;
@@ -74,16 +81,12 @@ uint8_t SDCheckVoltageRange(uint32_t *databack)
 
    // Read the 00 00 01 AA sequence back from the SD CARD
    *databack = 0x00000000;
-   *IO_SPIRXTX = 0xFF;
-   *databack |= *IO_SPIRXTX;
-   *IO_SPIRXTX = 0xFF;
-   *databack |= (*databack<<8)|(*IO_SPIRXTX);
-   *IO_SPIRXTX = 0xFF;
-   *databack |= (*databack<<8)|(*IO_SPIRXTX);
-   *IO_SPIRXTX = 0xFF;
-   *databack |= (*databack<<8)|(*IO_SPIRXTX);
+   *databack |= SPITx(0xFF);
+   *databack |= (*databack<<8) | SPITx(0xFF);
+   *databack |= (*databack<<8) | SPITx(0xFF);
+   *databack |= (*databack<<8) | SPITx(0xFF);
 
-   UARTWriteHex(response);
+   UARTWriteHex(response); UARTWrite(" : "); UARTWriteHex(*databack); UARTWrite("\n");
    return response;
 }
 
@@ -92,26 +95,23 @@ uint8_t SDCardInit()
    uint8_t response;
 
    // ACMD header
+   UARTWrite(">"); UARTWriteHex(0x20000000); UARTWrite("\n");
    SDCmd(CMD55_APP_CMD, 0x00000000);
-   UARTWrite(">"); UARTWriteHex(0x20000000);
 
    int timeout=65536;
    do {
-      *IO_SPIRXTX = 0xFF;
-      response = *IO_SPIRXTX;
+      response = SPITx(0xFF);
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x00?? - NOTE: Won't handle old cards!
 
    // Set high capacity mode on
-   *IO_SPIRXTX = 0xFF;
    SDCmd(ACMD41_SD_SEND_OP_COND, 0x40000000);
 
    timeout=65536;
    do {
-      *IO_SPIRXTX = 0xFF;
-      response = *IO_SPIRXTX;
+      response = SPITx(0xFF);
       if (response != 0xFF)
          break;
       --timeout;
@@ -133,7 +133,7 @@ uint8_t SDCardInit()
          break;
    } while(1); // Expected: 0x00*/
 
-   UARTWriteHex(response);
+   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
@@ -142,19 +142,18 @@ uint8_t SDSetBlockSize512()
    uint8_t response;
 
    // Set block length
+   UARTWrite(">"); UARTWriteHex(0x30000000); UARTWrite("\n");
    SDCmd(CMD16_SET_BLOCKLEN, 0x00000200);
-   UARTWrite(">"); UARTWriteHex(0x30000000);
 
    int timeout=65536;
    do {
-      *IO_SPIRXTX = 0xFF;
-      response = *IO_SPIRXTX;
+      response = SPITx(0xFF);
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x00
 
-   UARTWriteHex(response);
+   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
@@ -164,14 +163,13 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
 
    // Read single block
    // NOTE: sector<<9 for non SDHC cards
+   UARTWrite(">"); UARTWriteHex(0x40000000); UARTWrite("\n");
    SDCmd(CMD17_READ_SINGLE_BLOCK, sector);
-   UARTWrite(">"); UARTWriteHex(0x40000000);
 
    // R1: expect 0x00
    int timeout=65536;
    do {
-      *IO_SPIRXTX = 0xFF;
-      response = *IO_SPIRXTX;
+      response = SPITx(0xFF);
       if (response != 0xFF)
          break;
       --timeout;
@@ -182,8 +180,7 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
       // R2: expect 0xFE
       timeout=65536;
       do {
-         *IO_SPIRXTX = 0xFF;
-         response = *IO_SPIRXTX;
+         response = SPITx(0xFF);
          if (response != 0xFF)
             break;
          --timeout;
@@ -195,15 +192,12 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
          // 512 bytes of data followed by 16 bit CRC, total of 514 bytes
          int x=0;
          do {
-            *IO_SPIRXTX = 0xFF;
-            datablock[x++] = *IO_SPIRXTX;
+            datablock[x++] = SPITx(0xFF);
          } while(x<512);
 
          // Checksum
-         *IO_SPIRXTX = 0xFF;
-         checksum[0] = *IO_SPIRXTX;
-         *IO_SPIRXTX = 0xFF;
-         checksum[1] = *IO_SPIRXTX;
+         checksum[0] = SPITx(0xFF);
+         checksum[1] = SPITx(0xFF);
       }
    }
 
@@ -226,7 +220,7 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
          UARTWrite("SDReadSingleBlock: error response = 'Card locked'\n");
    }
 
-   UARTWriteHex(response);
+   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
@@ -283,7 +277,6 @@ int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t
 
 int SDCardStartup()
 {
-   int k=0;
    uint8_t response[3];
 
    response[0] = SDIdle();
@@ -306,7 +299,6 @@ int SDCardStartup()
    while (response[2] == 0x01) // Loop again if it's 0x01
    {
       response[2] = SDCardInit();
-      k=k^0xFF;
    } // Repeat this until we receive a non-idle (0x00)
 
    // NOTE: Block size is already set to 512 for high speed and can't be changed
