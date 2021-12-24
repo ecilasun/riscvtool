@@ -41,8 +41,8 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       }
       if (code == 0x7) // timer
       {
-         UARTWrite("\n\033[7mTEST: One-shot timer trap\n\033[0m");
-         // Stop further timer interrupts
+         UARTWrite("\n\033[34m\033[47m\033[7mTEST: One-shot timer trap\033[0m\n");
+         // Stop further timer interrupts by setting the timecmp to furthest value available.
          swap_csr(0x801, 0xFFFFFFFF);
          swap_csr(0x800, 0xFFFFFFFF);
       }
@@ -54,9 +54,9 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
          case CAUSE_ILLEGAL_INSTRUCTION:
          {
             // Trap and stop execution.
-            UARTWrite("\n\n\033[7mEXCEPTION: Illegal instruction word 0x");
+            UARTWrite("\n\n\033[31m\033[47m\033[7mEXCEPTION: Illegal instruction word 0x");
             UARTWriteHex((uint32_t)value);
-            UARTWrite("\n\033[0m");
+            UARTWrite("\033[0m\n");
             // Put core to sleep
             while(1) {
                asm volatile("wfi;");
@@ -66,11 +66,11 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
          default:
          {
             // Trap and resume execution, for the time being.
-            UARTWrite("\n\n\033[7mEXCEPTION:  mcause = 0x");
+            UARTWrite("\n\n\033[31m\033[47m\033[7mEXCEPTION:  mcause = 0x");
             UARTWriteHex((uint32_t)cause);
             UARTWrite(" mtval = 0x");
             UARTWriteHex((uint32_t)value);
-            UARTWrite("\n\033[0m");
+            UARTWrite("\033[0m\n");
          }
       }
    }
