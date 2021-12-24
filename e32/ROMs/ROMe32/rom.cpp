@@ -57,8 +57,10 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
             UARTWrite("\n\n\033[7mEXCEPTION: Illegal instruction word 0x");
             UARTWriteHex((uint32_t)value);
             UARTWrite("\n\033[0m");
-            // Stall
-            while(1) { }
+            // Put core to sleep
+            while(1) {
+               asm volatile("wfi;");
+            }
          }
 
          default:
@@ -113,7 +115,11 @@ int main()
 
    while(1)
    {
-      // Interrupt handler will do all the work
+      // Interrupt handler will do all the real work.
+      // Therefore we can put the core to sleep until an interrupt occurs,
+      // after which it will wake up to service it and then go back to
+      // sleep, unless we asked it to crash.
+      asm volatile("wfi;");
 
       // See if we're requested to forcibly crash
       if (donotcrash == 0x00000000)
