@@ -10,10 +10,10 @@
 
 #include "core.h"
 #include "uart.h"
-#include "sdcard.h"
-#include "fat32/ff.h"
+/*#include "sdcard.h"
+#include "fat32/ff.h"*/
 
-const char *FRtoString[]={
+/*const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
 	"Assertion failed\n",
@@ -34,7 +34,7 @@ const char *FRtoString[]={
 	"LFN working buffer could not be allocated\n",
 	"Number of open files > FF_FS_LOCK\n",
 	"Given parameter is invalid\n"
-};
+};*/
 
 static volatile int donotcrash = 0xDADED0D1;
 
@@ -124,7 +124,7 @@ void InstallIllegalInstructionHandler()
    swap_csr(mstatus, MSTATUS_MIE);
 }
 
-void ListELF(const char *path)
+/*void ListELF(const char *path)
 {
    DIR dir;
    FRESULT re = f_opendir(&dir, path);
@@ -148,7 +148,7 @@ void ListELF(const char *path)
    }
    else
       UARTWrite(FRtoString[re]);
-}
+}*/
 
 int main()
 {
@@ -157,7 +157,7 @@ int main()
    // Clear all attributes, clear screen, print boot message
    UARTWrite("\033[0m\033[2J\nE32: RV32iZicsr\nROM v0003\n");
 
-	FATFS Fs;
+	/*FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);
@@ -166,7 +166,7 @@ int main()
 		UARTWrite("Listing ELF files on sd:\n");
 		// List ELF files on the mounted volume
 		ListELF("sd:");
-	}
+	}*/
 
    while(1)
    {

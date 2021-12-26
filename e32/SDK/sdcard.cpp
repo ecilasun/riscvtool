@@ -22,15 +22,17 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
 }
 
 // A single SPI transaction is a write from master followed by a read from slave's output
-volatile uint8_t *SPISINK = (volatile uint8_t* )0x0000FFF8; // SPI adress swap sink
+//volatile uint8_t *SPISINK = (volatile uint8_t* ) 0x8000000F;
 uint8_t SPITx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
-   UARTWriteHexByte(outbyte);
-   UARTWrite("->");
+   //*SPISINK = 0xFF;
+   //UARTWriteHexByte(outbyte);
+   //UARTWrite("->");
    uint8_t incoming = *IO_SPIRXTX;
-   UARTWriteHexByte(incoming);
-   UARTWrite(":");
+   //*SPISINK = 0xFF;
+   //UARTWriteHexByte(incoming);
+   //UARTWrite(":");
    return incoming;
 }
 
