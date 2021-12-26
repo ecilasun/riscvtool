@@ -4,7 +4,7 @@
 #include "uart.h"
 #include <stdio.h>
 
-#define G_SPI_TIMEOUT 32
+#define G_SPI_TIMEOUT 65536
 
 static uint8_t CRC7(const uint8_t* data, uint8_t n) {
   uint8_t crc = 0;
@@ -23,7 +23,7 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
 
 // A single SPI transaction is a write from master followed by a read from slave's output
 //volatile uint8_t *SPISINK = (volatile uint8_t* ) 0x8000000F;
-uint8_t SPITx(const uint8_t outbyte)
+uint8_t SPITxRx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
    //*SPISINK = 0xFF;
@@ -47,61 +47,83 @@ uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
    buf[4] = (uint8_t)(args&0x000000FF);
    buf[5] = CRC7(buf, 5);
 
-   uint8_t incoming = SPITx(0xFF);
+   SPITxRx(0xFF); // Dummy
+
+   uint8_t incoming;
    for (uint32_t i=0;i<6;++i)
-      incoming = SPITx(buf[i]);
+      incoming = SPITxRx(buf[i]);
+
+   SPITxRx(0xFF); // Dummy
+
    return incoming;
 }
 
+uint8_t SDResponse1()
+{
+   uint8_t res1 = 0xFF;
+
+   int timeout = 0;
+   while((res1 = SPITxRx(0xFF)) == 0xFF) {
+      ++timeout;
+      if (timeout > G_SPI_TIMEOUT)
+         break;
+   };
+
+   return res1;
+}
+
+uint8_t SDResponse7(uint32_t *data)
+{
+   *data = 0x00000000;
+   uint8_t res1 = SDResponse1();
+   if (res1 > 1) return 0xFF;
+
+   uint8_t d[4];
+   d[0] = SPITxRx(0xFF);
+   d[1] = SPITxRx(0xFF);
+   d[2] = SPITxRx(0xFF);
+   d[3] = SPITxRx(0xFF);
+
+   *data = (d[0]<<24) | (d[1]<<16) | (d[2]<<8) | (d[3]);
+
+   return res1;
+}
+
+// Enter idle state
 uint8_t SDIdle()
 {
-   uint8_t response;
-
-   // Enter idle state
    SDCmd(CMD0_GO_IDLE_STATE, 0);
+   uint8_t response = SDResponse1(); // Expected: 0x01
 
-   int timeout=G_SPI_TIMEOUT;
-   do {
-      response = SPITx(0xFF);
-      if (response != 0xFF)
-         break;
-      --timeout;
-   } while(timeout>0); // Expected: 0x01
+   if (response != 0x01)
+   {
+      UARTWrite("SDIdle expected 0x01, got 0x");
+      UARTWriteHex(response);
+      UARTWrite("\n");
+   }
 
    return response;
 }
 
-uint8_t SDCheckVoltageRange(uint32_t *databack)
+uint8_t SDCheckVoltageRange()
 {
-   uint8_t response;
-
    SDCmd(CMD8_SEND_IF_COND, 0x000001AA);
 
-   int timeout=G_SPI_TIMEOUT;
-   do {
-      response = SPITx(0xFF);
-      if (response != 0xFF)
-         break;
-      --timeout;
-   } while(timeout>0); // Expected: 0x01(version 2 SDCARD) or 0x05(version 1 or MMC card) - got 0x01
+   // Read the response and 00 00 01 AA sequence back from the SD CARD
+   uint32_t databack;
+   uint8_t response = SDResponse7(&databack); // Expected: 0x01(version 2 SDCARD) or 0x05(version 1 or MMC card)
 
-   if (response != 0x01)
+   if (response != 0x01) // V2 SD Card, 0x05 for a V1 SD Card / MMC card
    {
-      UARTWrite("Error version 2 SDCard expected\n");
-      return response;
+      UARTWrite("SDCheckVoltageRange expected 0x01, got 0x");
+      UARTWriteHex(response);
+      UARTWrite("\n");
    }
 
-   // Read the 00 00 01 AA sequence back from the SD CARD
-   *databack = 0x00000000;
-   *databack |= SPITx(0xFF);
-   *databack |= (*databack<<8) | SPITx(0xFF);
-   *databack |= (*databack<<8) | SPITx(0xFF);
-   *databack |= (*databack<<8) | SPITx(0xFF);
-
-   if (*databack != 0x000001AA)
+   if (databack != 0x000001AA)
    {
-      UARTWrite("Expected 0x000001AA, got 0x");
-      UARTWriteHex(*databack);
+      UARTWrite("SDCheckVoltageRange expected 0x000001AA, got 0x");
+      UARTWriteHex(databack);
       UARTWrite("\n");
    }
 
@@ -110,29 +132,31 @@ uint8_t SDCheckVoltageRange(uint32_t *databack)
 
 uint8_t SDCardInit()
 {
-   uint8_t response;
-
-   // ACMD header
-   SDCmd(CMD55_APP_CMD, 0x00000000);
-
-   int timeout=G_SPI_TIMEOUT;
-   do {
-      response = SPITx(0xFF);
-      if (response != 0xFF)
-         break;
-      --timeout;
-   } while(timeout>0); // Expected: 0x00?? - NOTE: Won't handle old cards!
-
    // Set high capacity mode on
-   SDCmd(ACMD41_SD_SEND_OP_COND, 0x40000000);
-
-   timeout=G_SPI_TIMEOUT;
+   int timeout = 0;
+   uint8_t rA = 0xFF, rB = 0xFF;
    do {
-      response = SPITx(0xFF);
-      if (response != 0xFF)
-         break;
-      --timeout;
-   } while(timeout>0); // Expected: 0x00 eventually, but will also get several 0x01 (idle)
+      // ACMD header
+      SDCmd(CMD55_APP_CMD, 0x00000000);
+      rA = SDResponse1(); // Expected: 0x00?? - NOTE: Won't handle old cards!
+      SDCmd(ACMD41_SD_SEND_OP_COND, 0x40000000);
+      rB = SDResponse1(); // Expected: 0x00 eventually, but will also get several 0x01 (idle)
+      ++timeout;
+   } while (rB != 0x00 && timeout < G_SPI_TIMEOUT);
+
+   if (rA != 0x01)
+   {
+      UARTWrite("SDCardInit expected 0x01, got 0x");
+      UARTWriteHex(rA);
+      UARTWrite("\n");
+   }
+
+   if (rB != 0x00)
+   {
+      UARTWrite("SDCardInit expected 0x00, got 0x");
+      UARTWriteHex(rB);
+      UARTWrite("\n");
+   }
 
    // Initialize
    /**IO_SPIRXTX = 0xFF;
@@ -150,54 +174,27 @@ uint8_t SDCardInit()
          break;
    } while(1); // Expected: 0x00*/
 
-   return response;
+   return rB;
 }
 
 uint8_t SDSetBlockSize512()
 {
-   uint8_t response;
-
    // Set block length
    SDCmd(CMD16_SET_BLOCKLEN, 0x00000200);
-
-   int timeout=G_SPI_TIMEOUT;
-   do {
-      response = SPITx(0xFF);
-      if (response != 0xFF)
-         break;
-      --timeout;
-   } while(timeout>0); // Expected: 0x00
-
+   uint8_t response = SDResponse1();
    return response;
 }
 
 uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
 {
-   uint8_t response;
-
    // Read single block
    // NOTE: sector<<9 for non SDHC cards
    SDCmd(CMD17_READ_SINGLE_BLOCK, sector);
-
-   // R1: expect 0x00
-   int timeout=G_SPI_TIMEOUT;
-   do {
-      response = SPITx(0xFF);
-      if (response != 0xFF)
-         break;
-      --timeout;
-   } while(timeout>0);
+   uint8_t response = SDResponse1(); // R1: expect 0x00
 
    if (response != 0xFF) // == 0x00
    {
-      // R2: expect 0xFE
-      timeout=G_SPI_TIMEOUT;
-      do {
-         response = SPITx(0xFF);
-         if (response != 0xFF)
-            break;
-         --timeout;
-      } while(timeout>0);
+      response = SDResponse1(); // R2: expect 0xFE
 
       if (response == 0xFE)
       {
@@ -205,12 +202,12 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
          // 512 bytes of data followed by 16 bit CRC, total of 514 bytes
          int x=0;
          do {
-            datablock[x++] = SPITx(0xFF);
+            datablock[x++] = SPITxRx(0xFF);
          } while(x<512);
 
          // Checksum
-         checksum[0] = SPITx(0xFF);
-         checksum[1] = SPITx(0xFF);
+         checksum[0] = SPITxRx(0xFF);
+         checksum[1] = SPITxRx(0xFF);
       }
    }
 
@@ -291,34 +288,27 @@ int SDCardStartup()
 {
    uint8_t response[3];
 
+   // At least 75 bits worth of idling around before we start
+   // Here we send 8x10=80 bits worth of dummy bytes
+   for (uint32_t i=0;i<10;++i)
+      SPITxRx(0xFF);
+
    response[0] = SDIdle();
    if (response[0] != 0x01)
       return -1;
 
-   uint32_t databack;
-   response[1] = SDCheckVoltageRange(&databack);
+   response[1] = SDCheckVoltageRange();
    if (response[1] != 0x01)
       return -1;
 
    response[2] = SDCardInit();
    if (response[2] == 0x00) // OK
       return 0;
-
-   if (response[2] != 0x01) // 0x05, older card, bail out
-      return -1;
-
-   // Keep looping until we get a 0x0
-   while (response[2] == 0x01) // Loop again if it's 0x01
-   {
-      response[2] = SDCardInit();
-   } // Repeat this until we receive a non-idle (0x00)
+   
+   return -1;
 
    // NOTE: Block size is already set to 512 for high speed and can't be changed
    // Do I need to implement this one?
    //response[3] = SDSetBlockSize512();
    //EchoUART("SDSetBlockSize512()");
-
-   int finalval = response[2] == 0x00 ? 0 : -1;
-
-   return finalval;
 }
