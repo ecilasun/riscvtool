@@ -26,10 +26,22 @@ void UARTWrite(const char *_message)
         UARTPutChar(_message[i++]);
 }
 
+void UARTWriteHexByte(const uint8_t i)
+{
+    const char hexdigits[] = "0123456789ABCDEF";
+    char msg[] = "  ";
+
+    msg[0] = hexdigits[((i>>4)%16)];
+    msg[1] = hexdigits[(i%16)];
+
+    UARTWrite(msg);
+}
+
 void UARTWriteHex(const uint32_t i)
 {
     const char hexdigits[] = "0123456789ABCDEF";
     char msg[] = "        ";
+
     msg[0] = hexdigits[((i>>28)%16)];
     msg[1] = hexdigits[((i>>24)%16)];
     msg[2] = hexdigits[((i>>20)%16)];

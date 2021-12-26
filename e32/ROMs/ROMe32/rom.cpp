@@ -135,13 +135,13 @@ void ListELF(const char *path)
          re = f_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
-			if (strstr(finf.fname, ".elf"))
-			{
-            	UARTWrite(finf.fname);
-				UARTWrite(" ");
-				UARTWriteDecimal((int32_t)finf.fsize);
-				UARTWrite("b\n");
-			}
+            if (strstr(finf.fname, ".elf"))
+            {
+               UARTWrite(finf.fname);
+               UARTWrite(" ");
+               UARTWriteDecimal((int32_t)finf.fsize);
+               UARTWrite("b\n");
+            }
          }
       } while(re == FR_OK && dir.sect!=0);
       f_closedir(&dir);

@@ -4,6 +4,8 @@
 #include "uart.h"
 #include <stdio.h>
 
+#define G_SPI_TIMEOUT 32
+
 static uint8_t CRC7(const uint8_t* data, uint8_t n) {
   uint8_t crc = 0;
   for (uint8_t i = 0; i < n; i++) {
@@ -20,10 +22,15 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
 }
 
 // A single SPI transaction is a write from master followed by a read from slave's output
+volatile uint8_t *SPISINK = (volatile uint8_t* )0x0000FFF8; // SPI adress swap sink
 uint8_t SPITx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
+   UARTWriteHexByte(outbyte);
+   UARTWrite("->");
    uint8_t incoming = *IO_SPIRXTX;
+   UARTWriteHexByte(incoming);
+   UARTWrite(":");
    return incoming;
 }
 
@@ -38,7 +45,7 @@ uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
    buf[4] = (uint8_t)(args&0x000000FF);
    buf[5] = CRC7(buf, 5);
 
-   uint8_t incoming = 0;
+   uint8_t incoming = SPITx(0xFF);
    for (uint32_t i=0;i<6;++i)
       incoming = SPITx(buf[i]);
    return incoming;
@@ -49,10 +56,9 @@ uint8_t SDIdle()
    uint8_t response;
 
    // Enter idle state
-   UARTWrite(">"); UARTWriteHex(0x00000000); UARTWrite("\n");
    SDCmd(CMD0_GO_IDLE_STATE, 0);
 
-   int timeout=65536;
+   int timeout=G_SPI_TIMEOUT;
    do {
       response = SPITx(0xFF);
       if (response != 0xFF)
@@ -60,7 +66,6 @@ uint8_t SDIdle()
       --timeout;
    } while(timeout>0); // Expected: 0x01
 
-   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
@@ -68,16 +73,21 @@ uint8_t SDCheckVoltageRange(uint32_t *databack)
 {
    uint8_t response;
 
-   UARTWrite(">"); UARTWriteHex(0x10000000); UARTWrite("\n");
    SDCmd(CMD8_SEND_IF_COND, 0x000001AA);
 
-   int timeout=65536;
+   int timeout=G_SPI_TIMEOUT;
    do {
       response = SPITx(0xFF);
       if (response != 0xFF)
          break;
       --timeout;
    } while(timeout>0); // Expected: 0x01(version 2 SDCARD) or 0x05(version 1 or MMC card) - got 0x01
+
+   if (response != 0x01)
+   {
+      UARTWrite("Error version 2 SDCard expected\n");
+      return response;
+   }
 
    // Read the 00 00 01 AA sequence back from the SD CARD
    *databack = 0x00000000;
@@ -86,7 +96,13 @@ uint8_t SDCheckVoltageRange(uint32_t *databack)
    *databack |= (*databack<<8) | SPITx(0xFF);
    *databack |= (*databack<<8) | SPITx(0xFF);
 
-   UARTWriteHex(response); UARTWrite(" : "); UARTWriteHex(*databack); UARTWrite("\n");
+   if (*databack != 0x000001AA)
+   {
+      UARTWrite("Expected 0x000001AA, got 0x");
+      UARTWriteHex(*databack);
+      UARTWrite("\n");
+   }
+
    return response;
 }
 
@@ -95,10 +111,9 @@ uint8_t SDCardInit()
    uint8_t response;
 
    // ACMD header
-   UARTWrite(">"); UARTWriteHex(0x20000000); UARTWrite("\n");
    SDCmd(CMD55_APP_CMD, 0x00000000);
 
-   int timeout=65536;
+   int timeout=G_SPI_TIMEOUT;
    do {
       response = SPITx(0xFF);
       if (response != 0xFF)
@@ -109,7 +124,7 @@ uint8_t SDCardInit()
    // Set high capacity mode on
    SDCmd(ACMD41_SD_SEND_OP_COND, 0x40000000);
 
-   timeout=65536;
+   timeout=G_SPI_TIMEOUT;
    do {
       response = SPITx(0xFF);
       if (response != 0xFF)
@@ -133,7 +148,6 @@ uint8_t SDCardInit()
          break;
    } while(1); // Expected: 0x00*/
 
-   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
@@ -142,10 +156,9 @@ uint8_t SDSetBlockSize512()
    uint8_t response;
 
    // Set block length
-   UARTWrite(">"); UARTWriteHex(0x30000000); UARTWrite("\n");
    SDCmd(CMD16_SET_BLOCKLEN, 0x00000200);
 
-   int timeout=65536;
+   int timeout=G_SPI_TIMEOUT;
    do {
       response = SPITx(0xFF);
       if (response != 0xFF)
@@ -153,7 +166,6 @@ uint8_t SDSetBlockSize512()
       --timeout;
    } while(timeout>0); // Expected: 0x00
 
-   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
@@ -163,11 +175,10 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
 
    // Read single block
    // NOTE: sector<<9 for non SDHC cards
-   UARTWrite(">"); UARTWriteHex(0x40000000); UARTWrite("\n");
    SDCmd(CMD17_READ_SINGLE_BLOCK, sector);
 
    // R1: expect 0x00
-   int timeout=65536;
+   int timeout=G_SPI_TIMEOUT;
    do {
       response = SPITx(0xFF);
       if (response != 0xFF)
@@ -178,7 +189,7 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
    if (response != 0xFF) // == 0x00
    {
       // R2: expect 0xFE
-      timeout=65536;
+      timeout=G_SPI_TIMEOUT;
       do {
          response = SPITx(0xFF);
          if (response != 0xFF)
@@ -220,7 +231,6 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
          UARTWrite("SDReadSingleBlock: error response = 'Card locked'\n");
    }
 
-   UARTWriteHex(response); UARTWrite("\n");
    return response;
 }
 
