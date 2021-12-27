@@ -78,9 +78,10 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    }
    else // Exception
    {
-         UARTWrite("\033[0m\033[2J\n"); // Clear attributes, clear screen
+         UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
 
-         // reverse: \033[7m
+         // reverse on: \033[7m
+         // blink on: \033[5m
          // Set foreground color to red and bg color to black
          UARTWrite("\033[31m\033[40m");
 
@@ -94,7 +95,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
          UARTWrite("└───────────────────────────────────────────────────┘\n");
          UARTWrite("\033[0m\n");
 
-         // Put core to sleep
+         // Put core to endless sleep
          while(1) {
             asm volatile("wfi;");
          }
@@ -103,6 +104,8 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
          // switch (code)
          // {
          //    case CAUSE_ILLEGAL_INSTRUCTION:
+
+         // Another use would be to do software emulation of the instruction in 'value'.
    }
 }
 
