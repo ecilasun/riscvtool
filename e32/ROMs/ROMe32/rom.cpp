@@ -59,7 +59,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
             // Read incoming character
             uint8_t incoming = *IO_UARTRXTX;
             // Force crash to test re-entering exception handler
-            donotcrash = (incoming == 'C') ? 0x00000000 : 0xDADED0D1;
+            donotcrash = (incoming == '~') ? 0x00000000 : 0xDADED0D1; // Force test crash on letter '~'
             // Write back to UART
             *IO_UARTRXTX = incoming;
             UARTFlush();
@@ -70,7 +70,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       }
       if (code == 0x7) // timer
       {
-         UARTWrite("\n\033[34m\033[47m\033[7mTEST: One-shot timer trap\033[0m\n");
+         UARTWrite("\n\033[34m\033[47m\033[7mHINT: Test crash handling by sending the character '~'\033[0m\n");
          // Stop further timer interrupts by setting the timecmp to furthest value available.
          swap_csr(0x801, 0xFFFFFFFF);
          swap_csr(0x800, 0xFFFFFFFF);
@@ -78,30 +78,31 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    }
    else // Exception
    {
-      switch (code)
-      {
-         case CAUSE_ILLEGAL_INSTRUCTION:
-         {
-            // Trap and stop execution.
-            UARTWrite("\n\n\033[31m\033[47m\033[7mEXCEPTION: Illegal instruction word 0x");
-            UARTWriteHex((uint32_t)value);
-            UARTWrite("\033[0m\n");
-            // Put core to sleep
-            while(1) {
-               asm volatile("wfi;");
-            }
+         UARTWrite("\033[0m\033[2J\n"); // Clear attributes, clear screen
+
+         // reverse: \033[7m
+         // Set foreground color to red and bg color to black
+         UARTWrite("\033[31m\033[40m");
+
+         UARTWrite("┌───────────────────────────────────────────────────┐\n");
+         UARTWrite("│ Software Failure. Press reset button to continue. │\n");
+         UARTWrite("│        Guru Meditation #");
+         UARTWriteHex((uint32_t)cause); // Cause
+         UARTWrite(".");
+         UARTWriteHex((uint32_t)value); // Failed instruction
+         UARTWrite("         │\n");
+         UARTWrite("└───────────────────────────────────────────────────┘\n");
+         UARTWrite("\033[0m\n");
+
+         // Put core to sleep
+         while(1) {
+            asm volatile("wfi;");
          }
 
-         default:
-         {
-            // Trap and resume execution, for the time being.
-            UARTWrite("\n\n\033[31m\033[47m\033[7mEXCEPTION:  mcause = 0x");
-            UARTWriteHex((uint32_t)cause);
-            UARTWrite(" mtval = 0x");
-            UARTWriteHex((uint32_t)value);
-            UARTWrite("\033[0m\n");
-         }
-      }
+         // Could alternatively handle each separately via:
+         // switch (code)
+         // {
+         //    case CAUSE_ILLEGAL_INSTRUCTION:
    }
 }
 
@@ -155,7 +156,11 @@ int main()
    InstallIllegalInstructionHandler();
 
    // Clear all attributes, clear screen, print boot message
-   UARTWrite("\033[0m\033[2J\nE32: RV32iZicsr\nROM v0003\n");
+   UARTWrite("\033[0m\033[2J\n");
+   UARTWrite("╔═════════════════╗\n");
+   UARTWrite("║ E32: RV32iZicsr ║\n");
+   UARTWrite("║ ROM v0004       ║\n");
+   UARTWrite("╚═════════════════╝\n\n");
 
 	FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
@@ -179,7 +184,7 @@ int main()
       // See if we're requested to forcibly crash
       if (donotcrash == 0x00000000)
       {
-         UARTWrite("\nForcing illegal instruction exception...\n");
+         UARTWrite("\nDeliberate test crash incoming...\n");
          asm volatile(".dword 0x012345FF");
          asm volatile(".dword 0xFFFFFFFF");
       }
