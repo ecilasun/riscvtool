@@ -15,6 +15,426 @@
 
 #include "memtest/memtest.h"
 
+/*******************************/
+
+float __attribute((naked)) test_div()
+{
+    asm volatile (
+        "la a0, test_div_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fdiv.s fa0, fs0, fs1 ;"
+        "ret ;"
+        "test_div_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_mul()
+{
+    asm volatile (
+        "la a0, test_mul_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fmul.s fa0, fs0, fs1 ;"
+        "ret ;"
+        "test_mul_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_add()
+{
+    asm volatile (
+        "la a0, test_add_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fadd.s fa0, fs0, fs1 ;"
+        "ret ;"
+        "test_add_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_sub()
+{
+    asm volatile (
+        "la a0, test_sub_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fsub.s fa0, fs0, fs1 ;"
+        "ret ;"
+        "test_sub_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_min()
+{
+    asm volatile (
+        "la a0, test_min_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fmin.s fa0, fs0, fs1 ;"
+        "ret ;"
+        "test_min_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_max()
+{
+    asm volatile (
+        "la a0, test_max_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fmax.s fa0, fs0, fs1 ;"
+        "ret ;"
+        "test_max_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_sqrt()
+{
+    asm volatile (
+        "la a0, test_sqrt_data ;"
+        "flw fs1, 4(a0) ;"
+        "fsqrt.s fa0, fs1 ;"
+        "ret ;"
+        "test_sqrt_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_madd()
+{
+    asm volatile (
+        "la a0, test_madd_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "flw fs2, 8(a0) ;"
+        "fmadd.s fa0, fs0,fs1,fs2 ;"
+        "ret ;"
+        "test_madd_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        ".float 33.784341 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_msub()
+{
+    asm volatile (
+        "la a0, test_msub_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "flw fs2, 8(a0) ;"
+        "fmsub.s fa0, fs0,fs1,fs2 ;"
+        "ret ;"
+        "test_msub_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        ".float 33.784341 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_nmsub()
+{
+    asm volatile (
+        "la a0, test_nmsub_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "flw fs2, 8(a0) ;"
+        "fnmsub.s fa0, fs0,fs1,fs2 ;"
+        "ret ;"
+        "test_nmsub_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        ".float 33.784341 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_nmadd()
+{
+    asm volatile (
+        "la a0, test_nmadd_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "flw fs2, 8(a0) ;"
+        "fnmadd.s fa0, fs0,fs1,fs2 ;"
+        "ret ;"
+        "test_nmadd_data: ;"
+        ".float 1.1324145 ;"
+        ".float 553.538131 ;"
+        ".float 33.784341 ;"
+        :  : :
+    );
+}
+
+int __attribute((naked)) test_fcvtws()
+{
+    asm volatile (
+        "la a0, test_cvtws_data ;"
+        "flw fs0, 0(a0) ;"
+        "fcvt.w.s a0, fs0, rtz ;"
+        "ret ;"
+        "test_cvtws_data: ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_fcvtsw()
+{
+    asm volatile (
+        "la a0, test_cvtsw_data ;"
+        "lw a1, 0(a0) ;"
+        "fcvt.s.w fa0, a1 ;"
+        "ret ;"
+        "test_cvtsw_data: ;"
+        ".int 554 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_fsgnj()
+{
+    asm volatile (
+        "la a0, test_sgnj_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fsgnj.s fa0,fs0,fs1 ;"
+        "ret ;"
+        "test_sgnj_data: ;"
+        ".float -111.5555 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_fsgnjn()
+{
+    asm volatile (
+        "la a0, test_sgnjn_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fsgnjn.s fa0,fs0,fs1 ;"
+        "ret ;"
+        "test_sgnjn_data: ;"
+        ".float -111.5555 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_fsgnjx()
+{
+    asm volatile (
+        "la a0, test_sgnjx_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fsgnjx.s fa0,fs0,fs1 ;"
+        "ret ;"
+        "test_sgnjx_data: ;"
+        ".float -111.5555 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+int __attribute((naked)) test_flt()
+{
+    asm volatile (
+        "la a0, test_lt_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "flt.s a0,fs0,fs1 ;"
+        "ret ;"
+        "test_lt_data: ;"
+        ".float -111.5555 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+int __attribute((naked)) test_fle()
+{
+    asm volatile (
+        "la a0, test_le_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "fle.s a0,fs0,fs1 ;"
+        "ret ;"
+        "test_le_data: ;"
+        ".float -111.5555 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+int __attribute((naked)) test_feq()
+{
+    asm volatile (
+        "la a0, test_eq_data ;"
+        "flw fs0, 0(a0) ;"
+        "flw fs1, 4(a0) ;"
+        "feq.s a0,fs0,fs1 ;"
+        "ret ;"
+        "test_eq_data: ;"
+        ".float -111.5555 ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+int __attribute((naked)) test_fmvxw()
+{
+    asm volatile (
+        "la a0, test_mvxw_data ;"
+        "flw fs0, 0(a0) ;"
+        "fmv.x.w a0,fs0 ;"
+        "ret ;"
+        "test_mvxw_data: ;"
+        ".float 553.538131 ;"
+        :  : :
+    );
+}
+
+float __attribute((naked)) test_fmvwx()
+{
+    asm volatile (
+        "la a0, test_mvwx_data ;"
+        "lw a1, 0(a0) ;"
+        "fmv.w.x fa0,a1 ;"
+        "ret ;"
+        "test_mvwx_data: ;"
+        ".int 0x440a6271 ;" // 553.53814697265625
+        :  : :
+    );
+}
+
+void FPUTest()
+{
+    setbuf(stdout, NULL);
+
+    const float a = 1.3124145f;
+    const float b = 553.538131f;
+    const float c = 33.784341f;
+    const float d = -111.5555f;
+    float r = 0.f;
+    int t = 554;
+    int s = 0x440a6271;
+    int ri = 0;
+
+    UARTWrite("Testing FPU instructions\n\n");
+
+    UARTWrite("fdiv\n");
+    r = test_div();
+    //printf("fdiv: %f / %f = %f\n", a, b, r);
+
+    UARTWrite("fmul\n");
+    r = test_mul();
+    //printf("fmul: %f * %f = %f\n", a, b, r);
+
+    UARTWrite("fadd\n");
+    r = test_add();
+    //printf("fadd: %f + %f = %f\n", a, b, r);
+
+    UARTWrite("fsub\n");
+    r = test_sub();
+    //printf("fsub: %f - %f = %f\n", a, b, r);
+
+    UARTWrite("fmin\n");
+    r = test_min();
+    //printf("fmin: min(%f,%f) = %f\n", a, b, r);
+
+    UARTWrite("fmax\n");
+    r = test_max();
+    //printf("fmax: max(%f,%f) = %f\n", a, b, r);
+
+    UARTWrite("fsqrt\n");
+    r = test_sqrt();
+    //printf("fsqrt: sqrt(%f) = %f\n", b, r);
+
+    UARTWrite("fmadd\n");
+    r = test_madd();
+    //printf("fmadd: %f*%f+%f = %f\n", a, b, c, r);
+
+    UARTWrite("fmsub\n");
+    r = test_msub();
+    //printf("fmsub: %f*%f-%f = %f\n", a, b, c, r);
+
+    UARTWrite("fnmsub\n");
+    r = test_nmsub();
+    //printf("fnmsub: -%f*%f+%f = %f\n", a, b, c, r);
+
+    UARTWrite("fnmadd\n");
+    r = test_nmadd();
+    //printf("fnmadd: -%f*%f-%f = %f\n", a, b, c, r);
+
+    UARTWrite("fcvt.w.s\n");
+    ri = test_fcvtws();
+    //printf("fcvt.w.s: %f = %d\n", b, ri);
+
+    UARTWrite("fcvt.s.w\n");
+    r = test_fcvtsw();
+    //printf("fcvt.s.w: %d = %f\n", t, r);
+
+    UARTWrite("fsgnj.s\n");
+    r = test_fsgnj();
+    //printf("fsgnj.s: sgnj(%f,%f) = %f\n", d, b, r);
+
+    UARTWrite("fsgnjn.s\n");
+    r = test_fsgnjn();
+    //printf("fsgnjn.s: sgnj(%f,%f) = %f\n", d, b, r);
+
+    UARTWrite("fsgnjx.s\n");
+    r = test_fsgnjx();
+    //printf("fsgnjx.s: sgnj(%f,%f) = %f\n", d, b, r);
+
+    UARTWrite("flt.s\n");
+    ri = test_flt();
+    //printf("flt.s: %f < %f ? = %d\n", d, b, ri);
+
+    UARTWrite("fle.s\n");
+    ri = test_fle();
+    //printf("fle.s: %f <= %f ? = %d\n", d, b, ri);
+
+    UARTWrite("feq.s\n");
+    ri = test_feq();
+    //printf("feq.s: %f == %f ? = %d\n", d, b, ri);
+
+    UARTWrite("fmv.x.w\n");
+    ri = test_fmvxw();
+    //printf("fmv.x.w: %f -> %.8X\n", b, ri);
+
+    UARTWrite("fmv.w.x\n");
+    r = test_fmvwx();
+    //printf("fmv.w.x: %.8X -> %f\n", s, r);
+
+    UARTWrite("FPU instruction test complete\n");
+}
+
+/*******************************/
+
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -38,8 +458,10 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
-static volatile int donotcrash = 0xDADED0D1;
-static volatile int runmemtest = 0x00000000;
+static char commandline[512]="";
+static int cmdlen = 0;
+static int parseit = 0;
+static int havedrive = 0;
 
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
@@ -61,9 +483,15 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
          {
             // Read incoming character
             uint8_t incoming = *IO_UARTRXTX;
-            // Force crash to test re-entering exception handler
-            donotcrash = (incoming == '~') ? 0x00000000 : 0xDADED0D1; // Force test crash on letter '~'
-            runmemtest = (incoming == '!') ? 0x00000001 : 0x00000000; // Force memory test on letter '!'
+            // Zero terminated command line
+            if (incoming != 13)
+            {
+                commandline[cmdlen++] = incoming;
+                commandline[cmdlen] = 0;
+            }
+            else
+                parseit = 1;
+            if (cmdlen>=511) cmdlen = 511;
             // Write back to UART
             *IO_UARTRXTX = incoming;
             UARTFlush();
@@ -75,7 +503,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       if (code == 0x7) // timer
       {
          UARTWrite("\n\033[34m\033[47m\033[7m| ");
-         UARTWrite("HINT: Test crash handling by sending the character '~'");
+         UARTWrite("HINT: Type 'help' for a list of commands.");
          UARTWrite(" │\033[0m\n");
          // Stop further timer interrupts by setting the timecmp to furthest value available.
          swap_csr(0x801, 0xFFFFFFFF);
@@ -134,7 +562,7 @@ void InstallIllegalInstructionHandler()
    swap_csr(mstatus, MSTATUS_MIE);
 }
 
-void ListELF(const char *path)
+void ListFiles(const char *path)
 {
    DIR dir;
    FRESULT re = f_opendir(&dir, path);
@@ -145,7 +573,7 @@ void ListELF(const char *path)
          re = f_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
-            if (strstr(finf.fname, ".elf"))
+            //if (strstr(finf.fname, ".elf"))
             {
                UARTWrite(finf.fname);
                UARTWrite(" ");
@@ -197,51 +625,73 @@ void domemtest()
       UARTWrite("DDR3 device does not appear to be working correctly, or does not exist.\n");
 }
 
+void ParseCommands()
+{
+    if (!strcmp(commandline, "help")) // Help text
+    {
+        UARTWrite("crash, dir, ddr3, fpu\n");
+    }
+
+    // See if we're requested to forcibly crash
+    if (!strcmp(commandline, "crash")) // Test crash handler
+    {
+        UARTWrite("\nForcing crash via illegal instruction.\n");
+        asm volatile(".dword 0xBADF00D0");
+    }
+
+    if (!strcmp(commandline, "dir")) // List directory
+    {
+		UARTWrite("\nListing files on volume sd:\n");
+		ListFiles("sd:");
+    }
+
+    if (!strcmp(commandline, "ddr3")) // Test the DDR3
+        domemtest();
+
+    if (!strcmp(commandline, "fpu")) // Test the FPU instructions
+        FPUTest();
+
+    parseit = 0;
+    cmdlen = 0;
+    commandline[0]=0;
+}
+
 int main()
 {
-   InstallIllegalInstructionHandler();
+    InstallIllegalInstructionHandler();
 
-   // Clear all attributes, clear screen, print boot message
-   UARTWrite("\033[0m\033[2J\n");
-   UARTWrite("┌──────┬─────────────────────────────────────────┐\n");
-   UARTWrite("│ CPU  │ E32 RISC-V RV32iZicsr                   │\n");
-   UARTWrite("├──────┼─────────────────────────────────────────┤\n");
-   UARTWrite("│ ROM  │ 0x00000000-0x0000FFFF v0005             │\n");
-   UARTWrite("│ RAM  │ 0x00000000-0x0000FFFF                   │\n");
-   UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL) │\n");
-   UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                    │\n");
-   UARTWrite("└──────┴─────────────────────────────────────────┘\n\n");
+    // Clear all attributes, clear screen, print boot message
+    UARTWrite("\033[0m\033[2J\n");
+    UARTWrite("┌──────┬─────────────────────────────────────────┐\n");
+    UARTWrite("│ CPU  │ E32 RISC-V (RV32iMFZicsr) @100Mhz       │\n");
+    UARTWrite("├──────┼─────────────────────────────────────────┤\n");
+    UARTWrite("│ ROM  │ 0x00000000-0x0000FFFF v0006             │\n");
+    UARTWrite("│ RAM  │ 0x00000000-0x0000FFFF                   │\n");
+    UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL) │\n");
+    UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                    │\n");
+    UARTWrite("└──────┴─────────────────────────────────────────┘\n\n");
 
-	FATFS Fs;
+    FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
+    {
+        havedrive = 0;
 		UARTWrite(FRtoString[mountattempt]);
+    }
 	else
-	{
-		UARTWrite("ELF files on volume sd:\n");
-		// List ELF files on the mounted volume
-		ListELF("sd:");
-	}
+        havedrive = 1;
 
-   while(1)
-   {
-      // Interrupt handler will do all the real work.
-      // Therefore we can put the core to sleep until an interrupt occurs,
-      // after which it will wake up to service it and then go back to
-      // sleep, unless we asked it to crash.
-      asm volatile("wfi;");
+    while(1)
+    {
+        // Interrupt handler will do all the real work.
+        // Therefore we can put the core to sleep until an interrupt occurs,
+        // after which it will wake up to service it and then go back to
+        // sleep, unless we asked it to crash.
+        asm volatile("wfi;");
 
-      // See if we're requested to forcibly crash
-      if (donotcrash == 0x00000000)
-      {
-         UARTWrite("\nDeliberate test crash incoming...\n");
-         asm volatile(".dword 0x012345FF");
-         asm volatile(".dword 0xFFFFFFFF");
-      }
+        if (parseit)
+            ParseCommands();
+    }
 
-      if (runmemtest == 0x00000001) // Test the DDR3
-         domemtest();
-   }
-
-   return 0;
+    return 0;
 }

@@ -2,9 +2,10 @@
 
 #include <stdlib.h>
 #include <errno.h>
-
 #include "core.h"
 #include "uart.h"
+
+#define STDOUT_FILENO 1
 
 // Utilities
 
@@ -36,16 +37,110 @@ void E32SetTimeCompare(const uint64_t future)
 // Place the heap into DDR3 memory
 //#undef errno
 //int nerrno;
-static uint8_t *heap_start  = (uint8_t*)0x00008000;
-static uint8_t *heap_end    = (uint8_t*)0x0000F000; // Leave 0xFFF for stack
+static uint8_t *heap_start  = (uint8_t*)0x1000D000; // TODO: Move this to DDR3 region, S-RAM is too small
+static uint8_t *heap_end    = (uint8_t*)0x1000F000; // Leave 0xFFF for stack
 
 extern "C" {
 
-   /*void unimplemented_syscall()
+   /*int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
    {
-      asm volatile ("ebreak");
-      __builtin_unreachable();
+     // offset the current task's wakeup time, do not busywait
+     // however for our architecture, scheduler will break and run
+     // other tasks regardless of what's going on, so we can busy spin here
+      errno = ENOSYS;
+      return -1;
    }*/
+
+   int _chdir(const char *path)
+   {
+      /*if (FR_OK == f_chdir(path))
+         return 0;
+      else*/
+      {
+         errno = ENOSYS;
+         return -1;
+      }
+   }
+
+   char *_getcwd(char *buf, size_t size)
+   {
+      /*if (FR_OK == f_getcwd(buf, size))
+         return buf;
+      else*/
+      {
+         errno = -ENOSYS;
+         return NULL;
+      }
+   }
+
+   int _isatty(int file)
+   {
+      return (file == STDOUT_FILENO);
+   }
+
+   int _close(int file)
+   {
+      return 0;
+   }
+
+   off_t _lseek(int file, off_t ptr, int dir)
+   {
+      return 0;
+   }
+
+   int _lstat(const char *file, struct stat *st)
+   {
+      errno = ENOSYS;
+      return -1;
+   }
+
+   int _open(const char *name, int flags, int mode)
+   {
+      return -1;
+   }
+
+   int _openat(int dirfd, const char *name, int flags, int mode)
+   {
+      // https://linux.die.net/man/2/openat
+      errno = ENOSYS;
+      return -1;
+   }
+
+   ssize_t _read(int file, void *ptr, size_t len)
+   {
+      return 0;
+   }
+
+   int _stat(const char *file, struct stat *st)
+   {
+      //st->st_mode = S_IFCHR; // S_IFBLK for disk data?
+      return 0;
+   }
+
+   ssize_t _write(int file, const void *ptr, size_t len)
+   {
+      if (file == STDOUT_FILENO) {
+         char *cptr = (char*)ptr;
+         const char *eptr = cptr + len;
+         while (cptr != eptr)
+         {
+            *IO_UARTRXTX = *cptr;
+            ++cptr;
+         }
+         return len;
+      }
+      else return 0;
+   }
+
+   int _wait(int *status)
+   {
+      errno = ECHILD;
+      return -1;
+   }
+
+   void unimplemented_syscall()
+   {
+   }
 
    int _brk(void *addr)
    {
@@ -68,61 +163,4 @@ extern "C" {
       }
       return old_heapstart;
    }
-
-   ssize_t _read(int file, void *ptr, size_t len)
-   {
-      return 0; // eof
-   }
-
-   ssize_t _write(int file, const void *ptr, size_t len)
-   {
-      if(file == 1) // STDIO
-      {
-         for(size_t i=0; i<len; ++i)
-            UARTPutChar(((char*)ptr)[i]);
-      }
-
-      return 0;
-   }
-
-   int _close(int file)
-   {
-      // close is called before _exit()
-      return 0;
-   }
-
-   int _fstat(int file, struct stat *st)
-   {
-      // fstat is called during libc startup
-      errno = ENOENT;
-      return -1;
-   }
 }
-
-/*
-_open
-_openat
-_lseek
-_stat
-_lstat
-_fstatat
-_isatty
-_access
-_faccessat
-_link
-_unlink
-_execve
-_getpid
-_fork
-_kill
-_wait
-_times
-_gettimeofday
-_ftime
-_utime
-_chown
-_chmod
-_chdir
-_getcwd
-_sysconf
-*/
