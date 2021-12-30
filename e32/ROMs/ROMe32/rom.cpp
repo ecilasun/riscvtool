@@ -13,6 +13,8 @@
 #include "sdcard.h"
 #include "fat32/ff.h"
 
+#include "memtest/memtest.h"
+
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -37,6 +39,7 @@ const char *FRtoString[]={
 };
 
 static volatile int donotcrash = 0xDADED0D1;
+static volatile int runmemtest = 0x00000000;
 
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
@@ -60,6 +63,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
             uint8_t incoming = *IO_UARTRXTX;
             // Force crash to test re-entering exception handler
             donotcrash = (incoming == '~') ? 0x00000000 : 0xDADED0D1; // Force test crash on letter '~'
+            runmemtest = (incoming == '!') ? 0x00000001 : 0x00000000; // Force memory test on letter '!'
             // Write back to UART
             *IO_UARTRXTX = incoming;
             UARTFlush();
@@ -70,7 +74,9 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
       }
       if (code == 0x7) // timer
       {
-         UARTWrite("\n\033[34m\033[47m\033[7mHINT: Test crash handling by sending the character '~'\033[0m\n");
+         UARTWrite("\n\033[34m\033[47m\033[7m| ");
+         UARTWrite("HINT: Test crash handling by sending the character '~'");
+         UARTWrite(" │\033[0m\n");
          // Stop further timer interrupts by setting the timecmp to furthest value available.
          swap_csr(0x801, 0xFFFFFFFF);
          swap_csr(0x800, 0xFFFFFFFF);
@@ -154,16 +160,57 @@ void ListELF(const char *path)
       UARTWrite(FRtoString[re]);
 }
 
+void domemtest()
+{
+    int failed = 0;
+    for (uint32_t i=0x01000000; i<0x01000F00; i+=4)
+    {
+        failed += memTestDataBus((volatile datum*)i);
+    }
+    UARTWrite("Walking-1s test (0x01000000-0x01000F00)\n");
+    UARTWriteDecimal(failed);
+    UARTWrite(" failures\n");
+
+    datum* res = memTestAddressBus((volatile datum*)0x01000000, 4096);
+    UARTWrite("Address bus test (0x01000000-4Kbytes)\n");
+    UARTWrite(res == NULL ? "passed" : "failed");
+    UARTWrite("\n");
+    if (res != NULL)
+    {
+        UARTWrite("Reason: address aliasing problem at 0x");
+        UARTWriteHex((unsigned int)res);
+        UARTWrite("\n");
+    }
+
+    datum* res2 = memTestDevice((volatile datum *)0x01000000, 4096);
+    UARTWrite("Memory device test (0x01000000-4Kbytes)\n");
+    UARTWrite(res2 == NULL ? "passed" : "failed");
+    UARTWrite("\n");
+    if (res2 != NULL)
+    {
+        UARTWrite("Reason: incorrect value read at 0x");
+        UARTWriteHex((unsigned int)res2);
+        UARTWrite("\n");
+    }
+
+    if ((failed != 0) | (res != NULL) | (res2 != NULL))
+      UARTWrite("DDR3 device does not appear to be working correctly, or does not exist.\n");
+}
+
 int main()
 {
    InstallIllegalInstructionHandler();
 
    // Clear all attributes, clear screen, print boot message
    UARTWrite("\033[0m\033[2J\n");
-   UARTWrite("╔═════════════════╗\n");
-   UARTWrite("║ E32: RV32iZicsr ║\n");
-   UARTWrite("║ ROM v0004       ║\n");
-   UARTWrite("╚═════════════════╝\n\n");
+   UARTWrite("┌──────┬─────────────────────────────────────────┐\n");
+   UARTWrite("│ CPU  │ E32 RISC-V RV32iZicsr                   │\n");
+   UARTWrite("├──────┼─────────────────────────────────────────┤\n");
+   UARTWrite("│ ROM  │ 0x00000000-0x0000FFFF v0005             │\n");
+   UARTWrite("│ RAM  │ 0x00000000-0x0000FFFF                   │\n");
+   UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL) │\n");
+   UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                    │\n");
+   UARTWrite("└──────┴─────────────────────────────────────────┘\n\n");
 
 	FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
@@ -171,7 +218,7 @@ int main()
 		UARTWrite(FRtoString[mountattempt]);
 	else
 	{
-		UARTWrite("Listing ELF files on sd:\n");
+		UARTWrite("ELF files on volume sd:\n");
 		// List ELF files on the mounted volume
 		ListELF("sd:");
 	}
@@ -191,6 +238,9 @@ int main()
          asm volatile(".dword 0x012345FF");
          asm volatile(".dword 0xFFFFFFFF");
       }
+
+      if (runmemtest == 0x00000001) // Test the DDR3
+         domemtest();
    }
 
    return 0;

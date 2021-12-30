@@ -14,6 +14,7 @@ corelib_dir = ../SDK
 
 folders = \
 	helloworld \
+	tinyraytracer
 
 # Rules
 
