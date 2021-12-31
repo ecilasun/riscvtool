@@ -590,7 +590,7 @@ void ListFiles(const char *path)
 
 void domemtest()
 {
-    UARTWrite("\nTesting S-RAM @00000000\n");
+    UARTWrite("\nTesting DDR3 @00000000\n");
 
     int failed = 0;
     for (uint32_t i=0x00000000; i<0x00000F00; i+=4)
@@ -624,7 +624,7 @@ void domemtest()
     }
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
-      UARTWrite("Scratchpad memory does not appear to be working correctly, or does not exist.\n");
+      UARTWrite("DDR3 memory does not appear to be working correctly.\n");
 }
 
 void ParseCommands()
