@@ -665,7 +665,7 @@ int main()
     // Clear all attributes, clear screen, print boot message
     UARTWrite("\033[0m\033[2J\n");
     UARTWrite("┌──────┬───────────────────────────────────────────┐\n");
-    UARTWrite("│ CPU  │ E32 RISC-V (RV32iMFZicsr) @100Mhz         │\n");
+    UARTWrite("│ CPU  │ E32 RISC-V (rv32imfZicsr) @100Mhz         │\n");
     UARTWrite("├──────┼───────────────────────────────────────────┤\n");
     UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006)     │\n");
     UARTWrite("│ SRAM │ 0xA0000000-0xA0003FFF (scratchpad)        │\n");
