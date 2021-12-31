@@ -590,17 +590,19 @@ void ListFiles(const char *path)
 
 void domemtest()
 {
+    UARTWrite("\nTesting S-RAM @A0000000\n");
+
     int failed = 0;
-    for (uint32_t i=0x01000000; i<0x01000F00; i+=4)
+    for (uint32_t i=0xA0000000; i<0xA0000F00; i+=4)
     {
         failed += memTestDataBus((volatile datum*)i);
     }
-    UARTWrite("Walking-1s test (0x01000000-0x01000F00)\n");
+    UARTWrite("Walking-1s test (0xA0000000-0xA0000F00)\n");
     UARTWriteDecimal(failed);
     UARTWrite(" failures\n");
 
-    datum* res = memTestAddressBus((volatile datum*)0x01000000, 4096);
-    UARTWrite("Address bus test (0x01000000-4Kbytes)\n");
+    datum* res = memTestAddressBus((volatile datum*)0xA0000000, 4096);
+    UARTWrite("Address bus test (0xA0000000-4Kbytes)\n");
     UARTWrite(res == NULL ? "passed" : "failed");
     UARTWrite("\n");
     if (res != NULL)
@@ -610,8 +612,8 @@ void domemtest()
         UARTWrite("\n");
     }
 
-    datum* res2 = memTestDevice((volatile datum *)0x01000000, 4096);
-    UARTWrite("Memory device test (0x01000000-4Kbytes)\n");
+    datum* res2 = memTestDevice((volatile datum *)0xA0000000, 4096);
+    UARTWrite("Memory device test (0xA0000000-4Kbytes)\n");
     UARTWrite(res2 == NULL ? "passed" : "failed");
     UARTWrite("\n");
     if (res2 != NULL)
@@ -622,14 +624,14 @@ void domemtest()
     }
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
-      UARTWrite("DDR3 device does not appear to be working correctly, or does not exist.\n");
+      UARTWrite("Scratchpad memory does not appear to be working correctly, or does not exist.\n");
 }
 
 void ParseCommands()
 {
     if (!strcmp(commandline, "help")) // Help text
     {
-        UARTWrite("crash, dir, ddr3, fpu\n");
+        UARTWrite("crash, dir, memtest, fpu\n");
     }
 
     // See if we're requested to forcibly crash
@@ -645,7 +647,7 @@ void ParseCommands()
 		ListFiles("sd:");
     }
 
-    if (!strcmp(commandline, "ddr3")) // Test the DDR3
+    if (!strcmp(commandline, "memtest")) // Memory test on scratchpad
         domemtest();
 
     if (!strcmp(commandline, "fpu")) // Test the FPU instructions
@@ -662,14 +664,14 @@ int main()
 
     // Clear all attributes, clear screen, print boot message
     UARTWrite("\033[0m\033[2J\n");
-    UARTWrite("┌──────┬─────────────────────────────────────────┐\n");
-    UARTWrite("│ CPU  │ E32 RISC-V (RV32iMFZicsr) @100Mhz       │\n");
-    UARTWrite("├──────┼─────────────────────────────────────────┤\n");
-    UARTWrite("│ ROM  │ 0x00000000-0x0000FFFF v0006             │\n");
-    UARTWrite("│ RAM  │ 0x00000000-0x0000FFFF                   │\n");
-    UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL) │\n");
-    UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                    │\n");
-    UARTWrite("└──────┴─────────────────────────────────────────┘\n\n");
+    UARTWrite("┌──────┬───────────────────────────────────────────┐\n");
+    UARTWrite("│ CPU  │ E32 RISC-V (RV32iMFZicsr) @100Mhz         │\n");
+    UARTWrite("├──────┼───────────────────────────────────────────┤\n");
+    UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006)     │\n");
+    UARTWrite("│ SRAM │ 0xA0000000-0xA0003FFF (scratchpad)        │\n");
+    UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL)   │\n");
+    UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                      │\n");
+    UARTWrite("└──────┴───────────────────────────────────────────┘\n\n");
 
     FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
