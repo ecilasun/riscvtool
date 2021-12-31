@@ -590,19 +590,19 @@ void ListFiles(const char *path)
 
 void domemtest()
 {
-    UARTWrite("\nTesting S-RAM @A0000000\n");
+    UARTWrite("\nTesting S-RAM @00000000\n");
 
     int failed = 0;
-    for (uint32_t i=0xA0000000; i<0xA0000F00; i+=4)
+    for (uint32_t i=0x00000000; i<0x00000F00; i+=4)
     {
         failed += memTestDataBus((volatile datum*)i);
     }
-    UARTWrite("Walking-1s test (0xA0000000-0xA0000F00)\n");
+    UARTWrite("Walking-1s test (0x00000000-0x00000F00)\n");
     UARTWriteDecimal(failed);
     UARTWrite(" failures\n");
 
-    datum* res = memTestAddressBus((volatile datum*)0xA0000000, 4096);
-    UARTWrite("Address bus test (0xA0000000-4Kbytes)\n");
+    datum* res = memTestAddressBus((volatile datum*)0x00000000, 4096);
+    UARTWrite("Address bus test (0x00000000-4Kbytes)\n");
     UARTWrite(res == NULL ? "passed" : "failed");
     UARTWrite("\n");
     if (res != NULL)
@@ -612,8 +612,8 @@ void domemtest()
         UARTWrite("\n");
     }
 
-    datum* res2 = memTestDevice((volatile datum *)0xA0000000, 4096);
-    UARTWrite("Memory device test (0xA0000000-4Kbytes)\n");
+    datum* res2 = memTestDevice((volatile datum *)0x00000000, 4096);
+    UARTWrite("Memory device test (0x00000000-4Kbytes)\n");
     UARTWrite(res2 == NULL ? "passed" : "failed");
     UARTWrite("\n");
     if (res2 != NULL)
@@ -660,13 +660,22 @@ void ParseCommands()
 
 int main()
 {
+    // TEST
+    /*asm volatile (
+        "li a1, 0x00000040;"
+        "li a0, 0xCAFEBABE;"
+        "sw a0, 0(a1);"
+    );*/
+
     InstallIllegalInstructionHandler();
 
     // Clear all attributes, clear screen, print boot message
     UARTWrite("\033[0m\033[2J\n");
     UARTWrite("┌──────┬───────────────────────────────────────────┐\n");
     UARTWrite("│ CPU  │ E32 RISC-V (rv32imfZicsr) @100Mhz         │\n");
+    UARTWrite("│ BUS  │ AXI4-Lite @100MHz                         │\n");
     UARTWrite("├──────┼───────────────────────────────────────────┤\n");
+    UARTWrite("│ DDR3 │ 0x00000000-0x0FFFFFFF                     │\n");
     UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006)     │\n");
     UARTWrite("│ SRAM │ 0xA0000000-0xA0003FFF (scratchpad)        │\n");
     UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL)   │\n");
