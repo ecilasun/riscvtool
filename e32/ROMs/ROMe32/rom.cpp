@@ -151,7 +151,7 @@ void DumpFile(const char *path)
     {
         const uint32_t baseaddress = 0x00000000; // S-RAM
         UINT bytesread = 0;
-        // Read at top of DDR3 memory
+        // Read at top of scratchpad memory
         f_read(&fp, (void*)baseaddress, 16384, &bytesread);
         f_close(&fp);
         // Dump contents
