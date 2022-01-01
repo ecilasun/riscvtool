@@ -15,426 +15,6 @@
 
 #include "memtest/memtest.h"
 
-/*******************************/
-
-float __attribute((naked)) test_div()
-{
-    asm volatile (
-        "la a0, test_div_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fdiv.s fa0, fs0, fs1 ;"
-        "ret ;"
-        "test_div_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_mul()
-{
-    asm volatile (
-        "la a0, test_mul_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fmul.s fa0, fs0, fs1 ;"
-        "ret ;"
-        "test_mul_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_add()
-{
-    asm volatile (
-        "la a0, test_add_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fadd.s fa0, fs0, fs1 ;"
-        "ret ;"
-        "test_add_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_sub()
-{
-    asm volatile (
-        "la a0, test_sub_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fsub.s fa0, fs0, fs1 ;"
-        "ret ;"
-        "test_sub_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_min()
-{
-    asm volatile (
-        "la a0, test_min_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fmin.s fa0, fs0, fs1 ;"
-        "ret ;"
-        "test_min_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_max()
-{
-    asm volatile (
-        "la a0, test_max_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fmax.s fa0, fs0, fs1 ;"
-        "ret ;"
-        "test_max_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_sqrt()
-{
-    asm volatile (
-        "la a0, test_sqrt_data ;"
-        "flw fs1, 4(a0) ;"
-        "fsqrt.s fa0, fs1 ;"
-        "ret ;"
-        "test_sqrt_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_madd()
-{
-    asm volatile (
-        "la a0, test_madd_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "flw fs2, 8(a0) ;"
-        "fmadd.s fa0, fs0,fs1,fs2 ;"
-        "ret ;"
-        "test_madd_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        ".float 33.784341 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_msub()
-{
-    asm volatile (
-        "la a0, test_msub_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "flw fs2, 8(a0) ;"
-        "fmsub.s fa0, fs0,fs1,fs2 ;"
-        "ret ;"
-        "test_msub_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        ".float 33.784341 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_nmsub()
-{
-    asm volatile (
-        "la a0, test_nmsub_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "flw fs2, 8(a0) ;"
-        "fnmsub.s fa0, fs0,fs1,fs2 ;"
-        "ret ;"
-        "test_nmsub_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        ".float 33.784341 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_nmadd()
-{
-    asm volatile (
-        "la a0, test_nmadd_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "flw fs2, 8(a0) ;"
-        "fnmadd.s fa0, fs0,fs1,fs2 ;"
-        "ret ;"
-        "test_nmadd_data: ;"
-        ".float 1.1324145 ;"
-        ".float 553.538131 ;"
-        ".float 33.784341 ;"
-        :  : :
-    );
-}
-
-int __attribute((naked)) test_fcvtws()
-{
-    asm volatile (
-        "la a0, test_cvtws_data ;"
-        "flw fs0, 0(a0) ;"
-        "fcvt.w.s a0, fs0, rtz ;"
-        "ret ;"
-        "test_cvtws_data: ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_fcvtsw()
-{
-    asm volatile (
-        "la a0, test_cvtsw_data ;"
-        "lw a1, 0(a0) ;"
-        "fcvt.s.w fa0, a1 ;"
-        "ret ;"
-        "test_cvtsw_data: ;"
-        ".int 554 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_fsgnj()
-{
-    asm volatile (
-        "la a0, test_sgnj_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fsgnj.s fa0,fs0,fs1 ;"
-        "ret ;"
-        "test_sgnj_data: ;"
-        ".float -111.5555 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_fsgnjn()
-{
-    asm volatile (
-        "la a0, test_sgnjn_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fsgnjn.s fa0,fs0,fs1 ;"
-        "ret ;"
-        "test_sgnjn_data: ;"
-        ".float -111.5555 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_fsgnjx()
-{
-    asm volatile (
-        "la a0, test_sgnjx_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fsgnjx.s fa0,fs0,fs1 ;"
-        "ret ;"
-        "test_sgnjx_data: ;"
-        ".float -111.5555 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-int __attribute((naked)) test_flt()
-{
-    asm volatile (
-        "la a0, test_lt_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "flt.s a0,fs0,fs1 ;"
-        "ret ;"
-        "test_lt_data: ;"
-        ".float -111.5555 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-int __attribute((naked)) test_fle()
-{
-    asm volatile (
-        "la a0, test_le_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "fle.s a0,fs0,fs1 ;"
-        "ret ;"
-        "test_le_data: ;"
-        ".float -111.5555 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-int __attribute((naked)) test_feq()
-{
-    asm volatile (
-        "la a0, test_eq_data ;"
-        "flw fs0, 0(a0) ;"
-        "flw fs1, 4(a0) ;"
-        "feq.s a0,fs0,fs1 ;"
-        "ret ;"
-        "test_eq_data: ;"
-        ".float -111.5555 ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-int __attribute((naked)) test_fmvxw()
-{
-    asm volatile (
-        "la a0, test_mvxw_data ;"
-        "flw fs0, 0(a0) ;"
-        "fmv.x.w a0,fs0 ;"
-        "ret ;"
-        "test_mvxw_data: ;"
-        ".float 553.538131 ;"
-        :  : :
-    );
-}
-
-float __attribute((naked)) test_fmvwx()
-{
-    asm volatile (
-        "la a0, test_mvwx_data ;"
-        "lw a1, 0(a0) ;"
-        "fmv.w.x fa0,a1 ;"
-        "ret ;"
-        "test_mvwx_data: ;"
-        ".int 0x440a6271 ;" // 553.53814697265625
-        :  : :
-    );
-}
-
-void FPUTest()
-{
-    setbuf(stdout, NULL);
-
-    const float a = 1.3124145f;
-    const float b = 553.538131f;
-    const float c = 33.784341f;
-    const float d = -111.5555f;
-    float r = 0.f;
-    int t = 554;
-    int s = 0x440a6271;
-    int ri = 0;
-
-    UARTWrite("Testing FPU instructions\n\n");
-
-    UARTWrite("fdiv\n");
-    r = test_div();
-    //printf("fdiv: %f / %f = %f\n", a, b, r);
-
-    UARTWrite("fmul\n");
-    r = test_mul();
-    //printf("fmul: %f * %f = %f\n", a, b, r);
-
-    UARTWrite("fadd\n");
-    r = test_add();
-    //printf("fadd: %f + %f = %f\n", a, b, r);
-
-    UARTWrite("fsub\n");
-    r = test_sub();
-    //printf("fsub: %f - %f = %f\n", a, b, r);
-
-    UARTWrite("fmin\n");
-    r = test_min();
-    //printf("fmin: min(%f,%f) = %f\n", a, b, r);
-
-    UARTWrite("fmax\n");
-    r = test_max();
-    //printf("fmax: max(%f,%f) = %f\n", a, b, r);
-
-    UARTWrite("fsqrt\n");
-    r = test_sqrt();
-    //printf("fsqrt: sqrt(%f) = %f\n", b, r);
-
-    UARTWrite("fmadd\n");
-    r = test_madd();
-    //printf("fmadd: %f*%f+%f = %f\n", a, b, c, r);
-
-    UARTWrite("fmsub\n");
-    r = test_msub();
-    //printf("fmsub: %f*%f-%f = %f\n", a, b, c, r);
-
-    UARTWrite("fnmsub\n");
-    r = test_nmsub();
-    //printf("fnmsub: -%f*%f+%f = %f\n", a, b, c, r);
-
-    UARTWrite("fnmadd\n");
-    r = test_nmadd();
-    //printf("fnmadd: -%f*%f-%f = %f\n", a, b, c, r);
-
-    UARTWrite("fcvt.w.s\n");
-    ri = test_fcvtws();
-    //printf("fcvt.w.s: %f = %d\n", b, ri);
-
-    UARTWrite("fcvt.s.w\n");
-    r = test_fcvtsw();
-    //printf("fcvt.s.w: %d = %f\n", t, r);
-
-    UARTWrite("fsgnj.s\n");
-    r = test_fsgnj();
-    //printf("fsgnj.s: sgnj(%f,%f) = %f\n", d, b, r);
-
-    UARTWrite("fsgnjn.s\n");
-    r = test_fsgnjn();
-    //printf("fsgnjn.s: sgnj(%f,%f) = %f\n", d, b, r);
-
-    UARTWrite("fsgnjx.s\n");
-    r = test_fsgnjx();
-    //printf("fsgnjx.s: sgnj(%f,%f) = %f\n", d, b, r);
-
-    UARTWrite("flt.s\n");
-    ri = test_flt();
-    //printf("flt.s: %f < %f ? = %d\n", d, b, ri);
-
-    UARTWrite("fle.s\n");
-    ri = test_fle();
-    //printf("fle.s: %f <= %f ? = %d\n", d, b, ri);
-
-    UARTWrite("feq.s\n");
-    ri = test_feq();
-    //printf("feq.s: %f == %f ? = %d\n", d, b, ri);
-
-    UARTWrite("fmv.x.w\n");
-    ri = test_fmvxw();
-    //printf("fmv.x.w: %f -> %.8X\n", b, ri);
-
-    UARTWrite("fmv.w.x\n");
-    r = test_fmvwx();
-    //printf("fmv.w.x: %.8X -> %f\n", s, r);
-
-    UARTWrite("FPU instruction test complete\n");
-}
-
-/*******************************/
-
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -459,6 +39,7 @@ const char *FRtoString[]={
 };
 
 static char commandline[512]="";
+static char filename[128]="";
 static int cmdlen = 0;
 static int parseit = 0;
 static int havedrive = 0;
@@ -562,6 +143,25 @@ void InstallIllegalInstructionHandler()
    swap_csr(mstatus, MSTATUS_MIE);
 }
 
+void DumpFile(const char *path)
+{
+    FIL fp;
+    FRESULT fr = f_open(&fp, path, FA_READ);
+    if (fr == FR_OK)
+    {
+        UINT bytesread = 0;
+        // Read at top of DDR3 memory
+        f_read(&fp, (void*)0x0, 64, &bytesread);
+        f_close(&fp);
+        // Dump contents
+        for (uint32_t i=0;i<64/4;++i)
+        {
+            UARTWriteHex(*((uint32_t*)(i*4)));
+            UARTWrite(", ");
+        }
+    }
+}
+
 void ListFiles(const char *path)
 {
    DIR dir;
@@ -593,26 +193,33 @@ void domemtest()
     UARTWrite("\nTesting DDR3 @00000000\n");
 
     int failed = 0;
-    for (uint32_t i=0x00000000; i<0x00000F00; i+=4)
+    for (uint32_t i=0x00000000; i<0x0000FFFF; i+=4)
     {
         failed += memTestDataBus((volatile datum*)i);
     }
-    UARTWrite("Walking-1s test (0x00000000-0x00000F00)\n");
+    UARTWrite("Data bus test (0x00000000-0x00000F00)\n");
+    UARTWrite(failed == 0 ? "passed (" : "failed (");
     UARTWriteDecimal(failed);
-    UARTWrite(" failures\n");
+    UARTWrite(" failures)\n");
 
-    datum* res = memTestAddressBus((volatile datum*)0x00000000, 4096);
+    int errortype = 0;
+    datum* res = memTestAddressBus((volatile datum*)0x00000000, 65536, &errortype);
     UARTWrite("Address bus test (0x00000000-4Kbytes)\n");
     UARTWrite(res == NULL ? "passed" : "failed");
     UARTWrite("\n");
     if (res != NULL)
     {
-        UARTWrite("Reason: address aliasing problem at 0x");
+        if (errortype == 0)
+            UARTWrite("Reason: Address bit stuck high at 0x");
+        if (errortype == 1)
+            UARTWrite("Reason: Address bit stuck low at 0x");
+        if (errortype == 2)
+            UARTWrite("Reason: Address bit shorted at 0x");
         UARTWriteHex((unsigned int)res);
         UARTWrite("\n");
     }
 
-    datum* res2 = memTestDevice((volatile datum *)0x00000000, 4096);
+    datum* res2 = memTestDevice((volatile datum *)0x00000000, 65536);
     UARTWrite("Memory device test (0x00000000-4Kbytes)\n");
     UARTWrite(res2 == NULL ? "passed" : "failed");
     UARTWrite("\n");
@@ -631,7 +238,7 @@ void ParseCommands()
 {
     if (!strcmp(commandline, "help")) // Help text
     {
-        UARTWrite("crash, dir, memtest, fpu\n");
+        UARTWrite("dir, memtest, dump filename, crash\n");
     }
 
     // See if we're requested to forcibly crash
@@ -647,11 +254,16 @@ void ParseCommands()
 		ListFiles("sd:");
     }
 
+    if (strstr(commandline, "dump") != nullptr) // List directory
+    {
+		UARTWrite("\nLLoading sd:");
+        strcpy(filename, "sd:");
+        strcat(filename, &(commandline[5]));
+		DumpFile(filename);
+    }
+
     if (!strcmp(commandline, "memtest")) // Memory test on scratchpad
         domemtest();
-
-    if (!strcmp(commandline, "fpu")) // Test the FPU instructions
-        FPUTest();
 
     parseit = 0;
     cmdlen = 0;
@@ -660,13 +272,6 @@ void ParseCommands()
 
 int main()
 {
-    // TEST
-    /*asm volatile (
-        "li a1, 0x00000040;"
-        "li a0, 0xCAFEBABE;"
-        "sw a0, 0(a1);"
-    );*/
-
     InstallIllegalInstructionHandler();
 
     // Clear all attributes, clear screen, print boot message

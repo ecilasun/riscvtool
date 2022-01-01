@@ -89,8 +89,9 @@ memTestDataBus(volatile datum * address)
  *
  **********************************************************************/
 datum * 
-memTestAddressBus(volatile datum * baseAddress, unsigned long nBytes)
+memTestAddressBus(volatile datum * baseAddress, unsigned long nBytes, int *errortype)
 {
+    *errortype = 0;
     unsigned long addressMask = (nBytes/sizeof(datum) - 1);
     unsigned long offset;
     unsigned long testOffset;
@@ -117,6 +118,7 @@ memTestAddressBus(volatile datum * baseAddress, unsigned long nBytes)
     {
         if (baseAddress[offset] != pattern)
         {
+            *errortype = 1; // Address bit stuck high
             return ((datum *) &baseAddress[offset]);
         }
     }
@@ -132,6 +134,7 @@ memTestAddressBus(volatile datum * baseAddress, unsigned long nBytes)
 
 		if (baseAddress[0] != pattern)
 		{
+            *errortype = 2; // Address bit stuck low
 			return ((datum *) &baseAddress[testOffset]);
 		}
 
@@ -139,6 +142,7 @@ memTestAddressBus(volatile datum * baseAddress, unsigned long nBytes)
         {
             if ((baseAddress[offset] != pattern) && (offset != testOffset))
             {
+                *errortype = 3; // Address bit shorted
                 return ((datum *) &baseAddress[testOffset]);
             }
         }

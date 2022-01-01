@@ -36,7 +36,7 @@ typedef uint32_t datum;
  * Function prototypes.
  */
 datum   memTestDataBus(volatile datum * address);
-datum * memTestAddressBus(volatile datum * baseAddress, unsigned long nBytes);
+datum * memTestAddressBus(volatile datum * baseAddress, unsigned long nBytes, int *errortype);
 datum * memTestDevice(volatile datum * baseAddress, unsigned long nBytes);
 
 
