@@ -192,21 +192,20 @@ void domemtest()
 {
     UARTWrite("\nTesting DDR3 @00000000\n");
 
+    UARTWrite("Data bus test (0x00000000-0x00000F00)...");
     int failed = 0;
     for (uint32_t i=0x00000000; i<0x0000FFFF; i+=4)
     {
         failed += memTestDataBus((volatile datum*)i);
     }
-    UARTWrite("Data bus test (0x00000000-0x00000F00)\n");
     UARTWrite(failed == 0 ? "passed (" : "failed (");
     UARTWriteDecimal(failed);
     UARTWrite(" failures)\n");
 
+    UARTWrite("Address bus test (0x00000000-4Kbytes)...");
     int errortype = 0;
     datum* res = memTestAddressBus((volatile datum*)0x00000000, 65536, &errortype);
-    UARTWrite("Address bus test (0x00000000-4Kbytes)\n");
-    UARTWrite(res == NULL ? "passed" : "failed");
-    UARTWrite("\n");
+    UARTWrite(res == NULL ? "passed\n" : "failed\n");
     if (res != NULL)
     {
         if (errortype == 0)
@@ -219,10 +218,9 @@ void domemtest()
         UARTWrite("\n");
     }
 
+    UARTWrite("Memory device test (0x00000000-4Kbytes)...");
     datum* res2 = memTestDevice((volatile datum *)0x00000000, 65536);
-    UARTWrite("Memory device test (0x00000000-4Kbytes)\n");
-    UARTWrite(res2 == NULL ? "passed" : "failed");
-    UARTWrite("\n");
+    UARTWrite(res2 == NULL ? "passed\n" : "failed\n");
     if (res2 != NULL)
     {
         UARTWrite("Reason: incorrect value read at 0x");
