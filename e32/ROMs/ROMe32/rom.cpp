@@ -149,7 +149,7 @@ void DumpFile(const char *path)
     FRESULT fr = f_open(&fp, path, FA_READ);
     if (fr == FR_OK)
     {
-        const uint32_t baseaddress = 0xA0000000;
+        const uint32_t baseaddress = 0x00000000; // S-RAM
         UINT bytesread = 0;
         // Read at top of DDR3 memory
         f_read(&fp, (void*)baseaddress, 16384, &bytesread);
@@ -237,7 +237,7 @@ void ParseCommands()
 {
     if (!strcmp(commandline, "help")) // Help text
     {
-        UARTWrite("dir, memtest, dump filename, crash\n");
+        UARTWrite("dir, memtest, load filename, crash\n");
     }
 
     // See if we're requested to forcibly crash
@@ -253,13 +253,15 @@ void ParseCommands()
 		ListFiles("sd:");
     }
 
-    if (strstr(commandline, "dump") != nullptr) // List directory
+    if (strstr(commandline, "load") != nullptr) // Load file to S-RAM
     {
-		UARTWrite("\nDumping contents of ");
         strcpy(filename, "sd:");
         strcat(filename, &(commandline[5]));
+
+		UARTWrite("\nLoading '");
 		UARTWrite(filename);
-        UARTWrite("\n");
+        UARTWrite("'\n");
+
 		DumpFile(filename);
     }
 
@@ -277,15 +279,15 @@ int main()
 
     // Clear all attributes, clear screen, print boot message
     UARTWrite("\033[0m\033[2J\n");
-    UARTWrite("┌──────┬───────────────────────────────────────────┐\n");
-    UARTWrite("│ CPU  │ E32 RISC-V (rv32imfZicsr) @100Mhz         │\n");
-    UARTWrite("│ BUS  │ AXI4-Lite @100MHz                         │\n");
-    UARTWrite("├──────┼───────────────────────────────────────────┤\n");
-    UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006)     │\n");
-    UARTWrite("│ SRAM │ 0xA0000000-0xA0003FFF (scratchpad)        │\n");
-    UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL)   │\n");
-    UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                      │\n");
-    UARTWrite("└──────┴───────────────────────────────────────────┘\n\n");
+    UARTWrite("┌──────┬─────────────────────────────────────────────────────┐\n");
+    UARTWrite("│ CPU  │ E32 RISC-V (rv32imfZicsr) @100Mhz                   │\n");
+    UARTWrite("│ BUS  │ AXI4-Lite @100MHz                                   │\n");
+    UARTWrite("├──────┼─────────────────────────────────────────────────────┤\n");
+    UARTWrite("│ SRAM │ 0x00000000-0x0001FFFF (Scratchpad, 128Kbytes)       │\n");
+    UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006, 64Kbytes)     │\n");
+    UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL)             │\n");
+    UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                                │\n");
+    UARTWrite("└──────┴─────────────────────────────────────────────────────┘\n\n");
 
     FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);

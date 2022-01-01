@@ -13,17 +13,22 @@ void UARTFlush()
 
 void UARTPutChar(const char _char)
 {
-    // Do not write and wait until output fifo has space before next character
-    while (*IO_UARTTXFIFOFull) { /*stall*/ }
+    // Warning! This might overflow the output FIFO.
+    // It is advised to call UARTFlush() before using it.
     *IO_UARTRXTX = _char;
 }
 
 void UARTWrite(const char *_message)
 {
-    // Emit all characters
+    // Emit all characters from the input string
     int i = 0;
     while (_message[i]!=0)
+    {
         UARTPutChar(_message[i++]);
+        if (i%128==0) // time to flush the FIFO
+            UARTFlush();
+    }
+    UARTFlush(); // One last flush at the end
 }
 
 void UARTWriteHexByte(const uint8_t i)
