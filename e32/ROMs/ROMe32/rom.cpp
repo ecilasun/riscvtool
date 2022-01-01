@@ -50,6 +50,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
 
    uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
    uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16]
+   uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
    uint32_t code = cause & 0x7FFFFFFF;
 
    if (cause & 0x80000000) // Interrupt
@@ -102,11 +103,13 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
 
          UARTWrite("┌───────────────────────────────────────────────────┐\n");
          UARTWrite("│ Software Failure. Press reset button to continue. │\n");
-         UARTWrite("│        Guru Meditation #");
+         UARTWrite("│   Guru Meditation #");
          UARTWriteHex((uint32_t)cause); // Cause
          UARTWrite(".");
          UARTWriteHex((uint32_t)value); // Failed instruction
-         UARTWrite("         │\n");
+         UARTWrite(" @");
+         UARTWriteHex((uint32_t)PC); // PC
+         UARTWrite("    │\n");
          UARTWrite("└───────────────────────────────────────────────────┘\n");
          UARTWrite("\033[0m\n");
 
