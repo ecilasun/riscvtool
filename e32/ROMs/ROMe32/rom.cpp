@@ -236,27 +236,42 @@ void domemtest()
       UARTWrite("Scratchpad memory does not appear to be working correctly.\n");
 }
 
+void CLS()
+{
+    UARTWrite("\033[0m\033[2J");
+}
+
+void DeviceInfo()
+{
+    UARTWrite("\n┌──────┬─────────────────────────────────────────────────────┐\n");
+    UARTWrite("│ CPU  │ E32 RISC-V (rv32imfZicsr) @100Mhz                   │\n");
+    UARTWrite("│ BUS  │ AXI4-Lite @100MHz                                   │\n");
+    UARTWrite("├──────┼─────────────────────────────────────────────────────┤\n");
+    UARTWrite("│ SRAM │ 0x00000000-0x0001FFFF (Scratchpad, 128Kbytes)       │\n");
+    UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006, 64Kbytes)     │\n");
+    UARTWrite("│ DDR3 │ 0x80000000-0x8FFFFFFF (RAM 256MBytes)               │\n");
+    UARTWrite("│ UART │ 0x2000000n (n=8:R/W n=4:AVAIL n=0:FULL)             │\n");
+    UARTWrite("│ SPI  │ 0x2000100n (n=0:R/W)                                │\n");
+    UARTWrite("└──────┴─────────────────────────────────────────────────────┘\n\n");
+}
+
 void ParseCommands()
 {
     if (!strcmp(commandline, "help")) // Help text
     {
-        UARTWrite("dir, memtest, load filename, crash\n");
+        UARTWrite("dir, memtest, load filename, cls, info, crash\n");
     }
-
-    // See if we're requested to forcibly crash
-    if (!strcmp(commandline, "crash")) // Test crash handler
+    else if (!strcmp(commandline, "crash")) // Test crash handler
     {
         UARTWrite("\nForcing crash via illegal instruction.\n");
         asm volatile(".dword 0xBADF00D0");
     }
-
-    if (!strcmp(commandline, "dir")) // List directory
+    else if (!strcmp(commandline, "dir")) // List directory
     {
 		UARTWrite("\nListing files on volume sd:\n");
 		ListFiles("sd:");
     }
-
-    if (strstr(commandline, "load") != nullptr) // Load file to S-RAM
+    else if (strstr(commandline, "load") != nullptr) // Load file to S-RAM
     {
         strcpy(filename, "sd:");
         strcat(filename, &(commandline[5]));
@@ -267,9 +282,36 @@ void ParseCommands()
 
 		DumpFile(filename);
     }
-
-    if (!strcmp(commandline, "memtest")) // Memory test on scratchpad
+    else if (!strcmp(commandline, "memtest")) // Memory test on scratchpad
         domemtest();
+    else if (!strcmp(commandline, "cls")) // Clear screen
+        CLS();
+    else if (!strcmp(commandline, "info")) // Device info
+        DeviceInfo();
+    else // Unknown command, assume this is a program name from root directory of the SDCard
+    {
+        if (strlen(commandline)>1)
+        {
+            // Build a file name from the input string
+            strcpy(filename, "sd:");
+            strcat(filename, commandline);
+            strcat(filename, ".elf");
+
+            FIL fp;
+            FRESULT fr = f_open(&fp, filename, FA_READ);
+            if (fr == FR_OK)
+            {
+                // TODO: load+run ELF
+                f_close(&fp);
+            }
+            else
+            {
+                UARTWrite("Executable ");
+                UARTWrite(filename);
+                UARTWrite(" not found\n");
+            }
+        }
+    }
 
     parseit = 0;
     cmdlen = 0;
@@ -281,17 +323,10 @@ int main()
     InstallIllegalInstructionHandler();
 
     // Clear all attributes, clear screen, print boot message
-    UARTWrite("\033[0m\033[2J\n");
-    UARTWrite("┌──────┬─────────────────────────────────────────────────────┐\n");
-    UARTWrite("│ CPU  │ E32 RISC-V (rv32imfZicsr) @100Mhz                   │\n");
-    UARTWrite("│ BUS  │ AXI4-Lite @100MHz                                   │\n");
-    UARTWrite("├──────┼─────────────────────────────────────────────────────┤\n");
-    UARTWrite("│ SRAM │ 0x00000000-0x0001FFFF (Scratchpad, 128Kbytes)       │\n");
-    UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006, 64Kbytes)     │\n");
-    UARTWrite("│ DDR3 │ 0x80000000-0x8FFFFFFF (RAM 256MBytes)               │\n");
-    UARTWrite("│ UART │ 0xA000000X (X=8:R/W X=4:AVAIL X=0:FULL)             │\n");
-    UARTWrite("│ SPI  │ 0xB000000X (X=0:R/W)                                │\n");
-    UARTWrite("└──────┴─────────────────────────────────────────────────────┘\n\n");
+    CLS();
+    UARTWrite("┌──────────────────────────────────┐\n");
+    UARTWrite("│ E32OS v0.1 (c)2022 Engin Cilasun │\n");
+    UARTWrite("└──────────────────────────────────┘\n\n");
 
     FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
