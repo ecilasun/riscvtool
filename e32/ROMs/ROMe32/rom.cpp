@@ -288,8 +288,9 @@ int main()
     UARTWrite("├──────┼─────────────────────────────────────────────────────┤\n");
     UARTWrite("│ SRAM │ 0x00000000-0x0001FFFF (Scratchpad, 128Kbytes)       │\n");
     UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006, 64Kbytes)     │\n");
-    UARTWrite("│ UART │ 0x8000000X (X=8:R/W X=4:AVAIL X=0:FULL)             │\n");
-    UARTWrite("│ SPI  │ 0x9000000X (X=0:R/W)                                │\n");
+    UARTWrite("│ DDR3 │ 0x80000000-0x8FFFFFFF (RAM 256MBytes)               │\n");
+    UARTWrite("│ UART │ 0xA000000X (X=8:R/W X=4:AVAIL X=0:FULL)             │\n");
+    UARTWrite("│ SPI  │ 0xB000000X (X=0:R/W)                                │\n");
     UARTWrite("└──────┴─────────────────────────────────────────────────────┘\n\n");
 
     FATFS Fs;

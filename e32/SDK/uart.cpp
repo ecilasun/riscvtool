@@ -2,9 +2,9 @@
 
 #include <math.h> // For abs()
 
-volatile uint8_t  *IO_UARTRXTX            = (volatile uint8_t* )  0x80000008; // UART send/receive port (write/read)
-volatile uint32_t *IO_UARTRXByteAvailable = (volatile uint32_t* ) 0x80000004; // UART input status (read)
-volatile uint32_t *IO_UARTTXFIFOFull      = (volatile uint32_t* ) 0x80000000; // UART output status (read)
+volatile uint8_t  *IO_UARTRXTX            = (volatile uint8_t* )  0xA0000008; // UART send/receive port (write/read)
+volatile uint32_t *IO_UARTRXByteAvailable = (volatile uint32_t* ) 0xA0000004; // UART input status (read)
+volatile uint32_t *IO_UARTTXFIFOFull      = (volatile uint32_t* ) 0xA0000000; // UART output status (read)
 
 void UARTFlush()
 {
