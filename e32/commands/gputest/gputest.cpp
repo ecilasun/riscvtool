@@ -30,7 +30,8 @@ int main()
         uint32_t baseaddress = y*512;
         for (uint32_t x=0; x<320; ++x)
         {
-            GPUFB0_8[baseaddress+x] = 0xFF;
+            if (x==y)
+                GPUFB0_8[baseaddress+x] = 0xFF;
         }
     }
 
