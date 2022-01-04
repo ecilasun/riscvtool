@@ -27,10 +27,12 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
   g = max(0.0f, min(1.0f, g));
   b = max(0.0f, min(1.0f, b));
 
-  uint8_t R = (uint8_t)(255.0f * r);
-//  uint8_t G = (uint8_t)(255.0f * g);
-//  uint8_t B = (uint8_t)(255.0f * b);
-  GPUFB0[x+y*512] = R;
+  int R = int(255.f*r) / 32;
+  int G = int(255.f*g) / 32;
+  int B = int(255.f*b) / 64;
+  int RGB = (uint8_t)((B<<6) | (G<<3) | R);
+
+  GPUFB0[x+y*512] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -327,7 +329,19 @@ void init_scene() {
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
 
+volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x40040000;
+#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 int main() {
+    // Set RGB palette
+    int target = 0;
+    for (int b=0;b<4;++b)
+    for (int g=0;g<8;++g)
+    for (int r=0;r<8;++r)
+    {
+        GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
+        ++target;
+    }
+ 
     init_scene();
     render(spheres, nb_spheres, lights, nb_lights);
     return 0;

@@ -51,7 +51,7 @@ int main()
     }
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
-      UARTWrite("Scratchpad memory does not appear to be working correctly.\n");
+      UARTWrite("Memory device does not appear to be working correctly.\n");
 
     return 0;
 }
