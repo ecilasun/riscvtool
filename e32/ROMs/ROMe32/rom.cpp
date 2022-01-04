@@ -10,6 +10,7 @@
 
 #include "core.h"
 #include "uart.h"
+#include "elf.h"
 #include "sdcard.h"
 #include "fat32/ff.h"
 
@@ -236,30 +237,113 @@ void domemtest()
       UARTWrite("Scratchpad memory does not appear to be working correctly.\n");
 }
 
+volatile uint32_t *GPUFB0 = (volatile uint32_t* )0x40000000;
+volatile uint32_t *GPUFB1 = (volatile uint32_t* )0x40008000;
+volatile uint32_t *GPUCB0 = (volatile uint32_t* )0x40009000;
+void doGPUtest()
+{
+    static uint32_t incrval = 0;
+
+    const uint32_t wordspertile=256; // 32x32 pixels per tile, therefore 32x8=256 words per tile
+    for (uint32_t tile_y=0;tile_y<7;++tile_y) // 7 vertical tiles (224/32)
+    {
+        for (uint32_t tile_x=0;tile_x<10;++tile_x) // 10 horizontal tiles (320/32)
+        {
+            uint32_t tile_top = (tile_y*10+tile_x)*wordspertile;
+            for (uint32_t words=0; words<wordspertile; ++words)
+                GPUFB0[tile_top+words] = (tile_x^tile_y) + incrval;
+        }
+    }
+    ++incrval;
+}
+
 void CLS()
 {
     UARTWrite("\033[0m\033[2J");
 }
 
-void DeviceInfo()
+void CLV()
 {
-    UARTWrite("\n┌──────┬─────────────────────────────────────────────────────┐\n");
-    UARTWrite("│ CPU  │ E32 RISC-V (rv32imfZicsr) @100Mhz                   │\n");
-    UARTWrite("│ BUS  │ AXI4-Lite @100MHz                                   │\n");
-    UARTWrite("├──────┼─────────────────────────────────────────────────────┤\n");
-    UARTWrite("│ SRAM │ 0x00000000-0x0001FFFF (Scratchpad, 128Kbytes)       │\n");
-    UARTWrite("│ BRAM │ 0x10000000-0x1000FFFF (RAM/ROM v0006, 64Kbytes)     │\n");
-    UARTWrite("│ DDR3 │ 0x80000000-0x8FFFFFFF (RAM 256MBytes)               │\n");
-    UARTWrite("│ UART │ 0x2000000n (n=8:R/W n=4:AVAIL n=0:FULL)             │\n");
-    UARTWrite("│ SPI  │ 0x2000100n (n=0:R/W)                                │\n");
-    UARTWrite("└──────┴─────────────────────────────────────────────────────┘\n\n");
+    // Clear the video buffer
+    const uint32_t wordspertile=256; // 32x32 pixels per tile, therefore 32x8=256 words per tile
+    for (uint32_t tile_y=0;tile_y<7;++tile_y) // 7 vertical tiles (224/32)
+    {
+        for (uint32_t tile_x=0;tile_x<10;++tile_x) // 10 horizontal tiles (320/32)
+        {
+            uint32_t tile_top = (tile_y*10+tile_x)*wordspertile;
+            for (uint32_t words=0; words<wordspertile; ++words)
+                GPUFB0[tile_top+words] = 0xFFFFFFFF;
+        }
+    }
+}
+
+/*void FlushDataCache()
+{
+   // Force D$ flush so that contents are visible by I$
+   // We do this by forcing a dummy load of DWORDs from 0 to 2048
+   // to force previous contents to be written back to DDR3
+   for (uint32_t i=0; i<2048; ++i)
+   {
+      uint32_t dummyread = DDR3Start[i];
+      // This is to make sure compiler doesn't eat our reads
+      // and shuts up about unused variable
+      asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
+   }
+}*/
+
+void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
+{
+   if (fheader->m_Magic != 0x464C457F)
+   {
+       UARTWrite(" failed: expecting 0x7F+'ELF'");
+       return;
+   }
+
+   jumptarget = fheader->m_Entry;
+
+   // Read program header
+   SElfProgramHeader32 pheader;
+   f_lseek(fp, fheader->m_PHOff);
+   UINT bytesread;
+   f_read(fp, &pheader, sizeof(SElfProgramHeader32), &bytesread);
+
+   // Read string table section header
+   unsigned int stringtableindex = fheader->m_SHStrndx;
+   SElfSectionHeader32 stringtablesection;
+   f_lseek(fp, fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
+   f_read(fp, &stringtablesection, sizeof(SElfSectionHeader32), &bytesread);
+
+   // Allocate memory for and read string table
+   char *names = (char *)malloc(stringtablesection.m_Size);
+   f_lseek(fp, stringtablesection.m_Offset);
+   f_read(fp, names, stringtablesection.m_Size, &bytesread);
+
+   // Load all loadable sections
+   for(unsigned short i=0; i<fheader->m_SHNum; ++i)
+   {
+      // Seek-load section headers as needed
+      SElfSectionHeader32 sheader;
+      f_lseek(fp, fheader->m_SHOff+fheader->m_SHEntSize*i);
+      f_read(fp, &sheader, sizeof(SElfSectionHeader32), &bytesread);
+
+      // If this is a section worth loading...
+      if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
+      {
+         // ...place it in memory
+         uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
+         f_lseek(fp, sheader.m_Offset);
+         f_read(fp, elfsectionpointer, sheader.m_Size, &bytesread);
+      }
+   }
+
+   free(names);
 }
 
 void ParseCommands()
 {
     if (!strcmp(commandline, "help")) // Help text
     {
-        UARTWrite("dir, memtest, load filename, cls, info, crash\n");
+        UARTWrite("dir, memtest, gputest, load filename, cls, crash\n");
     }
     else if (!strcmp(commandline, "crash")) // Test crash handler
     {
@@ -284,10 +368,13 @@ void ParseCommands()
     }
     else if (!strcmp(commandline, "memtest")) // Memory test on scratchpad
         domemtest();
-    else if (!strcmp(commandline, "cls")) // Clear screen
+    else if (!strcmp(commandline, "gputest")) // GPU access test
+        doGPUtest();
+    else if (!strcmp(commandline, "cls")) // Clear terminal screen and the video buffer
+    {
         CLS();
-    else if (!strcmp(commandline, "info")) // Device info
-        DeviceInfo();
+        CLV();
+    }
     else // Unknown command, assume this is a program name from root directory of the SDCard
     {
         if (strlen(commandline)>1)
@@ -301,8 +388,17 @@ void ParseCommands()
             FRESULT fr = f_open(&fp, filename, FA_READ);
             if (fr == FR_OK)
             {
-                // TODO: load+run ELF
+                SElfFileHeader32 fheader;
+                UINT readsize;
+                f_read(&fp, &fheader, sizeof(fheader), &readsize);
+                uint32_t branchaddress;
+                ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
                 f_close(&fp);
+                asm volatile(
+                    "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
+                    "jalr s0;" // Branch with the intent to return back here
+                    : "=m" (branchaddress) : : 
+                );
             }
             else
             {

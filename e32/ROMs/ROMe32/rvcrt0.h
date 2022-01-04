@@ -1,5 +1,5 @@
 #if defined(__riscv_compressed)
-#error ("HALT! The target SoC NekoIchi does not support compressed instruction set!")
+#error ("HALT! The target SoC does not support compressed instruction set!")
 #endif
 
 extern "C"
