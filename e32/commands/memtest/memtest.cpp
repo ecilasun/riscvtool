@@ -12,7 +12,7 @@
 
 int main()
 {
-    UARTWrite("\nTesting S-RAM on AXI4-Lite bus\n");
+    UARTWrite("\nTesting DDR3 on AXI4-Lite bus\n");
 
     UARTWrite("Data bus test (0x80000000-0x80003FFF)...");
     int failed = 0;
