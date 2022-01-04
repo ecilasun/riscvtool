@@ -13,6 +13,14 @@ typedef int BOOL;
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
+// The Bayer matrix for ordered dithering
+const uint8_t dither[4][4] = {
+  { 0, 8, 2,10},
+  {12, 4,14, 6},
+  { 3,11, 1, 9},
+  {15, 7,13, 5}
+};
+
 /*******************************************************************/
 
 // Size of the screen
@@ -27,9 +35,17 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
   g = max(0.0f, min(1.0f, g));
   b = max(0.0f, min(1.0f, b));
 
-  int R = int(255.f*r) / 32;
-  int G = int(255.f*g) / 32;
-  int B = int(255.f*b) / 64;
+  uint16_t R = (uint16_t)(r*255.0f);
+  uint16_t G = (uint16_t)(g*255.0f);
+  uint16_t B = (uint16_t)(b*255.0f);
+
+  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
+  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
+  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
+
+  R = ROFF/32;
+  G = GOFF/32;
+  B = BOFF/64;
   int RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
   GPUFB0[x+y*512] = RGB;
