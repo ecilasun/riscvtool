@@ -14,6 +14,9 @@ thirdparty_libs = ../../3rdparty
 
 folders = \
 	info \
+	gputest \
+	memtest \
+	tinyraytracer \
 
 # Rules
 

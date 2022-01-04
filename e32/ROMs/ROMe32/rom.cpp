@@ -14,8 +14,6 @@
 #include "sdcard.h"
 #include "fat32/ff.h"
 
-#include "memtest/memtest.h"
-
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -193,89 +191,25 @@ void ListFiles(const char *path)
       UARTWrite(FRtoString[re]);
 }
 
-void domemtest()
-{
-    UARTWrite("\nTesting S-RAM on AXI4-Lite bus\n");
-
-    UARTWrite("Data bus test (0x00000000-0x00003FFF)...");
-    int failed = 0;
-    for (uint32_t i=0x00000000; i<0x00003FFF; i+=4)
-    {
-        failed += memTestDataBus((volatile datum*)i);
-    }
-    UARTWrite(failed == 0 ? "passed (" : "failed (");
-    UARTWriteDecimal(failed);
-    UARTWrite(" failures)\n");
-
-    UARTWrite("Address bus test (0x00000000-0x00003FFF)...");
-    int errortype = 0;
-    datum* res = memTestAddressBus((volatile datum*)0x00000000, 16384, &errortype);
-    UARTWrite(res == NULL ? "passed\n" : "failed\n");
-    if (res != NULL)
-    {
-        if (errortype == 0)
-            UARTWrite("Reason: Address bit stuck high at 0x");
-        if (errortype == 1)
-            UARTWrite("Reason: Address bit stuck low at 0x");
-        if (errortype == 2)
-            UARTWrite("Reason: Address bit shorted at 0x");
-        UARTWriteHex((unsigned int)res);
-        UARTWrite("\n");
-    }
-
-    UARTWrite("Memory device test (0x00000000-0x00003FFF)...");
-    datum* res2 = memTestDevice((volatile datum *)0x00000000, 16384);
-    UARTWrite(res2 == NULL ? "passed\n" : "failed\n");
-    if (res2 != NULL)
-    {
-        UARTWrite("Reason: incorrect value read at 0x");
-        UARTWriteHex((unsigned int)res2);
-        UARTWrite("\n");
-    }
-
-    if ((failed != 0) | (res != NULL) | (res2 != NULL))
-      UARTWrite("Scratchpad memory does not appear to be working correctly.\n");
-}
-
-volatile uint32_t *GPUFB0 = (volatile uint32_t* )0x40000000;
-volatile uint32_t *GPUFB1 = (volatile uint32_t* )0x40008000;
-volatile uint32_t *GPUCB0 = (volatile uint32_t* )0x40009000;
-void doGPUtest()
-{
-    static uint32_t incrval = 0;
-
-    const uint32_t wordspertile=256; // 32x32 pixels per tile, therefore 32x8=256 words per tile
-    for (uint32_t tile_y=0;tile_y<7;++tile_y) // 7 vertical tiles (224/32)
-    {
-        for (uint32_t tile_x=0;tile_x<10;++tile_x) // 10 horizontal tiles (320/32)
-        {
-            uint32_t tile_top = (tile_y*10+tile_x)*wordspertile;
-            for (uint32_t words=0; words<wordspertile; ++words)
-                GPUFB0[tile_top+words] = (tile_x^tile_y) + incrval;
-        }
-    }
-    ++incrval;
-}
-
 void CLS()
 {
     UARTWrite("\033[0m\033[2J");
 }
 
-void CLV()
-{
-    // Clear the video buffer
-    const uint32_t wordspertile=256; // 32x32 pixels per tile, therefore 32x8=256 words per tile
-    for (uint32_t tile_y=0;tile_y<7;++tile_y) // 7 vertical tiles (224/32)
-    {
-        for (uint32_t tile_x=0;tile_x<10;++tile_x) // 10 horizontal tiles (320/32)
-        {
-            uint32_t tile_top = (tile_y*10+tile_x)*wordspertile;
-            for (uint32_t words=0; words<wordspertile; ++words)
-                GPUFB0[tile_top+words] = 0xFFFFFFFF;
-        }
-    }
-}
+// void CLV()
+// {
+//     // Clear the video buffer
+//     const uint32_t wordspertile=256; // 32x32 pixels per tile, therefore 32x8=256 words per tile
+//     for (uint32_t tile_y=0;tile_y<7;++tile_y) // 7 vertical tiles (224/32)
+//     {
+//         for (uint32_t tile_x=0;tile_x<10;++tile_x) // 10 horizontal tiles (320/32)
+//         {
+//             uint32_t tile_top = (tile_y*10+tile_x)*wordspertile;
+//             for (uint32_t words=0; words<wordspertile; ++words)
+//                 GPUFB0[tile_top+words] = 0xFFFFFFFF;
+//         }
+//     }
+// }
 
 /*void FlushDataCache()
 {
@@ -343,7 +277,7 @@ void ParseCommands()
 {
     if (!strcmp(commandline, "help")) // Help text
     {
-        UARTWrite("dir, memtest, gputest, load filename, cls, crash\n");
+        UARTWrite("dir, load filename, cls, crash\n");
     }
     else if (!strcmp(commandline, "crash")) // Test crash handler
     {
@@ -366,14 +300,10 @@ void ParseCommands()
 
 		DumpFile(filename);
     }
-    else if (!strcmp(commandline, "memtest")) // Memory test on scratchpad
-        domemtest();
-    else if (!strcmp(commandline, "gputest")) // GPU access test
-        doGPUtest();
-    else if (!strcmp(commandline, "cls")) // Clear terminal screen and the video buffer
+    else if (!strcmp(commandline, "cls")) // Clear terminal screen
     {
         CLS();
-        CLV();
+        //CLV();
     }
     else // Unknown command, assume this is a program name from root directory of the SDCard
     {
