@@ -27,7 +27,7 @@ uint64_t E32ReadTime()
 
 uint32_t ClockToMs(uint64_t clk)
 {
-   return uint32_t(clk / ONE_SECOND_IN_TICKS);
+   return uint32_t(clk / ONE_MILLISECOND_IN_TICKS);
 }
 
 void E32SetTimeCompare(const uint64_t future)

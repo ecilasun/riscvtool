@@ -6,6 +6,7 @@
 #include <encoding.h>
 
 #define ONE_SECOND_IN_TICKS 10'000'000
+#define ONE_MILLISECOND_IN_TICKS 10'000
 
 uint64_t E32ReadTime();
 uint32_t ClockToMs(uint64_t clk);
