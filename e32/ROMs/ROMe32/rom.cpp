@@ -43,6 +43,8 @@ static int cmdlen = 0;
 static int parseit = 0;
 static int havedrive = 0;
 
+FATFS Fs;
+
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
    // See https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf mcause section for the cause codes.
@@ -65,18 +67,24 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
             // Read incoming character
             uint8_t incoming = *IO_UARTRXTX;
             // Zero terminated command line
-            if (incoming != 13)
+            if (incoming == 13)
+                parseit = 1;
+            else if (incoming == 8)
             {
-                commandline[cmdlen++] = incoming;
+                cmdlen--;
+                if (cmdlen < 0) cmdlen = 0;
                 commandline[cmdlen] = 0;
             }
             else
-                parseit = 1;
-            if (cmdlen>=511) cmdlen = 511;
+            {
+                commandline[cmdlen++] = incoming;
+                if (cmdlen>=511) cmdlen = 511;
+                commandline[cmdlen] = 0;
+            }
             // Write back to UART
             *IO_UARTRXTX = incoming;
-            UARTFlush();
          }
+         UARTFlush();
 
          //*IO_UARTRXTX = 0x11; // XON
          //UARTFlush();
@@ -93,37 +101,72 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
    }
    else // Exception
    {
-         UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
+        // NOTE: One use of illegal instruction exception would be to do software emulation of the instruction in 'value'.
+        switch (cause)
+        {
+            case CAUSE_BREAKPOINT:
+                // TODO: Debugger related
+            break;
 
-         // reverse on: \033[7m
-         // blink on: \033[5m
-         // Set foreground color to red and bg color to black
-         UARTWrite("\033[31m\033[40m");
+            /*case CAUSE_USER_ECALL:
+            case CAUSE_SUPERVISOR_ECALL:
+            case CAUSE_HYPERVISOR_ECALL:*/
+            case CAUSE_MACHINE_ECALL:
+                // TODO: SYSCALL
+                UARTWrite("\033[31m\033[40m");
 
-         UARTWrite("┌───────────────────────────────────────────────────┐\n");
-         UARTWrite("│ Software Failure. Press reset button to continue. │\n");
-         UARTWrite("│   Guru Meditation #");
-         UARTWriteHex((uint32_t)cause); // Cause
-         UARTWrite(".");
-         UARTWriteHex((uint32_t)value); // Failed instruction
-         UARTWrite(" @");
-         UARTWriteHex((uint32_t)PC); // PC
-         UARTWrite("    │\n");
-         UARTWrite("└───────────────────────────────────────────────────┘\n");
-         UARTWrite("\033[0m\n");
+                UARTWrite("┌───────────────────────────────────────────────────┐\n");
+                UARTWrite("│ Unimplemented machine ECALL. Program will resume. │\n");
+                UARTWrite("│ #");
+                UARTWriteHex((uint32_t)cause); // Cause
+                UARTWrite(".");
+                UARTWriteHex((uint32_t)value); // Failed instruction
+                UARTWrite(" @");
+                UARTWriteHex((uint32_t)PC); // PC
+                UARTWrite("                      │\n");
+                UARTWrite("└───────────────────────────────────────────────────┘\n");
+                UARTWrite("\033[0m\n");
+            break;
 
-         // Put core to endless sleep
-         while(1) {
-            asm volatile("wfi;");
-         }
+            /*case CAUSE_MISALIGNED_FETCH:
+            case CAUSE_FETCH_ACCESS:
+            case CAUSE_ILLEGAL_INSTRUCTION:
+            case CAUSE_MISALIGNED_LOAD:
+            case CAUSE_LOAD_ACCESS:
+            case CAUSE_MISALIGNED_STORE:
+            case CAUSE_STORE_ACCESS:
+            case CAUSE_FETCH_PAGE_FAULT:
+            case CAUSE_LOAD_PAGE_FAULT:
+            case CAUSE_STORE_PAGE_FAULT:*/
+            default:
+            {
+                UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
 
-         // Could alternatively handle each separately via:
-         // switch (code)
-         // {
-         //    case CAUSE_ILLEGAL_INSTRUCTION:
+                // reverse on: \033[7m
+                // blink on: \033[5m
+                // Set foreground color to red and bg color to black
+                UARTWrite("\033[31m\033[40m");
 
-         // Another use would be to do software emulation of the instruction in 'value'.
-   }
+                UARTWrite("┌───────────────────────────────────────────────────┐\n");
+                UARTWrite("│ Software Failure. Press reset button to continue. │\n");
+                UARTWrite("│   Guru Meditation #");
+                UARTWriteHex((uint32_t)cause); // Cause
+                UARTWrite(".");
+                UARTWriteHex((uint32_t)value); // Failed instruction
+                UARTWrite(" @");
+                UARTWriteHex((uint32_t)PC); // PC
+                UARTWrite("    │\n");
+                UARTWrite("└───────────────────────────────────────────────────┘\n");
+                UARTWrite("\033[0m\n");
+
+                // Put core to endless sleep
+                while(1) {
+                    asm volatile("wfi;");
+                }
+                break; // Doesn't make sense but to make compiler happy...
+            }
+        }
+    }
 }
 
 void InstallIllegalInstructionHandler()
@@ -156,13 +199,22 @@ void ListFiles(const char *path)
          re = f_readdir(&dir, &finf);
          if (re == FR_OK && dir.sect!=0)
          {
-            //if (strstr(finf.fname, ".elf"))
+            char *isexe = strstr(finf.fname, ".elf");
+            int isdir = finf.fattrib&AM_DIR;
+            if (isdir)
+                UARTWrite("\033[32m"); // Green
+            if (isexe!=nullptr)
+                UARTWrite("\033[33m"); // Yellow
+            UARTWrite(finf.fname);
+            if (isdir)
+                UARTWrite(" <dir>");
+            else
             {
-               UARTWrite(finf.fname);
-               UARTWrite(" ");
-               UARTWriteDecimal((int32_t)finf.fsize);
-               UARTWrite("b\n");
+                UARTWrite(" ");
+                UARTWriteDecimal((int32_t)finf.fsize);
+                UARTWrite("b");
             }
+            UARTWrite("\033[0m\n");
          }
       } while(re == FR_OK && dir.sect!=0);
       f_closedir(&dir);
@@ -229,12 +281,12 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
       // If this is a section worth loading...
       if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
       {
-         UARTWriteHex(sheader.m_Addr);
+         /*UARTWriteHex(sheader.m_Addr);
          UARTWrite(" @");
          UARTWriteHex(sheader.m_Offset);
          UARTWrite(" ");
          UARTWriteHex(sheader.m_Size);
-         UARTWrite("\n");
+         UARTWrite("\n");*/
          // ...place it in memory
          uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
          f_lseek(fp, sheader.m_Offset);
@@ -280,6 +332,9 @@ void ParseCommands()
                 uint32_t branchaddress;
                 ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
                 f_close(&fp);
+                // Unmount filesystem before passing control
+                f_mount(nullptr, "sd:", 1);
+
                 FlushDataCache(); // Make sure we've forced a cache flush on the D$
                 UARTWrite("Starting ");
                 UARTWrite(filename);
@@ -289,6 +344,9 @@ void ParseCommands()
                     "jalr s0;" // Branch with the intent to return back here
                     : "=m" (branchaddress) : : 
                 );
+
+                // Re-mount filesystem before passing control
+                f_mount(&Fs, "sd:", 1);
             }
             else
             {
@@ -315,7 +373,6 @@ int main()
     UARTWrite("│ E32OS v0.1 (c)2022 Engin Cilasun │\n");
     UARTWrite("└──────────────────────────────────┘\n\n");
 
-    FATFS Fs;
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
     {

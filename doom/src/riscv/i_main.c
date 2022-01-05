@@ -28,10 +28,8 @@ FATFS Fs;
 
 int main(void)
 {
-   console_puts("Mounting drive sd:\n");
    f_mount(&Fs, "sd:", 1);
 
-   console_puts("Starting DOOM\n");
    D_DoomMain();
 
 	return 0;
