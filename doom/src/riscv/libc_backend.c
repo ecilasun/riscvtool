@@ -37,19 +37,29 @@
 // HEAP handling
 // -------------
 
-//extern uint8_t _heap_start;
+static uint8_t *heap_start  = (uint8_t*)0x08000000; // Program/static data can leak all the way up to 128MBytes
+static uint8_t *heap_end    = (uint8_t*)0x0FFF0000; // ~127MBytes of heap, 64KBytes at the end reserved for now (future kernel stack)
 
-//uint8_t *_heap_start = 0x03000000;
-static void *heap_end   = (void*)0x00100000; //&_heap_start;
-void *
-_sbrk(intptr_t increment)
+int _brk(void *addr)
 {
-	void *rv = heap_end;
-	heap_end += increment;
-#ifdef LIBC_DEBUG
-	console_printf("Heap extended to %08x\r\n", (unsigned int)heap_end);
-#endif
-	return rv;
+	heap_start = (uint8_t*)addr;
+	return 0;
+}
+
+void *_sbrk(intptr_t incr)
+{
+	uint8_t *old_heapstart = heap_start;
+
+	if (heap_start == heap_end) {
+		return NULL;
+	}
+
+	if ((heap_start += incr) < heap_end) {
+		heap_start += incr;
+	} else {
+		heap_start = heap_end;
+	}
+	return old_heapstart;
 }
 
 

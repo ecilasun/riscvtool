@@ -535,29 +535,29 @@ void IdentifyVersion (void)
 #if 0
     gamemode = commercial;
     language = french;
-    D_AddFile ("sd:/doom2f.wad");
+    D_AddFile ("sd:doom2f.wad");
 #elif 0
     gamemode = commercial;
-    D_AddFile ("sd:/doom2.wad");
+    D_AddFile ("sd:doom2.wad");
 #elif 0
     gamemode = commercial;
-    D_AddFile ("sd:/plutonia.wad");
+    D_AddFile ("sd:plutonia.wad");
 #elif 0
     gamemode = commercial;
-    D_AddFile ("sd:/tnt.wad");
+    D_AddFile ("sd:tnt.wad");
 #elif 0
     gamemode = retail;
-    D_AddFile ("sd:/doomu.wad");
+    D_AddFile ("sd:doomu.wad");
 #elif 0
     gamemode = registered;
-    D_AddFile ("sd:/doom.wad");
+    D_AddFile ("sd:doom.wad");
 #elif 0
     gamemode = shareware;
     // https://github.com/fragglet/miniwad
-    D_AddFile ("sd:/miniwad.wad");
+    D_AddFile ("sd:miniwad.wad");
 #elif 1
     gamemode = shareware;
-    D_AddFile ("sd:/doom1.wad");
+    D_AddFile ("sd:doom1.wad");
 #else
     printf("Game mode indeterminate.\r\n");
     gamemode = indetermined;

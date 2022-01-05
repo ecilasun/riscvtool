@@ -31,70 +31,14 @@
 
 static uint32_t vramPage = 0;
 
-uint8_t video_pal[256];
-
-//volatile uint32_t *gpustate = (volatile uint32_t*)0x1001FFF0; // End of GRAM-16
-unsigned int cnt = 0x00000000;
-
-struct GPUCommandPackage swapProg;
-struct GPUCommandPackage gpuSetupProg;
-struct GPUCommandPackage gpuPaletteProg;
-struct GPUCommandPackage dmaProg;
-int dmasourceSlot;
-int dmatargetSlot;
-int dmacountSlot;
-
 void flippage()
 {
-	vramPage = (vramPage+1)%2;
-
-	// Wire up a 'swap' program on the fly to set current vram write page
-	GPUInitializeCommandPackage(&swapProg);
-	GPUWritePrologue(&swapProg);
-	GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF(vramPage)));
-	GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF(vramPage)));
-	GPUWriteInstruction(&swapProg, GPU_INSTRUCTION(G_MISC, G_R15, 0x0, 0x0, G_VPAGE));
-	GPUWriteEpilogue(&swapProg);
-	GPUCloseCommandPackage(&swapProg);
-
-	GPUClearMailbox();
-	GPUSubmitCommands(&swapProg);
-	GPUKick();
-	GPUWaitMailbox();
+	//
 }
 
 void
 I_InitGraphics(void)
 {
-	// Setup program doesn't do much at the moment except set v-ram page 0 for writes
-    GPUInitializeCommandPackage(&gpuSetupProg);
-    GPUWritePrologue(&gpuSetupProg);
-    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_MISC, G_R0, 0x0, 0x0, G_VPAGE));
-    GPUWriteEpilogue(&gpuSetupProg);
-    GPUCloseCommandPackage(&gpuSetupProg);
-
-	GPUClearMailbox();
-	GPUSubmitCommands(&gpuSetupProg);
-	GPUKick();
-	GPUWaitMailbox();
-
-	// Initial V-RAM write page select
-	flippage();
-
-	// Prepare the DMA program, but leave the setreg instructions blank for now
-
-	GPUInitializeCommandPackage(&dmaProg);
-	GPUWritePrologue(&dmaProg);
-
-	dmasourceSlot = GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, 0));
-	GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, 0));
-	dmatargetSlot = GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, 0));
-	GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, 0));
-	dmacountSlot = GPUWriteInstruction(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, 0));
-
-	GPUWriteEpilogue(&dmaProg);
-	GPUCloseCommandPackage(&dmaProg);
-
 	usegamma = 1;
 }
 
@@ -105,6 +49,9 @@ I_ShutdownGraphics(void)
 }
 
 
+volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x40040000;
+#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
+
 void
 I_SetPalette(byte* palette)
 {
@@ -114,20 +61,8 @@ I_SetPalette(byte* palette)
 		r = gammatable[usegamma][*palette++];
 		g = gammatable[usegamma][*palette++];
 		b = gammatable[usegamma][*palette++];
-		GRAMStart[i] = MAKERGBPALETTECOLOR(r, g, b);
+		GPUPAL_32[i] = MAKERGBPALETTECOLOR(r, g, b);
 	}
-
-	// Wire up and submit a 'palette upload' program
-	// NOTE: This could be a resident program
-	GPUInitializeCommandPackage(&gpuSetupProg);
-	GPUWritePrologue(&gpuSetupProg);
-    GPUWriteInstruction(&gpuSetupProg, GPU_INSTRUCTION(G_DMA, G_R0, G_R0, G_DMAGRAMTOPALETTE, 0x100)); // move palette from top of G-RAM to palette memory at 0
-	GPUWriteEpilogue(&gpuSetupProg);
-	GPUCloseCommandPackage(&gpuSetupProg);
-	GPUClearMailbox();
-	GPUSubmitCommands(&gpuSetupProg);
-	GPUKick();
-	GPUWaitMailbox();
 }
 
 
@@ -149,23 +84,9 @@ I_FinishUpdate (void)
 			H = 16;
 
 		// The out buffer needs a stride of 512 instead of 320
+		uint32_t GRAMStart = 0x40000000;
 		for (int L=0;L<H;++L)
 			__builtin_memcpy((void*)GRAMStart+512*L, screens[0]+SCREENWIDTH*64*slice+SCREENWIDTH*L, 320);
-
-		// Only modify the changed parts of our dma program
-		uint32_t gramsource = (uint32_t)(GRAMStart);
-		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_HIGHBITS, G_R15, HIHALF((uint32_t)gramsource)), dmasourceSlot);
-		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R15, G_LOWBITS, G_R15, LOHALF((uint32_t)gramsource)), dmasourceSlot+1);
-		uint32_t vramramtarget = (512*64*slice);
-		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_HIGHBITS, G_R14, HIHALF((uint32_t)vramramtarget)), dmatargetSlot);
-		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_SETREG, G_R14, G_LOWBITS, G_R14, LOHALF((uint32_t)vramramtarget)), dmatargetSlot+1);
-		uint32_t dmacount = (512*H)>>2; //2048 DWORD writes or 1024 for end slice
-		GPUWriteInstructionAt(&dmaProg, GPU_INSTRUCTION(G_DMA, G_R15, G_R14, 0x0, dmacount), dmacountSlot);
-
-		GPUClearMailbox();
-		GPUSubmitCommands(&dmaProg);
-		GPUKick();
-		GPUWaitMailbox();
 	}
 
 	// optional: wait for vsync

@@ -1,12 +1,8 @@
 #include "config.h"
 
-volatile unsigned char *IO_SPIRXTX = (volatile unsigned char* )0x8000000C;       // SPU send data (write)
-volatile unsigned char *IO_UARTRXTX = (volatile unsigned char* )0x80000008;          // UART send data (write)
-volatile unsigned int *IO_UARTRXByteCount = (volatile unsigned int* )0x80000004;   // UART input status (read)
-volatile unsigned int *IO_UARTTXFifoFull = (volatile unsigned int* )0x80000000;
-volatile unsigned int *PRAMStart = (volatile unsigned int* )0x30000000;
-volatile unsigned int *GRAMStart = (volatile unsigned int* )0x20000000;
-volatile unsigned int *SRAMStart = (volatile unsigned int* )0x10000000;
+volatile unsigned char *IO_UARTRXTX           = (volatile unsigned char* )  0x20000008; // UART send/receive port (write/read)
+volatile unsigned int *IO_UARTRXByteAvailable = (volatile unsigned int* ) 0x20000004; // UART input status (read)
+volatile unsigned int *IO_UARTTXFIFOFull      = (volatile unsigned int* ) 0x20000000; // UART output status (read)
 
 uint64_t ReadClock()
 {

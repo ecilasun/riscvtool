@@ -145,30 +145,6 @@ void InstallIllegalInstructionHandler()
    swap_csr(mstatus, MSTATUS_MIE);
 }
 
-void DumpFile(const char *path)
-{
-    FIL fp;
-    FRESULT fr = f_open(&fp, path, FA_READ);
-    if (fr == FR_OK)
-    {
-        const uint32_t baseaddress = 0x00000000; // DDR3
-        UINT bytesread = 0;
-        // Read at top of scratchpad memory
-        f_read(&fp, (void*)baseaddress, 131072, &bytesread);
-        UARTWrite("Read ");
-        UARTWriteDecimal(bytesread);
-        UARTWrite(" bytes:\n");
-        f_close(&fp);
-        // Dump contents
-        for (uint32_t i=0;i<bytesread;++i)
-        {
-            const char chr = *((char*)(baseaddress+i));
-            UARTPutChar(chr);
-        }
-        UARTWrite("\nEnd of file dump.\n");
-    }
-}
-
 void ListFiles(const char *path)
 {
    DIR dir;
@@ -200,26 +176,12 @@ void CLS()
     UARTWrite("\033[0m\033[2J");
 }
 
-// void CLV()
-// {
-//     // Clear the video buffer
-//     const uint32_t wordspertile=256; // 32x32 pixels per tile, therefore 32x8=256 words per tile
-//     for (uint32_t tile_y=0;tile_y<7;++tile_y) // 7 vertical tiles (224/32)
-//     {
-//         for (uint32_t tile_x=0;tile_x<10;++tile_x) // 10 horizontal tiles (320/32)
-//         {
-//             uint32_t tile_top = (tile_y*10+tile_x)*wordspertile;
-//             for (uint32_t words=0; words<wordspertile; ++words)
-//                 GPUFB0[tile_top+words] = 0xFFFFFFFF;
-//         }
-//     }
-// }
-
-/*void FlushDataCache()
+void FlushDataCache()
 {
    // Force D$ flush so that contents are visible by I$
    // We do this by forcing a dummy load of DWORDs from 0 to 2048
    // to force previous contents to be written back to DDR3
+   volatile uint32_t *DDR3Start = (volatile uint32_t *)0x00000000;
    for (uint32_t i=0; i<2048; ++i)
    {
       uint32_t dummyread = DDR3Start[i];
@@ -227,7 +189,7 @@ void CLS()
       // and shuts up about unused variable
       asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
    }
-}*/
+}
 
 void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
 {
@@ -267,6 +229,12 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
       // If this is a section worth loading...
       if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
       {
+         UARTWriteHex(sheader.m_Addr);
+         UARTWrite(" @");
+         UARTWriteHex(sheader.m_Offset);
+         UARTWrite(" ");
+         UARTWriteHex(sheader.m_Size);
+         UARTWrite("\n");
          // ...place it in memory
          uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
          f_lseek(fp, sheader.m_Offset);
@@ -281,28 +249,12 @@ void ParseCommands()
 {
     if (!strcmp(commandline, "help")) // Help text
     {
-        UARTWrite("dir, load filename, cls, crash\n");
-    }
-    else if (!strcmp(commandline, "crash")) // Test crash handler
-    {
-        UARTWrite("\nForcing crash via illegal instruction.\n");
-        asm volatile(".dword 0xBADF00D0");
+        UARTWrite("dir, cls\n");
     }
     else if (!strcmp(commandline, "dir")) // List directory
     {
 		UARTWrite("\nListing files on volume sd:\n");
 		ListFiles("sd:");
-    }
-    else if (strstr(commandline, "load") != nullptr) // Load file to S-RAM
-    {
-        strcpy(filename, "sd:");
-        strcat(filename, &(commandline[5]));
-
-		UARTWrite("\nLoading '");
-		UARTWrite(filename);
-        UARTWrite("'\n");
-
-		DumpFile(filename);
     }
     else if (!strcmp(commandline, "cls")) // Clear terminal screen
     {
@@ -328,6 +280,10 @@ void ParseCommands()
                 uint32_t branchaddress;
                 ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
                 f_close(&fp);
+                FlushDataCache(); // Make sure we've forced a cache flush on the D$
+                UARTWrite("Starting ");
+                UARTWrite(filename);
+                UARTWrite("...\n");
                 asm volatile(
                     "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
                     "jalr s0;" // Branch with the intent to return back here

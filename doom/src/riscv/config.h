@@ -27,13 +27,9 @@
 
 #include <inttypes.h>
 
-extern volatile unsigned char *IO_SPIRXTX;
 extern volatile unsigned char *IO_UARTRXTX;
-extern volatile unsigned int *IO_UARTRXByteCount;
-extern volatile unsigned int *IO_UARTTXFifoFull;
-extern volatile unsigned int *PRAMStart;
-extern volatile unsigned int *GRAMStart;
-extern volatile unsigned int *SRAMStart;
+extern volatile unsigned int *IO_UARTRXByteAvailable;
+extern volatile unsigned int *IO_UARTTXFIFOFull;
 
 uint64_t ReadClock();
 uint64_t ClockToMs(uint64_t clock);

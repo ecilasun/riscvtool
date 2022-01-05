@@ -73,7 +73,7 @@ I_GetEvent(void)
 
 	// Works with riscvtool's keyserver
 	unsigned char keydata[2];
-	if (*IO_UARTRXByteCount)
+	if (*IO_UARTRXByteAvailable)
 	{
 		for (int i=0;i<2;++i)
 			keydata[i] = *IO_UARTRXTX;

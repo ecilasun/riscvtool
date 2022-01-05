@@ -21,8 +21,6 @@
 #include "mini-printf.h"
 
 
-
-
 void
 console_init(void)
 {
@@ -32,7 +30,7 @@ console_init(void)
 void
 console_putchar(char c)
 {
-	while (*IO_UARTTXFifoFull) { }
+	while (*IO_UARTTXFIFOFull) { }
 	*IO_UARTRXTX = c;
 }
 
@@ -40,7 +38,7 @@ char
 console_getchar(void)
 {
 	char c=0;
-	while (*IO_UARTRXByteCount)
+	while (*IO_UARTRXByteAvailable)
 		c = (char)*IO_UARTRXTX;
 	return c;
 }
@@ -49,7 +47,7 @@ int
 console_getchar_nowait(void)
 {
 	char c=0;
-	unsigned int count = *IO_UARTRXByteCount;
+	unsigned int count = *IO_UARTRXByteAvailable;
 	if (count)
 		c = *IO_UARTRXTX;
 
@@ -62,7 +60,7 @@ console_puts(const char *p)
 	char c;
 	while ((c = *(p++)) != 0x00)
 	{
-		if (*IO_UARTTXFifoFull)
+		if (*IO_UARTTXFIFOFull)
 			continue;
 		*IO_UARTRXTX = c;
 	}
