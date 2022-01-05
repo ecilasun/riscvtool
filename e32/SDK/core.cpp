@@ -25,6 +25,11 @@ uint64_t E32ReadTime()
    return now;
 }
 
+uint32_t ClockToMs(uint64_t clk)
+{
+   return uint32_t(clk / ONE_SECOND_IN_TICKS);
+}
+
 void E32SetTimeCompare(const uint64_t future)
 {
    // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
@@ -37,8 +42,8 @@ void E32SetTimeCompare(const uint64_t future)
 // Place the heap into DDR3 memory
 //#undef errno
 //int nerrno;
-static uint8_t *heap_start  = (uint8_t*)0x1000D000; // TODO: Move this to DDR3 region, S-RAM is too small
-static uint8_t *heap_end    = (uint8_t*)0x1000F000; // Leave 0xFFF for stack
+static uint8_t *heap_start  = (uint8_t*)0x08000000; // Program/static data can leak all the way up to 128MBytes
+static uint8_t *heap_end    = (uint8_t*)0x0FFF0000; // ~127MBytes of heap, 64KBytes at the end reserved for now (future kernel stack)
 
 extern "C" {
 

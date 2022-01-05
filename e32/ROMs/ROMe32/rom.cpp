@@ -151,17 +151,21 @@ void DumpFile(const char *path)
     FRESULT fr = f_open(&fp, path, FA_READ);
     if (fr == FR_OK)
     {
-        const uint32_t baseaddress = 0x00000000; // S-RAM
+        const uint32_t baseaddress = 0x00000000; // DDR3
         UINT bytesread = 0;
         // Read at top of scratchpad memory
-        f_read(&fp, (void*)baseaddress, 16384, &bytesread);
+        f_read(&fp, (void*)baseaddress, 131072, &bytesread);
+        UARTWrite("Read ");
+        UARTWriteDecimal(bytesread);
+        UARTWrite(" bytes:\n");
         f_close(&fp);
         // Dump contents
-        for (uint32_t i=0;i<bytesread/4;++i)
+        for (uint32_t i=0;i<bytesread;++i)
         {
             const char chr = *((char*)(baseaddress+i));
             UARTPutChar(chr);
         }
+        UARTWrite("\nEnd of file dump.\n");
     }
 }
 
@@ -344,6 +348,7 @@ void ParseCommands()
     commandline[0]=0;
 }
 
+#include "memtest/memtest.h"
 int main()
 {
     InstallIllegalInstructionHandler();
