@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include "core.h"
+#include "uart.h"
 #include "cmdboot.h"
 
 /*******************************************************************/
@@ -13,20 +14,12 @@ typedef int BOOL;
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
-// The Bayer matrix for ordered dithering
-const uint8_t dither[4][4] = {
-  { 0, 8, 2,10},
-  {12, 4,14, 6},
-  { 3,11, 1, 9},
-  {15, 7,13, 5}
-};
-
 /*******************************************************************/
 
 // Size of the screen
 // Replace with your own variables or values
-#define graphics_width  320
-#define graphics_height 240
+#define graphics_width  80
+#define graphics_height 80
 
 // Replace with your own code.
 volatile uint8_t *GPUFB0 = (volatile uint8_t* )0x40000000;
@@ -35,20 +28,19 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
   g = max(0.0f, min(1.0f, g));
   b = max(0.0f, min(1.0f, b));
 
-  uint16_t R = (uint16_t)(r*255.0f);
-  uint16_t G = (uint16_t)(g*255.0f);
-  uint16_t B = (uint16_t)(b*255.0f);
+    uint8_t R = (uint8_t)(255.0f * r);
+    uint8_t G = (uint8_t)(255.0f * g);
+    uint8_t B = (uint8_t)(255.0f * b);
 
-  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
-  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
-  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
-
-  R = ROFF/32;
-  G = GOFF/32;
-  B = BOFF/64;
-  int RGB = (uint8_t)((B<<6) | (G<<3) | R);
-
-  GPUFB0[x+y*512] = RGB;
+    UARTWrite("\033[48;2;");
+    UARTWriteDecimal(R);
+    UARTWrite(";");
+    UARTWriteDecimal(G);
+    UARTWrite(";");
+    UARTWriteDecimal(B);
+    UARTWrite("m ");
+    if(x==graphics_width-1)
+        UARTWrite("\033[48;2;0;0;0m");
 }
 
 // Normally you will not need to modify anything beyond that point.

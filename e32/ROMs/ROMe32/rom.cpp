@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
-#include <syscall.h>
 
 #include "rvcrt0.h"
 
@@ -48,60 +47,64 @@ FATFS Fs;
 
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
-   // See https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf mcause section for the cause codes.
+    // Trap A7 before it's ruined.
+    uint32_t a7;
+    asm volatile ("sw a7, %0;" : "=m" (a7));
 
-   uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
-   uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16]
-   uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
-   uint32_t code = cause & 0x7FFFFFFF;
+    // See https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf mcause section for the cause codes.
 
-   if (cause & 0x80000000) // Interrupt
-   {
-      if (code == 0xB) // hardware
-      {
-         //*IO_UARTRXTX = 0x13; // XOFF
-         //UARTFlush();
+    uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
+    uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16]
+    uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
+    uint32_t code = cause & 0x7FFFFFFF;
 
-         // Echo back incoming bytes
-         while (*IO_UARTRXByteAvailable)
-         {
-            // Read incoming character
-            uint8_t incoming = *IO_UARTRXTX;
-            // Zero terminated command line
-            if (incoming == 13)
-                parseit = 1;
-            else if (incoming == 8)
+    if (cause & 0x80000000) // Interrupt
+    {
+        if (code == 0xB) // hardware
+        {
+            //*IO_UARTRXTX = 0x13; // XOFF
+            //UARTFlush();
+
+            // Echo back incoming bytes
+            while (*IO_UARTRXByteAvailable)
             {
-                cmdlen--;
-                if (cmdlen < 0) cmdlen = 0;
-                commandline[cmdlen] = 0;
+                // Read incoming character
+                uint8_t incoming = *IO_UARTRXTX;
+                // Zero terminated command line
+                if (incoming == 13)
+                    parseit = 1;
+                else if (incoming == 8)
+                {
+                    cmdlen--;
+                    if (cmdlen < 0) cmdlen = 0;
+                    commandline[cmdlen] = 0;
+                }
+                else
+                {
+                    commandline[cmdlen++] = incoming;
+                    if (cmdlen>=511) cmdlen = 511;
+                    commandline[cmdlen] = 0;
+                }
+                // Write back to UART
+                *IO_UARTRXTX = incoming;
             }
-            else
-            {
-                commandline[cmdlen++] = incoming;
-                if (cmdlen>=511) cmdlen = 511;
-                commandline[cmdlen] = 0;
-            }
-            // Write back to UART
-            *IO_UARTRXTX = incoming;
-         }
-         UARTFlush();
+            UARTFlush();
 
-         //*IO_UARTRXTX = 0x11; // XON
-         //UARTFlush();
-      }
-      if (code == 0x7) // timer
-      {
-         UARTWrite("\n\033[34m\033[47m\033[7m| ");
-         UARTWrite("HINT: Type 'help' for a list of commands.");
-         UARTWrite(" │\033[0m\n");
-         // Stop further timer interrupts by setting the timecmp to furthest value available.
-         swap_csr(0x801, 0xFFFFFFFF);
-         swap_csr(0x800, 0xFFFFFFFF);
-      }
-   }
-   else // Exception
-   {
+            //*IO_UARTRXTX = 0x11; // XON
+            //UARTFlush();
+        }
+        if (code == 0x7) // timer
+        {
+            UARTWrite("\n\033[34m\033[47m\033[7m| ");
+            UARTWrite("HINT: Type 'help' for a list of commands.");
+            UARTWrite(" │\033[0m\n");
+            // Stop further timer interrupts by setting the timecmp to furthest value available.
+            swap_csr(0x801, 0xFFFFFFFF);
+            swap_csr(0x800, 0xFFFFFFFF);
+        }
+    }
+    else // Exception
+    {
         // NOTE: One use of illegal instruction exception would be to do software emulation of the instruction in 'value'.
         switch (cause)
         {
@@ -127,14 +130,13 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
                 UARTWrite("\033[31m\033[40m");
 
                 UARTWrite("┌───────────────────────────────────────────────────┐\n");
-                UARTWrite("│ Unimplemented machine ECALL. Program will resume. │\n");
+                UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
+                UARTWrite("│ execution, though it might crash.                 │\n");
                 UARTWrite("│ #");
-                UARTWriteHex((uint32_t)cause); // Cause
-                UARTWrite(".");
-                UARTWriteHex((uint32_t)value); // Failed instruction
+                UARTWriteHex((uint32_t)a7); // A7 containts Syscall ID
                 UARTWrite(" @");
                 UARTWriteHex((uint32_t)PC); // PC
-                UARTWrite("                      │\n");
+                UARTWrite("                               │\n");
                 UARTWrite("└───────────────────────────────────────────────────┘\n");
                 UARTWrite("\033[0m\n");
             break;

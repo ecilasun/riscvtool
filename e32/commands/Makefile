@@ -16,7 +16,7 @@ folders = \
 	info \
 	gputest \
 	memtest \
-	tinyraytracer \
+	tinyraytracertty \
 
 # Rules
 
