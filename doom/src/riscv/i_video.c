@@ -29,7 +29,7 @@
 #include "config.h"
 #include "gpu.h"
 
-static uint32_t vramPage = 0;
+//static uint32_t vramPage = 0;
 
 void flippage()
 {

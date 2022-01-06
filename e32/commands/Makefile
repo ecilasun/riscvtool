@@ -17,7 +17,6 @@ folders = \
 	gputest \
 	memtest \
 	tinyraytracertty \
-	dhrystone \
 
 # Rules
 
@@ -32,7 +31,7 @@ objs  :=
 
 define compile_command
 $(1).elf: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
-	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) $(wildcard $(corelib_dir)/*.cpp) $(wildcard $(thirdparty_libs)/**/*.c) -Wl,-T$(1)/../command.lds
+	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.c*) $(wildcard $(corelib_dir)/*.cpp) $(wildcard $(thirdparty_libs)/**/*.c) -Wl,-T$(1)/../command.lds
 
 $(1).coe: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
 	$$(RISCVTOOL) $(src_dir)/$(1).elf -makerom 4 0 >> $(src_dir)/$(1).coe

@@ -1,17 +1,14 @@
-//#include "core.h"
+#include "config.h"
 #include "sdcard.h"
-//#include "uart.h"
 #include <stdio.h>
-
-volatile unsigned char *IO_SPIRXTX = (volatile unsigned char* )0x20001000; // SPI read/write port
 
 #define G_SPI_TIMEOUT 65536
 
-static unsigned char CRC7(const unsigned char* data, unsigned char n) {
-  unsigned char crc = 0;
-  for (unsigned char i = 0; i < n; i++) {
-    unsigned char d = data[i];
-    for (unsigned char j = 0; j < 8; j++) {
+static uint8_t CRC7(const uint8_t* data, uint8_t n) {
+  uint8_t crc = 0;
+  for (uint8_t i = 0; i < n; i++) {
+    uint8_t d = data[i];
+    for (uint8_t j = 0; j < 8; j++) {
       crc <<= 1;
       if ((d & 0x80) ^ (crc & 0x80)) {
         crc ^= 0x09;
@@ -23,34 +20,34 @@ static unsigned char CRC7(const unsigned char* data, unsigned char n) {
 }
 
 // A single SPI transaction is a write from master followed by a read from slave's output
-//volatile unsigned char *SPISINK = (volatile unsigned char* ) 0x8000000F;
-unsigned char SPITxRx(const unsigned char outbyte)
+//volatile uint8_t *SPISINK = (volatile uint8_t* ) 0x8000000F;
+uint8_t SPITxRx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
    //*SPISINK = 0xFF;
    //UARTWriteHexByte(outbyte);
    //UARTWrite("->");
-   unsigned char incoming = *IO_SPIRXTX;
+   uint8_t incoming = *IO_SPIRXTX;
    //*SPISINK = 0xFF;
    //UARTWriteHexByte(incoming);
    //UARTWrite(":");
    return incoming;
 }
 
-unsigned char SDCmd(const SDCardCommand cmd, uint32_t args)
+uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
 {
-   unsigned char buf[8];
+   uint8_t buf[8];
 
    buf[0] = SPI_CMD(cmd);
-   buf[1] = (unsigned char)((args&0xFF000000)>>24);
-   buf[2] = (unsigned char)((args&0x00FF0000)>>16);
-   buf[3] = (unsigned char)((args&0x0000FF00)>>8);
-   buf[4] = (unsigned char)(args&0x000000FF);
+   buf[1] = (uint8_t)((args&0xFF000000)>>24);
+   buf[2] = (uint8_t)((args&0x00FF0000)>>16);
+   buf[3] = (uint8_t)((args&0x0000FF00)>>8);
+   buf[4] = (uint8_t)(args&0x000000FF);
    buf[5] = CRC7(buf, 5);
 
    SPITxRx(0xFF); // Dummy
 
-   unsigned char incoming;
+   uint8_t incoming;
    for (uint32_t i=0;i<6;++i)
       incoming = SPITxRx(buf[i]);
 
@@ -59,9 +56,9 @@ unsigned char SDCmd(const SDCardCommand cmd, uint32_t args)
    return incoming;
 }
 
-unsigned char SDResponse1(void)
+uint8_t SDResponse1()
 {
-   unsigned char res1 = 0xFF;
+   uint8_t res1 = 0xFF;
 
    int timeout = 0;
    while((res1 = SPITxRx(0xFF)) == 0xFF) {
@@ -73,13 +70,13 @@ unsigned char SDResponse1(void)
    return res1;
 }
 
-unsigned char SDResponse7(uint32_t *data)
+uint8_t SDResponse7(uint32_t *data)
 {
    *data = 0x00000000;
-   unsigned char res1 = SDResponse1();
+   uint8_t res1 = SDResponse1();
    if (res1 > 1) return 0xFF;
 
-   unsigned char d[4];
+   uint8_t d[4];
    d[0] = SPITxRx(0xFF);
    d[1] = SPITxRx(0xFF);
    d[2] = SPITxRx(0xFF);
@@ -91,10 +88,10 @@ unsigned char SDResponse7(uint32_t *data)
 }
 
 // Enter idle state
-unsigned char SDIdle(void)
+uint8_t SDIdle()
 {
    SDCmd(CMD0_GO_IDLE_STATE, 0);
-   unsigned char response = SDResponse1(); // Expected: 0x01
+   uint8_t response = SDResponse1(); // Expected: 0x01
 
    /*if (response != 0x01)
    {
@@ -106,13 +103,13 @@ unsigned char SDIdle(void)
    return response;
 }
 
-unsigned char SDCheckVoltageRange(void)
+uint8_t SDCheckVoltageRange()
 {
    SDCmd(CMD8_SEND_IF_COND, 0x000001AA);
 
    // Read the response and 00 00 01 AA sequence back from the SD CARD
    uint32_t databack;
-   unsigned char response = SDResponse7(&databack); // Expected: 0x01(version 2 SDCARD) or 0x05(version 1 or MMC card)
+   uint8_t response = SDResponse7(&databack); // Expected: 0x01(version 2 SDCARD) or 0x05(version 1 or MMC card)
 
    /*if (response != 0x01) // V2 SD Card, 0x05 for a V1 SD Card / MMC card
    {
@@ -131,11 +128,11 @@ unsigned char SDCheckVoltageRange(void)
    return response;
 }
 
-unsigned char SDCardInit(void)
+uint8_t SDCardInit()
 {
    // Set high capacity mode on
    int timeout = 0;
-   unsigned char rA = 0xFF, rB = 0xFF;
+   uint8_t rA = 0xFF, rB = 0xFF;
    do {
       // ACMD header
       SDCmd(CMD55_APP_CMD, 0x00000000);
@@ -178,20 +175,20 @@ unsigned char SDCardInit(void)
    return rB;
 }
 
-unsigned char SDSetBlockSize512(void)
+uint8_t SDSetBlockSize512()
 {
    // Set block length
    SDCmd(CMD16_SET_BLOCKLEN, 0x00000200);
-   unsigned char response = SDResponse1();
+   uint8_t response = SDResponse1();
    return response;
 }
 
-unsigned char SDReadSingleBlock(uint32_t sector, unsigned char *datablock, unsigned char checksum[2])
+uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
 {
    // Read single block
    // NOTE: sector<<9 for non SDHC cards
    SDCmd(CMD17_READ_SINGLE_BLOCK, sector);
-   unsigned char response = SDResponse1(); // R1: expect 0x00
+   uint8_t response = SDResponse1(); // R1: expect 0x00
 
    if (response != 0xFF) // == 0x00
    {
@@ -234,27 +231,27 @@ unsigned char SDReadSingleBlock(uint32_t sector, unsigned char *datablock, unsig
    return response;
 }
 
-unsigned char SDWriteSingleBlock(uint32_t blockaddress, unsigned char *datablock, unsigned char checksum[2])
+uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
 {
    // TODO: 
-   //UARTWrite("SDWriteSingleBlock: not implemented yet.\n");
+   /*UARTWrite("SDWriteSingleBlock: not implemented yet.\n");*/
 
    return 0xFF;
 }
 
-int SDReadMultipleBlocks(unsigned char *datablock, uint32_t numblocks, uint32_t blockaddress)
+int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
    if (numblocks == 0)
       return -1;
 
    uint32_t cursor = 0;
 
-   unsigned char tmp[512];
-   unsigned char checksum[2];
+   uint8_t tmp[512];
+   uint8_t checksum[2];
 
    for(uint32_t b=0; b<numblocks; ++b)
    {
-      unsigned char response = SDReadSingleBlock(b+blockaddress, tmp, checksum);
+      uint8_t response = SDReadSingleBlock(b+blockaddress, tmp, checksum);
       if (response != 0xFE)
          return -1;
       __builtin_memcpy(datablock+cursor, tmp, 512);
@@ -264,20 +261,20 @@ int SDReadMultipleBlocks(unsigned char *datablock, uint32_t numblocks, uint32_t 
    return cursor;
 }
 
-int SDWriteMultipleBlocks(const unsigned char *datablock, uint32_t numblocks, uint32_t blockaddress)
+int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
    if (numblocks == 0)
       return -1;
 
    uint32_t cursor = 0;
 
-   unsigned char tmp[512];
-   unsigned char checksum[2];
+   uint8_t tmp[512];
+   uint8_t checksum[2];
 
    for(uint32_t b=0; b<numblocks; ++b)
    {
       __builtin_memcpy(tmp, datablock+cursor, 512);
-      unsigned char response = SDWriteSingleBlock(b+blockaddress, tmp, checksum);
+      uint8_t response = SDWriteSingleBlock(b+blockaddress, tmp, checksum);
       if (response != 0xFE)
          return -1;
       cursor += 512;
@@ -285,9 +282,9 @@ int SDWriteMultipleBlocks(const unsigned char *datablock, uint32_t numblocks, ui
 
    return cursor;}
 
-int SDCardStartup(void)
+int SDCardStartup()
 {
-   unsigned char response[3];
+   uint8_t response[3];
 
    // At least 75 bits worth of idling around before we start
    // Here we send 8x10=80 bits worth of dummy bytes

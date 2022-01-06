@@ -30,6 +30,7 @@
 extern volatile unsigned char *IO_UARTRXTX;
 extern volatile unsigned int *IO_UARTRXByteAvailable;
 extern volatile unsigned int *IO_UARTTXFIFOFull;
+extern volatile unsigned char *IO_SPIRXTX;
 
 uint64_t ReadClock();
 uint64_t ClockToMs(uint64_t clock);

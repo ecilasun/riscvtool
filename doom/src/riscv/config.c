@@ -1,8 +1,9 @@
 #include "config.h"
 
-volatile unsigned char *IO_UARTRXTX           = (volatile unsigned char* )  0x20000008; // UART send/receive port (write/read)
-volatile unsigned int *IO_UARTRXByteAvailable = (volatile unsigned int* ) 0x20000004; // UART input status (read)
-volatile unsigned int *IO_UARTTXFIFOFull      = (volatile unsigned int* ) 0x20000000; // UART output status (read)
+volatile unsigned char *IO_UARTRXTX           = (volatile unsigned char* ) 0x20000008; // UART send/receive port (write/read)
+volatile unsigned int *IO_UARTRXByteAvailable = (volatile unsigned int* )  0x20000004; // UART input status (read)
+volatile unsigned int *IO_UARTTXFIFOFull      = (volatile unsigned int* )  0x20000000; // UART output status (read)
+volatile unsigned char *IO_SPIRXTX            = (volatile unsigned char* ) 0x20001000; // SPI read/write port
 
 uint64_t ReadClock()
 {

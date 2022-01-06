@@ -40,13 +40,6 @@ typedef enum {
 #define CMD8_PATTERN (0xAA)
 #define SPI_CMD(x) (0x40 | (x & 0x3f))
 
-unsigned char SDIdle(void);
-unsigned char SDCheckVoltageRange(void);
-unsigned char SDCardInit(void);
-unsigned char SDSetBlockSize512(void);
-unsigned char SDReadSingleBlock(uint32_t blockaddress, unsigned char *datablock, unsigned char checksum[2]);
-unsigned char SDWriteSingleBlock(uint32_t blockaddress, unsigned char *datablock, unsigned char checksum[2]);
-
-int SDCardStartup(void);
-int SDReadMultipleBlocks(unsigned char *datablock, uint32_t numblocks, uint32_t blockaddress);
-int SDWriteMultipleBlocks(const unsigned char *datablock, uint32_t numblocks, uint32_t blockaddress);
+int SDCardStartup();
+int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress);
+int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress);
