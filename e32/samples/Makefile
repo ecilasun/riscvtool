@@ -8,13 +8,14 @@ default: all
 
 src_dir = .
 corelib_dir = ../SDK
-# thirdparty_libs = ../../3rdparty
+thirdparty_libs = ../../3rdparty
 
 # Executable folders
 
 folders = \
 	helloworld \
-	tinyraytracer
+	tinyraytracer \
+	sdcard \
 
 # Rules
 
@@ -23,10 +24,8 @@ RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 -Wall -Ofast -march=rv32imf -mabi=ilp32f -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
 
-# incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
-incs  += -I$(src_dir) -I$(corelib_dir) $(addprefix -I$(src_dir)/, $(folders))
-# libs += $(wildcard $(corelib_dir)/*.cpp) $(wildcard $(thirdparty_libs)/**/*.c)
-libs += $(wildcard $(corelib_dir)/*.cpp)
+incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
+libs += $(wildcard $(corelib_dir)/*.cpp) $(wildcard $(thirdparty_libs)/**/*.c)
 objs  :=
 
 define compile_template
