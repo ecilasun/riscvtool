@@ -17,6 +17,7 @@ folders = \
 	gputest \
 	memtest \
 	tinyraytracertty \
+	dhrystone \
 
 # Rules
 

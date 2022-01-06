@@ -9,7 +9,7 @@ GROUP( -lc -lgloss -lgcc )
 
 MEMORY{
    /* Commands live in S-RAM */
-   RAM (rwx) : ORIGIN = 0x10010000, LENGTH = 0xFFFF
+   RAM (rwx) : ORIGIN = 0x80010000, LENGTH = 0xFFFF
 }
 
 ENTRY(_start)

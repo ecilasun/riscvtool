@@ -9,7 +9,7 @@ GROUP( -lc -lgloss -lgcc )
 
 MEMORY{
   /* 0x10008000 is where heap starts, total memory length is 64K */
-   RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0xE000
+   RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0xE000
 }
 
 ENTRY(_start)

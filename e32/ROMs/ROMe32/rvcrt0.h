@@ -31,7 +31,7 @@ extern "C"
 
          // Set up stack pointer and align it to 16 bytes
          //"la sp, __stack_top;"
-         "li sp, 0x1000FFF0;" // CPU#0 stack
+         "li sp, 0x8000FFF0;" // CPU#0 stack
          "mv s0, sp;"
 
          // Clear BSS
