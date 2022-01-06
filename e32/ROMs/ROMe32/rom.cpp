@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
+#include <syscall.h>
 
 #include "rvcrt0.h"
 
@@ -112,7 +113,17 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
             case CAUSE_SUPERVISOR_ECALL:
             case CAUSE_HYPERVISOR_ECALL:*/
             case CAUSE_MACHINE_ECALL:
-                // TODO: SYSCALL
+
+                // NOTE: See \usr\include\asm-generic\unistd.h for a full list
+
+                // A7
+                // 64  sys_write  -> print (A0==1->stdout, A1->string, A2->length)
+                // 96  sys_exit   -> terminate (A0==return code)
+                // 116 sys_syslog -> 
+                // 117 sys_ptrace -> 
+
+                // TODO: implement system calls
+
                 UARTWrite("\033[31m\033[40m");
 
                 UARTWrite("┌───────────────────────────────────────────────────┐\n");
