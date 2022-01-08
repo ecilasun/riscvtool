@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include "core.h"
+#include "uart.h"
 
 /*******************************************************************/
 
@@ -358,6 +359,16 @@ int main() {
     }
  
     init_scene();
+
+    uint64_t startclock = E32ReadTime();
+
     render(spheres, nb_spheres, lights, nb_lights);
+
+    uint64_t endclock = E32ReadTime();
+    uint32_t deltams = ClockToMs(endclock-startclock);
+    UARTWrite("tinyraytracer took ");
+    UARTWriteDecimal((unsigned int)deltams);
+    UARTWrite(" ms at 320x240 resolution\n");
+
     return 0;
 }

@@ -350,6 +350,16 @@ int main() {
     }
  
     init_scene();
+
+    uint64_t startclock = E32ReadTime();
+
     render(spheres, nb_spheres, lights, nb_lights);
+
+    uint64_t endclock = E32ReadTime();
+    uint32_t deltams = ClockToMs(endclock-startclock);
+    UARTWrite("tinyraytracertty took ");
+    UARTWriteDecimal((unsigned int)deltams);
+    UARTWrite(" ms at 80x80 resolution\n");
+
     return 0;
 }
