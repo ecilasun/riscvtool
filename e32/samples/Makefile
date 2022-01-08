@@ -18,6 +18,7 @@ folders = \
 	tinyraytracertty \
 	sdcard \
 	memtest \
+	dump \
 
 # Rules
 

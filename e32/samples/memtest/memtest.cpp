@@ -15,7 +15,7 @@ int main()
     UARTWrite("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
     int i=0;
     uint64_t startclock = E32ReadTime();
-    for (uint32_t m=0x01000000; m<0x03000000; m+=4)
+    for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
     {
         *((uint32_t*)m) = 0x00000000;
         if ((m!=0) && ((m%0x100000) == 0))
@@ -44,9 +44,9 @@ int main()
     UARTWrite("Copyright (c) 2000 by Michael Barr\n");
     UARTWrite("----------------------------------\n");
 
-    UARTWrite("Data bus test (0x00000000-0x0003FFFF)...");
+    UARTWrite("Data bus test (0x0A000000-0x0A03FFFF)...");
     int failed = 0;
-    for (uint32_t i=0x00000000; i<0x0003FFFF; i+=4)
+    for (uint32_t i=0x0A000000; i<0x0A03FFFF; i+=4)
     {
         failed += memTestDataBus((volatile datum*)i);
     }
@@ -54,9 +54,9 @@ int main()
     UARTWriteDecimal(failed);
     UARTWrite(" failures)\n");
 
-    UARTWrite("Address bus test (0x00000000-0x0003FFFF)...");
+    UARTWrite("Address bus test (0x0B000000-0x0B03FFFF)...");
     int errortype = 0;
-    datum* res = memTestAddressBus((volatile datum*)0x00000000, 262144, &errortype);
+    datum* res = memTestAddressBus((volatile datum*)0x0B000000, 262144, &errortype);
     UARTWrite(res == NULL ? "passed\n" : "failed\n");
     if (res != NULL)
     {
@@ -70,8 +70,8 @@ int main()
         UARTWrite("\n");
     }
 
-    UARTWrite("Memory device test (0x00000000-0x0003FFFF)...");
-    datum* res2 = memTestDevice((volatile datum *)0x00000000, 262144);
+    UARTWrite("Memory device test (0x0C000000-0x0C03FFFF)...");
+    datum* res2 = memTestDevice((volatile datum *)0x0C000000, 262144);
     UARTWrite(res2 == NULL ? "passed\n" : "failed\n");
     if (res2 != NULL)
     {
