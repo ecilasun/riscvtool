@@ -5,7 +5,6 @@
 #include <math.h>
 #include "core.h"
 #include "uart.h"
-#include "cmdboot.h"
 
 /*******************************************************************/
 

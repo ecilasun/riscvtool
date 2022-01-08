@@ -31,6 +31,9 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
+// Shared FAT file system at bottom of S-RAM
+FATFS *Fs = (FATFS*)0x8002F000;
+
 void ListELF(const char *path)
 {
    DIR dir;
@@ -62,8 +65,7 @@ int main()
     UARTWrite("SD Card test\n\n");
 
 	// Init file system
-	FATFS Fs;
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);
 	else

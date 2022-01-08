@@ -21,20 +21,25 @@ uint64_t E32ReadTime()
       : "=&r" (clockhigh), "=&r" (clocklow), "=&r" (tmp)
    );
 
-   uint64_t now = (uint64_t(clockhigh)<<32) | clocklow;
+   uint64_t now = ((uint64_t)(clockhigh)<<32) | clocklow;
    return now;
 }
 
 uint32_t ClockToMs(uint64_t clk)
 {
-   return uint32_t(clk / ONE_MILLISECOND_IN_TICKS);
+   return (uint32_t)(clk / ONE_MILLISECOND_IN_TICKS);
+}
+
+uint32_t ClockToUs(uint64_t clk)
+{
+   return (uint32_t)(clk / ONE_MICROSECOND_IN_TICKS);
 }
 
 void E32SetTimeCompare(const uint64_t future)
 {
    // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
    swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));
-   swap_csr(0x800, (uint32_t(future&0x00000000FFFFFFFF)));
+   swap_csr(0x800, ((uint32_t)(future&0x00000000FFFFFFFF)));
 }
 
 // C stdlib overrides
@@ -45,7 +50,9 @@ void E32SetTimeCompare(const uint64_t future)
 static uint8_t *heap_start  = (uint8_t*)0x08000000; // Program/static data can leak all the way up to 128MBytes
 static uint8_t *heap_end    = (uint8_t*)0x0FFF0000; // ~127MBytes of heap, 64KBytes at the end reserved for now (future kernel stack)
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 
    /*int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
    {
@@ -168,4 +175,6 @@ extern "C" {
       }
       return old_heapstart;
    }
+#ifdef __cplusplus
 }
+#endif

@@ -17,9 +17,9 @@
 
 #include <stdint.h>
 
-#include "config.h"
+#include "core.h"
 #include "mini-printf.h"
-
+#include "uart.h"
 
 void
 console_init(void)

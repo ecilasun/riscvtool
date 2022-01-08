@@ -36,8 +36,9 @@
 #include "../i_system.h"
 
 #include <inttypes.h>
+#include "core.h"
 #include "console.h"
-#include "config.h"
+#include "uart.h"
 
 void
 I_Init(void)
@@ -60,8 +61,8 @@ I_GetTime(void)
 {
 	static int basetime = 0;
 	if (!basetime)
-		basetime = ReadClock();
-	int ticks = TICRATE*ClockToUs(ReadClock()-basetime)/1000000;
+		basetime = E32ReadTime();
+	int ticks = TICRATE*ClockToUs(E32ReadTime()-basetime)/1000000;
 	return ticks;
 }
 

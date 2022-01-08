@@ -8,8 +8,6 @@
 #include "uart.h"
 #include "memtest/memtest.h"
 
-#include "../cmdboot.h"
-
 int main()
 {
     UARTWrite("\nTesting DDR3 on AXI4-Lite bus\n");

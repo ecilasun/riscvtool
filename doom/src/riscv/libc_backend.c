@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-#include "config.h"
+#include "core.h"
 #include "console.h"
 
 
@@ -37,7 +37,7 @@
 // HEAP handling
 // -------------
 
-static uint8_t *heap_start  = (uint8_t*)0x08000000; // Program/static data can leak all the way up to 128MBytes
+/*static uint8_t *heap_start  = (uint8_t*)0x08000000; // Program/static data can leak all the way up to 128MBytes
 static uint8_t *heap_end    = (uint8_t*)0x0FFF0000; // ~127MBytes of heap, 64KBytes at the end reserved for now (future kernel stack)
 
 int _brk(void *addr)
@@ -60,17 +60,17 @@ void *_sbrk(intptr_t incr)
 		heap_start = heap_end;
 	}
 	return old_heapstart;
-}
+}*/
 
 
 // File handling
 // -------------
-
-/* Flash "filesystem" */
+/*
+// Flash "filesystem"
 static struct {
-	const char *name;	/* Filename */
-	size_t      len;	/* Length */
-	void *      addr;	/* Address in flash */
+	const char *name;	// Filename
+	size_t      len;	// Length
+	void *      addr;	// Address in flash
 } fs[] = {
 	{ "nothing.dat", 4, (void*)0x0E000000 },
 	{ NULL }
@@ -105,7 +105,7 @@ _open(const char *pathname, int flags)
 {
 	int fn, fd;
 
-	/* Try to find file */
+	/// Try to find file
 	for (fn=0; fs[fn].name; fn++)
 		if (!strcmp(pathname, fs[fn].name))
 			break;
@@ -115,14 +115,14 @@ _open(const char *pathname, int flags)
 		return -1;
 	}
 
-	/* Find free FD */
+	// Find free FD
 	for (fd=3; (fd<NUM_FDS) && (fds[fd].type != FD_NONE); fd++);
 	if (fd == NUM_FDS) {
 		errno = ENOMEM;
 		return -1;
 	}
 
-	/* "Open" file */
+	// "Open" file
 	fds[fd].type   = FD_FLASH;
 	fds[fd].offset = 0;
 	fds[fd].len    = fs[fn].len;
@@ -210,7 +210,7 @@ _lseek(int fd, off_t offset, int whence)
 int
 _stat(const char *filename, struct stat *statbuf)
 {
-	/* Not implemented */
+	// Not implemented
 #ifdef LIBC_DEBUG
 	console_printf("[1] Unimplemented _stat(filename=\"%s\")\n", filename);
 #endif
@@ -221,7 +221,7 @@ _stat(const char *filename, struct stat *statbuf)
 int
 _fstat(int fd, struct stat *statbuf)
 {
-	/* Not implemented */
+	// Not implemented
 #ifdef LIBC_DEBUG
 	console_printf("[1] Unimplemented _fstat(fd=%d)\n", fd);
 #endif
@@ -232,7 +232,7 @@ _fstat(int fd, struct stat *statbuf)
 int
 _isatty(int fd)
 {
-	/* Only stdout and stderr are TTY */
+	// Only stdout and stderr are TTY
 	errno = 0;
 	return (fd == 1) || (fd == 2);
 }
@@ -242,7 +242,7 @@ access(const char *pathname, int mode)
 {
 	int fn;
 
-	/* Try to find file */
+	// Try to find file
 	for (fn=0; fs[fn].name; fn++)
 		if (!strcmp(pathname, fs[fn].name))
 			break;
@@ -252,7 +252,7 @@ access(const char *pathname, int mode)
 		return -1;
 	}
 
-	/* Check requested access */
+	// Check requested access
 	if (mode & ~(R_OK | F_OK)) {
 		errno = EACCES;
 		return -1;
@@ -260,3 +260,4 @@ access(const char *pathname, int mode)
 
 	return 0;
 }
+*/

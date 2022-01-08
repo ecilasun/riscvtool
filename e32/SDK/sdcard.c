@@ -1,5 +1,7 @@
-#include "config.h"
+#include "core.h"
+#include "spi.h"
 #include "sdcard.h"
+#include "uart.h"
 #include <stdio.h>
 
 #define G_SPI_TIMEOUT 65536
@@ -93,12 +95,12 @@ uint8_t SDIdle()
    SDCmd(CMD0_GO_IDLE_STATE, 0);
    uint8_t response = SDResponse1(); // Expected: 0x01
 
-   /*if (response != 0x01)
+   if (response != 0x01)
    {
       UARTWrite("SDIdle expected 0x01, got 0x");
       UARTWriteHex(response);
       UARTWrite("\n");
-   }*/
+   }
 
    return response;
 }
@@ -111,19 +113,19 @@ uint8_t SDCheckVoltageRange()
    uint32_t databack;
    uint8_t response = SDResponse7(&databack); // Expected: 0x01(version 2 SDCARD) or 0x05(version 1 or MMC card)
 
-   /*if (response != 0x01) // V2 SD Card, 0x05 for a V1 SD Card / MMC card
+   if (response != 0x01) // V2 SD Card, 0x05 for a V1 SD Card / MMC card
    {
       UARTWrite("SDCheckVoltageRange expected 0x01, got 0x");
       UARTWriteHex(response);
       UARTWrite("\n");
-   }*/
+   }
 
-   /*if (databack != 0x000001AA)
+   if (databack != 0x000001AA)
    {
       UARTWrite("SDCheckVoltageRange expected 0x000001AA, got 0x");
       UARTWriteHex(databack);
       UARTWrite("\n");
-   }*/
+   }
 
    return response;
 }
@@ -142,19 +144,19 @@ uint8_t SDCardInit()
       ++timeout;
    } while (rB != 0x00 && timeout < G_SPI_TIMEOUT);
 
-   /*if (rA != 0x01)
+   if (rA != 0x01)
    {
       UARTWrite("SDCardInit expected 0x01, got 0x");
       UARTWriteHex(rA);
       UARTWrite("\n");
-   }*/
+   }
 
-   /*if (rB != 0x00)
+   if (rB != 0x00)
    {
       UARTWrite("SDCardInit expected 0x00, got 0x");
       UARTWriteHex(rB);
       UARTWrite("\n");
-   }*/
+   }
 
    // Initialize
    /**IO_SPIRXTX = 0xFF;
@@ -210,7 +212,7 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
    }
 
    // Error
-   /*if (!(response&0xF0))
+   if (!(response&0xF0))
    {
       if (response&0x01)
          UARTWrite("SDReadSingleBlock: error response = 'error'\n");
@@ -226,7 +228,7 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
       }
       if (response&0x10)
          UARTWrite("SDReadSingleBlock: error response = 'Card locked'\n");
-   }*/
+   }
 
    return response;
 }
@@ -234,7 +236,7 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
 uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
 {
    // TODO: 
-   /*UARTWrite("SDWriteSingleBlock: not implemented yet.\n");*/
+   UARTWrite("SDWriteSingleBlock: not implemented yet.\n");
 
    return 0xFF;
 }
@@ -280,7 +282,8 @@ int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t
       cursor += 512;
    }
 
-   return cursor;}
+   return cursor;
+}
 
 int SDCardStartup()
 {

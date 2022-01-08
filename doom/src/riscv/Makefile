@@ -6,8 +6,9 @@ OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
 UPLOADER = ../../../build/release/riscvtool
 
-#-ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug 
-CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,--gc-sections --specs=nano.specs -I..
+# -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
+# --specs=nano.specs
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32imf -mabi=ilp32f -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,-strip-debug -I.. -I../../../3rdparty/fat32 -I../../../e32/SDK/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -34,11 +35,14 @@ SOURCES_doom_arch := \
 	console.c  \
 	libc_backend.c  \
 	mini-printf.c \
-	config.c \
-	ff.c \
-	diskio.c \
-	gpu.c \
-	sdcard.c \
+	../../../3rdparty/fat32/ff.c \
+	../../../3rdparty/fat32/diskio.c \
+	../../../3rdparty/fat32/ffsystem.c \
+	../../../3rdparty/fat32/ffunicode.c \
+	../../../e32/SDK/core.c \
+	../../../e32/SDK/sdcard.c \
+	../../../e32/SDK/uart.c \
+	../../../e32/SDK/spi.c \
 	$(NULL)
 
 # start.S

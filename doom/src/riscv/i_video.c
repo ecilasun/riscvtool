@@ -26,8 +26,7 @@
 #include "../v_video.h"
 #include "../i_video.h"
 
-#include "config.h"
-#include "gpu.h"
+#include "core.h"
 
 //static uint32_t vramPage = 0;
 

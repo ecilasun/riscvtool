@@ -71,7 +71,7 @@ void UARTWriteDecimal(const int32_t i)
         msg[m++] = '-';
     for (int c=0;c<10;++c)
     {
-        uint32_t r = abs(i/d)%10;
+        uint32_t r = ((i/d)%10)&0x7FFFFFFF;
         // Ignore preceeding zeros
         if ((r!=0) || enableappend || d==1)
         {

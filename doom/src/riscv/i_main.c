@@ -22,13 +22,14 @@
 #include "../doomdef.h"
 #include "../d_main.h"
 
-#include "../riscv/ff.h"
+#include "ff.h"
 
-FATFS Fs;
+// Shared FAT file system at bottom of S-RAM
+FATFS *Fs = (FATFS*)0x8002F000;
 
 int main(void)
 {
-   f_mount(&Fs, "sd:", 1);
+   f_mount(Fs, "sd:", 1);
 
    D_DoomMain();
 

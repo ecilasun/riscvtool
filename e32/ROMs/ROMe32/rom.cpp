@@ -43,7 +43,8 @@ static int cmdlen = 0;
 static int parseit = 0;
 static int havedrive = 0;
 
-FATFS Fs;
+// Shared FAT file system at bottom of S-RAM
+FATFS *Fs = (FATFS*)0x8002F000;
 
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
@@ -246,8 +247,10 @@ void FlushDataCache()
    // Force D$ flush so that contents are visible by I$
    // We do this by forcing a dummy load of DWORDs from 0 to 2048
    // to force previous contents to be written back to DDR3
-   volatile uint32_t *DDR3Start = (volatile uint32_t *)0x00000000;
-   for (uint32_t i=0; i<2048; ++i)
+   // Tag is on high 17 bits, use end-of-memory to make sure we
+   // access somewhere not touched by program loads
+   volatile uint32_t *DDR3Start = (volatile uint32_t *)0x1FFFF000;
+   for (uint32_t i=0; i<1024; ++i) // 4x32bit reads
    {
       uint32_t dummyread = DDR3Start[i];
       // This is to make sure compiler doesn't eat our reads
@@ -345,6 +348,7 @@ void ParseCommands()
                 uint32_t branchaddress;
                 ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
                 f_close(&fp);
+
                 // Unmount filesystem before passing control
                 f_mount(nullptr, "sd:", 1);
 
@@ -352,6 +356,7 @@ void ParseCommands()
                 UARTWrite("Starting ");
                 UARTWrite(filename);
                 UARTWrite("...\n");
+
                 asm volatile(
                     "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
                     "jalr s0;" // Branch with the intent to return back here
@@ -359,7 +364,7 @@ void ParseCommands()
                 );
 
                 // Re-mount filesystem before passing control
-                f_mount(&Fs, "sd:", 1);
+                f_mount(Fs, "sd:", 1);
             }
             else
             {
@@ -375,9 +380,18 @@ void ParseCommands()
     commandline[0]=0;
 }
 
-#include "memtest/memtest.h"
 int main()
 {
+    // NOTE: This is to test DDR3 access easily at boot time withouth having to wait for a lot of instructions
+    // It copies the first 16 words of main() into DDR3, then does a read pass and copies onto overlapping tag.
+    /*volatile uint32_t *T = (volatile uint32_t*)0x01000000;
+    volatile uint32_t *Y = (volatile uint32_t*)0x02000000;
+    volatile uint32_t *X = (volatile uint32_t*)&main;
+    for (uint32_t i=0x00000000; i<0x00000010; ++i)
+        T[i] = X[i];
+    for (uint32_t i=0x00000000; i<0x00000010; ++i)
+        Y[i] = 0xFFFFFFFF^T[i];*/
+
     InstallIllegalInstructionHandler();
 
     // Clear all attributes, clear screen, print boot message
@@ -386,7 +400,7 @@ int main()
     UARTWrite("│ E32OS v0.1 (c)2022 Engin Cilasun │\n");
     UARTWrite("└──────────────────────────────────┘\n\n");
 
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
     {
         havedrive = 0;
