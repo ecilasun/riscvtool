@@ -249,8 +249,8 @@ void FlushDataCache()
    // to force previous contents to be written back to DDR3
    // Tag is on high 17 bits, use end-of-memory to make sure we
    // access somewhere not touched by program loads
-   volatile uint32_t *DDR3Start = (volatile uint32_t *)0x1FFFF000;
-   for (uint32_t i=0; i<1024; ++i) // 4x32bit reads
+   volatile uint32_t *DDR3Start = (volatile uint32_t *)0x00000000;
+   for (uint32_t i=0; i<2048; ++i)
    {
       uint32_t dummyread = DDR3Start[i];
       // This is to make sure compiler doesn't eat our reads
