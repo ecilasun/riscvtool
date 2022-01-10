@@ -328,7 +328,6 @@ void ParseCommands()
     else if (!strcmp(commandline, "cls")) // Clear terminal screen
     {
         CLS();
-        //CLV();
     }
     else // Unknown command, assume this is a program name from root directory of the SDCard
     {
@@ -381,74 +380,8 @@ void ParseCommands()
     commandline[0]=0;
 }
 
-/*void diagnoseddr3()
-{
-    // Cache holds 256*4 (1024) WORDs of data within the same cache tag region
-    // This means we can write a 4096 byte block without having to write back
-    // to main memory.
-
-    // Resuming writes past 4Kbyte window will generate different tags for
-    // each cache line, therefore force the contents to be written back to
-    // main memory.
-
-    uint64_t startclock = E32ReadTime();
-
-    // 4Kbyte region, stays entirely in cache (only 'populate' cost)
-    // Write 16 words
-    for (uint32_t m=0x00000000; m<0x00000010; m+=4)
-        *((volatile uint32_t*)m) = 0x00000000;
-
-    // Continue into another 4Kbyte region, forcing 'writeback' then 'populate'
-    // Write 16 words
-    for (uint32_t m=0x00080010; m<0x00080010; m+=4)
-        *((volatile uint32_t*)m) = 0xFFFFFFFF;
-
-    // Stay on same region, read those 16 words
-    volatile uint32_t readval = 0;
-    for (uint32_t m=0x00080010; m<0x00080010; m+=4)
-        readval += *((volatile uint32_t*)m);
-
-    uint64_t endclock = E32ReadTime();
-    uint32_t deltams = ClockToUs(endclock-startclock);
-    UARTWrite("Diagnosis took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" usec(s)\n");
-}*/
-
-/*void measureddr3()
-{
-    int i=0;
-    uint64_t startclock = E32ReadTime();
-    for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
-    {
-        *((volatile uint32_t*)m) = 0x00000000;
-        if ((m!=0) && ((m%0x100000) == 0))
-        {
-            ++i;
-            UARTWriteDecimal(i);
-            UARTWrite(" Mbytes cleared @");
-            UARTWriteHex((unsigned int)m);
-            UARTWrite("\n");
-
-        }
-    }
-
-    uint64_t endclock = E32ReadTime();
-    uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("Clearing 32Mbytes took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms\n");
-
-    int rate = (1024*32*1024) / deltams;
-    UARTWrite("Zero-write rate is ");
-    UARTWriteDecimal(rate);
-    UARTWrite(" Kbytes/sec\n");
-}*/
-
 int main()
 {
-    /*diagnoseddr3();*/
-
     InstallIllegalInstructionHandler();
 
     // Clear all attributes, clear screen, print boot message
@@ -465,8 +398,6 @@ int main()
     }
 	else
         havedrive = 1;
-
-    //measureddr3();
 
     while(1)
     {
