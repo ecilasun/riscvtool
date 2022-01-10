@@ -43,7 +43,7 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 #include <string.h>
 #include <ctype.h>
 
-#include "ff.h"
+#include "fat32/ff.h"
 
 
 FIL s_filehandles[32]; // 32 files open at most

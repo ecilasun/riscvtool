@@ -8,7 +8,7 @@ UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
 # --specs=nano.specs
-CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32imf -mabi=ilp32f -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,-strip-debug -I.. -I../../../3rdparty/fat32 -I../../../e32/SDK/
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32imf -mabi=ilp32f -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,-strip-debug -I.. -I../../../3rdparty/ -I../../../e32/SDK/
 
 CFLAGS += \
 	-DNORMALUNIX \

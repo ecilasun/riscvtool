@@ -415,7 +415,7 @@ void ParseCommands()
     UARTWrite(" usec(s)\n");
 }*/
 
-void measureddr3()
+/*void measureddr3()
 {
     int i=0;
     uint64_t startclock = E32ReadTime();
@@ -443,7 +443,7 @@ void measureddr3()
     UARTWrite("Zero-write rate is ");
     UARTWriteDecimal(rate);
     UARTWrite(" Kbytes/sec\n");
-}
+}*/
 
 int main()
 {
@@ -453,9 +453,9 @@ int main()
 
     // Clear all attributes, clear screen, print boot message
     CLS();
-    UARTWrite("┌──────────────────────────────────┐\n");
-    UARTWrite("│ E32OS v0.1 (c)2022 Engin Cilasun │\n");
-    UARTWrite("└──────────────────────────────────┘\n\n");
+    UARTWrite("┌───────────────────────────────────┐\n");
+    UARTWrite("│ E32OS v0.12 (c)2022 Engin Cilasun │\n");
+    UARTWrite("└───────────────────────────────────┘\n\n");
 
 	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
@@ -466,7 +466,7 @@ int main()
 	else
         havedrive = 1;
 
-    measureddr3();
+    //measureddr3();
 
     while(1)
     {
