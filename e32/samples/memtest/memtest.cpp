@@ -25,7 +25,6 @@ int main()
             UARTWrite(" Mbytes cleared @");
             UARTWriteHex((unsigned int)m);
             UARTWrite("\n");
-
         }
     }
 
