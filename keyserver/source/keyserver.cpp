@@ -28,10 +28,10 @@ int main(int argc, char **argv)
 
     printf("Keyserver\nPlease hit END key to quit\n");
 
-    int serial_port = open("/dev/ttyUSB1", O_RDWR);
+    int serial_port = open("/dev/ttyUSB0", O_RDWR);
     if (serial_port <0 )
     {
-        printf("cannot open /dev/ttyUSB1\n");
+        printf("cannot open /dev/ttyUSB0\n");
         return -1;
     }
 

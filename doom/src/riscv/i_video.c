@@ -27,6 +27,7 @@
 #include "../i_video.h"
 
 #include "core.h"
+#include "gpu.h"
 
 //static uint32_t vramPage = 0;
 
@@ -46,10 +47,6 @@ I_ShutdownGraphics(void)
 {
 	// TODO: Wait for GPU idle perhaps?
 }
-
-
-volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x40040000;
-#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 
 void
 I_SetPalette(byte* palette)
@@ -74,19 +71,10 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// Fake screen buffer in BRAM (overwrites loader in BIOS)
-	// TODO: Somehow make sure screens[0] is within BRAM region instead of DDR3
-	for (int slice = 0; slice<4; ++slice)
-	{
-		int H=64;
-		if (slice==4)
-			H = 16;
-
-		// The out buffer needs a stride of 512 instead of 320
-		uint32_t GRAMStart = 0x40000000;
-		for (int L=0;L<H;++L)
-			__builtin_memcpy((void*)GRAMStart+512*L, screens[0]+SCREENWIDTH*64*slice+SCREENWIDTH*L, 320);
-	}
+	// NOTE: This is unnecessary, E32 has direct scan-out buffers that the CPU can write to
+	// with built-in double-buffering, therefore this copy is redundant.
+	for (int L=0;L<240;++L)
+		__builtin_memcpy((void*)GPUFB0+512*L, screens[0]+SCREENWIDTH*L, 320);
 
 	// optional: wait for vsync
 

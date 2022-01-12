@@ -7,8 +7,8 @@ SIZE = $(CROSS)size
 UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
-# --specs=nano.specs
-CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32imf -mabi=ilp32f -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,-strip-debug -I.. -I../../../3rdparty/ -I../../../e32/SDK/
+# --specs=nano.specs -std=c++14 
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -Ofast -march=rv32im -mabi=ilp32 -flto -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,-gc-sections -Wl,-strip-debug -I.. -I../../../3rdparty/ -I../../../e32/SDK/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -43,6 +43,7 @@ SOURCES_doom_arch := \
 	../../../e32/SDK/sdcard.c \
 	../../../e32/SDK/uart.c \
 	../../../e32/SDK/spi.c \
+	../../../e32/SDK/gpu.c \
 	$(NULL)
 
 # start.S

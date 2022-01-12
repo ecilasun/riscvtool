@@ -17,7 +17,7 @@ int main()
     uint64_t startclock = E32ReadTime();
     for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
     {
-        *((uint32_t*)m) = 0x00000000;
+        *((volatile uint32_t*)m) = 0x00000000;
         /*if ((m!=0) && ((m%0x100000) == 0))
         {
             ++i;

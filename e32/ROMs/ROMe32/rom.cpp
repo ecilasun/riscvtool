@@ -359,6 +359,7 @@ void ParseCommands()
 
                 // Unmount filesystem before passing control
                 f_mount(nullptr, "sd:", 1);
+                havedrive = 0;
 
                 FlushDataCache(); // Make sure we've forced a cache flush on the D$
                 UARTWrite("Starting ");
@@ -371,8 +372,9 @@ void ParseCommands()
                     : "=m" (branchaddress) : : 
                 );
 
-                // Re-mount filesystem before passing control
+                // Re-mount filesystem before re-gaining control
                 f_mount(Fs, "sd:", 1);
+                havedrive = 1;
             }
             else
             {
@@ -388,35 +390,6 @@ void ParseCommands()
     commandline[0]=0;
 }
 
-/*void ddr3test()
-{
-    //int i=0;
-    uint64_t startclock = E32ReadTime();
-    for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
-    {
-        *((volatile uint32_t*)m) = 0x00000000;
-        //if ((m!=0) && ((m%0x100000) == 0))
-        //{
-        //    ++i;
-        //    UARTWriteDecimal(i);
-        //    UARTWrite(" Mbytes cleared @");
-        //    UARTWriteHex((unsigned int)m);
-        //    UARTWrite("\n");
-        //}
-    }
-
-    uint64_t endclock = E32ReadTime();
-    uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("Clearing 32Mbytes took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms\n");
-
-    int rate = (1024*32*1024) / deltams;
-    UARTWrite("Zero-write rate is ");
-    UARTWriteDecimal(rate);
-    UARTWrite(" Kbytes/sec\n");
-}*/
-
 int main()
 {
     InstallIllegalInstructionHandler();
@@ -426,8 +399,6 @@ int main()
     UARTWrite("┌───────────────────────────────────┐\n");
     UARTWrite("│ E32OS v0.12 (c)2022 Engin Cilasun │\n");
     UARTWrite("└───────────────────────────────────┘\n\n");
-
-    //ddr3test();
 
 	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
