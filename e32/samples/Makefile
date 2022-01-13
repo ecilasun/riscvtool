@@ -19,6 +19,7 @@ folders = \
 	sdcard \
 	memtest \
 	dump \
+	vramtest \
 
 # Rules
 
