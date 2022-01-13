@@ -5,6 +5,7 @@
 #include <math.h>
 #include "core.h"
 #include "uart.h"
+#include "gpu.h"
 
 /*******************************************************************/
 
@@ -29,7 +30,6 @@ const uint8_t dither[4][4] = {
 #define graphics_height 240
 
 // Replace with your own code.
-volatile uint8_t *GPUFB0 = (volatile uint8_t* )0x40000000;
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
   r = max(0.0f, min(1.0f, r));
   g = max(0.0f, min(1.0f, g));
@@ -46,7 +46,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
   R = ROFF/32;
   G = GOFF/32;
   B = BOFF/64;
-  int RGB = (uint8_t)((B<<6) | (G<<3) | R);
+  uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
   GPUFB0[x+y*512] = RGB;
 }
@@ -345,8 +345,6 @@ void init_scene() {
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
 
-volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x40040000;
-#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 int main() {
     // Set RGB palette
     int target = 0;

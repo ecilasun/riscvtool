@@ -21,7 +21,6 @@ static inline float min(float x, float y) { return x<y?x:y; }
 #define graphics_height 80
 
 // Replace with your own code.
-volatile uint8_t *GPUFB0 = (volatile uint8_t* )0x40000000;
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
   r = max(0.0f, min(1.0f, r));
   g = max(0.0f, min(1.0f, g));
@@ -336,19 +335,7 @@ void init_scene() {
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
 
-volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x40040000;
-#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g)<<16) | ((_r)<<8) | (_b))
 int main() {
-    // Set RGB palette
-    int target = 0;
-    for (int b=0;b<4;++b)
-    for (int g=0;g<8;++g)
-    for (int r=0;r<8;++r)
-    {
-        GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
-        ++target;
-    }
- 
     init_scene();
 
     uint64_t startclock = E32ReadTime();
