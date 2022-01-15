@@ -14,11 +14,11 @@ int main()
 
     while (1)
     {
-        uint32_t scancode = *PS2KEYBOARD;
-        if (scancode != 0)
+        if (*PS2KEYBOARDDATAAVAIL)
         {
+            uint32_t scancode = *PS2KEYBOARD;
             UARTWriteHex(scancode);
-            UARTWrite(" ");
+            UARTWrite(":");
         }
     }
 
