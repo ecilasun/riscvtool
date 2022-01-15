@@ -6,18 +6,21 @@
 
 #include "core.h"
 #include "uart.h"
-#include "memtest/memtest.h"
+#include "ps2.h"
 
 int main()
 {
-    UARTWrite("\nDumping first 256 words @0x00000000\n");
+    UARTWrite("\nDumping incoming keyboard scan codes\n");
 
-    for (uint32_t m=0x00000000; m<0x00000100; m+=4)
+    while (1)
     {
-        UARTWriteHex(*((uint32_t*)m));
-        UARTWrite(" ");
+        uint32_t scancode = *PS2KEYBOARD;
+        if (scancode != 0)
+        {
+            UARTWriteHex(scancode);
+            UARTWrite(" ");
+        }
     }
 
-    UARTWrite("\n");
     return 0;
 }
