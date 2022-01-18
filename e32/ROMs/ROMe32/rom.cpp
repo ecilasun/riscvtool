@@ -38,6 +38,7 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
+static char currentdir[512]="sd:";
 static char commandline[512]="";
 static char filename[128]="";
 static int cmdlen = 0;
@@ -97,9 +98,9 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
         }
         if (code == 0x7) // timer
         {
-            UARTWrite("\n\033[34m\033[47m\033[7m| ");
-            UARTWrite("HINT: Type 'help' for a list of commands.");
-            UARTWrite(" │\033[0m\n");
+            UARTWrite("\n\033[34m\033[47m\033[7m");
+            UARTWrite("HINT: Type 'help' for a list of available commands.");
+            UARTWrite("\033[0m\n");
             // Stop further timer interrupts by setting the timecmp to furthest value available.
             swap_csr(0x801, 0xFFFFFFFF);
             swap_csr(0x800, 0xFFFFFFFF);
@@ -316,72 +317,81 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 
 void ParseCommands()
 {
-    if (!strcmp(commandline, "help")) // Help text
+    // Grab first token, if any
+    char *command = strtok(commandline, " ");
+
+    if (!strcmp(command, "help")) // Help text
     {
-        UARTWrite("dir, cls\n");
+        UARTWrite("\033[34m\033[47m\033[7mdir\033[0m: show list of files in working directory\n");
+        UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
+        UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
+        UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
     }
-    else if (!strcmp(commandline, "dir")) // List directory
+    else if (!strcmp(command, "cwd"))
     {
-		UARTWrite("\nListing files on volume sd:\n");
-		ListFiles("sd:");
+        // Use first parameter to set current directory
+        char *param = strtok(nullptr, " ");
+        if (param != nullptr)
+            strcpy(currentdir, param);
+        else
+            strcpy(currentdir, "sd:");
     }
-    else if (!strcmp(commandline, "cls")) // Clear terminal screen
+    else if (!strcmp(command, "pwd"))
+    {
+        UARTWrite(currentdir);
+        UARTWrite("\n");
+    }
+    else if (!strcmp(command, "dir")) // List directory
+    {
+		UARTWrite("\n");
+        UARTWrite(currentdir);
+        UARTWrite("\n");
+		ListFiles(currentdir);
+    }
+    else if (!strcmp(command, "cls")) // Clear terminal screen
     {
         CLS();
     }
-    else // Unknown command, assume this is a program name from root directory of the SDCard
+    else // None, assume this is a program name at the working directory of the SDCard
     {
-        if (strlen(commandline)>1)
+        // Build a file name from the input string
+        strcpy(filename, currentdir);
+        strcat(filename, command);
+        strcat(filename, ".elf");
+
+        FIL fp;
+        FRESULT fr = f_open(&fp, filename, FA_READ);
+        if (fr == FR_OK)
         {
-            // Build a file name from the input string
-            strcpy(filename, "sd:");
-            strcat(filename, commandline);
-            strcat(filename, ".elf");
+            SElfFileHeader32 fheader;
+            UINT readsize;
+            f_read(&fp, &fheader, sizeof(fheader), &readsize);
+            uint32_t branchaddress;
+            ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
+            f_close(&fp);
 
-            FIL fp;
-            FRESULT fr = f_open(&fp, filename, FA_READ);
-            if (fr == FR_OK)
-            {
-                SElfFileHeader32 fheader;
-                UINT readsize;
-                f_read(&fp, &fheader, sizeof(fheader), &readsize);
-                uint32_t branchaddress;
-                ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
-                f_close(&fp);
+            // Unmount filesystem and reset to root directory before passing control
+            f_mount(nullptr, "sd:", 1);
+            strcpy(currentdir, "sd:");
+            havedrive = 0;
 
-                // DEBUG: Dump a little bit of data to see if we loaded the start section correctly
-                /*for (uint32_t m=0;m<128;m+=4)
-                {
-                    UARTWriteHex(*((volatile uint32_t*)(branchaddress+m)));
-                    UARTWrite(" ");
-                }
-                UARTWrite("\n");*/
+            FlushDataCache(); // Make sure we've forced a cache flush on the D$ (TODO: Use FENCE.I here instead, once it's implemented)
 
-                // Unmount filesystem before passing control
-                f_mount(nullptr, "sd:", 1);
-                havedrive = 0;
+            asm volatile(
+                "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
+                "jalr s0;" // Branch with the intent to return back here
+                : "=m" (branchaddress) : : 
+            );
 
-                FlushDataCache(); // Make sure we've forced a cache flush on the D$
-                UARTWrite("Starting ");
-                UARTWrite(filename);
-                UARTWrite("...\n");
-
-                asm volatile(
-                    "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
-                    "jalr s0;" // Branch with the intent to return back here
-                    : "=m" (branchaddress) : : 
-                );
-
-                // Re-mount filesystem before re-gaining control
-                f_mount(Fs, "sd:", 1);
-                havedrive = 1;
-            }
-            else
-            {
-                UARTWrite("Executable ");
-                UARTWrite(filename);
-                UARTWrite(" not found\n");
-            }
+            // Re-mount filesystem before re-gaining control
+            f_mount(Fs, "sd:", 1);
+            havedrive = 1;
+        }
+        else
+        {
+            UARTWrite("Executable '");
+            UARTWrite(filename);
+            UARTWrite("' not found.\n");
         }
     }
 
@@ -397,7 +407,7 @@ int main()
     // Clear all attributes, clear screen, print boot message
     CLS();
     UARTWrite("┌───────────────────────────────────┐\n");
-    UARTWrite("│ E32OS v0.12 (c)2022 Engin Cilasun │\n");
+    UARTWrite("│ E32OS v0.13 (c)2022 Engin Cilasun │\n");
     UARTWrite("└───────────────────────────────────┘\n\n");
 
 	FRESULT mountattempt = f_mount(Fs, "sd:", 1);

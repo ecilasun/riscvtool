@@ -74,7 +74,7 @@ I_FinishUpdate (void)
 	// NOTE: This is unnecessary, E32 has direct scan-out buffers that the CPU can write to
 	// with built-in double-buffering, therefore this copy is redundant.
 	for (int L=0;L<240;++L)
-		__builtin_memcpy((void*)GPUFB0+512*L, screens[0]+SCREENWIDTH*L, 320);
+		__builtin_memcpy((void*)GPUFB0+512*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);
 
 	// optional: wait for vsync
 

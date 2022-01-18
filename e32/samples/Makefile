@@ -20,6 +20,7 @@ folders = \
 	memtest \
 	dump \
 	vramtest \
+	floattest \
 
 # Rules
 

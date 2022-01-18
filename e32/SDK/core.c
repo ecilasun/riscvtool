@@ -134,11 +134,16 @@ extern "C" {
       if (file == STDOUT_FILENO) {
          char *cptr = (char*)ptr;
          const char *eptr = cptr + len;
+         int i = 0;
          while (cptr != eptr)
          {
-            *IO_UARTRXTX = *cptr;
+            UARTPutChar(*cptr);
+            if (i%128==0) // time to flush the FIFO
+               UARTFlush();
+            ++i;
             ++cptr;
          }
+         UARTFlush();
          return len;
       }
       else return 0;
