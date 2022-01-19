@@ -13,7 +13,7 @@
 #include "elf.h"
 #include "sdcard.h"
 #include "fat32/ff.h"
-#include "memtest/memtest.h"
+#include "buttons.h"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -48,6 +48,51 @@ static int havedrive = 0;
 // Shared FAT file system at bottom of S-RAM
 FATFS *Fs = (FATFS*)0x8002F000;
 
+void HandleUART()
+{
+    //*IO_UARTRXTX = 0x13; // XOFF
+    //UARTFlush();
+
+    // Echo back incoming bytes
+    while (*IO_UARTRXByteAvailable)
+    {
+        // Read incoming character
+        uint8_t incoming = *IO_UARTRXTX;
+        // Zero terminated command line
+        if (incoming == 13)
+            parseit = 1;
+        else if (incoming == 8)
+        {
+            cmdlen--;
+            if (cmdlen < 0) cmdlen = 0;
+            commandline[cmdlen] = 0;
+        }
+        else
+        {
+            commandline[cmdlen++] = incoming;
+            if (cmdlen>=511) cmdlen = 511;
+            commandline[cmdlen] = 0;
+        }
+        // Write back to UART
+        *IO_UARTRXTX = incoming;
+    }
+    UARTFlush();
+
+    //*IO_UARTRXTX = 0x11; // XON
+    //UARTFlush();
+}
+
+void HandleButtons()
+{
+    while (*BUTTONCHANGEAVAIL)
+    {
+        uint32_t change = *BUTTONCHANGE;
+        UARTWrite("Button state change: ");
+        UARTWriteHex(change);
+        UARTWrite("\n");
+    }
+}
+
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
     // Trap A7 before it's ruined.
@@ -65,36 +110,8 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
     {
         if (code == 0xB) // hardware
         {
-            //*IO_UARTRXTX = 0x13; // XOFF
-            //UARTFlush();
-
-            // Echo back incoming bytes
-            while (*IO_UARTRXByteAvailable)
-            {
-                // Read incoming character
-                uint8_t incoming = *IO_UARTRXTX;
-                // Zero terminated command line
-                if (incoming == 13)
-                    parseit = 1;
-                else if (incoming == 8)
-                {
-                    cmdlen--;
-                    if (cmdlen < 0) cmdlen = 0;
-                    commandline[cmdlen] = 0;
-                }
-                else
-                {
-                    commandline[cmdlen++] = incoming;
-                    if (cmdlen>=511) cmdlen = 511;
-                    commandline[cmdlen] = 0;
-                }
-                // Write back to UART
-                *IO_UARTRXTX = incoming;
-            }
-            UARTFlush();
-
-            //*IO_UARTRXTX = 0x11; // XON
-            //UARTFlush();
+            HandleButtons();
+            HandleUART();
         }
         if (code == 0x7) // timer
         {
