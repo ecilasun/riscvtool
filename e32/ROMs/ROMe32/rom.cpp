@@ -318,7 +318,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 void ParseCommands()
 {
     // Grab first token, if any
-    char *command = strtok(commandline, " ");
+    const char *command = strtok(commandline, " ");
 
     if (!strcmp(command, "help")) // Help text
     {
@@ -352,7 +352,7 @@ void ParseCommands()
     {
         CLS();
     }
-    else // None, assume this is a program name at the working directory of the SDCard
+    else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
     {
         // Build a file name from the input string
         strcpy(filename, currentdir);
@@ -377,11 +377,17 @@ void ParseCommands()
 
             FlushDataCache(); // Make sure we've forced a cache flush on the D$ (TODO: Use FENCE.I here instead, once it's implemented)
 
+            // Turn off machine external interrupts
+            swap_csr(mie, MIP_MSIP | MIP_MTIP);
+
             asm volatile(
                 "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
                 "jalr s0;" // Branch with the intent to return back here
                 : "=m" (branchaddress) : : 
             );
+
+            // Turn on machine external interrupts
+            swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 
             // Re-mount filesystem before re-gaining control
             f_mount(Fs, "sd:", 1);
