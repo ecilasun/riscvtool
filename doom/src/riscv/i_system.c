@@ -39,11 +39,15 @@
 #include "core.h"
 #include "console.h"
 #include "uart.h"
+#include "buttons.h"
+
+static uint32_t s_buttons = 0;
 
 void
 I_Init(void)
 {
 	//I_InitSound();
+	s_buttons = *BUTTONIMMEDIATESTATE;
 }
 
 
@@ -72,8 +76,63 @@ I_GetEvent(void)
 {
 	event_t event;
 
+    if (*BUTTONCHANGEAVAIL)
+    {
+        uint32_t newbuttons = *BUTTONCHANGE;
+
+		// There's a change if s_buttons ^ newbuttons != 0
+
+		if ((s_buttons ^ newbuttons)&BUTTONMASK_CENTER)
+		{
+			event.type =  ev_joystick;
+			if ((s_buttons&BUTTONMASK_CENTER) == 0) // Old state was 'up', so new event is 'down' etc
+				event.data1 = 1;
+			else
+				event.data1 = 0;
+		}
+
+		if ((s_buttons ^ newbuttons)&BUTTONMASK_DOWN)
+		{
+			if ((s_buttons&BUTTONMASK_DOWN) == 0)
+				event.type = ev_keydown;
+			else
+				event.type = ev_keyup;
+			event.data1 = KEY_DOWNARROW;
+		}
+
+		if ((s_buttons ^ newbuttons)&BUTTONMASK_LEFT)
+		{
+			if ((s_buttons&BUTTONMASK_LEFT) == 0)
+				event.type = ev_keydown;
+			else
+				event.type = ev_keyup;
+			event.data1 = KEY_LEFTARROW;
+		}
+
+		if ((s_buttons ^ newbuttons)&BUTTONMASK_RIGHT)
+		{
+			if ((s_buttons&BUTTONMASK_RIGHT) == 0)
+				event.type = ev_keydown;
+			else
+				event.type = ev_keyup;
+			event.data1 = KEY_RIGHTARROW;
+		}
+
+		if ((s_buttons ^ newbuttons)&BUTTONMASK_UP)
+		{
+			if ((s_buttons&BUTTONMASK_UP) == 0)
+				event.type = ev_keydown;
+			else
+				event.type = ev_keyup;
+			event.data1 = KEY_UPARROW;
+		}
+
+		s_buttons = newbuttons;
+		D_PostEvent(&event);
+	}
+
 	// Works with riscvtool's keyserver
-	unsigned char keydata[2];
+	/*unsigned char keydata[2];
 	if (*IO_UARTRXByteAvailable)
 	{
 		for (int i=0;i<2;++i)
@@ -82,7 +141,7 @@ I_GetEvent(void)
 		// second byte: x11 keysymbol
 
 		// The packet contains up/down state in first byte
-		event.type = keydata[0] ? ev_keydown : ev_keyup;
+		//event.type = keydata[0] ? ev_keydown : ev_keyup;
 
 		switch (keydata[1])
 		{
@@ -123,7 +182,7 @@ I_GetEvent(void)
 		}
 
 		D_PostEvent(&event);
-	}
+	}*/
 
 	/*static uint32_t oldhardwareswitchstates = 0;
 	if (*IO_SwitchByteCount)

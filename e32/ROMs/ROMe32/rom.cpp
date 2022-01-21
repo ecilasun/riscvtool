@@ -93,9 +93,98 @@ void HandleButtons()
     }
 }
 
+void HandleTimer()
+{
+    UARTWrite("\n\033[34m\033[47m\033[7m");
+    UARTWrite("HINT: Type 'help' for a list of available commands.");
+    UARTWrite("\033[0m\n");
+
+    // Stop further timer interrupts by setting the timecmp to furthest value available.
+    swap_csr(0x801, 0xFFFFFFFF);
+    swap_csr(0x800, 0xFFFFFFFF);
+}
+
+void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, const uint32_t PC)
+{
+    // NOTE: One use of illegal instruction exception would be to do software emulation of the instruction in 'value'.
+    switch (cause)
+    {
+        case CAUSE_BREAKPOINT:
+            // TODO: Debugger related
+        break;
+
+        /*case CAUSE_USER_ECALL:
+        case CAUSE_SUPERVISOR_ECALL:
+        case CAUSE_HYPERVISOR_ECALL:*/
+        case CAUSE_MACHINE_ECALL:
+
+            // NOTE: See \usr\include\asm-generic\unistd.h for a full list
+
+            // A7
+            // 64  sys_write  -> print (A0==1->stdout, A1->string, A2->length)
+            // 96  sys_exit   -> terminate (A0==return code)
+            // 116 sys_syslog -> 
+            // 117 sys_ptrace -> 
+
+            // TODO: implement system calls
+
+            UARTWrite("\033[31m\033[40m");
+
+            UARTWrite("┌───────────────────────────────────────────────────┐\n");
+            UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
+            UARTWrite("│ execution, though it might crash.                 │\n");
+            UARTWrite("│ #");
+            UARTWriteHex((uint32_t)a7); // A7 containts Syscall ID
+            UARTWrite(" @");
+            UARTWriteHex((uint32_t)PC); // PC
+            UARTWrite("                               │\n");
+            UARTWrite("└───────────────────────────────────────────────────┘\n");
+            UARTWrite("\033[0m\n");
+        break;
+
+        /*case CAUSE_MISALIGNED_FETCH:
+        case CAUSE_FETCH_ACCESS:
+        case CAUSE_ILLEGAL_INSTRUCTION:
+        case CAUSE_MISALIGNED_LOAD:
+        case CAUSE_LOAD_ACCESS:
+        case CAUSE_MISALIGNED_STORE:
+        case CAUSE_STORE_ACCESS:
+        case CAUSE_FETCH_PAGE_FAULT:
+        case CAUSE_LOAD_PAGE_FAULT:
+        case CAUSE_STORE_PAGE_FAULT:*/
+        default:
+        {
+            UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
+
+            // reverse on: \033[7m
+            // blink on: \033[5m
+            // Set foreground color to red and bg color to black
+            UARTWrite("\033[31m\033[40m");
+
+            UARTWrite("┌───────────────────────────────────────────────────┐\n");
+            UARTWrite("│ Software Failure. Press reset button to continue. │\n");
+            UARTWrite("│   Guru Meditation #");
+            UARTWriteHex((uint32_t)cause); // Cause
+            UARTWrite(".");
+            UARTWriteHex((uint32_t)value); // Failed instruction
+            UARTWrite(" @");
+            UARTWriteHex((uint32_t)PC); // PC
+            UARTWrite("    │\n");
+            UARTWrite("└───────────────────────────────────────────────────┘\n");
+            UARTWrite("\033[0m\n");
+
+            // Put core to endless sleep
+            while(1) {
+                asm volatile("wfi;");
+            }
+            break; // Doesn't make sense but to make compiler happy...
+        }
+    }
+}
+
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
 {
-    // Trap A7 before it's ruined.
+    // Catch A7 before it's ruined.
     uint32_t a7;
     asm volatile ("sw a7, %0;" : "=m" (a7));
 
@@ -108,97 +197,19 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
 
     if (cause & 0x80000000) // Interrupt
     {
-        if (code == 0xB) // hardware
+        if (code == 0xB) // Machine External Interrupt (hardware)
         {
-            HandleButtons();
             HandleUART();
+            HandleButtons();
         }
-        if (code == 0x7) // timer
+        if (code == 0x7) // Machine Timer Interrupt (timer)
         {
-            UARTWrite("\n\033[34m\033[47m\033[7m");
-            UARTWrite("HINT: Type 'help' for a list of available commands.");
-            UARTWrite("\033[0m\n");
-            // Stop further timer interrupts by setting the timecmp to furthest value available.
-            swap_csr(0x801, 0xFFFFFFFF);
-            swap_csr(0x800, 0xFFFFFFFF);
+            HandleTimer();
         }
     }
-    else // Exception
+    else // Machine Software Exception (trap)
     {
-        // NOTE: One use of illegal instruction exception would be to do software emulation of the instruction in 'value'.
-        switch (cause)
-        {
-            case CAUSE_BREAKPOINT:
-                // TODO: Debugger related
-            break;
-
-            /*case CAUSE_USER_ECALL:
-            case CAUSE_SUPERVISOR_ECALL:
-            case CAUSE_HYPERVISOR_ECALL:*/
-            case CAUSE_MACHINE_ECALL:
-
-                // NOTE: See \usr\include\asm-generic\unistd.h for a full list
-
-                // A7
-                // 64  sys_write  -> print (A0==1->stdout, A1->string, A2->length)
-                // 96  sys_exit   -> terminate (A0==return code)
-                // 116 sys_syslog -> 
-                // 117 sys_ptrace -> 
-
-                // TODO: implement system calls
-
-                UARTWrite("\033[31m\033[40m");
-
-                UARTWrite("┌───────────────────────────────────────────────────┐\n");
-                UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
-                UARTWrite("│ execution, though it might crash.                 │\n");
-                UARTWrite("│ #");
-                UARTWriteHex((uint32_t)a7); // A7 containts Syscall ID
-                UARTWrite(" @");
-                UARTWriteHex((uint32_t)PC); // PC
-                UARTWrite("                               │\n");
-                UARTWrite("└───────────────────────────────────────────────────┘\n");
-                UARTWrite("\033[0m\n");
-            break;
-
-            /*case CAUSE_MISALIGNED_FETCH:
-            case CAUSE_FETCH_ACCESS:
-            case CAUSE_ILLEGAL_INSTRUCTION:
-            case CAUSE_MISALIGNED_LOAD:
-            case CAUSE_LOAD_ACCESS:
-            case CAUSE_MISALIGNED_STORE:
-            case CAUSE_STORE_ACCESS:
-            case CAUSE_FETCH_PAGE_FAULT:
-            case CAUSE_LOAD_PAGE_FAULT:
-            case CAUSE_STORE_PAGE_FAULT:*/
-            default:
-            {
-                UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
-
-                // reverse on: \033[7m
-                // blink on: \033[5m
-                // Set foreground color to red and bg color to black
-                UARTWrite("\033[31m\033[40m");
-
-                UARTWrite("┌───────────────────────────────────────────────────┐\n");
-                UARTWrite("│ Software Failure. Press reset button to continue. │\n");
-                UARTWrite("│   Guru Meditation #");
-                UARTWriteHex((uint32_t)cause); // Cause
-                UARTWrite(".");
-                UARTWriteHex((uint32_t)value); // Failed instruction
-                UARTWrite(" @");
-                UARTWriteHex((uint32_t)PC); // PC
-                UARTWrite("    │\n");
-                UARTWrite("└───────────────────────────────────────────────────┘\n");
-                UARTWrite("\033[0m\n");
-
-                // Put core to endless sleep
-                while(1) {
-                    asm volatile("wfi;");
-                }
-                break; // Doesn't make sense but to make compiler happy...
-            }
-        }
+        HandleTrap(cause, a7, value, PC);
     }
 }
 

@@ -15,7 +15,7 @@ extern volatile uint32_t *BUTTONIMMEDIATESTATE;
 #define BUTTONMASK_RIGHT 0x00000008
 #define BUTTONMASK_UP 0x00000010
 
-enum EButtonBames {
+enum EButtonNames {
     ButtonCenter,
     ButtonDown,
     ButtonLeft,
@@ -23,4 +23,5 @@ enum EButtonBames {
     ButtonUp
 };
 
-int IsKeyDown( EButtonBames _button );
+int IsKeyDown( enum EButtonNames _button );
+const char *ButtonToString( enum EButtonNames _button );
