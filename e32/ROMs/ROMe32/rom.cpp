@@ -49,9 +49,9 @@ static int havedrive = 0;
 // Shared FAT file system at bottom of S-RAM
 FATFS *Fs = (FATFS*)0x8002F000;
 // Keyboard map is at top of S-RAM
-uint8_t *keymap = (uint8_t*)0x80010000;
+uint16_t *keymap = (uint16_t*)0x80010000;
 // Previous key map to be able to track deltas
-uint8_t *keymapprev = (uint8_t*)0x80010100;
+uint16_t *keymapprev = (uint16_t*)0x80010100;
 
 void HandleUART()
 {
@@ -116,22 +116,24 @@ void HandleKeyboard()
         ScanKeyboard(keymap);
 
     // If there's a difference between the previous keymap and current one, generate events for each change
-    for (uint32_t i=0;i<256;++i)
+    for (uint32_t i=0; i<256; ++i)
     {
         if (keymapprev[i]^keymap[i])
         {
-            // TODO: Generate key up/down events here instead of debug dump
+            // TODO: Generate key up/down events into a memory FIFO
 
-            if (i==255) // Keyboard state
+            if (i==0xAA) // Keyboard state
                 UARTWrite("KbdState=");
             UARTWrite("0x");
-            UARTWriteHexByte(keymap[i]);
+            UARTWriteHexByte(i);
+            UARTWrite(":0x");
+            UARTWriteHex(keymap[i]);
             UARTWrite("\n");
         }
     }
 
     // Store state of keymap for next scan
-    __builtin_memcpy(keymapprev, keymap, 256);
+    __builtin_memcpy(keymapprev, keymap, sizeof(uint16_t)*256);
 }
 
 void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, const uint32_t PC)

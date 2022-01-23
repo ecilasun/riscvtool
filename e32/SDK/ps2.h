@@ -7,5 +7,5 @@ extern volatile uint32_t *PS2KEYBOARDDATA;
 extern volatile uint32_t *PS2KEYBOARDDATAAVAIL;
 
 // Call this from an interrupt service routine to populate
-// a key 256 byte map in S-RAM
-void ScanKeyboard(uint8_t *_keymap);
+// a key 256 half map in S-RAM
+void ScanKeyboard(uint16_t *_keymap);
