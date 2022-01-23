@@ -16,7 +16,7 @@ int main()
     {
         if (*PS2KEYBOARDDATAAVAIL)
         {
-            uint32_t scancode = *PS2KEYBOARD;
+            uint32_t scancode = *PS2KEYBOARDDATA;
             UARTWriteHex(scancode);
             UARTWrite(":");
         }

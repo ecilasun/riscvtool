@@ -14,6 +14,7 @@
 #include "sdcard.h"
 #include "fat32/ff.h"
 #include "buttons.h"
+#include "ps2.h"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -47,6 +48,10 @@ static int havedrive = 0;
 
 // Shared FAT file system at bottom of S-RAM
 FATFS *Fs = (FATFS*)0x8002F000;
+// Keyboard map is at top of S-RAM
+uint8_t *keymap = (uint8_t*)0x80010000;
+// Previous key map to be able to track deltas
+uint8_t *keymapprev = (uint8_t*)0x80010100;
 
 void HandleUART()
 {
@@ -102,6 +107,31 @@ void HandleTimer()
     // Stop further timer interrupts by setting the timecmp to furthest value available.
     swap_csr(0x801, 0xFFFFFFFF);
     swap_csr(0x800, 0xFFFFFFFF);
+}
+
+void HandleKeyboard()
+{
+    // Consume all key state changes from FIFO and update the 256 byte key map
+    while (*PS2KEYBOARDDATAAVAIL)
+        ScanKeyboard(keymap);
+
+    // If there's a difference between the previous keymap and current one, generate events for each change
+    for (uint32_t i=0;i<256;++i)
+    {
+        if (keymapprev[i]^keymap[i])
+        {
+            // TODO: Generate key up/down events here instead of debug dump
+
+            if (i==255) // Keyboard state
+                UARTWrite("KbdState=");
+            UARTWrite("0x");
+            UARTWriteHexByte(keymap[i]);
+            UARTWrite("\n");
+        }
+    }
+
+    // Store state of keymap for next scan
+    __builtin_memcpy(keymapprev, keymap, 256);
 }
 
 void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, const uint32_t PC)
@@ -201,6 +231,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
         {
             HandleUART();
             HandleButtons();
+            HandleKeyboard();
         }
         if (code == 0x7) // Machine Timer Interrupt (timer)
         {
