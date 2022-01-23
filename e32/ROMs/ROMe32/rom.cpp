@@ -44,17 +44,16 @@ static char currentdir[512]="sd:";
 static char commandline[512]="";
 static char filename[128]="";
 static int cmdlen = 0;
-static int parseit = 0;
 static int havedrive = 0;
 
 // Shared FAT file system at bottom of S-RAM
 FATFS *Fs = (FATFS*)0x8002F000;
-// Keyboard map is at top of S-RAM (512 bytes)
-uint16_t *keymap = (uint16_t*)0x80010000;
-// Previous key map to be able to track deltas (512 bytes)
-uint16_t *keymapprev = (uint16_t*)0x80010200;
 // Keyboard event ring buffer (1024 bytes)
-uint8_t *keyboardringbuffer = (uint8_t*)0x80010400;
+uint8_t *keyboardringbuffer = (uint8_t*)0x80010000;
+// Keyboard map is at top of S-RAM (512 bytes)
+uint16_t *keymap = (uint16_t*)0x80010400;
+// Previous key map to be able to track deltas (512 bytes)
+uint16_t *keymapprev = (uint16_t*)0x80010600;
 
 void HandleUART()
 {
@@ -66,25 +65,10 @@ void HandleUART()
     // Echo back incoming bytes
     while (*IO_UARTRXByteAvailable)
     {
-        // Read incoming character
+        // Consume incoming character
         uint8_t incoming = *IO_UARTRXTX;
-        // Zero terminated command line
-        /*if (incoming == 13)
-            parseit = 1;
-        else if (incoming == 8)
-        {
-            cmdlen--;
-            if (cmdlen < 0) cmdlen = 0;
-            commandline[cmdlen] = 0;
-        }
-        else
-        {
-            commandline[cmdlen++] = incoming;
-            if (cmdlen>=511) cmdlen = 511;
-            commandline[cmdlen] = 0;
-        }*/
-
-        // Simply echo back
+        // TODO: Handle debugger / file server etc
+        // Echo back
         *IO_UARTRXTX = incoming;
     }
     UARTFlush();
@@ -117,7 +101,7 @@ void HandleTimer()
 
 void HandleKeyboard()
 {
-    // Consume all key state changes from FIFO and update the 256 byte key map
+    // Consume all key state changes from FIFO and update the key map
     while (*PS2KEYBOARDDATAAVAIL)
         ScanKeyboard(keymap);
 
@@ -128,18 +112,19 @@ void HandleKeyboard()
         if (i==0xAA)
             continue;
 
-        // Generate key up/down events into a memory FIFO
+        // Generate key up/down events
         uint32_t prevval = (uint32_t)keymapprev[i];
         uint32_t val = (uint32_t)keymap[i];
-        // Mismatch, this is a keyboard event
-        if (prevval^val)
+        if (prevval^val) // Mismatch, this considered an event
         {
-            // Wait for adequate space to write
-            while(RingBufferWrite(keyboardringbuffer, &val, sizeof(uint32_t)) == 0) { }
+            while(RingBufferWrite(keyboardringbuffer, &val, 4) == 0)
+            {
+                // Wait for adequate space in ring buffer to write
+            }
         }
     }
 
-    // Store state of keymap for next scan
+    // Store current state of keymap in a second buffer for future comparison
     __builtin_memcpy(keymapprev, keymap, sizeof(uint16_t)*256);
 }
 
@@ -221,16 +206,13 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
     }
 }
 
-void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal_instruction_exception()
+void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) interrupt_service_routine()
 {
-    // Catch A7 before it's ruined.
     uint32_t a7;
-    asm volatile ("sw a7, %0;" : "=m" (a7));
-
-    // See https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf mcause section for the cause codes.
+    asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
 
     uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
-    uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16]
+    uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
     uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
     uint32_t code = cause & 0x7FFFFFFF;
 
@@ -243,6 +225,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
             if (value & 0x00000002) HandleButtons();
             if (value & 0x00000004) HandleKeyboard();
         }
+
         if (code == 0x7) // Machine Timer Interrupt (timer)
         {
             HandleTimer();
@@ -254,10 +237,10 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
     }
 }
 
-void InstallIllegalInstructionHandler()
+void InstallISR()
 {
    // Set machine trap vector
-   swap_csr(mtvec, illegal_instruction_exception);
+   swap_csr(mtvec, interrupt_service_routine);
 
    // Set up timer interrupt one second into the future
    uint64_t now = E32ReadTime();
@@ -464,22 +447,72 @@ void ParseCommands()
         }
     }
 
-    parseit = 0;
     cmdlen = 0;
     commandline[0]=0;
 }
 
+int ProcessKeyEvents()
+{
+    static int uppercase = 0;
+    int parseit = 0;
+
+    // Any pending keyboard events to handle?
+    uint32_t val = 0;
+    // Consume one entry per execution
+    swap_csr(mie, MIP_MSIP | MIP_MTIP);
+    int R = RingBufferRead(keyboardringbuffer, &val, 4);
+    swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+    if (R)
+    {
+        uint32_t key = val&0xFF;
+        // Toggle caps
+        if (key == 0x58)
+            uppercase = !uppercase;
+
+        // Key up
+        if (val&0x00000100)
+        {
+            if (key == 0x12 || key == 0x59) // Right/left shift up
+                uppercase = 0;
+        }
+        else // Key down
+        {
+            if (key == 0x12 || key == 0x59) // Right/left shift down
+                uppercase = 1;
+            else
+            {
+                if (key == 0x5A) // Enter
+                    parseit = 1;
+                else if (key == 0x66) // Backspace
+                {
+                    cmdlen--;
+                    if (cmdlen < 0) cmdlen = 0;
+                    commandline[cmdlen] = 0;
+                }
+                else
+                {
+                    commandline[cmdlen++] = ScanToASCII(val, uppercase);
+                    if (cmdlen>=511)
+                        cmdlen = 511;
+                    commandline[cmdlen] = 0;
+                }
+                UARTPutChar(ScanToASCII(val, uppercase));
+            }
+        }
+    }
+
+    return parseit;
+}
+
 int main()
 {
-    // Reset keyboard event count
-    int uppercase = 0;
-
-    InstallIllegalInstructionHandler();
+    // Interrupt service routine
+    InstallISR();
 
     // Clear all attributes, clear screen, print boot message
     CLS();
     UARTWrite("┌───────────────────────────────────┐\n");
-    UARTWrite("│ E32OS v0.13 (c)2022 Engin Cilasun │\n");
+    UARTWrite("│ E32OS v0.14 (c)2022 Engin Cilasun │\n");
     UARTWrite("└───────────────────────────────────┘\n\n");
 
 	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
@@ -499,53 +532,9 @@ int main()
         // sleep, unless we asked it to crash.
         asm volatile("wfi;");
 
-        // Any pending keyboard events to handle?
-        uint32_t val = 0;
-        // Consume one entry per execution
-        swap_csr(mie, MIP_MSIP | MIP_MTIP);
-        int R = RingBufferRead(keyboardringbuffer, &val, 4);
-        swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
-        if (R)
-        {
-            uint32_t key = val&0xFF;
-            // Toggle caps
-            if (key == 0x58)
-                uppercase = !uppercase;
-
-            // Key up
-            if (val&0x00000100)
-            {
-                if (key == 0x12 || key == 0x59) // Right/left shift up
-                    uppercase = 0;
-            }
-            else // Key down
-            {
-                if (key == 0x12 || key == 0x59) // Right/left shift down
-                    uppercase = 1;
-                else
-                {
-                    if (key == 0x5A) // Enter
-                        parseit = 1;
-                    else if (key == 0x66) // Backspace
-                    {
-                        cmdlen--;
-                        if (cmdlen < 0) cmdlen = 0;
-                        commandline[cmdlen] = 0;
-                    }
-                    else
-                    {
-                        commandline[cmdlen++] = ScanToASCII(val, uppercase);
-                        if (cmdlen>=511)
-                            cmdlen = 511;
-                        commandline[cmdlen] = 0;
-                    }
-                    UARTPutChar(ScanToASCII(val, uppercase));
-                }
-            }
-        }
-
-        // Parse any available commands
-        if (parseit)
+        // Process any keyboard events produced by the ISR and
+        // parse the command generated in the command line on Enter.
+        if (ProcessKeyEvents())
             ParseCommands();
     }
 

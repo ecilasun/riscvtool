@@ -12,7 +12,7 @@ const static uint8_t c_cbBufferSizeLog2 = cbBufferSizeLog2 < 31 ? cbBufferSizeLo
 const static uint32_t c_cbBufferSize = ( 1 << c_cbBufferSizeLog2 );
 const static uint32_t c_sizeMask = c_cbBufferSize - 1;
 
-uint32_t RingBufferRead(uint8_t *ringbuffer, void* pvDest, const uint32_t cbDest)
+uint32_t __attribute__ ((noinline)) RingBufferRead(uint8_t *ringbuffer, void* pvDest, const uint32_t cbDest)
 {
     uint32_t readOffset = m_readOffset;
     const uint32_t writeOffset = m_writeOffset;
@@ -40,7 +40,7 @@ uint32_t RingBufferRead(uint8_t *ringbuffer, void* pvDest, const uint32_t cbDest
     return 1;
 }
 
-uint32_t RingBufferWrite(uint8_t *ringbuffer, const void* pvSrc, const uint32_t cbSrc)
+uint32_t __attribute__ ((noinline)) RingBufferWrite(uint8_t *ringbuffer, const void* pvSrc, const uint32_t cbSrc)
 {
     const uint32_t readOffset = m_readOffset;
     uint32_t writeOffset = m_writeOffset;
