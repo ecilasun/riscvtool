@@ -9,4 +9,4 @@ extern volatile uint32_t *PS2KEYBOARDDATAAVAIL;
 // Call this from an interrupt service routine to populate
 // a key 256 half map in S-RAM
 void ScanKeyboard(uint16_t *_keymap);
-char ScanToASCII(const uint8_t _code);
+char ScanToASCII(const uint8_t _code, const uint8_t _uppercase);

@@ -41,6 +41,14 @@
 #include "uart.h"
 #include "buttons.h"
 
+// Keyboard map is at top of S-RAM (512 bytes)
+uint16_t *keymap = (uint16_t*)0x80010000;
+// Previous key map to be able to track deltas (512 bytes)
+uint16_t *keymapprev = (uint16_t*)0x80010200;
+// Keyboard event queue (16 byte header + n words)
+volatile uint32_t *numkbdevents = (volatile uint32_t*)0x80010400;
+volatile uint32_t *kbdevents = (volatile uint32_t*)0x80010410;
+
 static uint32_t s_buttons = 0;
 
 void
@@ -76,7 +84,58 @@ I_GetEvent(void)
 {
 	event_t event;
 
-    if (*BUTTONCHANGEAVAIL)
+	// Any pending keyboard events to handle?
+	while (*numkbdevents != 0)
+	{
+		uint32_t val = kbdevents[*numkbdevents-1];
+		// NOTE: This is not atomic currently and the ISR might kick in between the read and the write.
+		// Perhaps disable interrrupts when doing this?
+		*numkbdevents = *numkbdevents-1;
+
+		uint32_t key = val&0xFF;
+
+		event.type = val&0x100 ? ev_keyup : ev_keydown;
+		switch(key)
+		{
+			case 0x74: event.data1 = KEY_RIGHTARROW;
+			case 0x6B: event.data1 = KEY_LEFTARROW;
+			case 0x75: event.data1 = KEY_UPARROW;
+			case 0x72: event.data1 = KEY_DOWNARROW;
+			case 0x76: event.data1 = KEY_ESCAPE;
+			case 0x5A: event.data1 = KEY_ENTER;
+			case 0x0D: event.data1 = KEY_TAB;
+			case 0x05: event.data1 = KEY_F1;
+			case 0x06: event.data1 = KEY_F2;
+			case 0x04: event.data1 = KEY_F3;
+			case 0x0C: event.data1 = KEY_F4;
+			case 0x03: event.data1 = KEY_F5;
+			case 0x0B: event.data1 = KEY_F6;
+			case 0x83: event.data1 = KEY_F7;
+			case 0x0A: event.data1 = KEY_F8;
+			case 0x01: event.data1 = KEY_F9;
+			case 0x09: event.data1 = KEY_F10;
+			case 0x78: event.data1 = KEY_F11;
+			case 0x07: event.data1 = KEY_F12;
+			case 0x66: event.data1 = KEY_BACKSPACE;
+			//case 0x00: event.data1 = KEY_PAUSE; ?
+			case 0x55: event.data1 = KEY_EQUALS;
+			case 0x4E: event.data1 = KEY_MINUS;
+			case 0x59: event.data1 = KEY_RSHIFT;
+			case 0x14: event.data1 = KEY_RCTRL;
+			//case 0x11: event.data1 = KEY_RALT; // 0xE0+0x11
+			case 0x11: event.data1 = KEY_LALT;
+		}
+
+		if (key == 0x4A) // '/?' key to fire
+		{
+			event.type =  ev_joystick;
+			event.data1 = val&0x100 ?1:0;
+		}
+
+		D_PostEvent(&event);
+	}
+
+    /*if (*BUTTONCHANGEAVAIL)
     {
         uint32_t newbuttons = *BUTTONCHANGE;
 
@@ -129,105 +188,6 @@ I_GetEvent(void)
 
 		s_buttons = newbuttons;
 		D_PostEvent(&event);
-	}
-
-	// Works with riscvtool's keyserver
-	/*unsigned char keydata[2];
-	if (*IO_UARTRXByteAvailable)
-	{
-		for (int i=0;i<2;++i)
-			keydata[i] = *IO_UARTRXTX;
-		// first byte: 1:down 2:up
-		// second byte: x11 keysymbol
-
-		// The packet contains up/down state in first byte
-		//event.type = keydata[0] ? ev_keydown : ev_keyup;
-
-		switch (keydata[1])
-		{
-			case 'w':
-				event.data1 = KEY_UPARROW;
-			break;
-
-			case 's':
-				event.data1 = KEY_DOWNARROW;
-			break;
-
-			case 'q':
-				event.data1 = ',';
-			break;
-
-			case 'e':
-				event.data1 = '.';
-			break;
-
-			case 'a':
-				event.data1 = KEY_LEFTARROW;
-			break;
-
-			case 'd':
-				event.data1 = KEY_RIGHTARROW;
-			break;
-
-			case '0':
-				event.type =  ev_joystick;
-				event.data1 = keydata[0];
-				event.data2 = 0;
-				event.data3 = 0;
-			break;
-
-			default:
-				event.data1 = keydata[1];
-			break;
-		}
-
-		D_PostEvent(&event);
-	}*/
-
-	/*static uint32_t oldhardwareswitchstates = 0;
-	if (*IO_SwitchByteCount)
-	{
-		uint32_t hardwareswitchstates = *IO_SwitchState;
-
-		uint32_t deltastate = hardwareswitchstates ^ oldhardwareswitchstates;
-
-		if (deltastate&0x01)
-		{
-			event.type =  ev_joystick;
-			event.data1 = 0; // buttons (1: fire)
-			event.data2 = 0;
-			event.data3 = (hardwareswitchstates&0x01) ? 3 : 0;
-			D_PostEvent(&event);
-		}
-
-		if ((deltastate&0x02))
-		{
-			event.type =  ev_joystick;
-			event.data1 = 0; // buttons
-			event.data2 = (hardwareswitchstates&0x02) ? 3 : 0;
-			event.data3 = 0;
-			D_PostEvent(&event);
-		}
-
-		if ((deltastate&0x04))
-		{
-			event.type = ev_joystick;
-			event.data1 = 0; // buttons
-			event.data2 = (hardwareswitchstates&0x04) ? -3 : 0;
-			event.data3 = 0;
-			D_PostEvent(&event);
-		}
-
-		if (deltastate&0x08)
-		{
-			event.type =  ev_joystick;
-			event.data1 = 0; // buttons
-			event.data2 = 0;
-			event.data3 = (hardwareswitchstates&0x08) ? -3 : 0;
-			D_PostEvent(&event);
-		}
-
-		oldhardwareswitchstates = hardwareswitchstates;
 	}*/
 }
 

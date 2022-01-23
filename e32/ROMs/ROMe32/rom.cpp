@@ -473,6 +473,7 @@ int main()
 {
     // Reset keyboard event count
     *numkbdevents = 0;
+    int uppercase = 0;
 
     InstallIllegalInstructionHandler();
 
@@ -503,14 +504,27 @@ int main()
         while (*numkbdevents != 0)
         {
             uint32_t val = kbdevents[*numkbdevents-1];
-            if (val&0x00000100) // Key up
-                ;
-            else // Key down
-                UARTPutChar(ScanToASCII(val));
-
             // NOTE: This is not atomic currently and the ISR might kick in between the read and the write.
             // Perhaps disable interrrupts when doing this?
             *numkbdevents = *numkbdevents-1;
+
+            // Toggle caps
+            if ((val&0xFF) == 0x58)
+                uppercase = !uppercase;
+
+            // Key up
+            if (val&0x00000100)
+            {
+                if ((val&0xFF) == 0x12 || (val&0xFF) == 0x59) // Right/left shift up
+                    uppercase = 0;
+            }
+            else // Key down
+            {
+                if ((val&0xFF) == 0x12 || (val&0xFF) == 0x59) // Right/left shift down
+                    uppercase = 1;
+                else
+                    UARTPutChar(ScanToASCII(val, uppercase));
+            }
         }
 
         // Parse any available commands
