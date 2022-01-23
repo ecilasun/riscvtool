@@ -15,6 +15,7 @@
 #include "fat32/ff.h"
 #include "buttons.h"
 #include "ps2.h"
+#include "ringbuffer.h"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -52,12 +53,13 @@ FATFS *Fs = (FATFS*)0x8002F000;
 uint16_t *keymap = (uint16_t*)0x80010000;
 // Previous key map to be able to track deltas (512 bytes)
 uint16_t *keymapprev = (uint16_t*)0x80010200;
-// Keyboard event queue (16 byte header + n words)
-volatile uint32_t *numkbdevents = (volatile uint32_t*)0x80010400;
-volatile uint32_t *kbdevents = (volatile uint32_t*)0x80010410;
+// Keyboard event ring buffer (1024 bytes)
+uint8_t *keyboardringbuffer = (uint8_t*)0x80010400;
 
 void HandleUART()
 {
+    // TODO: This will eventually become the debug connection handler
+
     //*IO_UARTRXTX = 0x13; // XOFF
     //UARTFlush();
 
@@ -67,7 +69,7 @@ void HandleUART()
         // Read incoming character
         uint8_t incoming = *IO_UARTRXTX;
         // Zero terminated command line
-        if (incoming == 13)
+        /*if (incoming == 13)
             parseit = 1;
         else if (incoming == 8)
         {
@@ -80,8 +82,9 @@ void HandleUART()
             commandline[cmdlen++] = incoming;
             if (cmdlen>=511) cmdlen = 511;
             commandline[cmdlen] = 0;
-        }
-        // Write back to UART
+        }*/
+
+        // Simply echo back
         *IO_UARTRXTX = incoming;
     }
     UARTFlush();
@@ -126,16 +129,13 @@ void HandleKeyboard()
             continue;
 
         // Generate key up/down events into a memory FIFO
-        uint16_t prevval = keymapprev[i];
-        uint16_t val = keymap[i];
+        uint32_t prevval = (uint32_t)keymapprev[i];
+        uint32_t val = (uint32_t)keymap[i];
+        // Mismatch, this is a keyboard event
         if (prevval^val)
         {
-            // NOTE: This increment is atomic for now because we can't run other code at the same time while in ISR
-            uint32_t eventalloc = *numkbdevents;
-            *numkbdevents = eventalloc+1;
-
-            // Store new event
-            kbdevents[eventalloc] = (uint32_t)val;
+            // Wait for adequate space to write
+            while(RingBufferWrite(keyboardringbuffer, &val, sizeof(uint32_t)) == 0) { }
         }
     }
 
@@ -472,7 +472,6 @@ void ParseCommands()
 int main()
 {
     // Reset keyboard event count
-    *numkbdevents = 0;
     int uppercase = 0;
 
     InstallIllegalInstructionHandler();
@@ -501,29 +500,47 @@ int main()
         asm volatile("wfi;");
 
         // Any pending keyboard events to handle?
-        while (*numkbdevents != 0)
+        uint32_t val = 0;
+        // Consume one entry per execution
+        swap_csr(mie, MIP_MSIP | MIP_MTIP);
+        int R = RingBufferRead(keyboardringbuffer, &val, 4);
+        swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+        if (R)
         {
-            uint32_t val = kbdevents[*numkbdevents-1];
-            // NOTE: This is not atomic currently and the ISR might kick in between the read and the write.
-            // Perhaps disable interrrupts when doing this?
-            *numkbdevents = *numkbdevents-1;
-
+            uint32_t key = val&0xFF;
             // Toggle caps
-            if ((val&0xFF) == 0x58)
+            if (key == 0x58)
                 uppercase = !uppercase;
 
             // Key up
             if (val&0x00000100)
             {
-                if ((val&0xFF) == 0x12 || (val&0xFF) == 0x59) // Right/left shift up
+                if (key == 0x12 || key == 0x59) // Right/left shift up
                     uppercase = 0;
             }
             else // Key down
             {
-                if ((val&0xFF) == 0x12 || (val&0xFF) == 0x59) // Right/left shift down
+                if (key == 0x12 || key == 0x59) // Right/left shift down
                     uppercase = 1;
                 else
+                {
+                    if (key == 0x5A) // Enter
+                        parseit = 1;
+                    else if (key == 0x66) // Backspace
+                    {
+                        cmdlen--;
+                        if (cmdlen < 0) cmdlen = 0;
+                        commandline[cmdlen] = 0;
+                    }
+                    else
+                    {
+                        commandline[cmdlen++] = ScanToASCII(val, uppercase);
+                        if (cmdlen>=511)
+                            cmdlen = 511;
+                        commandline[cmdlen] = 0;
+                    }
                     UARTPutChar(ScanToASCII(val, uppercase));
+                }
             }
         }
 
@@ -538,10 +555,10 @@ int main()
 
 /*
 // Turn off machine external interrupts to avoid interrupting this work
-swap_csr(mie, MIP_MSIP | MIP_MTIP);
+
 
 // Critical non-interruptable event goes here
 
 // Turn on machine external interrupts to handle hardware interrupts
-swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+
 */

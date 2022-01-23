@@ -18,7 +18,7 @@ folders = \
 	tinyraytracertty \
 	sdcard \
 	memtest \
-	dump \
+	keyboard \
 	vramtest \
 	floattest \
 

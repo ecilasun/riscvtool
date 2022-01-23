@@ -40,14 +40,14 @@
 #include "console.h"
 #include "uart.h"
 #include "buttons.h"
+#include "ringbuffer.h"
 
 // Keyboard map is at top of S-RAM (512 bytes)
 uint16_t *keymap = (uint16_t*)0x80010000;
 // Previous key map to be able to track deltas (512 bytes)
 uint16_t *keymapprev = (uint16_t*)0x80010200;
-// Keyboard event queue (16 byte header + n words)
-volatile uint32_t *numkbdevents = (volatile uint32_t*)0x80010400;
-volatile uint32_t *kbdevents = (volatile uint32_t*)0x80010410;
+// Keyboard event ring buffer (1024 bytes)
+uint8_t *keyboardringbuffer = (uint8_t*)0x80010400;
 
 static uint32_t s_buttons = 0;
 
@@ -85,13 +85,12 @@ I_GetEvent(void)
 	event_t event;
 
 	// Any pending keyboard events to handle?
-	while (*numkbdevents != 0)
+	uint32_t val;
+	swap_csr(mie, MIP_MSIP | MIP_MTIP);
+	int R = RingBufferRead(keyboardringbuffer, &val, 4);
+	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+	if (R)
 	{
-		uint32_t val = kbdevents[*numkbdevents-1];
-		// NOTE: This is not atomic currently and the ISR might kick in between the read and the write.
-		// Perhaps disable interrrupts when doing this?
-		*numkbdevents = *numkbdevents-1;
-
 		uint32_t key = val&0xFF;
 
 		event.type = val&0x100 ? ev_keyup : ev_keydown;
@@ -134,61 +133,6 @@ I_GetEvent(void)
 
 		D_PostEvent(&event);
 	}
-
-    /*if (*BUTTONCHANGEAVAIL)
-    {
-        uint32_t newbuttons = *BUTTONCHANGE;
-
-		// There's a change if s_buttons ^ newbuttons != 0
-
-		if ((s_buttons ^ newbuttons)&BUTTONMASK_CENTER)
-		{
-			event.type =  ev_joystick;
-			if ((s_buttons&BUTTONMASK_CENTER) == 0) // Old state was 'up', so new event is 'down' etc
-				event.data1 = 1;
-			else
-				event.data1 = 0;
-		}
-
-		if ((s_buttons ^ newbuttons)&BUTTONMASK_DOWN)
-		{
-			if ((s_buttons&BUTTONMASK_DOWN) == 0)
-				event.type = ev_keydown;
-			else
-				event.type = ev_keyup;
-			event.data1 = KEY_DOWNARROW;
-		}
-
-		if ((s_buttons ^ newbuttons)&BUTTONMASK_LEFT)
-		{
-			if ((s_buttons&BUTTONMASK_LEFT) == 0)
-				event.type = ev_keydown;
-			else
-				event.type = ev_keyup;
-			event.data1 = KEY_LEFTARROW;
-		}
-
-		if ((s_buttons ^ newbuttons)&BUTTONMASK_RIGHT)
-		{
-			if ((s_buttons&BUTTONMASK_RIGHT) == 0)
-				event.type = ev_keydown;
-			else
-				event.type = ev_keyup;
-			event.data1 = KEY_RIGHTARROW;
-		}
-
-		if ((s_buttons ^ newbuttons)&BUTTONMASK_UP)
-		{
-			if ((s_buttons&BUTTONMASK_UP) == 0)
-				event.type = ev_keydown;
-			else
-				event.type = ev_keyup;
-			event.data1 = KEY_UPARROW;
-		}
-
-		s_buttons = newbuttons;
-		D_PostEvent(&event);
-	}*/
 }
 
 void
