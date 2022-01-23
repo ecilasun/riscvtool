@@ -24,7 +24,7 @@ SECTIONS
   /* boot code */
   .boot :
   {
-     /* _start */
+     /* _start at top of binary blob */
      . = 0x00000000;
      *(.boot)
      _boot = .;

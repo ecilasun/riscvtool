@@ -86,42 +86,38 @@ I_GetEvent(void)
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
-		// Debug
-		UARTWriteHex(val);
-		UARTWrite("\n");
-
 		uint32_t key = val&0xFF;
 
 		event.type = val&0x100 ? ev_keyup : ev_keydown;
 		switch(key)
 		{
-			case 0x74: event.data1 = KEY_RIGHTARROW;
-			case 0x6B: event.data1 = KEY_LEFTARROW;
-			case 0x75: event.data1 = KEY_UPARROW;
-			case 0x72: event.data1 = KEY_DOWNARROW;
-			case 0x76: event.data1 = KEY_ESCAPE;
-			case 0x5A: event.data1 = KEY_ENTER;
-			case 0x0D: event.data1 = KEY_TAB;
-			case 0x05: event.data1 = KEY_F1;
-			case 0x06: event.data1 = KEY_F2;
-			case 0x04: event.data1 = KEY_F3;
-			case 0x0C: event.data1 = KEY_F4;
-			case 0x03: event.data1 = KEY_F5;
-			case 0x0B: event.data1 = KEY_F6;
-			case 0x83: event.data1 = KEY_F7;
-			case 0x0A: event.data1 = KEY_F8;
-			case 0x01: event.data1 = KEY_F9;
-			case 0x09: event.data1 = KEY_F10;
-			case 0x78: event.data1 = KEY_F11;
-			case 0x07: event.data1 = KEY_F12;
-			case 0x66: event.data1 = KEY_BACKSPACE;
-			//case 0x00: event.data1 = KEY_PAUSE; ?
-			case 0x55: event.data1 = KEY_EQUALS;
-			case 0x4E: event.data1 = KEY_MINUS;
-			case 0x59: event.data1 = KEY_RSHIFT;
-			case 0x14: event.data1 = KEY_RCTRL;
-			//case 0x11: event.data1 = KEY_RALT; // 0xE0+0x11
-			case 0x11: event.data1 = KEY_LALT;
+			case 0x74: event.data1 = KEY_RIGHTARROW; break;
+			case 0x6B: event.data1 = KEY_LEFTARROW; break;
+			case 0x75: event.data1 = KEY_UPARROW; break;
+			case 0x72: event.data1 = KEY_DOWNARROW; break;
+			case 0x76: event.data1 = KEY_ESCAPE; break;
+			case 0x5A: event.data1 = KEY_ENTER; break;
+			case 0x0D: event.data1 = KEY_TAB; break;
+			case 0x05: event.data1 = KEY_F1; break;
+			case 0x06: event.data1 = KEY_F2; break;
+			case 0x04: event.data1 = KEY_F3; break;
+			case 0x0C: event.data1 = KEY_F4; break;
+			case 0x03: event.data1 = KEY_F5; break;
+			case 0x0B: event.data1 = KEY_F6; break;
+			case 0x83: event.data1 = KEY_F7; break;
+			case 0x0A: event.data1 = KEY_F8; break;
+			case 0x01: event.data1 = KEY_F9; break;
+			case 0x09: event.data1 = KEY_F10; break;
+			case 0x78: event.data1 = KEY_F11; break;
+			case 0x07: event.data1 = KEY_F12; break;
+			case 0x66: event.data1 = KEY_BACKSPACE; break;
+			//case 0x00: event.data1 = KEY_PAUSE; ? break;
+			case 0x55: event.data1 = KEY_EQUALS; break;
+			case 0x4E: event.data1 = KEY_MINUS; break;
+			case 0x59: event.data1 = KEY_RSHIFT; break;
+			case 0x14: event.data1 = KEY_RCTRL; break;
+			//case 0x11: event.data1 = KEY_RALT; break; // 0xE0+0x11
+			case 0x11: event.data1 = KEY_LALT; break;
 		}
 
 		if (key == 0x4A) // '/?' key to fire
@@ -129,6 +125,11 @@ I_GetEvent(void)
 			event.type =  ev_joystick;
 			event.data1 = val&0x100 ?1:0;
 		}
+
+		// Debug
+		UARTWrite(event.type == ev_joystick ? "btn" : (event.type == ev_keyup ? "up":"down"));
+		UARTWriteHex(event.data1);
+		UARTWrite("\n");
 
 		D_PostEvent(&event);
 	}

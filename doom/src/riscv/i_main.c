@@ -48,12 +48,10 @@ const char *FRtoString[]={
 #include "uart.h"
 #include "fat32/ff.h"
 
-// Shared FAT file system at bottom of S-RAM
-FATFS *Fs = (FATFS*)0x8002F000;
-
 int main(void)
 {
-	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+	FATFS Fs;
+	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);
 	else

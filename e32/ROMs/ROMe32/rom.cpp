@@ -46,14 +46,15 @@ static char filename[128]="";
 static int cmdlen = 0;
 static int havedrive = 0;
 
-// Shared FAT file system at bottom of S-RAM
-FATFS *Fs = (FATFS*)0x8002F000;
+// Main file system object
+FATFS Fs;
+
 // Keyboard event ring buffer (1024 bytes)
 uint8_t *keyboardringbuffer = (uint8_t*)0x80010000;
 // Keyboard map is at top of S-RAM (512 bytes)
-uint16_t *keymap = (uint16_t*)0x80010400;
+uint16_t keymap[256];
 // Previous key map to be able to track deltas (512 bytes)
-uint16_t *keymapprev = (uint16_t*)0x80010600;
+uint16_t keymapprev[256];
 
 void HandleUART()
 {
@@ -90,6 +91,10 @@ void HandleButtons()
 
 void HandleTimer()
 {
+    // TODO: Utilize timer handler as a task switcher,
+    // switching context to the next task in task list and setting up
+    // next timer interrupt to current time + pre-determined task run length.
+
     UARTWrite("\n\033[34m\033[47m\033[7m");
     UARTWrite("HINT: Type 'help' for a list of available commands.");
     UARTWrite("\033[0m\n");
@@ -117,15 +122,12 @@ void HandleKeyboard()
         uint32_t val = (uint32_t)keymap[i];
         if (prevval^val) // Mismatch, this considered an event
         {
-            while(RingBufferWrite(keyboardringbuffer, &val, 4) == 0)
-            {
-                // Wait for adequate space in ring buffer to write
-            }
+            // Store new state in previous state buffer since we're done reading it
+            keymapprev[i] = val;
+            // Wait for adequate space in ring buffer to write
+            while(RingBufferWrite(keyboardringbuffer, &val, 4) == 0) { }
         }
     }
-
-    // Store current state of keymap in a second buffer for future comparison
-    __builtin_memcpy(keymapprev, keymap, sizeof(uint16_t)*256);
 }
 
 void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, const uint32_t PC)
@@ -436,7 +438,7 @@ void ParseCommands()
             );
 
             // Re-mount filesystem before re-gaining control
-            f_mount(Fs, "sd:", 1);
+            f_mount(&Fs, "sd:", 1);
             havedrive = 1;
         }
         else
@@ -515,7 +517,7 @@ int main()
     UARTWrite("│ E32OS v0.14 (c)2022 Engin Cilasun │\n");
     UARTWrite("└───────────────────────────────────┘\n\n");
 
-	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
     {
         havedrive = 0;
