@@ -13,7 +13,7 @@ const static uint32_t c_sizeMask = c_cbBufferSize - 1;
 // so that we don't read from wrong space (or not read at all)
 // NOTE: ringbuffer is normally placed at 0x80010000.
 volatile uint32_t *m_readOffset = (volatile uint32_t*)0x80010400;
-volatile  uint32_t *m_writeOffset = (volatile uint32_t*)0x80010404;
+volatile  uint32_t *m_writeOffset = (volatile uint32_t*)0x80010408;
 
 uint32_t __attribute__ ((noinline)) RingBufferRead(uint8_t *ringbuffer, void* pvDest, const uint32_t cbDest)
 {

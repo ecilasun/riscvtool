@@ -16,6 +16,7 @@
 #include "buttons.h"
 #include "ps2.h"
 #include "ringbuffer.h"
+#include "gpu.h"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -125,7 +126,11 @@ void HandleKeyboard()
             // Store new state in previous state buffer since we're done reading it
             keymapprev[i] = val;
             // Wait for adequate space in ring buffer to write
-            while(RingBufferWrite(keyboardringbuffer, &val, 4) == 0) { }
+            // NOTE: We'll simply hang if ringbuffer is full because nothing else
+            // is running on this core during ISR. So attempt once, and bail out
+            // if we can't write...
+            //while(RingBufferWrite(keyboardringbuffer, &val, 4) == 0) { }
+            RingBufferWrite(keyboardringbuffer, &val, 4);
         }
     }
 }
@@ -291,6 +296,17 @@ void ListFiles(const char *path)
    }
    else
       UARTWrite(FRtoString[re]);
+}
+
+void CLF()
+{
+    // Frame buffer aliased as words
+    uint32_t *FB0W = (uint32_t*)GPUFB0;
+
+    // Clear frame buffer zero
+    for (int y=0;y<240;++y)
+      for (int x=0;x<80;++x)
+        FB0W[x+y*128] = 0x00000000;
 }
 
 void CLS()
@@ -511,11 +527,14 @@ int main()
     // Interrupt service routine
     InstallISR();
 
+    // Clear frame buffer
+    CLF();
+
     // Clear all attributes, clear screen, print boot message
     CLS();
-    UARTWrite("┌───────────────────────────────────┐\n");
-    UARTWrite("│ E32OS v0.14 (c)2022 Engin Cilasun │\n");
-    UARTWrite("└───────────────────────────────────┘\n\n");
+    UARTWrite("┌────────────────────────────────────┐\n");
+    UARTWrite("│ E32OS v0.142 (c)2022 Engin Cilasun │\n");
+    UARTWrite("└────────────────────────────────────┘\n\n");
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
@@ -542,14 +561,3 @@ int main()
 
     return 0;
 }
-
-
-/*
-// Turn off machine external interrupts to avoid interrupting this work
-
-
-// Critical non-interruptable event goes here
-
-// Turn on machine external interrupts to handle hardware interrupts
-
-*/
