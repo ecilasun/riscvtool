@@ -48,10 +48,13 @@ static int havedrive = 0;
 
 // Shared FAT file system at bottom of S-RAM
 FATFS *Fs = (FATFS*)0x8002F000;
-// Keyboard map is at top of S-RAM
+// Keyboard map is at top of S-RAM (512 bytes)
 uint16_t *keymap = (uint16_t*)0x80010000;
-// Previous key map to be able to track deltas
-uint16_t *keymapprev = (uint16_t*)0x80010100;
+// Previous key map to be able to track deltas (512 bytes)
+uint16_t *keymapprev = (uint16_t*)0x80010200;
+// Keyboard event queue (16 byte header + n words)
+volatile uint32_t *numkbdevents = (volatile uint32_t*)0x80010400;
+volatile uint32_t *kbdevents = (volatile uint32_t*)0x80010410;
 
 void HandleUART()
 {
@@ -118,17 +121,21 @@ void HandleKeyboard()
     // If there's a difference between the previous keymap and current one, generate events for each change
     for (uint32_t i=0; i<256; ++i)
     {
-        if (keymapprev[i]^keymap[i])
-        {
-            // TODO: Generate key up/down events into a memory FIFO
+        // Skip keyboard OK (when plugged in)
+        if (i==0xAA)
+            continue;
 
-            if (i==0xAA) // Keyboard state
-                UARTWrite("KbdState=");
-            UARTWrite("0x");
-            UARTWriteHexByte(i);
-            UARTWrite(":0x");
-            UARTWriteHex(keymap[i]);
-            UARTWrite("\n");
+        // Generate key up/down events into a memory FIFO
+        uint16_t prevval = keymapprev[i];
+        uint16_t val = keymap[i];
+        if (prevval^val)
+        {
+            // NOTE: This increment is atomic for now because we can't run other code at the same time while in ISR
+            uint32_t eventalloc = *numkbdevents;
+            *numkbdevents = eventalloc+1;
+
+            // Store new event
+            kbdevents[eventalloc] = (uint32_t)val;
         }
     }
 
@@ -231,9 +238,10 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) illegal
     {
         if (code == 0xB) // Machine External Interrupt (hardware)
         {
-            HandleUART();
-            HandleButtons();
-            HandleKeyboard();
+            // Route based on hardware type
+            if (value & 0x00000001) HandleUART();
+            if (value & 0x00000002) HandleButtons();
+            if (value & 0x00000004) HandleKeyboard();
         }
         if (code == 0x7) // Machine Timer Interrupt (timer)
         {
@@ -438,17 +446,11 @@ void ParseCommands()
 
             FlushDataCache(); // Make sure we've forced a cache flush on the D$ (TODO: Use FENCE.I here instead, once it's implemented)
 
-            // Turn off machine external interrupts
-            swap_csr(mie, MIP_MSIP | MIP_MTIP);
-
             asm volatile(
                 "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
                 "jalr s0;" // Branch with the intent to return back here
                 : "=m" (branchaddress) : : 
             );
-
-            // Turn on machine external interrupts
-            swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 
             // Re-mount filesystem before re-gaining control
             f_mount(Fs, "sd:", 1);
@@ -469,6 +471,9 @@ void ParseCommands()
 
 int main()
 {
+    // Reset keyboard event count
+    *numkbdevents = 0;
+
     InstallIllegalInstructionHandler();
 
     // Clear all attributes, clear screen, print boot message
@@ -494,9 +499,35 @@ int main()
         // sleep, unless we asked it to crash.
         asm volatile("wfi;");
 
+        // Any pending keyboard events to handle?
+        while (*numkbdevents != 0)
+        {
+            uint32_t val = kbdevents[*numkbdevents-1];
+            if (val&0x00000100) // Key up
+                ;
+            else // Key down
+                UARTPutChar(ScanToASCII(val));
+
+            // NOTE: This is not atomic currently and the ISR might kick in between the read and the write.
+            // Perhaps disable interrrupts when doing this?
+            *numkbdevents = *numkbdevents-1;
+        }
+
+        // Parse any available commands
         if (parseit)
             ParseCommands();
     }
 
     return 0;
 }
+
+
+/*
+// Turn off machine external interrupts to avoid interrupting this work
+swap_csr(mie, MIP_MSIP | MIP_MTIP);
+
+// Critical non-interruptable event goes here
+
+// Turn on machine external interrupts to handle hardware interrupts
+swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+*/
