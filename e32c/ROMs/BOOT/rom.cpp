@@ -346,6 +346,7 @@ void init_scene() {
 }
 
 int main() {
+    UARTWrite("[E32C]\n");
     init_scene();
 
     render(spheres, nb_spheres, lights, nb_lights);
