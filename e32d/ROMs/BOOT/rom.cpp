@@ -12,6 +12,10 @@
 #include "core.h"
 #include "uart.h"
 
+// CPU synchronization mailbox
+// This is used to ensure UART write ordering
+volatile uint32_t *mailbox = (volatile uint32_t*)0x8000FFFC;
+
 /* Modified by Engin Cilasun to fit the E32 graphics architecture  */
 /* from Bruno Levy's original port of 2020                         */
 /* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
@@ -31,24 +35,17 @@ static inline float min(float x, float y) { return x<y?x:y; }
 #define graphics_height 80
 
 // Replace with your own code.
-void graphics_set_pixel(int x, int y, float r, float g, float b) {
-  r = max(0.0f, min(1.0f, r));
-  g = max(0.0f, min(1.0f, g));
-  b = max(0.0f, min(1.0f, b));
-
-    uint8_t R = (uint8_t)(255.0f * r);
-    uint8_t G = (uint8_t)(255.0f * g);
-    uint8_t B = (uint8_t)(255.0f * b);
-
-    UARTWrite("\033[48;2;");
-    UARTWriteDecimal(R);
-    UARTWrite(";");
-    UARTWriteDecimal(G);
-    UARTWrite(";");
-    UARTWriteDecimal(B);
-    UARTWrite("m ");
-    if(x==graphics_width-1)
-        UARTWrite("\033[48;2;0;0;0m");
+void graphics_set_pixel(int x, uint8_t r, uint8_t g, uint8_t b)
+{
+  UARTWrite("\033[48;2;");
+  UARTWriteDecimal(r);
+  UARTWrite(";");
+  UARTWriteDecimal(g);
+  UARTWrite(";");
+  UARTWriteDecimal(b);
+  UARTWrite("m ");
+  if(x==graphics_width-1)
+    UARTWrite("\033[48;2;0;0;0m");
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -301,16 +298,40 @@ vec3 cast_ray(
   return result;
 }
 
+static uint32_t scanlinecache[2][80];
+
 #define M_PI 3.14159265358979323846 
-void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
+void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  for (int j = 0; j<graphics_height; j++) { // actual rendering loop
+  for (int j = hartid; j<graphics_height; j+=2) { // actual rendering loop
     for (int i = 0; i<graphics_width; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
       float dir_z = -graphics_height/(2.*tan(fov/2.));
       vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-      graphics_set_pixel(i,j,C.x,C.y,C.z);
+
+      C.x = max(0.0f, min(1.0f, C.x));
+      C.y = max(0.0f, min(1.0f, C.y));
+      C.z = max(0.0f, min(1.0f, C.z));
+      uint8_t R = (uint8_t)(255.0f * C.x);
+      uint8_t G = (uint8_t)(255.0f * C.y);
+      uint8_t B = (uint8_t)(255.0f * C.z);
+      scanlinecache[hartid][i] = (R<<16)|(G<<8)|B;
+    }
+
+    if (hartid == 0)
+    {
+      for (int h = 0; h<2; h++)
+      {
+        for (int i = 0; i<graphics_width; i++)
+        {
+          uint8_t R,G,B;
+          R = (scanlinecache[h][i]&0x00FF0000) >> 16;
+          G = (scanlinecache[h][i]&0x0000FF00) >> 8;
+          B = (scanlinecache[h][i]&0x000000FF);
+          graphics_set_pixel(i,R,G,B);
+        }
+      }
     }
   }
 }
@@ -345,17 +366,36 @@ void init_scene() {
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
 
-void workermain() {
+// Worker CPU does a raytracing test
+void workermain()
+{
+  // Wait for mailbox to notify us that HART#0 is ready
+  while ((*mailbox) != 0x00000002) { }
+
   UARTWrite("[E32D:HART1]\n");
+
+  // Reset mailbox
+  (*mailbox) = 0x00000000;
+
+  render(1, spheres, nb_spheres, lights, nb_lights);
   UARTFlush(); // One last flush at the end
 
   while(1) { }
 }
 
-int main() {
+// Main CPU does nothing
+int main()
+{
   UARTWrite("[E32D:HART0]\n");
+
+  // Only one init of scene suffices on HART#0
+  // HART#1 uses same memory layout, only a different stack
   init_scene();
-  render(spheres, nb_spheres, lights, nb_lights);
+
+  // Enable HART#1
+  *mailbox |= 0x00000002;
+
+  render(0, spheres, nb_spheres, lights, nb_lights);
   UARTFlush(); // One last flush at the end
 
   while(1) { }

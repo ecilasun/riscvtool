@@ -8,16 +8,6 @@ extern "C"
    {
       asm volatile (
 
-         // This is the entry point of CORE#1 (0x10000000)
-         //"li sp, 0x1000EFF0;" // CPU#1 stack
-         //"mv s0, sp;"
-         //"infloop:"
-         //"nop;" // TODO: How do we wake this CPU up from CPU#0 so it can run something? install interrupt handler, WFI in loop, and trap?
-         //"j infloop;"
-         //"nop;" // Alignment
-         //"nop;" // Alignment
-         //"nop;" // Alignment
-
          // This is the entry point of CORE#0 (0x10000020 if above code is enabled)
          //".cfi_startproc;"
          //".cfi_undefined ra;"
@@ -31,7 +21,7 @@ extern "C"
 
          // Set up stack pointer and align it to 16 bytes
          //"la sp, __stack_top;"
-         "li sp, 0x8000FFF0;" // CPU#0 stack
+         "li sp, 0x8000FFF0;" // HART#0 stack
          "mv s0, sp;"
 
          // Clear BSS
@@ -69,7 +59,7 @@ extern "C"
    void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
    {
       /*asm (
-         // This will invoke an ECALL to halt the CPU
+         // This will invoke an ECALL to halt the HART
          "li a1,0;"
          "li a2,0;"
          "li a3,0;"
@@ -84,8 +74,29 @@ extern "C"
    void __attribute__((noreturn, naked, section (".workerinit"))) _workerstart()
    {
       asm volatile (
-         "li sp, 0x8000F000;" // CPU#1 stack
+
+         // TODO: Wait for HART#0 to wake us up
+         // This could be done via a memory mapped mailbox read which initially contains 0x000000001 (HART#0 enabled)
+         // We wait in an infinite loop to see if this HART's corresponding bit is set to 1 then resume execution.
+         // Otherwise, the memset etc code above will kick and write zeroes over memory we're using without this synchronization.
+         // Another memory mapped register could be used for a polling mechanism to see if a certain task is 'done' by
+         // all CPUs in the same work group (as with a GPU)
+
+         ".option push;"
+         ".option norelax;"
+
+         // Set up global pointer
+         "la gp, __global_pointer$;"
+
+         ".option pop;"
+
+         "li sp, 0x8000F000;" // HART#1 stack
          "mv s0, sp;"
+
+         "lw a0,0(sp);"
+         "addi	a1,sp,4;"
+         "li a2,0;"
+
          "j _Z10workermainv;"
          "ebreak;"
       );
