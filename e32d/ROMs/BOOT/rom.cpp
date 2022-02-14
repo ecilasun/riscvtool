@@ -345,15 +345,20 @@ void init_scene() {
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
 
+void workermain() {
+  UARTWrite("[E32D:HART1]\n");
+  UARTFlush(); // One last flush at the end
+
+  while(1) { }
+}
+
 int main() {
-    UARTWrite("[E32C]\n");
-    init_scene();
+  UARTWrite("[E32D:HART0]\n");
+  init_scene();
+  render(spheres, nb_spheres, lights, nb_lights);
+  UARTFlush(); // One last flush at the end
 
-    render(spheres, nb_spheres, lights, nb_lights);
+  while(1) { }
 
-    UARTFlush(); // One last flush at the end
-
-    while(1) { }
-
-    return 0;
+  return 0;
 }
