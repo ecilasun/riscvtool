@@ -89,8 +89,17 @@ extern "C"
          "la gp, __global_pointer$;"
 
          ".option pop;"
-
-         "li sp, 0x8000F000;" // HART#1 stack
+/*
+         "csrr	s1, mhartid;"       // Grab hart ID (>=1 routed here, hart0 uses _start)
+         "slli	s1, s1, 0x12;"      // Need 4K stack space
+         "li s2, 0x0000FFF0;"      // Grab stack base
+         "sub s2, s2, s1;"         // and offset stack top by 4096*hartid
+         "li s1, 0x80000000;"      // Memory top
+         "or s2, s2, s1;"          // Generate actual address
+         "mv sp, s2;"              // Set new stack pointer for this hart
+         "mv s0, sp;"
+*/
+         "li sp, 0x8000F000;" // HART#1 stack ~4Kbytes away
          "mv s0, sp;"
 
          "lw a0,0(sp);"

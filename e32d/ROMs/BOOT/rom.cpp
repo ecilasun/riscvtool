@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "rvcrt0.h"
+#include "encoding.h" // For CSR access macros
 
 #include "core.h"
 #include "uart.h"
@@ -298,12 +299,14 @@ vec3 cast_ray(
   return result;
 }
 
-static uint32_t scanlinecache[2][80];
+static const int numharts = 2;
+static uint32_t scanlinecache[numharts][80];
 
 #define M_PI 3.14159265358979323846 
+
 void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  for (int j = hartid; j<graphics_height; j+=2) { // actual rendering loop
+  for (int j = hartid; j<graphics_height; j+=numharts) { // actual rendering loop
     for (int i = 0; i<graphics_width; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
@@ -321,7 +324,7 @@ void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_l
 
     if (hartid == 0)
     {
-      for (int h = 0; h<2; h++)
+      for (int h = 0; h<numharts; h++)
       {
         for (int i = 0; i<graphics_width; i++)
         {
@@ -370,14 +373,22 @@ void init_scene() {
 void workermain()
 {
   // Wait for mailbox to notify us that HART#0 is ready
-  while ((*mailbox) != 0x00000002) { }
+  uint32_t hartid = read_csr(mhartid);
+  uint32_t hartbit = (1<<hartid);
 
-  UARTWrite("[E32D:HART1]\n");
+  while (((*mailbox)&hartbit) == 0) { }
+
+  UARTWrite("[E32D:HART");
+  UARTWriteDecimal(hartid);
+  UARTWrite("]\n");
+
+  //while ((*mailbox) != 0x00000002) { }
+  //UARTWrite("[E32D:HART1]\n");
 
   // Reset mailbox
   (*mailbox) = 0x00000000;
 
-  render(1, spheres, nb_spheres, lights, nb_lights);
+  render(hartid, spheres, nb_spheres, lights, nb_lights);
   UARTFlush(); // One last flush at the end
 
   while(1) { }
@@ -386,14 +397,17 @@ void workermain()
 // Main CPU does nothing
 int main()
 {
-  UARTWrite("[E32D:HART0]\n");
+  uint32_t hartid = read_csr(mhartid);
+  UARTWrite("[E32D:HART");
+  UARTWriteDecimal(hartid);
+  UARTWrite("]\n");
 
   // Only one init of scene suffices on HART#0
   // HART#1 uses same memory layout, only a different stack
   init_scene();
 
   // Enable HART#1
-  *mailbox |= 0x00000002;
+  *mailbox = 0x00000002;
 
   render(0, spheres, nb_spheres, lights, nb_lights);
   UARTFlush(); // One last flush at the end
