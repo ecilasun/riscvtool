@@ -8,7 +8,7 @@ GROUP( -lc -lgloss -lgcc )
 /*_STACK_SIZE = DEFINED(_STACK_SIZE) ? _STACK_SIZE : 0x1F0;*/
 
 MEMORY{
-   RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 64K
+   RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0xE000
 }
 
 ENTRY(_start)
@@ -27,13 +27,6 @@ SECTIONS
      . = 0x00000000;
      *(.boot)
      _boot = .;
-  }
-
-  /* worker CPU starts from here */
-  .workerinit : {
-    . = ABSOLUTE(0x80000200);
-    KEEP (*(.workerinit))
-    _workerinit = .;
   }
 
   /* Begining of code and text segment */

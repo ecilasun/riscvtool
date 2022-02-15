@@ -21,8 +21,19 @@ extern "C"
 
          // Set up stack pointer and align it to 16 bytes
          //"la sp, __stack_top;"
-         "li sp, 0x8000FFF0;" // HART#0 stack
+         /*"li sp, 0x8000FFF0;" // HART#0 stack
+         "mv s0, sp;"*/
+
+         "csrr	s1, mhartid;"       // get hart id
+         "slli	s1, s1, 11;"        // hartid*2048 (2K default stack)
+         "li s2, 0x0000E000;"      // stack pointer of last HART
+         "add s2, s2, s1;"         // base + hartid*2048
+         "li s3, 0x80000000;"      // base of BRAM
+         "or s2, s2, s3;"          // move into BRAM space
+         "mv sp, s2;"              // set new hart stack pointer
          "mv s0, sp;"
+
+         "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point 
 
          // Clear BSS
          "la a0, __malloc_max_total_mem;"
@@ -53,6 +64,10 @@ extern "C"
 
          // Stop at breakpoint / no return / _exit is useless
          "ebreak;"
+
+         "workerhartstart:"
+         "j _Z10workermainv;" // All HARTs with id!=0 fall here
+         "ebreak;"
       );
    }
 
@@ -69,45 +84,5 @@ extern "C"
          "ecall;"
          "j _exit;"
       );*/
-   }
-
-   void __attribute__((noreturn, naked, section (".workerinit"))) _workerstart()
-   {
-      asm volatile (
-
-         // TODO: Wait for HART#0 to wake us up
-         // This could be done via a memory mapped mailbox read which initially contains 0x000000001 (HART#0 enabled)
-         // We wait in an infinite loop to see if this HART's corresponding bit is set to 1 then resume execution.
-         // Otherwise, the memset etc code above will kick and write zeroes over memory we're using without this synchronization.
-         // Another memory mapped register could be used for a polling mechanism to see if a certain task is 'done' by
-         // all CPUs in the same work group (as with a GPU)
-
-         ".option push;"
-         ".option norelax;"
-
-         // Set up global pointer
-         "la gp, __global_pointer$;"
-
-         ".option pop;"
-/*
-         "csrr	s1, mhartid;"       // Grab hart ID (>=1 routed here, hart0 uses _start)
-         "slli	s1, s1, 0x12;"      // Need 4K stack space
-         "li s2, 0x0000FFF0;"      // Grab stack base
-         "sub s2, s2, s1;"         // and offset stack top by 4096*hartid
-         "li s1, 0x80000000;"      // Memory top
-         "or s2, s2, s1;"          // Generate actual address
-         "mv sp, s2;"              // Set new stack pointer for this hart
-         "mv s0, sp;"
-*/
-         "li sp, 0x8000F000;" // HART#1 stack ~4Kbytes away
-         "mv s0, sp;"
-
-         "lw a0,0(sp);"
-         "addi	a1,sp,4;"
-         "li a2,0;"
-
-         "j _Z10workermainv;"
-         "ebreak;"
-      );
    }
 };
