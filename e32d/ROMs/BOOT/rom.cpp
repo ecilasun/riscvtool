@@ -17,6 +17,9 @@
 // This is used to ensure UART write ordering
 volatile uint32_t *mailbox = (volatile uint32_t*)0x8000FFFC;
 
+static const int numharts = 4;
+static uint32_t scanlinecache[numharts][80];
+
 /* Modified by Engin Cilasun to fit the E32 graphics architecture  */
 /* from Bruno Levy's original port of 2020                         */
 /* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
@@ -299,9 +302,6 @@ vec3 cast_ray(
   return result;
 }
 
-static const int numharts = 2;
-static uint32_t scanlinecache[numharts][80];
-
 #define M_PI 3.14159265358979323846 
 
 void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
@@ -406,8 +406,8 @@ int main()
   // HART#1 uses same memory layout, only a different stack
   init_scene();
 
-  // Enable HART#1
-  *mailbox = 0x00000002;
+  // Enable HART#1 (2), HART#2 (4), HART#3 (8)
+  *mailbox = 0x0000000E;
 
   render(0, spheres, nb_spheres, lights, nb_lights);
   UARTFlush(); // One last flush at the end

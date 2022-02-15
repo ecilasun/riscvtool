@@ -16,18 +16,12 @@ extern "C"
 
          // Set up global pointer
          "la gp, __global_pointer$;"
-
          ".option pop;"
 
-         // Set up stack pointer and align it to 16 bytes
-         //"la sp, __stack_top;"
-         /*"li sp, 0x8000FFF0;" // HART#0 stack
-         "mv s0, sp;"*/
-
          "csrr	s1, mhartid;"       // get hart id
-         "slli	s1, s1, 11;"        // hartid*2048 (2K default stack)
-         "li s2, 0x0000E000;"      // stack pointer of last HART
-         "add s2, s2, s1;"         // base + hartid*2048
+         "slli	s1, s1, 12;"        // hartid*4096 (4K default stack)
+         "li s2, 0x0000C000;"      // stack pointer of last HART
+         "add s2, s2, s1;"         // base + hartid*4096
          "li s3, 0x80000000;"      // base of BRAM
          "or s2, s2, s3;"          // move into BRAM space
          "mv sp, s2;"              // set new hart stack pointer
