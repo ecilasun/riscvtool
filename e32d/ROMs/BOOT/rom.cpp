@@ -12,13 +12,12 @@
 
 #include "core.h"
 #include "uart.h"
+#include "gpu.h"
 
 // CPU synchronization mailbox
 // This is used to ensure UART write ordering
 volatile uint32_t *mailbox = (volatile uint32_t*)0x8000FFFC;
-
 static const int numharts = 4;
-static uint32_t scanlinecache[numharts][80];
 
 /* Modified by Engin Cilasun to fit the E32 graphics architecture  */
 /* from Bruno Levy's original port of 2020                         */
@@ -31,25 +30,41 @@ typedef int BOOL;
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
+// The Bayer matrix for ordered dithering
+const uint8_t dither[4][4] = {
+  { 0, 8, 2,10},
+  {12, 4,14, 6},
+  { 3,11, 1, 9},
+  {15, 7,13, 5}
+};
+
 /*******************************************************************/
 
 // Size of the screen
 // Replace with your own variables or values
-#define graphics_width  80
-#define graphics_height 80
+#define graphics_width  320
+#define graphics_height 240
 
 // Replace with your own code.
-void graphics_set_pixel(int x, uint8_t r, uint8_t g, uint8_t b)
-{
-  UARTWrite("\033[48;2;");
-  UARTWriteDecimal(r);
-  UARTWrite(";");
-  UARTWriteDecimal(g);
-  UARTWrite(";");
-  UARTWriteDecimal(b);
-  UARTWrite("m ");
-  if(x==graphics_width-1)
-    UARTWrite("\033[48;2;0;0;0m");
+void graphics_set_pixel(int x, int y, float r, float g, float b) {
+  r = max(0.0f, min(1.0f, r));
+  g = max(0.0f, min(1.0f, g));
+  b = max(0.0f, min(1.0f, b));
+
+  uint16_t R = (uint16_t)(r*255.0f);
+  uint16_t G = (uint16_t)(g*255.0f);
+  uint16_t B = (uint16_t)(b*255.0f);
+
+  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
+  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
+  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
+
+  R = ROFF/32;
+  G = GOFF/32;
+  B = BOFF/64;
+  uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
+
+  GPUFB0[x+y*512] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -312,29 +327,7 @@ void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_l
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
       float dir_z = -graphics_height/(2.*tan(fov/2.));
       vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-
-      C.x = max(0.0f, min(1.0f, C.x));
-      C.y = max(0.0f, min(1.0f, C.y));
-      C.z = max(0.0f, min(1.0f, C.z));
-      uint8_t R = (uint8_t)(255.0f * C.x);
-      uint8_t G = (uint8_t)(255.0f * C.y);
-      uint8_t B = (uint8_t)(255.0f * C.z);
-      scanlinecache[hartid][i] = (R<<16)|(G<<8)|B;
-    }
-
-    if (hartid == 0)
-    {
-      for (int h = 0; h<numharts; h++)
-      {
-        for (int i = 0; i<graphics_width; i++)
-        {
-          uint8_t R,G,B;
-          R = (scanlinecache[h][i]&0x00FF0000) >> 16;
-          G = (scanlinecache[h][i]&0x0000FF00) >> 8;
-          B = (scanlinecache[h][i]&0x000000FF);
-          graphics_set_pixel(i,R,G,B);
-        }
-      }
+      graphics_set_pixel(i,j,C.x,C.y,C.z);
     }
   }
 }
@@ -378,9 +371,7 @@ void workermain()
 
   while (((*mailbox)&hartbit) == 0) { }
 
-  UARTWrite("[E32D:HART");
   UARTWriteDecimal(hartid);
-  UARTWrite("]\n");
 
   //while ((*mailbox) != 0x00000002) { }
   //UARTWrite("[E32D:HART1]\n");
@@ -397,14 +388,24 @@ void workermain()
 // Main CPU does nothing
 int main()
 {
+  // Set RGB palette
+  int target = 0;
+  for (int b=0;b<4;++b)
+  for (int g=0;g<8;++g)
+  for (int r=0;r<8;++r)
+  {
+      GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
+      ++target;
+  }
+ 
   uint32_t hartid = read_csr(mhartid);
-  UARTWrite("[E32D:HART");
+  UARTWrite("HARTS:");
   UARTWriteDecimal(hartid);
-  UARTWrite("]\n");
 
   // Only one init of scene suffices on HART#0
   // HART#1 uses same memory layout, only a different stack
   init_scene();
+  UARTWrite("\n");
 
   // Enable HART#1 (2), HART#2 (4), HART#3 (8)
   *mailbox = 0x0000000E;
