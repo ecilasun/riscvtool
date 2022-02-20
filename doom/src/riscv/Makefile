@@ -46,6 +46,7 @@ SOURCES_doom_arch := \
 	../../../e32/SDK/gpu.c \
 	../../../e32/SDK/buttons.c \
 	../../../e32/SDK/ringbuffer.c \
+	../../../e32/SDK/ps2.c \
 	$(NULL)
 
 # start.S

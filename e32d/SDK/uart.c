@@ -2,20 +2,34 @@
 
 #include <math.h> // For abs()
 
-volatile uint8_t  *IO_UARTRXTX            = (volatile uint8_t* )  0x20000008; // UART send/receive port (write/read)
-volatile uint32_t *IO_UARTRXByteAvailable = (volatile uint32_t* ) 0x20000004; // UART input status (read)
-volatile uint32_t *IO_UARTTXFIFOFull      = (volatile uint32_t* ) 0x20000000; // UART output status (read)
+volatile uint32_t *IO_UARTRX     = (volatile uint32_t* ) 0x20000000; // Receive fifo
+volatile uint32_t *IO_UARTTX     = (volatile uint32_t* ) 0x20000004; // Send fifo
+volatile uint32_t *IO_UARTStatus = (volatile uint32_t* ) 0x20000008; // Status (bit#0=rx valid(0:empty,1:havedata),bit#1=rx fifo full,bit#2=tx fifo empty, bit#4=intr enabled, bit#5=overrun, bit#6=frameerr, bit#7=parityerr)
+volatile uint32_t *IO_UARTCtl    = (volatile uint32_t* ) 0x2000000C; // Control (write only, bit#4=interrupt enable, bit#1=reset receive fifo, bit#0=reset send fifo, bit#2/3=reserved)
+
+int UARTHasData()
+{
+    return ((*IO_UARTStatus)&0x00000001);
+}
 
 void UARTFlush()
 {
-    while (*IO_UARTTXFIFOFull) { asm volatile("nop;"); }
+    while (UARTHasData()) { asm volatile("nop;"); }
+}
+
+uint8_t UARTRead()
+{
+    if (UARTHasData())
+        return (uint8_t)(*IO_UARTTX);
+    else
+        return 0;
 }
 
 void UARTPutChar(const char _char)
 {
     // Warning! This might overflow the output FIFO.
     // It is advised to call UARTFlush() before using it.
-    *IO_UARTRXTX = _char;
+    *IO_UARTTX = (uint32_t)_char;
 }
 
 static int forceduartflush = 1;

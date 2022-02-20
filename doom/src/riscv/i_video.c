@@ -29,13 +29,6 @@
 #include "core.h"
 #include "gpu.h"
 
-//static uint32_t vramPage = 0;
-
-void flippage()
-{
-	//
-}
-
 void
 I_InitGraphics(void)
 {
@@ -73,13 +66,11 @@ I_FinishUpdate (void)
 {
 	// NOTE: This is unnecessary, E32 has direct scan-out buffers that the CPU can write to
 	// with built-in double-buffering, therefore this copy is redundant.
+	// However, the stride of the display != width of display, so we need to do this for now.
 	for (int L=0;L<SCREENHEIGHT;++L)
 		__builtin_memcpy((void*)GPUFB0+512*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);
 
-	// optional: wait for vsync
-
-	// Show the result
-	flippage();
+	// TBD: wait for vsync, swap framebuffers etc
 }
 
 
@@ -87,7 +78,7 @@ void
 I_WaitVBL(int count)
 {
 	//GPUWaitForVsync(); <= This is to make GPU wait for vblank, not the CPU
-	// Correct approach is to wait for the gpustate write from GPU side at end of frame
+	// Correct approach is to wait for the gpustate write from GPU side at end of frame (GPU label write to mark frame complete)
 }
 
 

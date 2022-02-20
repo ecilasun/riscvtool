@@ -41,6 +41,7 @@
 #include "uart.h"
 #include "buttons.h"
 #include "ringbuffer.h"
+#include "ps2.h"
 
 uint8_t *keyboardringbuffer = (uint8_t*)0x80010000;
 
@@ -118,13 +119,14 @@ I_GetEvent(void)
 			case 0x14: event.data1 = KEY_RCTRL; break;
 			//case 0x11: event.data1 = KEY_RALT; break; // 0xE0+0x11
 			case 0x11: event.data1 = KEY_LALT; break;
+			default: event.data1 = ScanToASCII(key, false); break; // Always lowercase
 		}
 
-		if (key == 0x4A) // '/?' key to fire
+		/*if (key == 0x4A) // '/?' key to fire
 		{
 			event.type =  ev_joystick;
 			event.data1 = val&0x100 ?1:0;
-		}
+		}*/
 
 		// Debug
 		/*UARTWrite(event.type == ev_joystick ? "btn" : (event.type == ev_keyup ? "up":"down"));
