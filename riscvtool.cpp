@@ -233,7 +233,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
                 printf(" "); // 32bit separator
         }
     }
-    else // 128bit groups (16 bytes)
+    else if (groupsize == 16) // 128bit groups (16 bytes)
     {
         unsigned int *litteendian = (unsigned int *)(_elfbinary+pheader->m_Offset);
         for (unsigned int i=0;i<pheader->m_FileSz/4;++i)
@@ -241,6 +241,16 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
             if (i!=0 && ((i%4) == 0))
                 printf("\n");
             printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
+        }
+    }
+    else if (groupsize == 32) // 256bit groups (32 bytes)
+    {
+        unsigned int *litteendian = (unsigned int *)(_elfbinary+pheader->m_Offset);
+        for (unsigned int i=0;i<pheader->m_FileSz/4;++i)
+        {
+            if (i!=0 && ((i%8) == 0))
+                printf("\n");
+            printf("%.8X", litteendian[(i&0xFFFFFFF8) + 7-(i%8)]);
         }
     }
 
