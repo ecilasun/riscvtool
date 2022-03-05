@@ -318,12 +318,14 @@ vec3 cast_ray(
 
 void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  for (int j = (hartid/2); j<graphics_height; j+=2) { // actual rendering loop
-    for (int i = (hartid%2); i<graphics_width; i+=2) { // interleave horizontal to keep close in cache to avoid excessive trashing
+  // Each HART starts on its respective scanline and steps by hart count
+  for (int j = hartid; j<graphics_height; j+=numharts) {
+    for (int i = 0; i<graphics_width; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
       float dir_z = -graphics_height/(2.*tan(fov/2.));
       vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
+      // TODO: Collect into a cache and output from HART0 when all are done (use the 4K mailbox perhaps?)
       graphics_set_pixel(i,j,C.x,C.y,C.z);
     }
   }
