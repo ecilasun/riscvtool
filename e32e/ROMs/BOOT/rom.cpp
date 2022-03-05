@@ -1,13 +1,26 @@
-/* Modified by Engin Cilasun to fit the E32 graphics architecture  */
-/* from Bruno Levy's original port of 2020                         */
-/* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
+// Bootloader
 
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <memory.h>
 #include <math.h>
 
 #include "rvcrt0.h"
+#include "encoding.h" // For CSR access macros
 
 #include "core.h"
 #include "uart.h"
+
+// CPU synchronization mailbox
+// This is used to ensure UART write ordering
+volatile uint32_t *mailbox = (volatile uint32_t*)0x20005000;
+static const int numharts = 2;
+
+/* Modified by Engin Cilasun to fit the E32 graphics architecture  */
+/* from Bruno Levy's original port of 2020                         */
+/* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
 
 /*******************************************************************/
 
@@ -16,6 +29,14 @@ typedef int BOOL;
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
+// The Bayer matrix for ordered dithering
+const uint8_t dither[4][4] = {
+  { 0, 8, 2,10},
+  {12, 4,14, 6},
+  { 3,11, 1, 9},
+  {15, 7,13, 5}
+};
+
 /*******************************************************************/
 
 // Size of the screen
@@ -23,25 +44,24 @@ static inline float min(float x, float y) { return x<y?x:y; }
 #define graphics_width  80
 #define graphics_height 80
 
-// Replace with your own code.
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
   r = max(0.0f, min(1.0f, r));
   g = max(0.0f, min(1.0f, g));
   b = max(0.0f, min(1.0f, b));
 
-    uint8_t R = (uint8_t)(255.0f * r);
-    uint8_t G = (uint8_t)(255.0f * g);
-    uint8_t B = (uint8_t)(255.0f * b);
+  uint8_t R = (uint8_t)(255.0f * r);
+  uint8_t G = (uint8_t)(255.0f * g);
+  uint8_t B = (uint8_t)(255.0f * b);
 
-    UARTWrite("\033[48;2;");
-    UARTWriteDecimal(R);
-    UARTWrite(";");
-    UARTWriteDecimal(G);
-    UARTWrite(";");
-    UARTWriteDecimal(B);
-    UARTWrite("m ");
-    if(x==graphics_width-1)
-        UARTWrite("\033[48;2;0;0;0m");
+  UARTWrite("\033[48;2;");
+  UARTWriteDecimal(R);
+  UARTWrite(";");
+  UARTWriteDecimal(G);
+  UARTWrite(";");
+  UARTWriteDecimal(B);
+  UARTWrite("m ");
+  if(x==graphics_width-1)
+    UARTWrite("\033[48;2;0;0;0m");
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -295,10 +315,11 @@ vec3 cast_ray(
 }
 
 #define M_PI 3.14159265358979323846 
-void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
+
+void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  for (int j = 0; j<graphics_height; j++) { // actual rendering loop
-    for (int i = 0; i<graphics_width; i++) {
+  for (int j = (hartid/2); j<graphics_height; j+=2) { // actual rendering loop
+    for (int i = (hartid%2); i<graphics_width; i+=2) { // interleave horizontal to keep close in cache to avoid excessive trashing
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
       float dir_z = -graphics_height/(2.*tan(fov/2.));
@@ -338,22 +359,41 @@ void init_scene() {
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
 
-int main() {
-    UARTWrite("tinyraytracertty\n");
-    UARTFlush();
-    init_scene();
+// Worker CPU does a raytracing test
+void workermain()
+{
+  // Wait for mailbox to notify us that HART#0 is ready
+  uint32_t hartid = read_csr(mhartid);
 
-    //uint64_t startclock = E32ReadTime();
+  // Since we're reading from mailbox memory (uncached) all writes are visible to all HARTs
+  uint32_t hartbit = (1<<hartid);
+  while (((*mailbox)&hartbit) == 0) { }
 
-    render(spheres, nb_spheres, lights, nb_lights);
+  // HART woke up, output our ID
+  UARTWriteDecimal(hartid);
 
-    /*uint64_t endclock = E32ReadTime();
-    uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("tinyraytracertty took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms at 80x80 resolution\n");*/
+  render(hartid, spheres, nb_spheres, lights, nb_lights);
+  UARTFlush(); // One last flush at the end
 
-    while (1) {}
+  while(1) { }
+}
 
-    return 0;
+// Main CPU does nothing
+int main()
+{
+  uint32_t hartid = read_csr(mhartid);
+  UARTWriteDecimal(hartid);
+
+  // Initialize the scene before we wake up worker HARTs
+  init_scene();
+
+  // Enable HART#1 (2), HART#2 (4), HART#3 (8)
+  *mailbox = 0x0000000E;
+
+  render(0, spheres, nb_spheres, lights, nb_lights);
+  UARTFlush(); // One last flush at the end
+
+  while(1) { }
+
+  return 0;
 }
