@@ -27,14 +27,14 @@ extern "C"
          "slli	s1, s1, 13;"          // hartid*8192 (8K default stack)
          "li s2, 0x0000D000;"        // stack pointer of last HART (NOTE: baseoffset=0xF000-0x2000*(hartcount-1))
          "add s2, s2, s1;"           // base + hartid*8192
-         "li s3, 0x80000000;"        // base of BRAM
+         "li s3, 0x20000000;"        // base of BRAM
          "or s2, s2, s3;"            // move into BRAM space
          "mv sp, s2;"                // set new hart stack pointer
          "mv s0, sp;"                // set frame pointer
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point 
 #else
-         "li sp, 0x8000FFF0;"        // single hart, hardcoded stack at end of 64K BRAM
+         "li sp, 0x2000FFF0;"        // single hart, hardcoded stack at end of 64K BRAM
          "mv s0, sp;"                // set frame pointer
 #endif
          // Clear BSS

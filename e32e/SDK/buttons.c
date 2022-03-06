@@ -1,9 +1,9 @@
 #include "buttons.h"
 #include <math.h> // for log2
 
-volatile uint32_t *BUTTONCHANGE = (volatile uint32_t* )0x20004000;
-volatile uint32_t *BUTTONCHANGEAVAIL = (volatile uint32_t* )0x20004004;
-volatile uint32_t *BUTTONIMMEDIATESTATE = (volatile uint32_t* )0x20004008;
+volatile uint32_t *BUTTONCHANGE = (volatile uint32_t* )0x80001030;
+volatile uint32_t *BUTTONCHANGEAVAIL = (volatile uint32_t* )0x80001034;
+volatile uint32_t *BUTTONIMMEDIATESTATE = (volatile uint32_t* )0x80001038;
 
 int IsKeyDown( enum EButtonNames _button )
 {

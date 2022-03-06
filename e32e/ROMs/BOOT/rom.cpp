@@ -14,7 +14,7 @@
 #include "uart.h"
 
 // CPU synchronization mailbox (uncached access, writes visible to all HARTs the following clock)
-volatile uint32_t *mailbox = (volatile uint32_t*)0x20005000;
+volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
 // Number of HARTs in E32E
 static const int numharts = 2;
 

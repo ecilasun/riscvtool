@@ -1,8 +1,7 @@
 #include "ps2.h"
 
-volatile uint32_t *PS2KEYBOARDDATA = (volatile uint32_t* )0x20002000;
-
-volatile uint32_t *PS2KEYBOARDDATAAVAIL = (volatile uint32_t* )0x20002008;
+volatile uint32_t *PS2KEYBOARDDATA = (volatile uint32_t* )0x80001020;
+volatile uint32_t *PS2KEYBOARDDATAAVAIL = (volatile uint32_t* )0x80001028;
 
 void ScanKeyboard(uint16_t *_keymap)
 {

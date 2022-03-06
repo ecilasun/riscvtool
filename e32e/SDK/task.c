@@ -1,9 +1,9 @@
 #include "core.h"
 #include "task.h"
 
-volatile uint32_t *taskcount = (volatile uint32_t *)0x80001F00;
-volatile uint32_t *currenttask = (volatile uint32_t *)0x80001F04;
-volatile struct STaskContext *tasks = (volatile struct STaskContext *)0x80001F08;
+volatile uint32_t *taskcount = (volatile uint32_t *)0x80000F00;
+volatile uint32_t *currenttask = (volatile uint32_t *)0x80000F04;
+volatile struct STaskContext *tasks = (volatile struct STaskContext *)0x80000F08;
 
 void InitTasks()
 {
