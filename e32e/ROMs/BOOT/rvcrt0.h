@@ -30,12 +30,12 @@ extern "C"
          "li s3, 0x80000000;"        // base of BRAM
          "or s2, s2, s3;"            // move into BRAM space
          "mv sp, s2;"                // set new hart stack pointer
-         "mv s0, sp;"
+         "mv s0, sp;"                // set frame pointer
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point 
 #else
-         "li sp, 0x8000FFF0;"        // Single hart, hardcoded stack at end of 64K BRAM
-         "mv s0, sp;"
+         "li sp, 0x8000FFF0;"        // single hart, hardcoded stack at end of 64K BRAM
+         "mv s0, sp;"                // set frame pointer
 #endif
          // Clear BSS
          "la a0, __malloc_max_total_mem;"
@@ -69,6 +69,9 @@ extern "C"
 
 #if defined(MULTIHART)
          "workerhartstart:"
+         "lw a0,0(sp);"
+         "addi	a1,sp,4;"
+         "li a2,0;"
          "j _Z10workermainv;" // All HARTs with id!=0 fall here
          "ebreak;"
 #endif
