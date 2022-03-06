@@ -242,6 +242,10 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
                 printf("\n");
             printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
         }
+        // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
+        unsigned int leftover = pheader->m_FileSz%8;
+        for (unsigned int i=0;i<leftover;++i)
+            printf("00");
     }
     else if (groupsize == 32) // 256bit groups (32 bytes)
     {
@@ -252,6 +256,10 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
                 printf("\n");
             printf("%.8X", litteendian[(i&0xFFFFFFF8) + 7-(i%8)]);
         }
+        // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
+        unsigned int leftover = pheader->m_FileSz%16;
+        for (unsigned int i=0;i<leftover;++i)
+            printf("00");
     }
 
     printf(";");
