@@ -319,9 +319,9 @@ vec3 cast_ray(
 
 #define M_PI 3.14159265358979323846
 
-void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
+void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  for (int j = 0; j<graphics_height; j++) {
+  for (int j = hartid; j<graphics_height; j+=numharts) {
     for (int i = 0; i<graphics_width; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
@@ -380,6 +380,9 @@ void workermain()
 
   *mailbox = 0x00000000; // Signal 'done' to HART#0
 
+  init_scene();
+  render(hartid, spheres, nb_spheres, lights, nb_lights);
+
   while(1) { }
 }
 
@@ -416,7 +419,7 @@ int main()
   while (*mailbox != 0) { }
   UARTWrite("All HARTs awake, rendering\n");
 
-  render(spheres, nb_spheres, lights, nb_lights);
+  render(hartid, spheres, nb_spheres, lights, nb_lights);
 
   UARTWrite("Done\n");
 
