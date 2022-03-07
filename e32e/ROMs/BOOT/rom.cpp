@@ -12,6 +12,7 @@
 
 #include "core.h"
 #include "uart.h"
+#include "gpu.h"
 
 // CPU synchronization mailbox (uncached access, writes visible to all HARTs the following clock)
 volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
@@ -29,24 +30,41 @@ typedef int BOOL;
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
+// The Bayer matrix for ordered dithering
+const uint8_t dither[4][4] = {
+  { 0, 8, 2,10},
+  {12, 4,14, 6},
+  { 3,11, 1, 9},
+  {15, 7,13, 5}
+};
+
 /*******************************************************************/
 
 // Size of the screen
 // Replace with your own variables or values
-#define graphics_width  80
-#define graphics_height 80
+#define graphics_width  320
+#define graphics_height 240
 
 // Replace with your own code.
-void graphics_set_pixel(int x, int y, uint8_t R, uint8_t G, uint8_t B) {
-    UARTWrite("\033[48;2;");
-    UARTWriteDecimal(R);
-    UARTWrite(";");
-    UARTWriteDecimal(G);
-    UARTWrite(";");
-    UARTWriteDecimal(B);
-    UARTWrite("m ");
-    if(x==graphics_width-1)
-        UARTWrite("\033[48;2;0;0;0m");
+void graphics_set_pixel(int x, int y, float r, float g, float b) {
+  r = max(0.0f, min(1.0f, r));
+  g = max(0.0f, min(1.0f, g));
+  b = max(0.0f, min(1.0f, b));
+
+  uint16_t R = (uint16_t)(r*255.0f);
+  uint16_t G = (uint16_t)(g*255.0f);
+  uint16_t B = (uint16_t)(b*255.0f);
+
+  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
+  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
+  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
+
+  R = ROFF/32;
+  G = GOFF/32;
+  B = BOFF/64;
+  uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
+
+  GPUFB0[x+y*graphics_width] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -309,10 +327,7 @@ void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
       float dir_z = -graphics_height/(2.*tan(fov/2.));
       vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-      C.x = max(0.0f, min(1.0f, C.x));
-      C.y = max(0.0f, min(1.0f, C.y));
-      C.z = max(0.0f, min(1.0f, C.z));
-        graphics_set_pixel(i,j, (uint8_t)(255.0f * C.x), (uint8_t)(255.0f * C.y), (uint8_t)(255.0f * C.z));
+      graphics_set_pixel(i,j, C.x, C.y, C.z);
     }
   }
 }
@@ -379,6 +394,16 @@ int main()
   UARTWriteDecimal(hartid);
   UARTWrite(", waiting for other HARTs\n");
   UARTFlush();
+
+  // Set RGB palette
+  int target = 0;
+  for (int b=0;b<4;++b)
+  for (int g=0;g<8;++g)
+  for (int r=0;r<8;++r)
+  {
+      GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
+      ++target;
+  }
 
   init_scene();
 
