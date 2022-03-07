@@ -34,7 +34,7 @@ static inline float min(float x, float y) { return x<y?x:y; }
 // Size of the screen
 // Replace with your own variables or values
 #define graphics_width  80
-#define graphics_height 60
+#define graphics_height 80
 
 // Replace with your own code.
 void graphics_set_pixel(int x, int y, uint8_t R, uint8_t G, uint8_t B) {
@@ -301,27 +301,19 @@ vec3 cast_ray(
 
 #define M_PI 3.14159265358979323846
 
-uint8_t rowcache[graphics_width*3];
 void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  for (int j = 0; j<graphics_height; j++) { // actual rendering loop
+  for (int j = 0; j<graphics_height; j++) {
     for (int i = 0; i<graphics_width; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
       float dir_z = -graphics_height/(2.*tan(fov/2.));
       vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-
       C.x = max(0.0f, min(1.0f, C.x));
       C.y = max(0.0f, min(1.0f, C.y));
       C.z = max(0.0f, min(1.0f, C.z));
-      rowcache[3*i+0] = (uint8_t)(255.0f * C.x);
-      rowcache[3*i+1] = (uint8_t)(255.0f * C.y);
-      rowcache[3*i+2] = (uint8_t)(255.0f * C.z);
+        graphics_set_pixel(i,j, (uint8_t)(255.0f * C.x), (uint8_t)(255.0f * C.y), (uint8_t)(255.0f * C.z));
     }
-
-    // Burst the values out
-    for (int i=0;i<graphics_width;i++)
-      graphics_set_pixel(i,j, rowcache[i*3+0], rowcache[i*3+1], rowcache[i*3+2]);
   }
 }
 
@@ -388,6 +380,8 @@ int main()
   UARTWrite(", waiting for other HARTs\n");
   UARTFlush();
 
+  init_scene();
+
   // Enable HART#1 (2), HART#2 (4), HART#3 (8)
   *mailbox = 0x0000000E;
 
@@ -397,7 +391,6 @@ int main()
   while (*mailbox != 0) { }
   UARTWrite("All HARTs awake, rendering\n");
 
-  init_scene();
   render(spheres, nb_spheres, lights, nb_lights);
 
   UARTWrite("Done\n");

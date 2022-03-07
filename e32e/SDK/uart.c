@@ -32,15 +32,15 @@ void UARTPutChar(const char _char)
     *IO_UARTTX = (uint32_t)_char;
 }
 
-static int forceduartflush = 1;
 void UARTWrite(const char *_message)
 {
+    int forceduartflush = 1;
     // Emit all characters from the input string
     int i = 0;
     while (_message[i]!=0)
     {
         UARTPutChar(_message[i++]);
-        if (((++forceduartflush)%384) == 0) // time to flush the FIFO before we reach the end (512 entries)
+        if (((++forceduartflush)%768) == 0) // This is a very long send operation, flush before we can resume
             UARTFlush();
     }
 }
