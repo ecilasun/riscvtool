@@ -21,7 +21,7 @@ RISCV_PREFIX ?= riscv64-unknown-elf-
 RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 RISCVTOOL ?= ../../build/release/riscvtool
-RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 --param l1-cache-line-size=64 --param l1-cache-size=32 -Wall -O3 -march=rv32i -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug --specs=nano.specs -nostartfiles
+RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 --param l1-cache-line-size=64 --param l1-cache-size=32 -Wall -Ofast -ffreestanding -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug --specs=nano.specs -fPIC -nostartfiles
 
 incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
 objs  :=
