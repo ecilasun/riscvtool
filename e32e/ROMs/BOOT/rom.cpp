@@ -321,10 +321,10 @@ vec3 cast_ray(
 
 void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  for (int j = hartid; j<graphics_height; j+=numharts) {
-    for (int i = 0; i<graphics_width; i++) {
+  for (int j = 0; j<graphics_height; j++) {
+    for (int i = hartid; i<graphics_width; i+=numharts) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
-      float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
+      float dir_y = -(j + 0.5) + graphics_height/2.;
       float dir_z = -graphics_height/(2.*tan(fov/2.));
       vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
       graphics_set_pixel(i,j, C.x, C.y, C.z);
