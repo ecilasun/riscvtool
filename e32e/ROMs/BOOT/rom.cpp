@@ -17,7 +17,7 @@
 // CPU synchronization mailbox (uncached access, writes visible to all HARTs the following clock)
 volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
 // Number of HARTs in E32E
-static const int numharts = 2;
+static const int numharts = 4;
 
 /* Modified by Engin Cilasun to fit the E32 graphics architecture  */
 /* from Bruno Levy's original port of 2020                         */
@@ -372,13 +372,8 @@ void workermain()
   uint32_t hartbit = (1<<hartid);
   while (((*mailbox)&hartbit) == 0) { }
 
-  // HART woke up, output our ID
-  UARTWrite("Hello from HART#");
-  UARTWriteDecimal(hartid);
-  UARTWrite("\n");
-  UARTFlush();
-
-  *mailbox = 0x00000000; // Signal 'done' to HART#0
+  // Signal 'awake' to HART#0
+  mailbox[hartid] = 0x00000000;
 
   init_scene();
   render(hartid, spheres, nb_spheres, lights, nb_lights);
@@ -389,6 +384,10 @@ void workermain()
 // Main CPU entry point
 int main()
 {
+  mailbox[1] = 0xFFFFFFFF;
+  mailbox[2] = 0xFFFFFFFF;
+  mailbox[3] = 0xFFFFFFFF;
+
   uint32_t hartid = read_csr(mhartid);
 
   // TODO: HART0 should do all one-time init here before waking up the workers
@@ -416,8 +415,10 @@ int main()
   // TODO: All HARTs are awake now, talk via mailbox to handle sync between them
 
   // Wait for HART#1 to signal done
-  while (*mailbox != 0) { }
-  UARTWrite("All HARTs awake, rendering\n");
+  while (mailbox[1] != 0) { } UARTWrite("HART#1 awake\n");
+  while (mailbox[2] != 0) { } UARTWrite("HART#2 awake\n");
+  while (mailbox[3] != 0) { } UARTWrite("HART#3 awake\n");
+  UARTWrite("Rendering...\n");
 
   render(hartid, spheres, nb_spheres, lights, nb_lights);
 

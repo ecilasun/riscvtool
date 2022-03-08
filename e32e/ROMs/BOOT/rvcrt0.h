@@ -24,9 +24,9 @@ extern "C"
 
 #if defined(MULTIHART)
          "csrr	s1, mhartid;"         // get hart id
-         "slli	s1, s1, 12;"          // hartid*4096 (4K default stack)
+         "slli	s1, s1, 10;"          // hartid*1024 (1K default stack)
          "li s2, 0x2000FFF0;"        // stack pointer of last HART
-         "sub s2, s2, s1;"           // base - hartid*4096
+         "sub s2, s2, s1;"           // base - hartid*1024
          "mv sp, s2;"                // set new hart stack pointer
          "mv s0, sp;"                // set frame pointer
 
