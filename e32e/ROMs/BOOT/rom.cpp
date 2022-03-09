@@ -321,8 +321,10 @@ vec3 cast_ray(
 
 void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
+  int HO = hartid*(graphics_width/numharts);
+  int HE = HO+(graphics_width/numharts);
   for (int j = 0; j<graphics_height; j++) {
-    for (int i = hartid; i<graphics_width; i+=numharts) {
+    for (int i = HO; i<HE; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.;
       float dir_z = -graphics_height/(2.*tan(fov/2.));
