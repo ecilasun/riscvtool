@@ -380,6 +380,10 @@ void workermain()
   init_scene();
   render(hartid, spheres, nb_spheres, lights, nb_lights);
 
+  UARTWrite("HART#");
+  UARTWriteDecimal(hartid);
+  UARTWrite(" done\n");
+
   while(1) { }
 }
 
@@ -402,29 +406,38 @@ int main()
   // Set RGB palette
   int target = 0;
   for (int b=0;b<4;++b)
-  for (int g=0;g<8;++g)
-  for (int r=0;r<8;++r)
-  {
-      GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
-      ++target;
-  }
+    for (int g=0;g<8;++g)
+      for (int r=0;r<8;++r)
+      {
+          GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
+          ++target;
+      }
 
   init_scene();
 
-  // Enable HART#1 (2), HART#2 (4), HART#3 (8)
-  *mailbox = 0x0000000E;
+  // Enable other HARTs
+  uint32_t hartenablemask = 0;
+  for (uint32_t i=0; i<numharts; ++i)
+    if (hartid!=i)
+      hartenablemask |= (1<<i);
+  *mailbox = hartenablemask;
 
-  // TODO: All HARTs are awake now, talk via mailbox to handle sync between them
+  // Wait for other harts to wake up
+  for (uint32_t i=0; i<numharts; ++i)
+  {
+    if (i!=hartid)
+    {
+      while (mailbox[i] != 0) { }
+      UARTWrite("HART#1 awake\n");
+    }
+  }
 
-  // Wait for HART#1 to signal done
-  while (mailbox[1] != 0) { } UARTWrite("HART#1 awake\n");
-  while (mailbox[2] != 0) { } UARTWrite("HART#2 awake\n");
-  while (mailbox[3] != 0) { } UARTWrite("HART#3 awake\n");
   UARTWrite("Rendering...\n");
 
   render(hartid, spheres, nb_spheres, lights, nb_lights);
-
-  UARTWrite("Done\n");
+  UARTWrite("HART#");
+  UARTWriteDecimal(hartid);
+  UARTWrite(" done\n");
 
   while(1) { }
 
