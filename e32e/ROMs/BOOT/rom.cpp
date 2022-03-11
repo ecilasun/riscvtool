@@ -14,10 +14,27 @@
 #include "uart.h"
 #include "gpu.h"
 
+#define M_PI 3.14159265358979323846
+
 // CPU synchronization mailbox (uncached access, writes visible to all HARTs the following clock)
 volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
+// Allocation flags for 300 (20x15) tiles (16x16 in size)
+volatile uint32_t *tilealloc = (volatile uint32_t*)0x80000100;
+
+// Naiive allocation of 'next' tile given a previous tile index as starting point
+uint32_t allocNextTile(uint32_t prevtile, uint32_t hartid)
+{
+  for(uint32_t i=prevtile; i<20*15; ++i)
+    if (tilealloc[i] == 0xFFFFFFFF)
+    {
+      tilealloc[i] = hartid;
+      return i;
+    }
+  return 0xFFFFFFFF;
+}
+
 // Number of HARTs in E32E
-static const int numharts = 4;
+static const int numharts = 6;
 
 /* Modified by Engin Cilasun to fit the E32 graphics architecture  */
 /* from Bruno Levy's original port of 2020                         */
@@ -317,14 +334,14 @@ vec3 cast_ray(
   return result;
 }
 
-#define M_PI 3.14159265358979323846
-
-void render(int hartid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
+void render(uint32_t hartid, uint32_t tileid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
-  int HO = hartid*(graphics_width/numharts);
-  int HE = HO+(graphics_width/numharts);
-  for (int j = 0; j<graphics_height; j++) {
-    for (int i = HO; i<HE; i++) {
+
+  int TX = (tileid%20)*16;
+  int TY = (tileid/20)*16;
+
+  for (int j = TY; j<TY+16; j++) {
+    for (int i = TX; i<TX+16; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.;
       float dir_z = -graphics_height/(2.*tan(fov/2.));
@@ -378,7 +395,16 @@ void workermain()
   mailbox[hartid] = 0x00000000;
 
   init_scene();
-  render(hartid, spheres, nb_spheres, lights, nb_lights);
+
+  int done = 0;
+  uint32_t tileid = hartid;
+  do {
+    tileid = allocNextTile(tileid, hartid);
+    if (tileid != 0xFFFFFFFF)
+      render(hartid, tileid, spheres, nb_spheres, lights, nb_lights);
+    else
+      done = 1;
+  } while(!done);
 
   UARTWrite("HART#");
   UARTWriteDecimal(hartid);
@@ -393,6 +419,9 @@ int main()
   mailbox[1] = 0xFFFFFFFF;
   mailbox[2] = 0xFFFFFFFF;
   mailbox[3] = 0xFFFFFFFF;
+
+  for (int i=0;i<20*15;++i)
+    tilealloc[i] = 0xFFFFFFFF;
 
   uint32_t hartid = read_csr(mhartid);
 
@@ -428,13 +457,24 @@ int main()
     if (i!=hartid)
     {
       while (mailbox[i] != 0) { }
-      UARTWrite("HART#1 awake\n");
+      UARTWrite("HART#");
+      UARTWriteDecimal(i);
+      UARTWrite(" awake\n");
     }
   }
 
   UARTWrite("Rendering...\n");
 
-  render(hartid, spheres, nb_spheres, lights, nb_lights);
+  int done = 0;
+  uint32_t tileid = hartid;
+  do {
+    tileid = allocNextTile(tileid, hartid);
+    if (tileid != 0xFFFFFFFF)
+      render(hartid, tileid, spheres, nb_spheres, lights, nb_lights);
+    else
+      done = 1;
+  } while(!done);
+
   UARTWrite("HART#");
   UARTWriteDecimal(hartid);
   UARTWrite(" done\n");
