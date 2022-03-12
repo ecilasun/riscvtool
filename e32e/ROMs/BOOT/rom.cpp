@@ -16,24 +16,31 @@
 
 #define M_PI 3.14159265358979323846
 
-// CPU synchronization mailbox (uncached access, writes visible to all HARTs the following clock)
-volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
-// Allocation flags for 300 (20x15) tiles (16x16 in size)
-volatile uint32_t *tilealloc = (volatile uint32_t*)0x80000100;
+// Morton order work dispatch
 
-// Naiive allocation of 'next' tile given a previous tile index as starting point
-uint32_t allocNextTile(uint32_t prevtile, uint32_t hartid)
+uint32_t EMortonEncode(uint32_t _x, uint32_t _y, uint32_t _z)
 {
-  for(uint32_t i=prevtile; i<20*15; ++i)
-    if (tilealloc[i] == 0xFFFFFFFF)
-    {
-      tilealloc[i] = hartid;
-      return i;
-    }
-  return 0xFFFFFFFF;
+	// Pack 3 10-bit indices into a 30-bit Morton code
+	// Logic below is HLSL compatible
+	_x &= 0x000003ff;	_y &= 0x000003ff;	_z &= 0x000003ff;
+	_x |= (_x << 16);	_y |= (_y << 16);	_z |= (_z << 16);
+	_x &= 0xff0000ff;	_y &= 0xff0000ff;	_z &= 0xff0000ff;
+	_x |= (_x << 8);	_y |= (_y << 8);	_z |= (_z << 8);
+	_x &= 0x0300f00f;	_y &= 0x0300f00f;	_z &= 0x0300f00f;
+	_x |= (_x << 4);	_y |= (_y << 4);	_z |= (_z << 4);
+	_x &= 0x030c30c3;	_y &= 0x030c30c3;	_z &= 0x030c30c3;
+	_x |= (_x << 2);	_y |= (_y << 2);	_z |= (_z << 2);
+	_x &= 0x09249249;	_y &= 0x09249249;	_z &= 0x09249249;
+	return (_x | (_y << 1) | (_z << 2));
 }
 
+
+// CPU synchronization mailbox (uncached access, writes visible to all HARTs the following clock)
+volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
+
 // Number of HARTs in E32E
+// HART#0 - main HART
+// HART#1..HART#6 - worker HARTs
 static const int numharts = 6;
 
 /* Modified by Engin Cilasun to fit the E32 graphics architecture  */
@@ -387,50 +394,33 @@ void workermain()
   // Wait for mailbox to notify us that HART#0 is ready
   uint32_t hartid = read_csr(mhartid);
 
-  // Since we're reading from mailbox memory (uncached) all writes are visible to all HARTs
+  // Wait to be woken up
   uint32_t hartbit = (1<<hartid);
-  while (((*mailbox)&hartbit) == 0) { }
-
-  // Signal 'awake' to HART#0
-  mailbox[hartid] = 0x00000000;
+  while ((mailbox[numharts]&hartbit) == 0) { }
 
   init_scene();
-
-  int done = 0;
-  uint32_t tileid = hartid;
-  do {
-    tileid = allocNextTile(tileid, hartid);
-    if (tileid != 0xFFFFFFFF)
-      render(hartid, tileid, spheres, nb_spheres, lights, nb_lights);
-    else
-      done = 1;
-  } while(!done);
-
-  UARTWrite("HART#");
-  UARTWriteDecimal(hartid);
-  UARTWrite(" done\n");
-
-  while(1) { }
+  uint32_t workunit = 0xFFFFFFFF;
+  do{
+    // Wait for valid work unit
+    do {
+      workunit = mailbox[hartid];
+    } while(workunit == 0xFFFFFFFF);
+    // Rendering incoming work
+    render(hartid, workunit, spheres, nb_spheres, lights, nb_lights);
+    // Work done
+    mailbox[hartid] = 0xFFFFFFFF;
+  } while(1);
 }
 
 // Main CPU entry point
 int main()
 {
-  mailbox[1] = 0xFFFFFFFF;
-  mailbox[2] = 0xFFFFFFFF;
-  mailbox[3] = 0xFFFFFFFF;
+  // Reset work indices
+  for (int i=0;i<numharts;++i)
+    mailbox[i] = 0xFFFFFFFF;
 
-  for (int i=0;i<20*15;++i)
-    tilealloc[i] = 0xFFFFFFFF;
-
+  // Handle HART#0 specific code before we wake up other HARTs with work
   uint32_t hartid = read_csr(mhartid);
-
-  // TODO: HART0 should do all one-time init here before waking up the workers
-
-  UARTWrite("Hello from HART#");
-  UARTWriteDecimal(hartid);
-  UARTWrite(", waiting for other HARTs\n");
-  UARTFlush();
 
   // Set RGB palette
   int target = 0;
@@ -442,42 +432,45 @@ int main()
           ++target;
       }
 
-  init_scene();
+  UARTWrite("Rendering...\n");
 
-  // Enable other HARTs
+  // Wake up other HARTs
   uint32_t hartenablemask = 0;
   for (uint32_t i=0; i<numharts; ++i)
     if (hartid!=i)
       hartenablemask |= (1<<i);
-  *mailbox = hartenablemask;
+  mailbox[numharts] = hartenablemask;
 
-  // Wait for other harts to wake up
-  for (uint32_t i=0; i<numharts; ++i)
-  {
-    if (i!=hartid)
-    {
-      while (mailbox[i] != 0) { }
-      UARTWrite("HART#");
-      UARTWriteDecimal(i);
-      UARTWrite(" awake\n");
-    }
-  }
+  uint64_t startclock = E32ReadTime();
 
-  UARTWrite("Rendering...\n");
-
+  // Work distributor
   int done = 0;
-  uint32_t tileid = hartid;
+  uint32_t workunit = 0;
   do {
-    tileid = allocNextTile(tileid, hartid);
-    if (tileid != 0xFFFFFFFF)
-      render(hartid, tileid, spheres, nb_spheres, lights, nb_lights);
-    else
-      done = 1;
-  } while(!done);
+    // Distribute some work for each hart, which also wakes them up
+    for (uint32_t i=1; i<numharts; ++i)
+    {
+      uint32_t currentworkunit = mailbox[i];
+      if (currentworkunit == 0xFFFFFFFF)
+      {
+        if (workunit < 300)
+          mailbox[i] = workunit;
+        else
+          done = 1;
+        workunit++;
+      }
+    }
+  } while (!done);
 
-  UARTWrite("HART#");
-  UARTWriteDecimal(hartid);
-  UARTWrite(" done\n");
+  uint64_t endclock = E32ReadTime();
+  uint32_t deltams = ClockToMs(endclock-startclock);
+  UARTWrite("tinyraytracerttymulti\n");
+  UARTWrite("Resolution: 320*240\n");
+  UARTWrite("HARTs: ");
+  UARTWriteDecimal(numharts);
+  UARTWrite("\nTime: ");
+  UARTWriteDecimal((unsigned int)deltams);
+  UARTWrite(" ms\n");
 
   while(1) { }
 
