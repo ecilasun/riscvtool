@@ -18,22 +18,22 @@
 
 // Morton order work dispatch
 
-uint32_t EMortonEncode(uint32_t _x, uint32_t _y, uint32_t _z)
+void EMorton2DDecode(const uint32_t morton, uint32_t &x, uint32_t &y)
 {
-	// Pack 3 10-bit indices into a 30-bit Morton code
-	// Logic below is HLSL compatible
-	_x &= 0x000003ff;	_y &= 0x000003ff;	_z &= 0x000003ff;
-	_x |= (_x << 16);	_y |= (_y << 16);	_z |= (_z << 16);
-	_x &= 0xff0000ff;	_y &= 0xff0000ff;	_z &= 0xff0000ff;
-	_x |= (_x << 8);	_y |= (_y << 8);	_z |= (_z << 8);
-	_x &= 0x0300f00f;	_y &= 0x0300f00f;	_z &= 0x0300f00f;
-	_x |= (_x << 4);	_y |= (_y << 4);	_z |= (_z << 4);
-	_x &= 0x030c30c3;	_y &= 0x030c30c3;	_z &= 0x030c30c3;
-	_x |= (_x << 2);	_y |= (_y << 2);	_z |= (_z << 2);
-	_x &= 0x09249249;	_y &= 0x09249249;	_z &= 0x09249249;
-	return (_x | (_y << 1) | (_z << 2));
-}
+  uint32_t res = morton&0x5555555555555555;
+  res=(res|(res>>1)) & 0x3333333333333333;
+  res=(res|(res>>2)) & 0x0f0f0f0f0f0f0f0f;
+  res=(res|(res>>4)) & 0x00ff00ff00ff00ff;
+  res=res|(res>>8);
+  x = res;
 
+  res = (morton>>1)&0x5555555555555555;
+  res=(res|(res>>1)) & 0x3333333333333333;
+  res=(res|(res>>2)) & 0x0f0f0f0f0f0f0f0f;
+  res=(res|(res>>4)) & 0x00ff00ff00ff00ff;
+  res=res|(res>>8);
+  y = res;
+}
 
 // CPU synchronization mailbox (uncached access, writes visible to all HARTs the following clock)
 volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
@@ -344,11 +344,13 @@ vec3 cast_ray(
 void render(uint32_t hartid, uint32_t tileid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
 
-  int TX = (tileid%20)*16;
-  int TY = (tileid/20)*16;
+  // Assume 16x16 tiles -> tile dim: 20x15
 
-  for (int j = TY; j<TY+16; j++) {
-    for (int i = TX; i<TX+16; i++) {
+  int TX = (tileid%16)*20;
+  int TY = (tileid/16)*15;
+
+  for (int j = TY; j<TY+15; j++) {
+    for (int i = TX; i<TX+20; i++) {
       float dir_x =  (i + 0.5) - graphics_width/2.;
       float dir_y = -(j + 0.5) + graphics_height/2.;
       float dir_z = -graphics_height/(2.*tan(fov/2.));
@@ -453,8 +455,10 @@ int main()
       uint32_t currentworkunit = mailbox[i];
       if (currentworkunit == 0xFFFFFFFF)
       {
-        if (workunit < 300)
-          mailbox[i] = workunit;
+        uint32_t x, y;
+        EMorton2DDecode(workunit, x, y);
+        if (workunit < 256) // 16x16 tiles
+          mailbox[i] = x+16*y;
         else
           done = 1;
         workunit++;

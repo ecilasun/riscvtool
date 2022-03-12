@@ -243,8 +243,8 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
             printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
         }
         // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
-        unsigned int leftover = 8-((pheader->m_FileSz/4)%8);
-        if (leftover!=8)
+        unsigned int leftover = 4-((pheader->m_FileSz/4)%4);
+        if (leftover!=4)
             for (unsigned int i=0;i<leftover;++i)
                 printf("00000000");
     }
