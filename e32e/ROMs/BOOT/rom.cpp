@@ -439,7 +439,7 @@ int main()
     {
       for (int y=0;y<15;++y)
         for (int x=0;x<20;++x)
-          GPUFB0[(i*20+x)+(j*15+y)*graphics_width] = (tileID%2) ? 0xFFFFFFFF : 0x00000000;
+          GPUFB0[(i*20+x)+(j*15+y)*graphics_width] = ((i%2)^(j%2)) ? 0xCCCCCCCC : 0x00000000;
       ++tileID;
     }
   }
