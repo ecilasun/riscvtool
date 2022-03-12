@@ -69,28 +69,6 @@ const uint8_t dither[4][4] = {
 #define graphics_width  320
 #define graphics_height 240
 
-// Replace with your own code.
-void graphics_set_pixel(int x, int y, float r, float g, float b) {
-  r = max(0.0f, min(1.0f, r));
-  g = max(0.0f, min(1.0f, g));
-  b = max(0.0f, min(1.0f, b));
-
-  uint16_t R = (uint16_t)(r*255.0f);
-  uint16_t G = (uint16_t)(g*255.0f);
-  uint16_t B = (uint16_t)(b*255.0f);
-
-  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
-  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
-  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
-
-  R = ROFF/32;
-  G = GOFF/32;
-  B = BOFF/64;
-  uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
-
-  GPUFB0[x+y*graphics_width] = RGB;
-}
-
 // Normally you will not need to modify anything beyond that point.
 /*******************************************************************/
 
@@ -341,6 +319,24 @@ vec3 cast_ray(
   return result;
 }
 
+// Replace with your own code.
+void graphics_set_pixel(int x, int y, vec3 &V) {
+  uint16_t R = (uint16_t)(max(0.0f, min(1.0f, V.x))*255.0f);
+  uint16_t G = (uint16_t)(max(0.0f, min(1.0f, V.y))*255.0f);
+  uint16_t B = (uint16_t)(max(0.0f, min(1.0f, V.z))*255.0f);
+
+  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
+  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
+  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
+
+  R = ROFF/32;
+  G = GOFF/32;
+  B = BOFF/64;
+  uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
+
+  GPUFB0[x+y*graphics_width] = RGB;
+}
+
 void render(uint32_t hartid, uint32_t tileid, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
   const float fov  = M_PI/3.;
 
@@ -349,13 +345,15 @@ void render(uint32_t hartid, uint32_t tileid, Sphere* spheres, int nb_spheres, L
   int TX = (tileid%16)*20;
   int TY = (tileid/16)*15;
 
-  for (int j = TY; j<TY+15; j++) {
-    for (int i = TX; i<TX+20; i++) {
+  float dir_z = -graphics_height/(2.*tan(fov/2.));
+  for (int j = TY; j<TY+15; j++)
+  {
+    float dir_y = -(j + 0.5) + graphics_height/2.;
+    for (int i = TX; i<TX+20; i++)
+    {
       float dir_x =  (i + 0.5) - graphics_width/2.;
-      float dir_y = -(j + 0.5) + graphics_height/2.;
-      float dir_z = -graphics_height/(2.*tan(fov/2.));
-      vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-      graphics_set_pixel(i,j, C.x, C.y, C.z);
+      vec3 V = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
+      graphics_set_pixel(i, j, V);
     }
   }
 }
@@ -433,6 +431,18 @@ int main()
           GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
           ++target;
       }
+
+  uint32_t tileID = 0;
+  for (int j = 0; j<16; j++)
+  {
+    for (int i = 0; i<16; i++)
+    {
+      for (int y=0;y<15;++y)
+        for (int x=0;x<20;++x)
+          GPUFB0[(i*20+x)+(j*15+y)*graphics_width] = (tileID%2) ? 0xFFFFFFFF : 0x00000000;
+      ++tileID;
+    }
+  }
 
   UARTWrite("Rendering...\n");
 
