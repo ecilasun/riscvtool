@@ -18,8 +18,6 @@
 
 void testmemory()
 {
-    UARTWrite("Zero write speed test (0x0A000000-0x0C000000)\n");
-
     int i=0;
     uint64_t startclock = E32ReadTime();
     for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
@@ -39,10 +37,9 @@ void testmemory()
     uint32_t deltams = ClockToMs(endclock-startclock);
     UARTWrite("Clearing 32Mbytes took ");
     UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms\n");
+    UARTWrite(" ms, at ");
 
     int rate = (1024*32*1024) / deltams;
-    UARTWrite("Zero-write rate is ");
     UARTWriteDecimal(rate);
     UARTWrite(" Kbytes/sec\n");
 
@@ -507,18 +504,6 @@ int main()
           GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
           ++target;
       }
-
-  uint32_t tileID = 0;
-  for (int j = 0; j<16; j++)
-  {
-    for (int i = 0; i<16; i++)
-    {
-      for (int y=0;y<15;++y)
-        for (int x=0;x<20;++x)
-          GPUFB0[(i*20+x)+(j*15+y)*graphics_width] = ((i%2)^(j%2)) ? 0xCCCCCCCC : 0x00000000;
-      ++tileID;
-    }
-  }
 
   UARTWrite("Rendering...\n");
 
