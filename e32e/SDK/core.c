@@ -47,8 +47,8 @@ void E32SetTimeCompare(const uint64_t future)
 // Place the heap into DDR3 memory
 //#undef errno
 //int nerrno;
-static uint8_t *heap_start  = (uint8_t*)0x08000000; // Program/static data can leak all the way up to 128MBytes
-static uint8_t *heap_end    = (uint8_t*)0x0FFF0000; // ~127MBytes of heap, 64KBytes at the end reserved for now (future kernel stack)
+static uint8_t *heap_start  = (uint8_t*)0x10000000; // Program/static data can use up to 256MBytes
+static uint8_t *heap_end    = (uint8_t*)0x1FFF0000; // ~256MBytes of heap, minus 64KBytes at the end reserved for future (kernel stack, OS buffers etc)
 
 #ifdef __cplusplus
 extern "C" {
