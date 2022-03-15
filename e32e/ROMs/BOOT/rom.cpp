@@ -14,9 +14,9 @@
 #include "uart.h"
 #include "gpu.h"
 
-#include "memtest/memtest.h"
+//#include "memtest/memtest.h"
 
-void testmemory()
+/*void testmemory()
 {
     int i=0;
     uint64_t startclock = E32ReadTime();
@@ -85,7 +85,7 @@ void testmemory()
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
       UARTWrite("Memory device does not appear to be working correctly.\n");
-}
+}*/
 
 #define M_PI 3.14159265358979323846
 
@@ -548,7 +548,7 @@ int main()
   UARTWrite(" ms\n");
 
   // Try out the DDR3 memory
-  testmemory();
+  //testmemory();
 
   while(1) { }
 
