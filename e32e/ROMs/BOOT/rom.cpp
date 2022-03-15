@@ -14,23 +14,23 @@
 #include "uart.h"
 #include "gpu.h"
 
-//#include "memtest/memtest.h"
+#include "memtest/memtest.h"
 
-/*void testmemory()
+void testmemory()
 {
-    int i=0;
+    //int i=0;
     uint64_t startclock = E32ReadTime();
     for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
     {
         *((volatile uint32_t*)m) = 0x00000000;
-        if ((m!=0) && ((m%0x100000) == 0))
+        /*if ((m!=0) && ((m%0x100000) == 0))
         {
             ++i;
             UARTWriteDecimal(i);
             UARTWrite(" Mbytes cleared @");
             UARTWriteHex((unsigned int)m);
             UARTWrite("\n");
-        }
+        }*/
     }
 
     uint64_t endclock = E32ReadTime();
@@ -85,7 +85,7 @@
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
       UARTWrite("Memory device does not appear to be working correctly.\n");
-}*/
+}
 
 #define M_PI 3.14159265358979323846
 
@@ -488,6 +488,9 @@ void workermain()
 // Main CPU entry point
 int main()
 {
+  // Try out the DDR3 memory
+  testmemory();
+
   // Reset work indices
   for (int i=0;i<numharts;++i)
     mailbox[i] = 0xFFFFFFFF;
@@ -546,9 +549,6 @@ int main()
   UARTWrite("\nTime: ");
   UARTWriteDecimal((unsigned int)deltams);
   UARTWrite(" ms\n");
-
-  // Try out the DDR3 memory
-  //testmemory();
 
   while(1) { }
 
