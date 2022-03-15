@@ -113,8 +113,8 @@ volatile uint32_t *mailbox = (volatile uint32_t*)0x80000000;
 
 // Number of HARTs in E32E
 // HART#0 - main HART
-// HART#1..HART#6 - worker HARTs
-static const int numharts = 6;
+// HART#1.. - worker HARTs
+static const int numharts = 8;
 
 /* Modified by Engin Cilasun to fit the E32 graphics architecture  */
 /* from Bruno Levy's original port of 2020                         */
