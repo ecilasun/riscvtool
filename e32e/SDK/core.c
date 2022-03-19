@@ -5,6 +5,9 @@
 #include "core.h"
 #include "uart.h"
 
+// Memory region (4Kbytes) used to transfer data between HARTs without polluting their caches
+volatile uint32_t *HARTMAILBOX = (volatile uint32_t* )0x80000000;
+
 #define STDOUT_FILENO 1
 
 // Utilities
