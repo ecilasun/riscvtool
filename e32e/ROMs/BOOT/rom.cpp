@@ -41,9 +41,9 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
-static char currentdir[512]="sd:";
-static char commandline[512]="";
-static char filename[128]="";
+static char currentdir[512] = "sd:";
+static char commandline[512] = "";
+static char filename[128] = "";
 static int cmdlen = 0;
 static int havedrive = 0;
 
@@ -51,7 +51,7 @@ static int havedrive = 0;
 FATFS Fs;
 
 // Keyboard event ring buffer (1024 bytes)
-uint8_t *keyboardringbuffer = (uint8_t*)0x80010000;
+uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
 // Keyboard map is at top of S-RAM (512 bytes)
 uint16_t keymap[256];
 // Previous key map to be able to track deltas (512 bytes)
@@ -369,12 +369,12 @@ void CLS()
 void FlushDataCache()
 {
    // Force D$ flush so that contents are visible by I$
-   // We do this by forcing a dummy load of DWORDs from 0 to 2048
-   // to force previous contents to be written back to DDR3
-   // Tag is on high 17 bits, use end-of-memory to make sure we
-   // access somewhere not touched by program loads
+   // We do this by forcing a dummy load 4096 words from
+   // first cache page, to force previous contents to be
+   // written back to DDR3
+   // (P.S. 4096 words == 16384 bytes == size of D$)
    volatile uint32_t *DDR3Start = (volatile uint32_t *)0x00000000;
-   for (uint32_t i=0; i<2048; ++i)
+   for (uint32_t i=0; i<4096; ++i)
    {
       uint32_t dummyread = DDR3Start[i];
       // This is to make sure compiler doesn't eat our reads

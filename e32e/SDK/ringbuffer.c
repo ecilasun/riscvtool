@@ -11,9 +11,9 @@ const static uint32_t c_sizeMask = c_cbBufferSize - 1;
 
 // These need to persist in same memory location betwen ROM and loaded ELF
 // so that we don't read from wrong space (or not read at all)
-// NOTE: ringbuffer is normally placed at 0x80010000.
-volatile uint32_t *m_readOffset = (volatile uint32_t*)0x80010400;
-volatile  uint32_t *m_writeOffset = (volatile uint32_t*)0x80010408;
+// NOTE: Ring buffer is normally placed at 0x80000200 in the mailbox
+volatile uint32_t *m_readOffset  = (volatile uint32_t*)0x80000600; // End of ringbuffer, which starts at 0x80000200 (+0x400, i.e. 1K away)
+volatile uint32_t *m_writeOffset = (volatile uint32_t*)0x80000604;
 
 uint32_t __attribute__ ((noinline)) RingBufferRead(uint8_t *ringbuffer, void* pvDest, const uint32_t cbDest)
 {
