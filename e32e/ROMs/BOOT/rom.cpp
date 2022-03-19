@@ -100,7 +100,7 @@ void HandleTimer()
     UARTWrite("HINT: Type 'help' for a list of available commands.");
     UARTWrite("\033[0m\n");
 
-    // Stop further timer interrupts by setting the timecmp to furthest value available.
+    // Stop further timer interrupts by setting timecmp to furthest value available.
     swap_csr(0x801, 0xFFFFFFFF);
     swap_csr(0x800, 0xFFFFFFFF);
 }
@@ -263,6 +263,61 @@ void InstallISR()
    swap_csr(mstatus, MSTATUS_MIE);
 }
 
+void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) worker_interrupt_service_routine()
+{
+    uint32_t a7;
+    asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
+
+    //uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
+    uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
+    //uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
+    uint32_t code = cause & 0x7FFFFFFF;
+
+    if (cause & 0x80000000) // Interrupt
+    {
+        if (code == 0xB) // Machine External Interrupt (hardware)
+        {
+            // Route based on hardware type
+            /*if (value & 0x00000001) HandleUART();
+            if (value & 0x00000002) HandleButtons();
+            if (value & 0x00000004) HandleKeyboard();*/
+        }
+
+        if (code == 0x7) // Machine Timer Interrupt (timer)
+        {
+            uint32_t hartid = read_csr(mhartid);
+            UARTWriteDecimal(hartid);
+            // Stop further timer interrupts by setting timecmp to furthest value available.
+            swap_csr(0x801, 0xFFFFFFFF);
+            swap_csr(0x800, 0xFFFFFFFF);
+            //HandleTimer();
+        }
+    }
+    else // Machine Software Exception (trap)
+    {
+        //HandleTrap(cause, a7, value, PC);
+    }
+}
+
+void InstallWorkerISR()
+{
+   // Set machine trap vector
+   swap_csr(mtvec, worker_interrupt_service_routine);
+
+   // Set up timer interrupt a few units into the future
+   uint64_t now = E32ReadTime();
+   uint64_t future = now + 512; // Set to happen very soon, around similar points in time for all HARTs except #0
+   E32SetTimeCompare(future);
+
+   // Enable machine software interrupts (breakpoint/illegal instruction)
+   // Enable machine hardware interrupts
+   // Enable machine timer interrupts
+   swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+
+   // Allow all machine interrupts to trigger
+   swap_csr(mstatus, MSTATUS_MIE);
+}
+
 void ListFiles(const char *path)
 {
    DIR dir;
@@ -298,13 +353,13 @@ void ListFiles(const char *path)
       UARTWrite(FRtoString[re]);
 }
 
-void CLF()
+/*void CLF()
 {
     // Clear frame buffer zero
     for (int y=0;y<240;++y)
       for (int x=0;x<80;++x)
         GPUFB0WORD[x+y*80] = 0x00000000;
-}
+}*/
 
 void CLS()
 {
@@ -522,12 +577,13 @@ int ProcessKeyEvents()
 // Worker CPU entry point
 void workermain()
 {
-  while (1)
-  {
-    // Halt on wakeup
-    asm volatile("wfi;");
-    // TODO: We're awake now, do something
-  }
+    InstallWorkerISR();
+    while (1)
+    {
+        // Halt on wakeup
+        asm volatile("wfi;");
+        // NOTE: Our ISR will service this interrupt
+    }
 }
 
 int main()
@@ -536,7 +592,7 @@ int main()
     InstallISR();
 
     // Clear frame buffer
-    CLF();
+    //CLF();
 
     // Clear all attributes, clear screen, print boot message
     CLS();
