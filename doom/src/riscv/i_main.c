@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  */
 
-// Modified to work on NekoIchi by Engin Cilasun
+// Modified to work on E32E by Engin Cilasun
 
 #include "../doomdef.h"
 #include "../d_main.h"

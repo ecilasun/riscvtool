@@ -45,13 +45,10 @@
 
 uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
 
-static uint32_t s_buttons = 0;
-
 void
 I_Init(void)
 {
 	//I_InitSound();
-	s_buttons = *BUTTONIMMEDIATESTATE;
 }
 
 

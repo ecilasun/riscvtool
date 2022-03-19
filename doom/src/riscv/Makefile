@@ -8,7 +8,7 @@ UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
 # --specs=nano.specs -std=c++14 -> need to use g++
-CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../3rdparty/ -I../../../e32e/SDK/
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -51,14 +51,14 @@ SOURCES_doom_arch := \
 
 # start.S
 
-all: doom-riscv.elf doom-riscv.txt
+all: doom.elf doom.txt
 
-doom-riscv.elf: $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
-	$(CC) $(CFLAGS) -DDISABLE_FILESYSTEM -o $@ $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
+doom.elf: $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
+	$(CC) $(CFLAGS) -o $@ $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
 	$(SIZE) $@
 
 clean:
-	rm -f *.bin *.hex *.elf *.o *.gen.h doom-riscv.txt
+	rm -f *.bin *.hex *.elf *.o *.gen.h doom.txt
 
 %.txt: %.elf
 	$(OBJDUMP) -x -D -S $< >> $@
@@ -66,7 +66,7 @@ clean:
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
 
-upload: doom-riscv.elf
+upload: doom.elf
 	$(UPLOADER) $< -sendelf 0x10000 /dev/ttyUSB1
 
 .PHONY: all clean upload
