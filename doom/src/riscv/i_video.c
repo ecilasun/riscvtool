@@ -68,7 +68,7 @@ I_FinishUpdate (void)
 	// with built-in double-buffering, therefore this copy is redundant.
 	// However, the stride of the display != width of display, so we need to do this for now.
 	for (int L=0;L<SCREENHEIGHT;++L)
-		__builtin_memcpy((void*)GPUFB0+512*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);
+		__builtin_memcpy((void*)GPUFB0+SCREENWIDTH*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);
 
 	// TBD: wait for vsync, swap framebuffers etc
 }

@@ -1,26 +1,12 @@
-/*
- * i_main.c
- *
- * Main entry point
- *
- * Copyright (C) 2021 Sylvain Munaut
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
+#include "core.h"
+#include "uart.h"
 
-// Modified to work on NekoIchi by Engin Cilasun
+#include "spi.h"
+#include "sdcard.h"
+#include "fat32/ff.h"
 
-#include "../doomdef.h"
-#include "../d_main.h"
+#include <string.h>
+#include <stdio.h>
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -45,21 +31,47 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
-#include "uart.h"
-#include "fat32/ff.h"
+void ListELF(const char *path)
+{
+   DIR dir;
+   FRESULT re = f_opendir(&dir, path);
+   if (re == FR_OK)
+   {
+      FILINFO finf;
+      do{
+         re = f_readdir(&dir, &finf);
+         if (re == FR_OK && dir.sect!=0)
+         {
+			if (strstr(finf.fname, ".elf"))
+			{
+            	UARTWrite(finf.fname);
+				UARTWrite(" ");
+				UARTWriteDecimal((int32_t)finf.fsize);
+				UARTWrite("b\n");
+			}
+         }
+      } while(re == FR_OK && dir.sect!=0);
+      f_closedir(&dir);
+   }
+   else
+      UARTWrite(FRtoString[re]);
+}
 
-int main(void)
+int main()
 {
 	FATFS Fs;
-	UARTWrite("Mounting SDCard\n");
+    UARTWrite("SD Card test\n\n");
+
+	// Init file system
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);
 	else
 	{
-		UARTWrite("Starting DOOM\n");
-		D_DoomMain();
+		UARTWrite("Listing ELF files on sd:\n");
+		// List ELF files on the mounted volume
+		ListELF("sd:");
 	}
 
-	return 0;
+    return 0;
 }

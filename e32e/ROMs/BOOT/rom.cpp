@@ -46,6 +46,7 @@ static char commandline[512] = "";
 static char filename[128] = "";
 static int cmdlen = 0;
 static int havedrive = 0;
+static uint32_t numharts = 0;
 
 // Main file system object
 FATFS Fs;
@@ -92,12 +93,15 @@ void HandleButtons()
 
 void HandleTimer()
 {
-    // TODO: Utilize timer handler as a task switcher,
-    // switching context to the next task in task list and setting up
-    // next timer interrupt to current time + pre-determined task run length.
+    // Report number of HARTs found
+
+    numharts = 1; // Count this HART first
+    for (uint32_t i=1; i<32; ++i)
+        numharts += (HARTMAILBOX[i] == 0xE32EBABE) ? 1 : 0;
 
     UARTWrite("\n\033[34m\033[47m\033[7m");
-    UARTWrite("HINT: Type 'help' for a list of available commands.");
+    UARTWrite("Number of HARTs detected: ");
+    UARTWriteDecimal(numharts);
     UARTWrite("\033[0m\n");
 
     // Stop further timer interrupts by setting timecmp to furthest value available.
@@ -286,7 +290,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) worker_
         if (code == 0x7) // Machine Timer Interrupt (timer)
         {
             uint32_t hartid = read_csr(mhartid);
-            UARTWriteDecimal(hartid);
+            HARTMAILBOX[hartid] = 0xE32EBABE; // Awake
             // Stop further timer interrupts by setting timecmp to furthest value available.
             swap_csr(0x801, 0xFFFFFFFF);
             swap_csr(0x800, 0xFFFFFFFF);
@@ -353,13 +357,13 @@ void ListFiles(const char *path)
       UARTWrite(FRtoString[re]);
 }
 
-/*void CLF()
+void CLF()
 {
     // Clear frame buffer zero
     for (int y=0;y<240;++y)
       for (int x=0;x<80;++x)
-        GPUFB0WORD[x+y*80] = 0x00000000;
-}*/
+        GPUFB0WORD[x+y*80] = 0x020C200C;
+}
 
 void CLS()
 {
@@ -368,19 +372,23 @@ void CLS()
 
 void FlushDataCache()
 {
-   // Force D$ flush so that contents are visible by I$
-   // We do this by forcing a dummy load 4096 words from
-   // first cache page, to force previous contents to be
-   // written back to DDR3
-   // (P.S. 4096 words == 16384 bytes == size of D$)
-   volatile uint32_t *DDR3Start = (volatile uint32_t *)0x00000000;
-   for (uint32_t i=0; i<4096; ++i)
-   {
-      uint32_t dummyread = DDR3Start[i];
-      // This is to make sure compiler doesn't eat our reads
-      // and shuts up about unused variable
-      asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
-   }
+    // Force D$ flush so that contents are visible by I$
+    // We do this by forcing a dummy load 4096 words from
+    // a single cache page, to force previous contents to be
+    // written back to DDR3
+    // (P.S. 4096 words == 16384 bytes == size of D$)
+    volatile uint32_t *DDR3Start = (volatile uint32_t *)0x1F000000;
+
+    // NOTE: This needs to be replaced with FENCE.I so that
+    // the I$ tags are invalidated instead, so it's forced
+    // to re-load, versus trying to get D$ to flush.
+    for (uint32_t i=0; i<4096; ++i)
+    {
+        uint32_t dummyread = DDR3Start[i];
+        // This is to make sure compiler doesn't eat our reads
+        // and shuts up about unused variable
+        asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
+    }
 }
 
 void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
@@ -592,7 +600,7 @@ int main()
     InstallISR();
 
     // Clear frame buffer
-    //CLF();
+    CLF();
 
     // Clear all attributes, clear screen, print boot message
     CLS();

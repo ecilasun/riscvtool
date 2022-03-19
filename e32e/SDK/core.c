@@ -5,6 +5,12 @@
 #include "core.h"
 #include "uart.h"
 
+#include <sys/stat.h>
+
+#ifndef DISABLE_FILESYSTEM
+#include "fat32/ff.h"
+#endif
+
 // Memory region (4Kbytes) used to transfer data between HARTs without polluting their caches
 volatile uint32_t *HARTMAILBOX = (volatile uint32_t* )0x80000000;
 
@@ -57,6 +63,11 @@ static uint8_t *heap_end    = (uint8_t*)0x1FFF0000; // ~256MBytes of heap, minus
 extern "C" {
 #endif
 
+#ifndef DISABLE_FILESYSTEM
+   FIL s_filehandles[32];
+   int s_numhandles = 0;
+#endif
+
    /*int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
    {
      // offset the current task's wakeup time, do not busywait
@@ -95,23 +106,87 @@ extern "C" {
 
    int _close(int file)
    {
+#ifndef DISABLE_FILESYSTEM
+      f_close(&s_filehandles[file]);
       return 0;
+#else
+      return 0;
+#endif
    }
 
    off_t _lseek(int file, off_t ptr, int dir)
    {
+#ifndef DISABLE_FILESYSTEM
+      FSIZE_t currptr = s_filehandles[file].fptr;
+      if (dir == 2 ) // SEEK_END
+      {
+         DWORD flen = s_filehandles[file].obj.objsize;
+         currptr = flen;
+      }
+      else if (dir == 1) // SEEK_CUR
+      {
+         currptr = ptr + currptr;
+      }
+      else// if (dir == 0) // SEEK_SET
+      {
+         currptr = ptr;
+      }
+
+      f_lseek(&s_filehandles[file], currptr);
+      return currptr;
+#else
       return 0;
+#endif
    }
 
    int _lstat(const char *file, struct stat *st)
    {
-      errno = ENOSYS;
-      return -1;
+      /*FILINFO finf;
+      if (FR_OK == f_stat(file, &finf))
+      {
+         st->st_dev = 1;
+         st->st_ino = 0;
+         st->st_mode = 0; // File mode
+         st->st_nlink = 0;
+         st->st_uid = 0;
+         st->st_gid = 0;
+         st->st_rdev = 1;
+         st->st_size = finf.fsize;
+         st->st_blksize = 512;
+         st->st_blocks = (finf.fsize+511)/512;
+         st->st_atime = finf.ftime;
+         st->st_atime_nsec = 0;
+         st->st_mtime = finf.ftime;
+         st->st_mtime_nsec = 0;
+         st->st_ctime = finf.ftime;
+         st->st_ctime_nsec = 0;
+
+         return 0;
+      }
+      else*/
+      {
+         errno = ENOSYS;
+         return -1;
+      }
    }
 
    int _open(const char *name, int flags, int mode)
    {
+#ifndef DISABLE_FILESYSTEM
+      int currenthandle = s_numhandles;
+      if (FR_OK == f_open(&s_filehandles[currenthandle], name, FA_READ)) //mode))
+      {
+         ++s_numhandles;
+         return currenthandle;
+      }
+      else
+      {
+         errno = ENOENT;
+         return -1;
+      }
+#else
       return -1;
+#endif
    }
 
    int _openat(int dirfd, const char *name, int flags, int mode)
@@ -123,7 +198,14 @@ extern "C" {
 
    ssize_t _read(int file, void *ptr, size_t len)
    {
-      return 0;
+#ifndef DISABLE_FILESYSTEM
+      UINT readlen;
+      /*pf_read(file, ptr, len, &readlen);*/
+      if (FR_OK == f_read(&s_filehandles[file], ptr, len, &readlen))
+         return readlen;
+      else
+#endif
+         return 0;
    }
 
    int _stat(const char *file, struct stat *st)

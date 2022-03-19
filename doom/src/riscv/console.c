@@ -30,16 +30,17 @@ console_init(void)
 void
 console_putchar(char c)
 {
-	while (*IO_UARTTXFIFOFull) { }
-	*IO_UARTRXTX = c;
+	UARTPutChar(c);
 }
 
 char
 console_getchar(void)
 {
-	char c=0;
-	while (*IO_UARTRXByteAvailable)
-		c = (char)*IO_UARTRXTX;
+	char c = 0;
+	while (UARTHasData())
+	{
+		c = *IO_UARTRX;
+	}
 	return c;
 }
 
@@ -47,23 +48,17 @@ int
 console_getchar_nowait(void)
 {
 	char c=0;
-	unsigned int count = *IO_UARTRXByteAvailable;
-	if (count)
-		c = *IO_UARTRXTX;
+	unsigned int hasdata = UARTHasData();
+	if (hasdata)
+		c = *IO_UARTRX;
 
-	return count ? c&0xFF : -1;// & 0x80000000 ? -1 : (c & 0xff);
+	return hasdata ? c&0xFF : -1;// & 0x80000000 ? -1 : (c & 0xff);
 }
 
 void
 console_puts(const char *p)
 {
-	char c;
-	while ((c = *(p++)) != 0x00)
-	{
-		if (*IO_UARTTXFIFOFull)
-			continue;
-		*IO_UARTRXTX = c;
-	}
+	UARTWrite(p);
 }
 
 int

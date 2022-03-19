@@ -20,7 +20,7 @@ void UARTFlush()
 uint8_t UARTRead()
 {
     if (UARTHasData())
-        return (uint8_t)(*IO_UARTTX);
+        return (uint8_t)(*IO_UARTRX);
     else
         return 0;
 }

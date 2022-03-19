@@ -43,7 +43,7 @@
 #include "ringbuffer.h"
 #include "ps2.h"
 
-uint8_t *keyboardringbuffer = (uint8_t*)0x80010000;
+uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
 
 static uint32_t s_buttons = 0;
 
@@ -81,6 +81,7 @@ I_GetEvent(void)
 	event_t event;
 
 	// Any pending keyboard events to handle?
+	// NOTE: OS feeds keyboard input to us from an ISR
 	uint32_t val;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
 	int R = RingBufferRead(keyboardringbuffer, (uint8_t*)&val, 4);

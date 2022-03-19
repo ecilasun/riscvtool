@@ -8,7 +8,7 @@ UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
 # --specs=nano.specs -std=c++14 -> need to use g++
-CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../3rdparty/ -I../../../e32/SDK/
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../3rdparty/ -I../../../e32e/SDK/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -39,14 +39,14 @@ SOURCES_doom_arch := \
 	../../../3rdparty/fat32/diskio.c \
 	../../../3rdparty/fat32/ffsystem.c \
 	../../../3rdparty/fat32/ffunicode.c \
-	../../../e32/SDK/core.c \
-	../../../e32/SDK/sdcard.c \
-	../../../e32/SDK/uart.c \
-	../../../e32/SDK/spi.c \
-	../../../e32/SDK/gpu.c \
-	../../../e32/SDK/buttons.c \
-	../../../e32/SDK/ringbuffer.c \
-	../../../e32/SDK/ps2.c \
+	../../../e32e/SDK/core.c \
+	../../../e32e/SDK/sdcard.c \
+	../../../e32e/SDK/uart.c \
+	../../../e32e/SDK/spi.c \
+	../../../e32e/SDK/gpu.c \
+	../../../e32e/SDK/buttons.c \
+	../../../e32e/SDK/ringbuffer.c \
+	../../../e32e/SDK/ps2.c \
 	$(NULL)
 
 # start.S
@@ -54,7 +54,7 @@ SOURCES_doom_arch := \
 all: doom-riscv.elf doom-riscv.txt
 
 doom-riscv.elf: $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
-	$(CC) $(CFLAGS) -o $@ $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
+	$(CC) $(CFLAGS) -DDISABLE_FILESYSTEM -o $@ $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
 	$(SIZE) $@
 
 clean:
