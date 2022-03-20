@@ -1,0 +1,140 @@
+bool slabs_fast(float3 p0, float3 p1, float3 rayOrigin, float3 rayDir, float3 invRayDir)
+{
+	float3 t0 = (p0-rayOrigin) * invRayDir;
+	float3 t1 = (p1-rayOrigin) * invRayDir;
+	float3 tmin = min(t0, t1);
+	float3 tmax = max(t0, t1);
+	float enter = max(0.f,max(tmin.x, max(tmin.y, tmin.z))); // Clamp entry point to not go backwards
+	float exit = min(1.f,min(tmax.x, min(tmax.y, tmax.z))); // Exit point is free (not clamped)
+	return enter <= exit; // also true on corners
+}
+
+// Collect any child nodes of 'rootNode' that are hit by the ray 'deltaVec' in ray octant order
+uint GatherChildNodes(in uint rootNode, in float3 startPos, in uint ray_octant, in float3 deltaVec, in float3 invDeltaVec, out uint hitCellMask, out uint firstChildOffset)
+{
+	hitCellMask = 0;
+	uint octantallocationmask = 0;
+
+	// Generate octant allocation mask and store items in hit order (search on caller side will be in reverse bit scan order, i.e. from MSB to LSB)
+	uint childcount = ModelDBInfo[rootNode].m_ChildCount;
+	firstChildOffset = ModelDBInfo[rootNode].m_DataIndex;
+	[loop] for (uint i=0; i<childcount; ++i)
+	{
+		uint idx = firstChildOffset + i;
+		float3 subminbounds = ModelDBInfo[idx].m_BoundsMin.xyz;
+		float3 submaxbounds = ModelDBInfo[idx].m_BoundsMax.xyz;
+		if (slabs_fast(subminbounds, submaxbounds, startPos, deltaVec, invDeltaVec))
+		{
+			uint byoctant = (ModelDBInfo[idx].m_SpatialKey&0x00000007) ^ ray_octant;
+			hitCellMask |= i << (byoctant<<2);
+			octantallocationmask |= (1<<byoctant);
+		}
+	}
+
+	return octantallocationmask;
+}
+
+int SSDBTraceRayBVH8(in uint NI, in float3 startPos, in float3 rayDir, out float3 normal, out float2 uv, out float3 hitPos, in float rayLength, out float3 uvw, out float3 tangent, out float3 bitangent, out uint mat_id0)
+{
+	float3 endPos = startPos + rayDir * rayLength;
+	float3 deltaVec = endPos-startPos;
+	float3 invDeltaVec = rcp(deltaVec);
+
+	// Assume 'miss' with hit position placed at the end of the ray
+	mat_id0 = 0;
+	uvw = normal = bitangent = tangent = float3(0,0,0);
+	uv = float2(0,0);
+	hitPos = startPos + rayDir*rayLength;
+
+	// Node traversal stack
+	uint traversalStack[MAX_STACK_ENTRIES];
+	int stackpointer = 0;
+
+	// Push root node onto the stack
+	traversalStack[stackpointer++] = g_ModelSSDBInfo[TOP_LOD].x;
+
+	// Convert ray direction to ray octant
+	// Octant mask bits: zero==positive direction, one==negative direction
+	// NOTE: Along this same ray, octant mask stays the same, so we calculate it once.
+	uint ray_octant = (deltaVec.x<0.f ? 1:0) | (deltaVec.y<0.f ? 2:0) | (deltaVec.z<0.f ? 4:0);
+
+	// Check to see if we reached any leaf nodes
+	while (stackpointer > 0) // Stack underflow
+	{
+		// Pop one item from the stack
+		--stackpointer;
+		uint currentNode = traversalStack[stackpointer];
+
+		if (ModelDBInfo[currentNode].m_ChildCount != 0) // Not leaf node, gather children
+		{
+			uint hitCellMask, firstChildOffset;
+			uint octantallocationmask = GatherChildNodes(currentNode, startPos, ray_octant, deltaVec, invDeltaVec, hitCellMask, firstChildOffset);
+
+			// Stack overflow (stack pointer can be one past the array size as we first decrement before use, i.e. 'pop')
+			// In this case, we resume from whatever was left on the stack (possibly next sibling or one level up etc)
+			if (stackpointer + countbits(octantallocationmask) >= MAX_STACK_ENTRIES)
+				break;
+
+			// Scan from MSB downto LSB (reverse order) so that the first (nearest) hit appears on top of the stack when done
+			int idx = firstbithigh(octantallocationmask);
+			while (idx >= 0)
+			{
+				traversalStack[stackpointer++] = firstChildOffset + ((hitCellMask >> (idx<<2)) & 0x00000007); // Push valid child nodes onto stack
+				octantallocationmask ^= (1<<idx); // Clear this bit for next iteration and get new index
+				idx = firstbithigh(octantallocationmask);
+			}
+		}
+		else // Leaf node, hit test contents
+		{
+			uint modelNode = ModelDBInfo[currentNode].m_DataIndex;
+
+			float last_t = 1.f;
+			uint hitTriangleIndex = 0xFFFFFFFF;
+			[loop] for (uint tri=0; tri<ModelDB[modelNode].m_NumTriangles.x; ++tri)
+			{
+				uint triangleIndex = ModelDB[modelNode].m_TriangleIDs[tri];
+				float3 v1 = GeometryDB[triangleIndex*3+0].m_Position.xyz;
+				float3 v2 = GeometryDB[triangleIndex*3+1].m_Position.xyz;
+				float3 v3 = GeometryDB[triangleIndex*3+2].m_Position.xyz;
+
+				// This path will ensure we get the nearest hit as each call to fast_intersect_triangle shortens the ray to nearest hit
+				last_t = fast_intersect_triangle(startPos, deltaVec, v1, v2, v3, triangleIndex, hitTriangleIndex, last_t);
+			}
+
+			if (hitTriangleIndex == 0xFFFFFFFF)
+				continue;
+
+			// Reconstruct normal from barycentrics 
+			float3 A = normalize(GeometryDB[hitTriangleIndex*3+0].m_Normal.xyz);
+			float3 B = normalize(GeometryDB[hitTriangleIndex*3+1].m_Normal.xyz);
+			float3 C = normalize(GeometryDB[hitTriangleIndex*3+2].m_Normal.xyz);
+
+			hitPos = startPos + last_t*deltaVec;
+
+			float3 v1 = GeometryDB[hitTriangleIndex*3+0].m_Position.xyz;
+			float3 v2 = GeometryDB[hitTriangleIndex*3+1].m_Position.xyz;
+			float3 v3 = GeometryDB[hitTriangleIndex*3+2].m_Position.xyz;
+
+			calculate_barycentrics(hitPos, v1, v2, v3, uvw);
+			normal = A*uvw.z+B*uvw.y+C*uvw.x;
+
+			float2 uvA = float2(GeometryDB[hitTriangleIndex*3+0].m_UV[0], GeometryDB[hitTriangleIndex*3+0].m_UV[1]);
+			float2 uvB = float2(GeometryDB[hitTriangleIndex*3+1].m_UV[0], GeometryDB[hitTriangleIndex*3+1].m_UV[1]);
+			float2 uvC = float2(GeometryDB[hitTriangleIndex*3+2].m_UV[0], GeometryDB[hitTriangleIndex*3+2].m_UV[1]);
+
+			uv = uvA*uvw.z+uvB*uvw.y+uvC*uvw.x;
+
+			// Generate tangent space
+			tangent = normalize(v2-v1);
+			bitangent = normalize(cross(tangent, normal));
+
+			// Extract material id for first vertex only
+			mat_id0 = GeometryDB[hitTriangleIndex*3+0].m_MatID;
+
+			// We have a hit
+			return 1;
+		}
+	}
+
+	return 0;
+}

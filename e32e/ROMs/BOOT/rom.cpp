@@ -361,14 +361,18 @@ void CLF()
 {
     // Write to FB0, display FB1
     *GPUCTL = 0;
-
-    // Clear frame buffer
     for (int y=0;y<240;++y)
       for (int x=0;x<80;++x)
-        GPUFBWORD[x+y*80] = 0x020C200C;
+        GPUFBWORD[x+y*80] = 0x00000000;
 
     // Write to FB1, display FB0
     *GPUCTL = 1;
+    for (int y=0;y<240;++y)
+      for (int x=0;x<80;++x)
+        GPUFBWORD[x+y*80] = 0x00000000;
+
+    // Back to displaying FB1
+    *GPUCTL = 0;
 }
 
 void CLS()
@@ -605,7 +609,7 @@ int main()
     // Interrupt service routine
     InstallISR();
 
-    // Clear frame buffer
+    // Clear framebuffers
     CLF();
 
     // Clear all attributes, clear screen, print boot message
