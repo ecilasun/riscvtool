@@ -29,6 +29,8 @@
 #include "core.h"
 #include "gpu.h"
 
+static uint32_t writepage = 0;
+
 void
 I_InitGraphics(void)
 {
@@ -64,13 +66,17 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// NOTE: This is unnecessary, E32 has direct scan-out buffers that the CPU can write to
+	// NOTE: This is unnecessary, E32E has direct scan-out buffers that the CPU can write to
 	// with built-in double-buffering, therefore this copy is redundant.
-	// However, the stride of the display != width of display, so we need to do this for now.
-	for (int L=0;L<SCREENHEIGHT;++L)
-		__builtin_memcpy((void*)GPUFB0+SCREENWIDTH*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);
+	// We set up screen[0] to point at GPUFB0 in v_video.c to avoid the following.
 
-	// TBD: wait for vsync, swap framebuffers etc
+	/*for (int L=0;L<SCREENHEIGHT;++L)
+		__builtin_memcpy((void*)GPUFB0+SCREENWIDTH*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);*/
+
+	// Swap to the next write page
+	// This will switch the scanout hardware to the page we're not writing to anymore (i.e. Flip())
+	writepage++;
+	*GPUCTL = (writepage%2);
 }
 
 

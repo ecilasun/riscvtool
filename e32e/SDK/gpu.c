@@ -1,11 +1,9 @@
 #include "gpu.h"
 
-volatile uint8_t *GPUFB0 = (volatile uint8_t* )0x81000000;
-volatile uint32_t *GPUFB0WORD = (volatile uint32_t* )0x81000000;
-volatile uint8_t *GPUFB1 = (volatile uint8_t* )0x81020000;
-volatile uint32_t *GPUFB1WORD = (volatile uint32_t* )0x81020000;
-volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x81040000;
-volatile uint32_t *GPUCTL = (volatile uint32_t* )0x81040100; // Up to 0x8104FFFF
+volatile uint8_t *GPUFB = (volatile uint8_t* )0x81000000;
+volatile uint32_t *GPUFBWORD = (volatile uint32_t* )0x81000000;
+volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x81020000;
+volatile uint32_t *GPUCTL = (volatile uint32_t* )0x81040000;
 
 #define max(_a_, _b_) (_a_) > (_b_) ? (_a_) : (_b_)
 #define min(_a_, _b_) (_a_) < (_b_) ? (_a_) : (_b_)

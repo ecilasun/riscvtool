@@ -48,7 +48,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
   B = BOFF/64;
   uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
-  GPUFB0[x+y*320] = RGB;
+  GPUFB[x+y*320] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -356,11 +356,14 @@ int main() {
         ++target;
     }
  
+    *GPUCTL = 0; // Output to FB0, show FB1
     init_scene();
 
     uint64_t startclock = E32ReadTime();
 
     render(spheres, nb_spheres, lights, nb_lights);
+
+    *GPUCTL = 1; // Output to FB1, show FB0
 
     uint64_t endclock = E32ReadTime();
     uint32_t deltams = ClockToMs(endclock-startclock);

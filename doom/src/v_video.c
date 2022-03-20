@@ -39,6 +39,8 @@ rcsid[] = "$Id: v_video.c,v 1.5 1997/02/03 22:45:13 b1 Exp $";
 
 #include "v_video.h"
 
+#include "gpu.h"
+
 
 // Each screen is [SCREENWIDTH*SCREENHEIGHT];
 byte*                           screens[5];
@@ -488,6 +490,11 @@ void V_Init (void)
 
     base = I_AllocLow (SCREENWIDTH*SCREENHEIGHT*4);
 
-    for (i=0 ; i<4 ; i++)
+    for (i=1 ; i<4 ; i++)
         screens[i] = base + i*SCREENWIDTH*SCREENHEIGHT;
+
+    // Set up direct access to frame buffer 0 to avoid memcopy
+    // (this is uncached memory for the time being in E32E architecture)
+    screens[0] = (byte*)GPUFB;
+    *GPUCTL = 0; // Write to FB0, output FB1
 }

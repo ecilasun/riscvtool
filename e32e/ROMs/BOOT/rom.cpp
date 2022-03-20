@@ -359,10 +359,16 @@ void ListFiles(const char *path)
 
 void CLF()
 {
-    // Clear frame buffer zero
+    // Write to FB0, display FB1
+    *GPUCTL = 0;
+
+    // Clear frame buffer
     for (int y=0;y<240;++y)
       for (int x=0;x<80;++x)
-        GPUFB0WORD[x+y*80] = 0x020C200C;
+        GPUFBWORD[x+y*80] = 0x020C200C;
+
+    // Write to FB1, display FB0
+    *GPUCTL = 1;
 }
 
 void CLS()
