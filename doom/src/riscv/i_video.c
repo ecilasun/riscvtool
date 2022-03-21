@@ -70,8 +70,9 @@ I_FinishUpdate (void)
 	// with built-in double-buffering, therefore this copy is redundant.
 	// We set up screen[0] to point at GPUFB0 in v_video.c to avoid the following.
 
-	/*for (int L=0;L<SCREENHEIGHT;++L)
-		__builtin_memcpy((void*)GPUFB0+SCREENWIDTH*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);*/
+	// This is here just to be 'correct' and not performant
+	for (int L=0;L<SCREENHEIGHT;++L)
+		__builtin_memcpy((void*)GPUFB+SCREENWIDTH*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);
 
 	// Swap to the next write page
 	// This will switch the scanout hardware to the page we're not writing to anymore (i.e. Flip())
