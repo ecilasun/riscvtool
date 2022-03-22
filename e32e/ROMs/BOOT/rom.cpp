@@ -498,9 +498,9 @@ void ParseCommands()
             // Write data cache back to memory, invalidate instruction cache and start the loaded executable
             asm volatile(
                 ".word 0xFC000073;" // Invalidate & Write Back D$ (SiFive's S51 CFLUSH.D.L1 instruction)
-                //"fence.i;" // Invalidate I$
-                "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
-                "jalr s0;" // Branch with the intent to return back here
+                "fence.i;"          // Invalidate I$
+                "lw s0, %0;"        // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
+                "jalr s0;"          // Branch with the intent to return back here
                 : "=m" (branchaddress) : : 
             );
 
