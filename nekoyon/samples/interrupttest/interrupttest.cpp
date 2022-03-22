@@ -199,8 +199,8 @@ int main()
         UARTWrite("Deliberately crashing to test handler\n");
         UARTWrite("D$ should show 0x012345FF\n");
         // Emit two illegal instructions to test proper crash handling
-        asm volatile(".dword 0x012345FF");
-        asm volatile(".dword 0xFFFFFFFF");
+        asm volatile(".word 0x012345FF");
+        asm volatile(".word 0xFFFFFFFF");
       }
     }
 

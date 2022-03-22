@@ -17,6 +17,7 @@
 #include "ps2.h"
 #include "ringbuffer.h"
 #include "gpu.h"
+//#include "debugger.h"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -60,7 +61,7 @@ uint16_t keymapprev[256];
 
 void HandleUART()
 {
-    // TODO: This will eventually become the debug connection handler
+    //gdb_handler(task_array, num_tasks);
 
     //*IO_UARTRXTX = 0x13; // XOFF
     //UARTFlush();
@@ -380,27 +381,6 @@ void CLS()
     UARTWrite("\033[0m\033[2J");
 }
 
-void FlushDataCache()
-{
-    // Force D$ flush so that contents are visible by I$
-    // We do this by forcing a dummy load 4096 words from
-    // a single cache page, to force previous contents to be
-    // written back to DDR3
-    // (P.S. 4096 words == 16384 bytes == size of D$)
-    volatile uint32_t *DDR3Start = (volatile uint32_t *)0x1F000000;
-
-    // NOTE: This needs to be replaced with FENCE.I so that
-    // the I$ tags are invalidated instead, so it's forced
-    // to re-load, versus trying to get D$ to flush.
-    for (uint32_t i=0; i<4096; ++i)
-    {
-        uint32_t dummyread = DDR3Start[i];
-        // This is to make sure compiler doesn't eat our reads
-        // and shuts up about unused variable
-        asm volatile ("add x0, x0, %0;" : : "r" (dummyread) : );
-    }
-}
-
 void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
 {
    if (fheader->m_Magic != 0x464C457F)
@@ -515,9 +495,10 @@ void ParseCommands()
             strcpy(currentdir, "sd:");
             havedrive = 0;
 
-            FlushDataCache(); // Make sure we've forced a cache flush on the D$ (TODO: Use FENCE.I here instead, once it's implemented)
-
+            // Write data cache back to memory, invalidate instruction cache and start the loaded executable
             asm volatile(
+                ".word 0xFC000073;" // Invalidate & Write Back D$ (SiFive's S51 CFLUSH.D.L1 instruction)
+                //"fence.i;" // Invalidate I$
                 "lw s0, %0;" // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
                 "jalr s0;" // Branch with the intent to return back here
                 : "=m" (branchaddress) : : 

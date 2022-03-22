@@ -433,8 +433,8 @@ int OSMainTask()
 
          printf("Crashing...\r\n");
          // Generate illegal instructions
-         asm volatile(".dword 0x012345FF");
-         asm volatile(".dword 0xFFFFFFFF");
+         asm volatile(".word 0x012345FF");
+         asm volatile(".word 0xFFFFFFFF");
       }
 
       if (*gpustate == cnt) // GPU work complete, push more
