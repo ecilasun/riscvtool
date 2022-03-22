@@ -495,12 +495,12 @@ void ParseCommands()
             strcpy(currentdir, "sd:");
             havedrive = 0;
 
-            // Write data cache back to memory, invalidate instruction cache and start the loaded executable
+            // Run the executable
             asm volatile(
-                ".word 0xFC000073;" // Invalidate & Write Back D$ (SiFive's S51 CFLUSH.D.L1 instruction)
+                ".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
                 "fence.i;"          // Invalidate I$
-                "lw s0, %0;"        // Target loaded in S-RAM top (uncached, doesn't need D$->I$ flush)
-                "jalr s0;"          // Branch with the intent to return back here
+                "lw s0, %0;"        // Target branch address
+                "jalr s0;"          // Branch to the entry point
                 : "=m" (branchaddress) : : 
             );
 
