@@ -99,6 +99,13 @@ extern "C" {
       }
    }
 
+   int _fstat(int fd, struct stat *statbuf)
+   {
+      // Not implemented
+      errno = ENOSYS;
+      return -1;
+   }
+
    int _isatty(int file)
    {
       return (file == STDOUT_FILENO);

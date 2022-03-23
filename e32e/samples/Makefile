@@ -17,6 +17,7 @@ folders = \
 	memtest \
 	tinyraytracer \
 	sdcard \
+	modplayer \
 
 # Rules
 
