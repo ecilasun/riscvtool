@@ -14,6 +14,12 @@
 // Memory region (4Kbytes) used to transfer data between HARTs without polluting their caches
 volatile uint32_t *HARTMAILBOX = (volatile uint32_t* )0x80000000;
 
+// Writing one to a byte offset (between 0 and 15)
+// at this address will wake the corresponding HART
+// from WFI. The awake HART needs to write a zero
+// from its ISR to the same address to stop further IRQs
+volatile uint8_t *HARTIRQ = (volatile uint8_t* )0x80001050;
+
 #define STDOUT_FILENO 1
 
 // Utilities

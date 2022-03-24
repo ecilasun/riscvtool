@@ -97,13 +97,17 @@ void HandleTimer()
     // Report number of HARTs found
 
     numharts = 1; // Count this HART first
-    for (uint32_t i=1; i<32; ++i)
+    for (uint32_t i=1; i<NUM_HARTS; ++i)
         numharts += (HARTMAILBOX[i] == 0xE32EBABE) ? 1 : 0;
 
     UARTWrite("\n\033[34m\033[47m\033[7m");
     UARTWrite("Number of HARTs detected: ");
     UARTWriteDecimal(numharts);
     UARTWrite("\033[0m\n");
+
+    // Send a 'wake up' to all HARTs except this one.
+    for (uint32_t i=1; i<NUM_HARTS; ++i)
+        HARTIRQ[i] = 1;
 
     // Stop further timer interrupts by setting timecmp to furthest value available.
     swap_csr(0x801, 0xFFFFFFFF);
@@ -236,6 +240,7 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) interru
             if (value & 0x00000001) HandleUART();
             if (value & 0x00000002) HandleButtons();
             if (value & 0x00000004) HandleKeyboard();
+            //if (value & 0x00000010) HandleHARTIRQ(hartid); // HART#0 doesn't use this
         }
 
         if (code == 0x7) // Machine Timer Interrupt (timer)
@@ -268,15 +273,23 @@ void InstallISR()
    swap_csr(mstatus, MSTATUS_MIE);
 }
 
+void HandleHARTIRQ(uint32_t hartid)
+{
+    // Woken up by another HART via HARTIRQ
+    UARTWriteDecimal(hartid);
+    HARTIRQ[hartid] = 0;
+}
+
 void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) worker_interrupt_service_routine()
 {
     uint32_t a7;
     asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
 
-    //uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
+    uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
     uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
     //uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
     uint32_t code = cause & 0x7FFFFFFF;
+    uint32_t hartid = read_csr(mhartid);
 
     if (cause & 0x80000000) // Interrupt
     {
@@ -285,13 +298,13 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) worker_
             // Route based on hardware type
             /*if (value & 0x00000001) HandleUART();
             if (value & 0x00000002) HandleButtons();
-            if (value & 0x00000004) HandleKeyboard();*/
+            if (value & 0x00000004) HandleKeyboard();*/ // HARTs 1..7 don't use these
+            if (value & 0x00000010) HandleHARTIRQ(hartid);
         }
 
         if (code == 0x7) // Machine Timer Interrupt (timer)
         {
-            uint32_t hartid = read_csr(mhartid);
-            HARTMAILBOX[hartid] = 0xE32EBABE; // Awake
+            HARTMAILBOX[hartid] = 0xE32EBABE; // Alive
             // Stop further timer interrupts by setting timecmp to furthest value available.
             swap_csr(0x801, 0xFFFFFFFF);
             swap_csr(0x800, 0xFFFFFFFF);
@@ -576,7 +589,8 @@ int ProcessKeyEvents()
 // Worker CPU entry point
 void workermain()
 {
-    InstallWorkerISR();
+    InstallWorkerISR(); // In a very short while, this will trigger a timer interrupt to test 'alive'
+
     while (1)
     {
         // Halt on wakeup

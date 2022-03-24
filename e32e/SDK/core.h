@@ -18,3 +18,4 @@ uint32_t ClockToUs(uint64_t clk);
 void E32SetTimeCompare(const uint64_t future);
 
 extern volatile uint32_t *HARTMAILBOX;
+extern volatile uint8_t *HARTIRQ;
