@@ -216,7 +216,5 @@ int main( int argc, char **argv )
 
 	printf("Playback complete\n");
 
-	while(1) { }
-
 	return 0;
 }
