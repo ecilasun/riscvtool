@@ -13,7 +13,7 @@
 
 FATFS Fs;
 
-#define SAMPLING_FREQ  44000  /* 44khz. */
+#define SAMPLING_FREQ  48000  /* 48khz. */
 #define REVERB_BUF_LEN 1100    /* 12.5ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
@@ -155,7 +155,7 @@ static long play_module( signed char *module )
 			// the CPU will stall to wait if the FIFO is full.
 			// Therefore, no need to worry about synchronization.
 			uint32_t *src = (uint32_t *)buffer;
-			for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
+			for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
 				*APUOUTPUT = src[i];
 
 			// Press down arrow to stop
@@ -213,6 +213,8 @@ int main( int argc, char **argv )
 		return -1;
 
 	PlayMODFile("sd:test.mod");
+
+	printf("Playback complete\n");
 
 	while(1) { }
 
