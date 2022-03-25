@@ -71,8 +71,9 @@ I_FinishUpdate (void)
 	// We set up screen[0] to point at GPUFB0 in v_video.c to avoid the following.
 
 	// This is here just to be 'correct' and not performant
-	for (int L=0;L<SCREENHEIGHT;++L)
-		__builtin_memcpy((void*)GPUFB+SCREENWIDTH*L, screens[0]+SCREENWIDTH*L, SCREENWIDTH);
+	uint32_t *VID = (uint32_t *)screens[0];
+	for (int L=0; L<(SCREENWIDTH/4)*SCREENHEIGHT; ++L)
+		GPUFBWORD[L]=VID[L];
 
 	// Swap to the next write page
 	// This will switch the scanout hardware to the page we're not writing to anymore (i.e. Flip())
