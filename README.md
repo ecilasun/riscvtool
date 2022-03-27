@@ -1,4 +1,4 @@
-This project contains a set of helper utilities and sample code, as well as the bootloader ROM image for ecrv32 RISC-V SoC found here: https://github.com/ecilasun/NekoIchi
+This project contains a set of helper utilities and sample code, as well as the bootloader ROM images for RISC-V SoC design variations found here: https://github.com/ecilasun
 
 # Prerequisites
 
