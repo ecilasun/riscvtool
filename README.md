@@ -22,17 +22,17 @@ python waf clean
 
 # Building the ROM and samples for Neko series
 
-To build the ROM file and the samples, either switch to the 'ROMs' or 'samples' directory under nekoichi or nekosan depending on the device you are running, and run:
+To build the ROM file and the samples, either switch to the 'ROMs' or 'samples' directory under any neko or E32 project depending on the device you are running, and use this on the command line:
 
 ```
 make
 ```
 
-You can also do the same with 'doom/src/riscv' and 'dhrystone' directories to build those programs.
+You can also do the same with 'doom/src/riscv' and 'dhrystone' directories to build those programs. Please note that DOOM will always be locked to run on the latest design, which is currently E32E.
 
-This will create ROMneko*.coe file which is the ROM image for Neko*, alongside some samples that riscvtool can upload to test the device. You can copy the ROMneko*.COE files contents over the BIOS.COE file in the source directory of Neko* HDL code, which you can find at either of https://github.com/ecilasun/NekoIchi or https://github.com/ecilasun/NekoSan
+This will create a ROM*.coe file which is the ROM image for the specific platform you chose. You can copy the ROM*.COE files contents over the BIOS.COE file in the source directory of the HDL code. You can find the hardware design files at https://github.com/ecilasun/
 
-With the exception of the ROM image, you can use a fair amount of C++14 code at some level, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file. This means in normal situations you should not require a custom linker script to run ELF files.
+With the exception of the ROM image, you can use a fair amount of C++14 code, and the uploader will take care of submitting each code / data section and takes care of branching to the entry point, so not much magic is required in the build.sh file. This means in normal situations you should not require a custom linker script to run ELF files, except the need to link to the core files in the SDK directory.
 
 # Uploading binaries
 
@@ -64,9 +64,13 @@ Branching to 0x00010528
 
 NOTE: Take care to keep your binary away from address range 0x20000000-0x2FFFFFFF so that the loader code does not get overwritten while loading your binary. All addresses from 0x00000000 up to 0x0FFFFFFF are available for program use otherwise (an 256Mbyte address range), and 0x20000000-0x2FFFFFFF space can be accessed after the program starts running, to be utilized as uncached fast RAM.
 
+# Using SDCard instead
+
+For some of the platforms, for example E32E, ELF files can live on an SDCard and be loaded from either a command line or with an onscreen menu. Simply copy across the sample files onto a FAT32 formatted SDCard and plug this into either a PMOD as shown on the device design or onto the onboard SDCard reader. For example, on E32E, one can use dir command to list the executables on disk and type in the name of the ELF file (without the .ELF extension) to run said executable.
+
 # Debugging with GDB
 
-If you've linked your program with the debug.cpp file and have necessary trap handlers installed (as in the romexplerimental sample), you can then attach with GDB to debug your code:
+If you've linked your program with the debug.cpp file (on some platforms) and have necessary trap handlers installed (as in the romexplerimental sample on some platforms), you can then attach with GDB to debug your code:
 
 ```
 riscv64-unknown-elf-gdb -b 115200 --tui nekoichi/samples/romexperimental.elf
@@ -83,3 +87,7 @@ NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknow
 It is advised to build the rv32i / rv32if / rv32imf / rv32imaf libraries
 
 There's currently no compressed instruction support on any Neko SoCs, and there's no plan to do it in the foreseeable future. If this changes, code and documentation will be updated to reflect the changes.
+
+# NOTES
+
+This tool is a simple environment with most things set up for all the platforms under https://github.com/ecilasun/ repo. It's mostly used internally, but if you take a design from that repo, this provides a good starting point to roll your own software. Be advised that all software has been tested with and geared to use a gcc-riscv 32bit environment, therefore any compiler changes and/or bit width changes are untested at this moment.
