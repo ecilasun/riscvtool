@@ -1,5 +1,18 @@
 This project contains a set of helper utilities and sample code, as well as the bootloader ROM images for RISC-V SoC design variations found here: https://github.com/ecilasun
 
+# Platforms supported
+
+Currently ROM images and samples are provided for the following platform, under their respective directies:
+- E32
+- E32C
+- E32D
+- E32E (Most up-to-date and latest version actively developed)
+- NekoIchi
+- NekoSan
+- NekoYon
+
+NOTE: Older platforms than the most active one may be deprecated over time.
+
 # Prerequisites
 
 You'll need the risc-v toolchain from https://github.com/riscv/riscv-gnu-toolchain or its precompiled version (make sure to have support for 32bit ELF and rv32imc variant)
