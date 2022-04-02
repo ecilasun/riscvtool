@@ -4,20 +4,6 @@
 #include <stdio.h>
 #include <math.h>
 
-/*uint32_t asuint(const float F)
-{
-    float K = F;
-    uint32_t *Kasu32 = (uint32_t*)(&K);
-    return *Kasu32;
-}*/
-
-/*float asfloat(const uint32_t I)
-{
-    uint32_t K = I;
-    float *Kasf = (float*)(&K);
-    return *Kasf;
-}*/
-
 float __attribute((naked)) test_div()
 {
     asm volatile (
@@ -336,7 +322,7 @@ int main()
 {
     setbuf(stdout, NULL);
 
-    const float a = 1.3124145f;
+    const float a = 1.1324145f;
     const float b = 553.538131f;
     const float c = 33.784341f;
     const float d = -111.5555f;
