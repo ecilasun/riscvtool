@@ -345,8 +345,9 @@ void ListFiles(const char *path)
 		FILINFO finf;
 		do{
 			re = f_readdir(&dir, &finf);
-			if (re == FR_OK && dir.sect!=0)
-			{
+			if (re != FR_OK || finf.fname[0] == 0) // Done scanning dir, or error encountered
+				break;
+
 			char *isexe = strstr(finf.fname, ".elf");
 			int isdir = finf.fattrib&AM_DIR;
 			if (isdir)
@@ -363,13 +364,14 @@ void ListFiles(const char *path)
 				UARTWrite("b");
 			}
 			UARTWrite("\033[0m\n");
-			}
-		} while(re == FR_OK && dir.sect!=0);
+
+		} while(1);
+
 		f_closedir(&dir);
 	}
 	else
 		UARTWrite(FRtoString[re]);
-	}
+}
 
 void CLF()
 {
@@ -588,7 +590,7 @@ int ProcessKeyEvents()
 
 // Worker CPU entry point
 void workermain()
-	{
+{
 	InstallWorkerISR(); // In a very short while, this will trigger a timer interrupt to test 'alive'
 
 	while (1)

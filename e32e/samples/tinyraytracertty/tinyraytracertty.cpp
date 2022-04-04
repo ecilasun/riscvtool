@@ -5,7 +5,6 @@
 #include <math.h>
 #include "core.h"
 #include "uart.h"
-#include "gpu.h"
 
 /*******************************************************************/
 
@@ -14,20 +13,12 @@ typedef int BOOL;
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
-// The Bayer matrix for ordered dithering
-const uint8_t dither[4][4] = {
-  { 0, 8, 2,10},
-  {12, 4,14, 6},
-  { 3,11, 1, 9},
-  {15, 7,13, 5}
-};
-
 /*******************************************************************/
 
 // Size of the screen
 // Replace with your own variables or values
-#define graphics_width  320
-#define graphics_height 240
+#define graphics_width  80
+#define graphics_height 80
 
 // Replace with your own code.
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
@@ -35,20 +26,19 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
   g = max(0.0f, min(1.0f, g));
   b = max(0.0f, min(1.0f, b));
 
-  uint16_t R = (uint16_t)(r*255.0f);
-  uint16_t G = (uint16_t)(g*255.0f);
-  uint16_t B = (uint16_t)(b*255.0f);
+    uint8_t R = (uint8_t)(255.0f * r);
+    uint8_t G = (uint8_t)(255.0f * g);
+    uint8_t B = (uint8_t)(255.0f * b);
 
-  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
-  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
-  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
-
-  R = ROFF/32;
-  G = GOFF/32;
-  B = BOFF/64;
-  uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
-
-  GPUFB[x+y*320] = RGB;
+    UARTWrite("\033[48;2;");
+    UARTWriteDecimal(R);
+    UARTWrite(";");
+    UARTWriteDecimal(G);
+    UARTWrite(";");
+    UARTWriteDecimal(B);
+    UARTWrite("m ");
+    if(x==graphics_width-1)
+        UARTWrite("\033[48;2;0;0;0m");
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -347,37 +337,18 @@ void init_scene() {
 
 int main()
 {
-    UARTWrite("tinyraytracer\n");
-
-    UARTWrite("setting up palette\n");
-    // Set RGB palette
-    int target = 0;
-    for (int b=0;b<4;++b)
-    for (int g=0;g<8;++g)
-    for (int r=0;r<8;++r)
-    {
-        GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
-        ++target;
-    }
- 
-    UARTWrite("initializing scene\n");
     init_scene();
-
-    UARTWrite("starting scene generation\n");
-
-    *GPUCTL = 0; // Output to FB0, show FB1
 
     uint64_t startclock = E32ReadTime();
 
+    UARTWrite("tinyraytracertty\n");
     render(spheres, nb_spheres, lights, nb_lights);
 
     uint64_t endclock = E32ReadTime();
     uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("tinyraytracer took ");
+    UARTWrite("\ntinyraytracertty took ");
     UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms at 320x240 resolution\n");
-
-    *GPUCTL = 1; // Output to FB1, show FB0
+    UARTWrite(" ms at 80x80 resolution\n");
 
     return 0;
 }

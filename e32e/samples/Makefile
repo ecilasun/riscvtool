@@ -16,8 +16,13 @@ folders = \
 	helloworld \
 	memtest \
 	tinyraytracer \
+	tinyraytracertty \
 	sdcard \
 	modplayer \
+	vramtest \
+	mandelbrot \
+	jpegview \
+#	floattest \ // NOTE: WILL ONLY BUILD WHEN F EXTENSION IS AVAILABLE
 
 # Rules
 

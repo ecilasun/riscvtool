@@ -40,6 +40,21 @@ uint64_t E32ReadTime()
    return now;
 }
 
+uint64_t E32ReadRetiredInstructions()
+{
+   uint32_t retihigh, retilow;
+
+   asm (
+      "rdinstreth %0;"
+      "rdinstret %1;"
+      : "=&r" (retihigh), "=&r" (retilow)
+   );
+
+   uint64_t reti = ((uint64_t)(retihigh)<<32) | retilow;
+
+   return reti;
+}
+
 uint32_t ClockToMs(uint64_t clk)
 {
    return (uint32_t)(clk / ONE_MILLISECOND_IN_TICKS);
