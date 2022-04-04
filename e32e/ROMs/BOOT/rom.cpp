@@ -47,7 +47,7 @@ static char commandline[512] = "";
 static char filename[128] = "";
 static int cmdlen = 0;
 static int havedrive = 0;
-static uint32_t numharts = 0;
+static uint32_t numdetectedharts = 0;
 
 // Main file system object
 FATFS Fs;
@@ -94,20 +94,15 @@ void HandleButtons()
 
 void HandleTimer()
 {
-	// Report number of HARTs found
-
-	numharts = 1; // Count this HART first
+	// Report live HART count
 	for (uint32_t i=1; i<NUM_HARTS; ++i)
-		numharts += (HARTMAILBOX[i] == 0xE32EBABE) ? 1 : 0;
+		if (HARTMAILBOX[i] == 0xE32EBABE)
+			numdetectedharts++;
 
 	UARTWrite("\n\033[34m\033[47m\033[7m");
 	UARTWrite("Number of HARTs detected: ");
-	UARTWriteDecimal(numharts);
+	UARTWriteDecimal(numdetectedharts);
 	UARTWrite("\033[0m\n");
-
-	// Send a 'wake up' to all HARTs except this one.
-	for (uint32_t i=1; i<NUM_HARTS; ++i)
-		HARTIRQ[i] = 1;
 
 	// Stop further timer interrupts by setting timecmp to furthest value available.
 	swap_csr(0x801, 0xFFFFFFFF);
@@ -276,7 +271,9 @@ void InstallISR()
 void HandleHARTIRQ(uint32_t hartid)
 {
 	// Woken up by another HART via HARTIRQ
-	UARTWriteDecimal(hartid);
+	HARTMAILBOX[hartid] = 0xE32EBABE; // Signal alive into our mail slot
+
+	// We've handled this interrupt
 	HARTIRQ[hartid] = 0;
 }
 
@@ -299,15 +296,15 @@ void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) worker_
 			/*if (value & 0x00000001) HandleUART();
 			if (value & 0x00000002) HandleButtons();
 			if (value & 0x00000004) HandleKeyboard();*/ // HARTs 1..7 don't use these
-			if (value & 0x00000010) HandleHARTIRQ(hartid);
+			if (value & 0x00000010) HandleHARTIRQ(hartid); // Signal back that we're alive
 		}
 
 		if (code == 0x7) // Machine Timer Interrupt (timer)
 		{
-			HARTMAILBOX[hartid] = 0xE32EBABE; // Alive
 			// Stop further timer interrupts by setting timecmp to furthest value available.
 			swap_csr(0x801, 0xFFFFFFFF);
 			swap_csr(0x800, 0xFFFFFFFF);
+			// TODO: Some timer work
 			//HandleTimer();
 		}
 	}
@@ -322,10 +319,10 @@ void InstallWorkerISR()
 	// Set machine trap vector
 	swap_csr(mtvec, worker_interrupt_service_routine);
 
-	// Set up timer interrupt a few units into the future
-	uint64_t now = E32ReadTime();
+	// Set up timer interrupt for this HART
+	/*uint64_t now = E32ReadTime();
 	uint64_t future = now + 512; // Set to happen very soon, around similar points in time for all HARTs except #0
-	E32SetTimeCompare(future);
+	E32SetTimeCompare(future);*/
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
 	// Enable machine hardware interrupts
@@ -605,6 +602,11 @@ int main()
 {
 	// Interrupt service routine
 	InstallISR();
+
+	// Kick HART detection by seinding a 'wake up' to all HARTs except this one.
+	numdetectedharts = 1;
+	for (uint32_t i=1; i<NUM_HARTS; ++i)
+		HARTIRQ[i] = 1;
 
 	// Clear framebuffers
 	CLF();

@@ -75,7 +75,7 @@ int main(int argc, char ** argv)
 		GPUPAL_32[i] = MAKERGBPALETTECOLOR(j, j, j);
 	}
 
-	mandelbuffer = new uint8_t[320*240];
+	mandelbuffer = (uint8_t*)malloc(320*240);
 
     uint32_t page = 0;
 
@@ -119,7 +119,7 @@ int main(int argc, char ** argv)
         }
     }
 
-	delete [] mandelbuffer;
+	free(mandelbuffer);
 
     return 0;
 }

@@ -17,10 +17,18 @@ int selectedjpegfile = 0;
 int numjpegfiles = 0;
 char *jpegfiles[64];
 
-uint32_t *image;
+uint8_t *image;
 
 #define min(_x_,_y_) (_x_) < (_y_) ? (_x_) : (_y_)
 #define max(_x_,_y_) (_x_) > (_y_) ? (_x_) : (_y_)
+
+// The Bayer matrix for ordered dithering
+const uint8_t dither[4][4] = {
+  { 0, 8, 2,10},
+  {12, 4,14, 6},
+  { 3,11, 1, 9},
+  {15, 7,13, 5}
+};
 
 void DecodeJPEG(const char *fname)
 {
@@ -53,52 +61,24 @@ void DecodeJPEG(const char *fname)
 			uint8_t *img = njGetImage();
 			if (njIsColor())
 			{
-				// Copy
+				// Copy, dither and convert to indexed color
 				for (int y=0;y<iH;++y)
 				{
 					for (int x=0;x<iW;++x)
 					{
-						image[(x+y*320)*3+0] = img[(x+y*W)*3+0];
-						image[(x+y*320)*3+1] = img[(x+y*W)*3+1];
-						image[(x+y*320)*3+2] = img[(x+y*W)*3+2];
-					}
-				}
+						uint8_t R = img[(x+y*W)*3+0];
+						uint8_t G = img[(x+y*W)*3+1];
+						uint8_t B = img[(x+y*W)*3+2];
 
-				// Error diffusion dither
-				// Can also be applied at hardware scan-out time
-				for (int y=0;y<iH-1;++y)
-				{
-					for (int x=1;x<iW-1;++x)
-					{
-						int oldR = image[(x+y*320)*3+0];
-						int oldG = image[(x+y*320)*3+1];
-						int oldB = image[(x+y*320)*3+2];
-						int R = (oldR/32)<<5;
-						int G = (oldG/32)<<5;
-						int B = (oldB/64)<<6;
-						image[(x+y*320)*3+0] = R;
-						image[(x+y*320)*3+1] = G;
-						image[(x+y*320)*3+2] = B;
+						uint8_t ROFF = min(dither[x&3][y&3] + R, 255);
+						uint8_t GOFF = min(dither[x&3][y&3] + G, 255);
+						uint8_t BOFF = min(dither[x&3][y&3] + B, 255);
 
-						int errR = (oldR-R);
-						int errG = (oldG-G);
-						int errB = (oldB-B);
+						R = ROFF/32;
+						G = GOFF/32;
+						B = BOFF/64;
 
-						image[(x+1+y*320)*3+0] = min(255,max(0,image[(x+1+y*320)*3+0] + errR));
-						image[(x+1+y*320)*3+1] = min(255,max(0,image[(x+1+y*320)*3+1] + errG));
-						image[(x+1+y*320)*3+2] = min(255,max(0,image[(x+1+y*320)*3+2] + errB));
-					}
-				}
-
-				// Convert to indexed color
-				for (int y=0;y<iH;++y)
-				{
-					for (int x=0;x<iW;++x)
-					{
-						int R = image[(x+y*320)*3+0]>>5;
-						int G = image[(x+y*320)*3+1]>>5;
-						int B = image[(x+y*320)*3+2]>>6;
-						image[x+y*320] = (B<<6) | (G<<3) | R;
+						image[x+y*320] = (uint8_t)((B<<6) | (G<<3) | R);
 					}
 				}
 			}
@@ -124,7 +104,7 @@ void DecodeJPEG(const char *fname)
 	*GPUCTL = 0;
 
 	for (uint32_t i=0;i<80*240;++i)
-		GPUFBWORD[i] = image[i];
+		GPUFBWORD[i] = ((uint32_t*)image)[i];
 
 	// Show FB0 (write to FB1)
 	*GPUCTL = 1;
@@ -149,7 +129,7 @@ int main( int argc, char **argv )
 		return -1;
 
 	// Set aside space for the decompressed image
-	image = (uint32_t*)malloc(320*208*3*sizeof(uint32_t));
+	image = (uint8_t*)malloc(320*208*3*sizeof(uint8_t));
 
 	DecodeJPEG("sd:test.jpg");
 
