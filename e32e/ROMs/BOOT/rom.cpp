@@ -217,7 +217,7 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
 	}
 }
 
-void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) interrupt_service_routine()
+void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine()
 {
 	uint32_t a7;
 	asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
@@ -277,7 +277,7 @@ void HandleHARTIRQ(uint32_t hartid)
 	HARTIRQ[hartid] = 0;
 }
 
-void __attribute__((aligned(256))) __attribute__((interrupt("machine"))) worker_interrupt_service_routine()
+void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_interrupt_service_routine()
 {
 	uint32_t a7;
 	asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.

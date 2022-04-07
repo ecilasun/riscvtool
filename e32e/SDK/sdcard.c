@@ -275,10 +275,36 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
 
 uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
 {
-   // TODO: 
-   UARTWrite("SDWriteSingleBlock: not implemented yet.\n");
+   // TODO: CMD24_WRITE_BLOCK
+   SDCmd(CMD17_READ_SINGLE_BLOCK, blockaddress);
 
-   return 0xFF;
+   uint8_t response = SDResponse1(); // R1: expect 0x00
+
+   if (response == 0x00) // SD_READY
+   {
+		// Send start token
+		response = SPITxRx(0xFE);
+
+         int x=0;
+         do {
+            response = SPITxRx(datablock[x++]);
+         } while(x<512);
+
+		response = SDResponse1(); // R1: status, expected status&x1F==0x05
+
+		if ((response&0x1F) == 0x05) // 010:accepted, 101:rejected-crcerror, 110:rejected-writeerror
+		{
+			// Wait for write to finish
+			response = SDResponse1();
+		}
+		else
+		{
+			UARTWrite("SDWriteSingleBlock: write error\n");
+			return 0xFF;
+		}
+   }
+
+   return response;
 }
 
 int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
