@@ -23,6 +23,7 @@ folders = \
 	mandelbrot \
 	jpegview \
 	floattest \
+	bvh \
 
 # Rules
 
