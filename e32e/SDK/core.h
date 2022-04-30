@@ -22,3 +22,6 @@ uint64_t E32ReadRetiredInstructions();
 
 extern volatile uint32_t *HARTMAILBOX;
 extern volatile uint8_t *HARTIRQ;
+
+// User defined timer interrupt service routine signature
+typedef void (*t_timerISR)();

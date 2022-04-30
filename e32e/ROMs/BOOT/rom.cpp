@@ -49,6 +49,12 @@ static int cmdlen = 0;
 static int havedrive = 0;
 static uint32_t numdetectedharts = 0;
 
+// Number of parameters per hart, stored at offset NUM_HARTS
+// To access a parameter N, use: NUM_HARTS+hartid*HARTPARAMCOUNT+N where N<HARTPARAMCOUNT
+#define HARTPARAMCOUNT 4
+#define NUMHARTWORDS 512
+static uint32_t *hartData = nullptr;
+
 // Main file system object
 FATFS Fs;
 
@@ -96,7 +102,7 @@ void HandleTimer()
 {
 	// Report live HART count
 	for (uint32_t i=1; i<NUM_HARTS; ++i)
-		if (HARTMAILBOX[i] == 0xE32EBABE)
+		if (HARTMAILBOX[i] == 0xE32EBABE) // This is an E32E core, consider alive
 			numdetectedharts++;
 
 	UARTWrite("\n\033[34m\033[47m\033[7m");
@@ -270,10 +276,49 @@ void InstallISR()
 
 void HandleHARTIRQ(uint32_t hartid)
 {
-	// Woken up by another HART via HARTIRQ
-	HARTMAILBOX[hartid] = 0xE32EBABE; // Signal alive into our mail slot
+	// Answer different service IDs when woken up
+	// by another HART via HARTIRQ + request code in HARTMAILBOX
 
-	// We've handled this interrupt
+	uint32_t REQ = HARTMAILBOX[hartid];
+	switch (REQ)
+	{
+		// REQ#0 : Check alive
+		case 0x00000000:
+		{
+			HARTMAILBOX[hartid] = 0xE32EBABE; // Signal alive into our mail slot
+		}
+		break;
+
+		// REQ#1 : Install user timer interrupt handler (TISR) and set its interval
+		case 0x00000001:
+		{
+			// TISR address, parameter #0
+			uint32_t TISR = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+
+			// TISR interval, parameter #1
+			uint32_t TISR_Interval = HARTMAILBOX[hartid*HARTPARAMCOUNT+1+NUM_HARTS];
+
+			// Store for later retreival
+			hartData[hartid*NUMHARTWORDS+0] = TISR;
+			hartData[hartid*NUMHARTWORDS+1] = TISR_Interval;
+
+			uint64_t now = E32ReadTime();
+			uint64_t future = now + TISR_Interval;
+			E32SetTimeCompare(future);
+
+			HARTMAILBOX[hartid] = 0x00000000; // Done
+		}
+		break;
+
+		// NOOP
+		default:
+		{
+			HARTMAILBOX[hartid] = 0x00000000; // Done
+		}
+		break;
+	}
+
+	// Request handled, clear interrupt
 	HARTIRQ[hartid] = 0;
 }
 
@@ -301,11 +346,24 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 
 		if (code == 0x7) // Machine Timer Interrupt (timer)
 		{
-			// Stop further timer interrupts by setting timecmp to furthest value available.
-			swap_csr(0x801, 0xFFFFFFFF);
-			swap_csr(0x800, 0xFFFFFFFF);
-			// TODO: Some timer work
-			//HandleTimer();
+			// TODO: Chain into the TISR if there is one installed
+			uint32_t TISR = hartData[hartid*NUMHARTWORDS+0];
+			if (TISR)
+			{
+				((t_timerISR)TISR)();
+
+				// Re-set the timer interval
+				uint32_t TISR_Interval = hartData[hartid*NUMHARTWORDS+1];
+				uint64_t now = E32ReadTime();
+				uint64_t future = now + TISR_Interval;
+				E32SetTimeCompare(future);
+			}
+			else
+			{
+				// Stop further timer interrupts by setting timecmp to furthest value available.
+				swap_csr(0x801, 0xFFFFFFFF);
+				swap_csr(0x800, 0xFFFFFFFF);
+			}
 		}
 	}
 	else // Machine Software Exception (trap)
@@ -600,13 +658,19 @@ void workermain()
 
 int main()
 {
+	// Set up per-HART scratch memory
+	hartData = (uint32_t*)malloc(sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS); // Allocate a scratch for each hart
+
 	// Interrupt service routine
 	InstallISR();
 
 	// Kick HART detection by seinding a 'wake up' to all HARTs except this one.
 	numdetectedharts = 1;
 	for (uint32_t i=1; i<NUM_HARTS; ++i)
+	{
+		HARTMAILBOX[i] = 0x00000000; // REQ#0 : Check alive
 		HARTIRQ[i] = 1;
+	}
 
 	// Clear framebuffers
 	CLF();
@@ -639,6 +703,9 @@ int main()
 		if (ProcessKeyEvents())
 			ParseCommands();
 	}
+
+	// Never going to happen, but to keep things happy...
+	free (hartData);
 
 	return 0;
 }
