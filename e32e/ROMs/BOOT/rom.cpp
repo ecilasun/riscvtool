@@ -49,10 +49,7 @@ static int cmdlen = 0;
 static int havedrive = 0;
 static uint32_t numdetectedharts = 0;
 
-// Number of parameters per hart, stored at offset NUM_HARTS
-// To access a parameter N, use: NUM_HARTS+hartid*HARTPARAMCOUNT+N where N<HARTPARAMCOUNT
-#define HARTPARAMCOUNT 4
-#define NUMHARTWORDS 512
+// Space for per-hart data
 static uint32_t *hartData = nullptr;
 
 // Main file system object
@@ -282,7 +279,7 @@ void HandleHARTIRQ(uint32_t hartid)
 	uint32_t REQ = HARTMAILBOX[hartid];
 	switch (REQ)
 	{
-		// REQ#0 : Check alive
+		// REQ#0 : Alive check
 		case 0x00000000:
 		{
 			HARTMAILBOX[hartid] = 0xE32EBABE; // Signal alive into our mail slot
@@ -668,7 +665,7 @@ int main()
 	numdetectedharts = 1;
 	for (uint32_t i=1; i<NUM_HARTS; ++i)
 	{
-		HARTMAILBOX[i] = 0x00000000; // REQ#0 : Check alive
+		HARTMAILBOX[i] = 0x00000000; // REQ#0 : Alive check
 		HARTIRQ[i] = 1;
 	}
 
@@ -678,7 +675,7 @@ int main()
 	// Clear all attributes, clear screen, print boot message
 	CLS();
 	UARTWrite("┌────────────────────────────────────┐\n");
-	UARTWrite("│ E32OS v0.150 (c)2022 Engin Cilasun │\n");
+	UARTWrite("│ E32OS v0.160 (c)2022 Engin Cilasun │\n");
 	UARTWrite("└────────────────────────────────────┘\n\n");
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);

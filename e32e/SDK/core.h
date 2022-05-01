@@ -25,3 +25,8 @@ extern volatile uint8_t *HARTIRQ;
 
 // User defined timer interrupt service routine signature
 typedef void (*t_timerISR)();
+
+// Number of parameters per hart, stored at offset NUM_HARTS
+// To access a parameter N, use: NUM_HARTS+hartid*HARTPARAMCOUNT+N where N<HARTPARAMCOUNT
+#define HARTPARAMCOUNT 4
+#define NUMHARTWORDS 512

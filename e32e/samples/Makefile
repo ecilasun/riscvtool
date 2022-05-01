@@ -24,6 +24,7 @@ folders = \
 	jpegview \
 	floattest \
 	bvh \
+	interrupt \
 
 # Rules
 
