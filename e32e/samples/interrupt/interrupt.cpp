@@ -7,7 +7,7 @@ uint32_t mytimerthing(const uint32_t hartID)
 	UARTWriteDecimal(hartID);
 	UARTWrite("\n");
 
-	return 1; // NOTE: Return zero to be ternimated after execution
+	return 1; // NOTE: Return zero to be terminated after execution
 }
 
 int main()
