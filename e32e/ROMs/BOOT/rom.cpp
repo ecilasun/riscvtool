@@ -666,7 +666,7 @@ void workermain()
 int main()
 {
 	// Set up per-HART scratch memory
-	hartData = (uint32_t*)malloc(sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS); // Allocate a scratch for each hart
+	hartData = (uint32_t*)0x1FFF0000; // enough space for 4 of sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS;
 
 	// Interrupt service routine
 	InstallISR();
@@ -710,9 +710,6 @@ int main()
 		if (ProcessKeyEvents())
 			ParseCommands();
 	}
-
-	// Never going to happen, but to keep things happy...
-	free (hartData);
 
 	return 0;
 }

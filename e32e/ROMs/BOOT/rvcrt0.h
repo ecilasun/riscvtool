@@ -23,9 +23,9 @@ extern "C"
          ".option pop;"
 
 #if defined(MULTIHART)
-         "csrr	s1, mhartid;"         // get hart id
-         "slli	s1, s1, 12;"          // hartid*4096 (4K default stack)
-         "li s2, 0x1FFFFFF0;"        // stack top of last HART in DDR3 memory (near end of 512MBytes minus 16 bytes)
+         "csrr	s1, mhartid;"        // get hart id
+         "slli	s1, s1, 12;"         // hartid*4096 (4K (2^12) default stack)
+         "li s2, 0x1FFF0000;"        // stack top of last HART in DDR3 memory (near end of 512MBytes minus 16 bytes), leave 64K at the end for OS tables
          "sub s2, s2, s1;"           // base - hartid*4096
          "mv sp, s2;"                // set new hart stack pointer
          "mv s0, sp;"                // set frame pointer
@@ -67,10 +67,14 @@ extern "C"
 
 #if defined(MULTIHART)
          "workerhartstart:"
+
          "lw a0,0(sp);"
          "addi	a1,sp,4;"
          "li a2,0;"
+
          "j _Z10workermainv;" // All HARTs with id!=0 fall here
+
+         // Stop at breakpoint / no return / _exit is useless
          "ebreak;"
 #endif
       );
