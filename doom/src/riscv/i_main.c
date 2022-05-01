@@ -45,6 +45,7 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
+#include "core.h"
 #include "uart.h"
 #include "fat32/ff.h"
 

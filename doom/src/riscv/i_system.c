@@ -48,7 +48,7 @@ uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox me
 void
 I_Init(void)
 {
-	//I_InitSound();
+	I_InitSound();
 }
 
 
