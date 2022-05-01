@@ -334,30 +334,40 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 	{
 		if (code == 0xB) // Machine External Interrupt (hardware)
 		{
-			// Route based on hardware type
+			// HARTs 1..7 don't use these yet (see service request handler below to add support)
 			/*if (value & 0x00000001) HandleUART();
 			if (value & 0x00000002) HandleButtons();
-			if (value & 0x00000004) HandleKeyboard();*/ // HARTs 1..7 don't use these
-			if (value & 0x00000010) HandleHARTIRQ(hartid); // Signal back that we're alive
+			if (value & 0x00000004) HandleKeyboard();*/
+
+			// Service request handler
+			if (value & 0x00000010) HandleHARTIRQ(hartid);
 		}
 
 		if (code == 0x7) // Machine Timer Interrupt (timer)
 		{
-			// TODO: Chain into the TISR if there is one installed
+			uint32_t keepAlive = 0;
+			// Chain into the TISR if there is one installed
 			uint32_t TISR = hartData[hartid*NUMHARTWORDS+0];
-			if (TISR)
-			{
-				((t_timerISR)TISR)();
 
-				// Re-set the timer interval
+			// If there's an installed routine, call it
+			if (TISR)
+				keepAlive = ((t_timerISR)TISR)(hartid);
+
+			if (keepAlive) // TISR wishes to stay alive for next time
+			{
+				// Re-set the timer interval to wake up again
 				uint32_t TISR_Interval = hartData[hartid*NUMHARTWORDS+1];
 				uint64_t now = E32ReadTime();
 				uint64_t future = now + TISR_Interval;
 				E32SetTimeCompare(future);
 			}
-			else
+			else // TISR wishes to be terminated
 			{
-				// Stop further timer interrupts by setting timecmp to furthest value available.
+				// Uninstall the routine
+				hartData[hartid*NUMHARTWORDS+0] = 0x0;
+				hartData[hartid*NUMHARTWORDS+1] = 0x0;
+
+				// Set timecmp to a distant future
 				swap_csr(0x801, 0xFFFFFFFF);
 				swap_csr(0x800, 0xFFFFFFFF);
 			}

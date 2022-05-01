@@ -3,15 +3,13 @@ This project contains a set of helper utilities and sample code, as well as the 
 # Platforms supported
 
 Currently ROM images and samples are provided for the following platform, under their respective directies:
-- E32
-- E32C
-- E32D
 - E32E (Most up-to-date and latest version actively developed)
-- NekoIchi
-- NekoSan
-- NekoYon
-
-NOTE: Older platforms than the most active one may be deprecated over time.
+- E32 - soon to be deprecated
+- E32C - soon to be deprecated
+- E32D - soon to be deprecated
+- NekoIchi - soon to be deprecated
+- NekoSan - soon to be deprecated
+- NekoYon - soon to be deprecated
 
 # Prerequisites
 

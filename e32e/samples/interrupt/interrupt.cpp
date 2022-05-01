@@ -1,29 +1,31 @@
 #include "core.h"
 #include "uart.h"
 
-void mytimerthing()
+uint32_t mytimerthing(const uint32_t hartID)
 {
-	UARTWrite("HART#1 Tick\n");
+	UARTWrite("Tick: HART#");
+	UARTWriteDecimal(hartID);
+	UARTWrite("\n");
+
+	return 1; // NOTE: Return zero to be ternimated after execution
 }
 
 int main()
 {
-	uint32_t hartid = 1;
-	uint32_t TISR = (uint32_t)mytimerthing;
-	uint32_t TISR_Interval = ONE_SECOND_IN_TICKS;
+	// Install the TISR on HART#1 & HART#2
 
-	// Install a timer interrupt routione for HART#1
-	HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS] = TISR;
-	HARTMAILBOX[hartid*HARTPARAMCOUNT+1+NUM_HARTS] = TISR_Interval;
-	HARTMAILBOX[hartid] = 0x00000001;
-	HARTIRQ[hartid] = 1; // IRQ to wake up HART#1's ISR
+	// HART#1 goes at one second intervals
+	InstallTimerISR(1, mytimerthing, ONE_SECOND_IN_TICKS);
 
-	// Wait until HART#1 clears in response
+	// HART#2 goes at half second intervals
+	InstallTimerISR(2, mytimerthing, ONE_SECOND_IN_TICKS/2);
+
+	// Wait until HART#1&HART#2 clear in response
 	UARTWrite("Waiting for HART#1\n");
-	while(HARTMAILBOX[hartid] == 0x00000001)
-	{
+	while(HARTMAILBOX[1] != 0x0)
 		asm volatile("nop;");
-	}
+	while(HARTMAILBOX[2] != 0x0)
+		asm volatile("nop;");
 
 	UARTWrite("HART#1 acknowledged TISR installation, HART#0 sleeping.\n");
 	while(1)

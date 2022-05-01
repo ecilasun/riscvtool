@@ -24,7 +24,8 @@ extern volatile uint32_t *HARTMAILBOX;
 extern volatile uint8_t *HARTIRQ;
 
 // User defined timer interrupt service routine signature
-typedef void (*t_timerISR)();
+typedef uint32_t (*t_timerISR)(const uint32_t hartID);
+void InstallTimerISR(const uint32_t hartID, t_timerISR tisr, const uint32_t interval);
 
 // Number of parameters per hart, stored at offset NUM_HARTS
 // To access a parameter N, use: NUM_HARTS+hartid*HARTPARAMCOUNT+N where N<HARTPARAMCOUNT
