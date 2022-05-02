@@ -53,6 +53,7 @@ static int cmdlen = 0;
 static int havedrive = 0;
 static uint32_t numdetectedharts = 0;
 static int defaultHardID = 0;
+static int mainloopdone = 0;
 
 // Space for per-hart data
 static uint32_t *hartData = nullptr;
@@ -107,10 +108,26 @@ void HandleTimer()
 		if (HARTMAILBOX[i] == 0xE32EBABE) // This is an E32E core, consider alive
 			numdetectedharts++;
 
-	UARTWrite("\n\033[34m\033[47m\033[7m");
-	UARTWrite("Number of HARTs detected: ");
+	// Show boot message
+	UARTWrite("┌─────────────────────────┐\n");
+	UARTWrite("│          ▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
+	UARTWrite("│ ████████   ▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
+	UARTWrite("│ █████████  ▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
+	UARTWrite("│ ████████   ▒▒▒▒▒▒▒▒▒▒▒  │\n");
+	UARTWrite("│ █        ▒▒▒▒▒▒▒▒▒▒▒    │\n");
+	UARTWrite("│ ██   ▒▒▒▒▒▒▒▒▒▒▒▒▒   ██ │\n");
+	UARTWrite("│ ████   ▒▒▒▒▒▒▒▒▒   ████ │\n");
+	UARTWrite("│ ██████   ▒▒▒▒▒   ██████ │\n");
+	UARTWrite("│ ████████   ▒   ████████ │\n");
+	UARTWrite("│ ██████████   ██████████ │\n");
+	UARTWrite("│                         │\n");
+	UARTWrite("│ E32OS v0.164            │\n");
+	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
+	UARTWrite("│                         │\n");
+	UARTWrite("│ HARTS: ");
 	UARTWriteDecimal(numdetectedharts);
-	UARTWrite("\033[0m\n");
+	UARTWrite("                │\n");
+	UARTWrite("└─────────────────────────┘\n\n");
 
 	// Stop further timer interrupts by setting timecmp to furthest value available.
 	swap_csr(0x801, 0xFFFFFFFF);
@@ -268,7 +285,7 @@ void InstallISR()
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + ONE_SECOND_IN_TICKS; // One second into the future (based on 10MHz wall clock)
+	uint64_t future = now + ONE_SECOND_IN_TICKS; // Two seconds into the future (based on 10MHz wall clock)
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
@@ -320,9 +337,9 @@ void HandleHARTIRQ(uint32_t hartid)
 		case REQ_StartExecutable:
 		{
 			// Let the main thread know that we're supposed to start an executable at the given address
-			uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+			/*uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
 			hartData[hartid*NUMHARTWORDS+2] = progaddress;
-			hartData[hartid*NUMHARTWORDS+3] = 0x1;
+			hartData[hartid*NUMHARTWORDS+3] = 0x1;*/
 		}
 		break;
 
@@ -531,7 +548,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 	free(names);
 }
 
-void RunExecutable(const int hartID, const char *filename)
+void RunExecutable(const int /*hartID*/, const char *filename, const bool reportError)
 {
 	FIL fp;
 	FRESULT fr = f_open(&fp, filename, FA_READ);
@@ -544,7 +561,7 @@ void RunExecutable(const int hartID, const char *filename)
 		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
 		f_close(&fp);
 
-		if (hartID == 0)
+		//if (hartID == 0)
 		{
 			// Unmount filesystem and reset to root directory before passing control
 			f_mount(nullptr, "sd:", 1);
@@ -553,7 +570,7 @@ void RunExecutable(const int hartID, const char *filename)
 		}
 
 		// Run the executable on HART#0
-		if (hartID == 0)
+		//if (hartID == 0)
 		{
 			asm volatile(
 				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
@@ -563,7 +580,7 @@ void RunExecutable(const int hartID, const char *filename)
 				: "=m" (branchaddress) : : 
 			);
 		}
-		else
+		/*else
 		{
 			asm volatile(
 				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
@@ -573,9 +590,9 @@ void RunExecutable(const int hartID, const char *filename)
 			HARTMAILBOX[hartID] = REQ_StartExecutable;
 			HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = branchaddress; // Executable is at this address
 			HARTIRQ[hartID] = 1;
-		}
+		}*/
 
-		if (hartID == 0)
+		//if (hartID == 0)
 		{
 			// Re-mount filesystem before re-gaining control
 			f_mount(&Fs, "sd:", 1);
@@ -584,9 +601,12 @@ void RunExecutable(const int hartID, const char *filename)
 	}
 	else
 	{
-		UARTWrite("Executable '");
-		UARTWrite(filename);
-		UARTWrite("' not found.\n");
+		if (reportError)
+		{
+			UARTWrite("Executable '");
+			UARTWrite(filename);
+			UARTWrite("' not found.\n");
+		}
 	}
 }
 
@@ -601,7 +621,8 @@ void ParseCommands()
 		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
-		UARTWrite("\033[34m\033[47m\033[7mhart\033[0m: set hart to run loaded executable on\n");
+		//UARTWrite("\033[34m\033[47m\033[7mhart\033[0m: set hart to run loaded executable on\n");
+		UARTWrite("\033[34m\033[47m\033[7mstop\033[0m: exit main OS loop\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -628,21 +649,25 @@ void ParseCommands()
 	{
 		CLS();
 	}
-	else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
+	else if (!strcmp(command, "stop")) // Halt the system by returning from main function
+	{
+		mainloopdone = 1;
+	}
+	/*else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
 	{
 		char *param = strtok(nullptr, " ");
 		if (param != nullptr)
 			defaultHardID = atoi(param);
 		else
 			defaultHardID = 0;
-	}
+	}*/
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
 		// Build a file name from the input string
 		strcpy(filename, currentdir);
 		strcat(filename, command);
 		strcat(filename, ".elf");
-		RunExecutable(defaultHardID, filename);
+		RunExecutable(defaultHardID, filename, true);
 	}
 
 	cmdlen = 0;
@@ -707,7 +732,7 @@ void workermain()
 {
 	InstallWorkerISR(); // In a very short while, this will trigger a timer interrupt to test 'alive'
 
-	uint32_t hartid = read_csr(mhartid);
+	//uint32_t hartid = read_csr(mhartid);
 
 	while (1)
 	{
@@ -715,7 +740,7 @@ void workermain()
 		asm volatile("wfi;");
 
 		// We're signalled to run something
-		if (hartData[hartid*NUMHARTWORDS+3] != 0x0)
+		/*if (hartData[hartid*NUMHARTWORDS+3] != 0x0)
 		{
 			hartData[hartid*NUMHARTWORDS+3] = 0;
 
@@ -726,12 +751,13 @@ void workermain()
 				"jalr s0;"          // Branch to the entry point
 				: "=m" (progaddress) : : 
 			);
-		}
+		}*/
 	}
 }
 
 int main()
 {
+	// Attempt to mount file system on micro-SD card
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 	{
@@ -741,35 +767,35 @@ int main()
 	else
 		havedrive = 1;
 
-	// If there's an autoexec.elf on the SDCard, boot that one instead
-	// before we touch any of the hardware
+	// Clear framebuffers
+	CLF();
+
+	// Clear all attributes, clear screen, print boot message
+	CLS();
+
+	// If there's an autoexec.elf on the SDCard, start it
+	// Note that this code does not need to return here
 	if (havedrive)
-		RunExecutable(0, "autoexec.elf"); // Boot on HART#0
+		RunExecutable(0, "autoexec.elf", false); // Boots on HART#0 if found
 
 	// Set up per-HART scratch memory
-	hartData = (uint32_t*)0x1FFF0000; // enough space for 4 of sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS;
+	hartData = (uint32_t*)malloc(sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS);
+	__builtin_memset(hartData, 0x0, sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS);
 
-	// Interrupt service routine
+	// Install interrupt service routines
+	// NOTE: Only after this point on timers / hw interrupts / illegal instruction exceptions start functioning
 	InstallISR();
 
-	// Kick HART detection by seinding a 'wake up' to all HARTs except this one.
-	numdetectedharts = 1;
+	// Kick HART detection by sending a 'wake up' REQ to all HARTs except HART#0
+	numdetectedharts = 1; // Self
 	for (uint32_t i=1; i<NUM_HARTS; ++i)
 	{
 		HARTMAILBOX[i] = REQ_CheckAlive;
 		HARTIRQ[i] = 1;
 	}
 
-	// Clear framebuffers
-	CLF();
-
-	// Clear all attributes, clear screen, print boot message
-	CLS();
-	UARTWrite("┌────────────────────────────────────┐\n");
-	UARTWrite("│ E32OS v0.162 (c)2022 Engin Cilasun │\n");
-	UARTWrite("└────────────────────────────────────┘\n\n");
-
-	while(1)
+	// Main loop, sleeps most of the time until an interrupt occurs
+	while(!mainloopdone)
 	{
 		// Interrupt handler will do all the real work.
 		// Therefore we can put the core to sleep until an interrupt occurs,
@@ -782,6 +808,9 @@ int main()
 		if (ProcessKeyEvents())
 			ParseCommands();
 	}
+
+	// Somehow, we have exited the main loop
+	free(hartData);
 
 	return 0;
 }
