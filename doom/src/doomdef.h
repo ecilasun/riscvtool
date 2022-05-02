@@ -83,7 +83,7 @@ typedef enum
 // Experimental asynchronous timer based is
 //  handled by SNDINTR.
 // #define SNDSERV  1
-#define SNDINTR  1
+// #define SNDINTR  1
 
 
 // This one switches between MIT SHM (no proper mouse)
