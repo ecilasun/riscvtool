@@ -19,6 +19,10 @@
 #include "gpu.h"
 //#include "debugger.h"
 
+#define REQ_CheckAlive			0x00000000
+#define REQ_InstallTISR			0x00000001
+#define REQ_StartExecutable		0x00000002
+
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -48,6 +52,7 @@ static char filename[128] = "";
 static int cmdlen = 0;
 static int havedrive = 0;
 static uint32_t numdetectedharts = 0;
+static int defaultHardID = 0;
 
 // Space for per-hart data
 static uint32_t *hartData = nullptr;
@@ -148,13 +153,16 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
 	switch (cause)
 	{
 		case CAUSE_BREAKPOINT:
+		{
 			// TODO: Debugger related
+		}
 		break;
 
 		/*case CAUSE_USER_ECALL:
 		case CAUSE_SUPERVISOR_ECALL:
 		case CAUSE_HYPERVISOR_ECALL:*/
 		case CAUSE_MACHINE_ECALL:
+		{
 
 			// NOTE: See \usr\include\asm-generic\unistd.h for a full list
 
@@ -178,6 +186,7 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
 			UARTWrite("                               │\n");
 			UARTWrite("└───────────────────────────────────────────────────┘\n");
 			UARTWrite("\033[0m\n");
+		}
 		break;
 
 		/*case CAUSE_MISALIGNED_FETCH:
@@ -215,8 +224,8 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
 			while(1) {
 				asm volatile("wfi;");
 			}
-			break; // Doesn't make sense but to make compiler happy...
 		}
+		break; // Doesn't make sense but to make compiler happy...
 	}
 }
 
@@ -280,14 +289,14 @@ void HandleHARTIRQ(uint32_t hartid)
 	switch (REQ)
 	{
 		// REQ#0 : Alive check
-		case 0x00000000:
+		case REQ_CheckAlive:
 		{
 			HARTMAILBOX[hartid] = 0xE32EBABE; // Signal alive into our mail slot
 		}
 		break;
 
 		// REQ#1 : Install user timer interrupt handler (TISR) and set its interval
-		case 0x00000001:
+		case REQ_InstallTISR:
 		{
 			// TISR address, parameter #0
 			uint32_t TISR = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
@@ -304,6 +313,16 @@ void HandleHARTIRQ(uint32_t hartid)
 			E32SetTimeCompare(future);
 
 			HARTMAILBOX[hartid] = 0x00000000; // Done
+		}
+		break;
+
+		// REQ#2 : Start executable on main thread of this HART
+		case REQ_StartExecutable:
+		{
+			// Let the main thread know that we're supposed to start an executable at the given address
+			uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+			hartData[hartid*NUMHARTWORDS+2] = progaddress;
+			hartData[hartid*NUMHARTWORDS+3] = 0x1;
 		}
 		break;
 
@@ -512,6 +531,65 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 	free(names);
 }
 
+void RunExecutable(const int hartID, const char *filename)
+{
+	FIL fp;
+	FRESULT fr = f_open(&fp, filename, FA_READ);
+	if (fr == FR_OK)
+	{
+		SElfFileHeader32 fheader;
+		UINT readsize;
+		f_read(&fp, &fheader, sizeof(fheader), &readsize);
+		uint32_t branchaddress;
+		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
+		f_close(&fp);
+
+		if (hartID == 0)
+		{
+			// Unmount filesystem and reset to root directory before passing control
+			f_mount(nullptr, "sd:", 1);
+			strcpy(currentdir, "sd:");
+			havedrive = 0;
+		}
+
+		// Run the executable on HART#0
+		if (hartID == 0)
+		{
+			asm volatile(
+				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+				"fence.i;"          // Invalidate I$
+				"lw s0, %0;"        // Target branch address
+				"jalr s0;"          // Branch to the entry point
+				: "=m" (branchaddress) : : 
+			);
+		}
+		else
+		{
+			asm volatile(
+				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+			);
+
+			// Use a REQ# to get another core to boot the executable
+			HARTMAILBOX[hartID] = REQ_StartExecutable;
+			HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = branchaddress; // Executable is at this address
+			HARTIRQ[hartID] = 1;
+		}
+
+		if (hartID == 0)
+		{
+			// Re-mount filesystem before re-gaining control
+			f_mount(&Fs, "sd:", 1);
+			havedrive = 1;
+		}
+	}
+	else
+	{
+		UARTWrite("Executable '");
+		UARTWrite(filename);
+		UARTWrite("' not found.\n");
+	}
+}
+
 void ParseCommands()
 {
 	// Grab first token, if any
@@ -523,6 +601,7 @@ void ParseCommands()
 		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
+		UARTWrite("\033[34m\033[47m\033[7mhart\033[0m: set hart to run loaded executable on\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -549,48 +628,21 @@ void ParseCommands()
 	{
 		CLS();
 	}
+	else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
+	{
+		char *param = strtok(nullptr, " ");
+		if (param != nullptr)
+			defaultHardID = atoi(param);
+		else
+			defaultHardID = 0;
+	}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
 		// Build a file name from the input string
 		strcpy(filename, currentdir);
 		strcat(filename, command);
 		strcat(filename, ".elf");
-
-		FIL fp;
-		FRESULT fr = f_open(&fp, filename, FA_READ);
-		if (fr == FR_OK)
-		{
-			SElfFileHeader32 fheader;
-			UINT readsize;
-			f_read(&fp, &fheader, sizeof(fheader), &readsize);
-			uint32_t branchaddress;
-			ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
-			f_close(&fp);
-
-			// Unmount filesystem and reset to root directory before passing control
-			f_mount(nullptr, "sd:", 1);
-			strcpy(currentdir, "sd:");
-			havedrive = 0;
-
-			// Run the executable
-			asm volatile(
-				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-				"fence.i;"          // Invalidate I$
-				"lw s0, %0;"        // Target branch address
-				"jalr s0;"          // Branch to the entry point
-				: "=m" (branchaddress) : : 
-			);
-
-			// Re-mount filesystem before re-gaining control
-			f_mount(&Fs, "sd:", 1);
-			havedrive = 1;
-		}
-		else
-		{
-			UARTWrite("Executable '");
-			UARTWrite(filename);
-			UARTWrite("' not found.\n");
-		}
+		RunExecutable(defaultHardID, filename);
 	}
 
 	cmdlen = 0;
@@ -655,16 +707,45 @@ void workermain()
 {
 	InstallWorkerISR(); // In a very short while, this will trigger a timer interrupt to test 'alive'
 
+	uint32_t hartid = read_csr(mhartid);
+
 	while (1)
 	{
 		// Halt on wakeup
 		asm volatile("wfi;");
-		// NOTE: Our ISR will service this interrupt
+
+		// We're signalled to run something
+		if (hartData[hartid*NUMHARTWORDS+3] != 0x0)
+		{
+			hartData[hartid*NUMHARTWORDS+3] = 0;
+
+			uint32_t progaddress = hartData[hartid*NUMHARTWORDS+2];
+			asm volatile(
+				"fence.i;"          // Invalidate I$
+				"lw s0, %0;"        // Target branch address
+				"jalr s0;"          // Branch to the entry point
+				: "=m" (progaddress) : : 
+			);
+		}
 	}
 }
 
 int main()
 {
+	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	if (mountattempt!=FR_OK)
+	{
+		havedrive = 0;
+		UARTWrite(FRtoString[mountattempt]);
+	}
+	else
+		havedrive = 1;
+
+	// If there's an autoexec.elf on the SDCard, boot that one instead
+	// before we touch any of the hardware
+	if (havedrive)
+		RunExecutable(0, "autoexec.elf"); // Boot on HART#0
+
 	// Set up per-HART scratch memory
 	hartData = (uint32_t*)0x1FFF0000; // enough space for 4 of sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS;
 
@@ -675,7 +756,7 @@ int main()
 	numdetectedharts = 1;
 	for (uint32_t i=1; i<NUM_HARTS; ++i)
 	{
-		HARTMAILBOX[i] = 0x00000000; // REQ#0 : Alive check
+		HARTMAILBOX[i] = REQ_CheckAlive;
 		HARTIRQ[i] = 1;
 	}
 
@@ -685,17 +766,8 @@ int main()
 	// Clear all attributes, clear screen, print boot message
 	CLS();
 	UARTWrite("┌────────────────────────────────────┐\n");
-	UARTWrite("│ E32OS v0.160 (c)2022 Engin Cilasun │\n");
+	UARTWrite("│ E32OS v0.162 (c)2022 Engin Cilasun │\n");
 	UARTWrite("└────────────────────────────────────┘\n\n");
-
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-	if (mountattempt!=FR_OK)
-	{
-		havedrive = 0;
-		UARTWrite(FRtoString[mountattempt]);
-	}
-	else
-		havedrive = 1;
 
 	while(1)
 	{
