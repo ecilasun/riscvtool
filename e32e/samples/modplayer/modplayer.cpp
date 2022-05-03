@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "core.h"
+#include "gpu.h"
 #include "apu.h"
 #include "ps2.h"
 #include "sdcard.h"
@@ -121,6 +122,16 @@ static long read_module_length( const char *filename ) {
 	return length;
 }
 
+void DrawWaveform()
+{
+	static uint32_t cycle = 0;
+	uint32_t *src = (uint32_t *)buffer;
+	for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
+		GPUFBWORD[i] = src[i];
+	*GPUCTL = cycle;
+	++cycle;
+}
+
 static long play_module( signed char *module )
 {
 	long result;
@@ -175,7 +186,7 @@ static long play_module( signed char *module )
 			if( samples_remaining <= 0 || result != 0 )
 				playing = 0;
 
-			// VUMeter: SubmitPlaybackFrame();
+			DrawWaveform();
 		}
 	}
 	else
