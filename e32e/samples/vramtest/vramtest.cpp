@@ -25,6 +25,8 @@ int main()
         GPUFBWORD[x+128] = 0x20FF20FF;
 	}
 
+	DrawText(0, 0, "VRAM Test");
+
 	*GPUCTL = cycle;
 
     ++cycle;

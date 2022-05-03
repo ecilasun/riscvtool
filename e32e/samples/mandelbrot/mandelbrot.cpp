@@ -98,7 +98,12 @@ int main(int argc, char ** argv)
 		{
 			for (uint32_t i=0;i<80*240;++i)
 				GPUFBWORD[i] = ((uint32_t*)mandelbuffer)[i];
+
+			DrawText(0, 0, "IPS:");
+			DrawDecimal(0, 8, ips);
+
 			*GPUCTL = page;
+
 	        page = (page + 1)%2;
 		}
 
@@ -112,10 +117,6 @@ int main(int argc, char ** argv)
             uint64_t reti = E32ReadRetiredInstructions();
             ips = (reti-prevreti);
             prevreti = reti;
-
-            UARTWrite("IPS: ");
-            UARTWriteDecimal(ips);
-            UARTWrite("\n");
         }
     }
 

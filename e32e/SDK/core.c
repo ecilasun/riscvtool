@@ -76,6 +76,13 @@ uint32_t ClockToUs(uint64_t clk)
    return (uint32_t)(clk / ONE_MICROSECOND_IN_TICKS);
 }
 
+void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &seconds)
+{
+   hours = ms / 3600000;
+   minutes = (ms % 3600000) / 60000;
+   seconds = ((ms % 360000) % 60000) / 1000;
+}
+
 void E32SetTimeCompare(const uint64_t future)
 {
    // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
