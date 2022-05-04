@@ -126,6 +126,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 impure.c
 200098f0 l     O .data	00000428 impure_data
 00000000 l    df *ABS*	00000000 task.c
+00000000 l    df *ABS*	00000000 console.c
 00000000 l    df *ABS*	00000000 gpu.c
 00000000 l    df *ABS*	00000000 buttons.c
 00000000 l    df *ABS*	00000000 memtest.c
@@ -199,7 +200,7 @@ SYMBOL TABLE:
 200073b8 g     F .text	00000064 ff_uni2oem
 200000b0 g     F .text	0000005c __libc_fini_array
 20003cb0 g     F .text	0000003c _Z11SDResponse1v
-2000a38c g     O .data	00000004 IO_SPIRXTX
+2000a394 g     O .data	00000004 IO_SPIRXTX
 20000c54 g     F .text	00000088 strcat
 200069c8 g     F .text	00000038 f_chdrive
 200036dc g     F .text	00000024 _chdir
@@ -222,7 +223,7 @@ SYMBOL TABLE:
 2000a65c g     O .bss	00000028 __malloc_current_mallinfo
 20003f40 g     F .text	00000020 _Z17SDSetBlockSize512v
 200016f0 g     F .text	00000014 strtok
-2000a394 g     O .data	00000004 GPUFBWORD
+2000a390 g     O .data	00000004 GPUFBWORD
 2000a3a0 g     O .data	00000004 PS2KEYBOARDDATA
 20000974 g     F .text	00000078 memcmp
 20009d18 g     O .data	00000408 __malloc_av_
@@ -279,7 +280,7 @@ SYMBOL TABLE:
 2000ab54 g     O .bss	00000200 keymap
 20001c90 g     F .text	0000008c strlen
 20007580 g     F .text	00000040 disk_read
-2000a390 g     O .data	00000004 GPUCTL
+2000a38c g     O .data	00000004 GPUCTL
 2000a320 g     O .data	00000004 keyboardringbuffer
 200025e0 g     F .text	00000100 _Z25interrupt_service_routinev
 20000cdc g     F .text	00000140 strchr
@@ -12797,17 +12798,17 @@ Disassembly of section .data:
 2000a388:	0000                	unimp
 2000a38a:	0400                	addi	s0,sp,512
 
-2000a38c <IO_SPIRXTX>:
-2000a38c:	1010                	addi	a2,sp,32
-2000a38e:	8000                	0x8000
+2000a38c <GPUCTL>:
+2000a38c:	0000                	unimp
+2000a38e:	8104                	0x8104
 
-2000a390 <GPUCTL>:
+2000a390 <GPUFBWORD>:
 2000a390:	0000                	unimp
-2000a392:	8104                	0x8104
+2000a392:	8100                	0x8100
 
-2000a394 <GPUFBWORD>:
-2000a394:	0000                	unimp
-2000a396:	8100                	0x8100
+2000a394 <IO_SPIRXTX>:
+2000a394:	1010                	addi	a2,sp,32
+2000a396:	8000                	0x8000
 
 2000a398 <m_readOffset>:
 2000a398:	0600                	addi	s0,sp,768
@@ -12854,7 +12855,7 @@ Disassembly of section .data:
 2000a3dc:	20367967          	0x20367967
 2000a3e0:	2020                	fld	fs0,64(s0)
 2000a3e2:	6a6d                	lui	s4,0x1b
-2000a3e4:	3775                	jal	2000a390 <GPUCTL>
+2000a3e4:	3775                	jal	2000a390 <GPUFBWORD>
 2000a3e6:	2038                	fld	fa4,64(s0)
 2000a3e8:	2c20                	fld	fs0,88(s0)
 2000a3ea:	306f696b          	0x306f696b
@@ -13114,11 +13115,11 @@ Disassembly of section .got:
 2000a5e6:	2000                	fld	fs0,0(s0)
 2000a5e8:	00b0                	addi	a2,sp,72
 2000a5ea:	2000                	fld	fs0,0(s0)
-2000a5ec:	a38c                	fsd	fa1,0(a5)
+2000a5ec:	a394                	fsd	fa3,0(a5)
 2000a5ee:	2000                	fld	fs0,0(s0)
 2000a5f0:	a5a8                	fsd	fa0,72(a1)
 2000a5f2:	2000                	fld	fs0,0(s0)
-2000a5f4:	a394                	fsd	fa3,0(a5)
+2000a5f4:	a390                	fsd	fa2,0(a5)
 2000a5f6:	2000                	fld	fs0,0(s0)
 2000a5f8:	a3a0                	fsd	fs0,64(a5)
 2000a5fa:	2000                	fld	fs0,0(s0)
@@ -13140,7 +13141,7 @@ Disassembly of section .got:
 2000a61a:	2000                	fld	fs0,0(s0)
 2000a61c:	ab54                	fsd	fa3,144(a4)
 2000a61e:	2000                	fld	fs0,0(s0)
-2000a620:	a390                	fsd	fa2,0(a5)
+2000a620:	a38c                	fsd	fa1,0(a5)
 2000a622:	2000                	fld	fs0,0(s0)
 2000a624:	a320                	fsd	fs0,64(a4)
 2000a626:	2000                	fld	fs0,0(s0)

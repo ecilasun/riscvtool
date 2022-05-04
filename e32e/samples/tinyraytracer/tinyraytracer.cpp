@@ -7,6 +7,9 @@
 #include "uart.h"
 #include "gpu.h"
 
+static uint32_t frame = 0;
+uint8_t *outputbuffer = nullptr;
+
 /*******************************************************************/
 
 typedef int BOOL;
@@ -24,31 +27,26 @@ const uint8_t dither[4][4] = {
 
 /*******************************************************************/
 
-// Size of the screen
-// Replace with your own variables or values
-#define graphics_width  320
-#define graphics_height 240
-
 // Replace with your own code.
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
-  r = max(0.0f, min(1.0f, r));
-  g = max(0.0f, min(1.0f, g));
-  b = max(0.0f, min(1.0f, b));
+	r = max(0.0f, min(1.0f, r));
+	g = max(0.0f, min(1.0f, g));
+	b = max(0.0f, min(1.0f, b));
 
-  uint16_t R = (uint16_t)(r*255.0f);
-  uint16_t G = (uint16_t)(g*255.0f);
-  uint16_t B = (uint16_t)(b*255.0f);
+	uint16_t R = (uint16_t)(r*255.0f);
+	uint16_t G = (uint16_t)(g*255.0f);
+	uint16_t B = (uint16_t)(b*255.0f);
 
-  uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
-  uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
-  uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
+	uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
+	uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
+	uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
 
-  R = ROFF/32;
-  G = GOFF/32;
-  B = BOFF/64;
-  uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
+	R = ROFF/32;
+	G = GOFF/32;
+	B = BOFF/64;
+	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
-  GPUFB[x+y*320] = RGB;
+	outputbuffer[x+y*320] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -302,17 +300,27 @@ vec3 cast_ray(
 }
 
 #define M_PI 3.14159265358979323846 
-void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
-  const float fov  = M_PI/3.;
-  for (int j = 0; j<graphics_height; j++) { // actual rendering loop
-    for (int i = 0; i<graphics_width; i++) {
-      float dir_x =  (i + 0.5) - graphics_width/2.;
-      float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
-      float dir_z = -graphics_height/(2.*tan(fov/2.));
-      vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-      graphics_set_pixel(i,j,C.x,C.y,C.z);
-    }
-  }
+void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
+{
+	const float fov  = M_PI/3.f;
+	float dir_z = -FRAME_HEIGHT/(2.*tan(fov/2.f));
+	for (int j = 0; j<FRAME_HEIGHT; j++)// actual rendering loop
+	{
+		float dir_y = -(j + 0.5f) + FRAME_HEIGHT/2.f; // this flips the image.
+		for (int i = 0; i<FRAME_WIDTH; i++)
+		{
+			float dir_x =  (i + 0.5f) - FRAME_WIDTH/2.f;
+			vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
+			graphics_set_pixel(i,j,C.x,C.y,C.z);
+		}
+		// Previous line and current line to GPU framebuffer (to avoid interleaved visuals)
+		int strt = (j-1);
+		strt = strt<0 ? 0:strt;
+		for (int i=strt; i<=j; ++i)
+			__builtin_memcpy((void*)&GPUFB[strt*FRAME_WIDTH], &outputbuffer[strt*FRAME_WIDTH], FRAME_WIDTH*2);
+		++frame;
+		*GPUCTL = frame;
+	}
 }
 
 int nb_spheres = 4;
@@ -365,7 +373,9 @@ int main()
 
     UARTWrite("starting scene generation\n");
 
-    *GPUCTL = 0; // Output to FB0, show FB1
+	outputbuffer = (uint8_t*)malloc(FRAME_WIDTH*FRAME_HEIGHT);
+	frame = 0;
+	*GPUCTL = frame;
 
     uint64_t startclock = E32ReadTime();
 
@@ -376,8 +386,6 @@ int main()
     UARTWrite("tinyraytracer took ");
     UARTWriteDecimal((unsigned int)deltams);
     UARTWrite(" ms at 320x240 resolution\n");
-
-    *GPUCTL = 1; // Output to FB1, show FB0
 
     return 0;
 }

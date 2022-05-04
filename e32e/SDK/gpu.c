@@ -5,10 +5,6 @@ volatile uint32_t *GPUFBWORD = (volatile uint32_t* )0x81000000;
 volatile uint32_t *GPUPAL_32 = (volatile uint32_t* )0x81020000;
 volatile uint32_t *GPUCTL = (volatile uint32_t* )0x81040000;
 
-#define FRAME_WIDTH 320
-#define FRAME_WIDTH_IN_WORDS 80
-#define FRAME_HEIGHT 240
-
 #define max(_a_, _b_) (_a_) > (_b_) ? (_a_) : (_b_)
 #define min(_a_, _b_) (_a_) < (_b_) ? (_a_) : (_b_)
 
