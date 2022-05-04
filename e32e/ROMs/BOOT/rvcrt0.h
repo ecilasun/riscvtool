@@ -30,9 +30,9 @@ extern "C"
          "mv sp, s2;"                // set new hart stack pointer
          "mv s0, sp;"                // set frame pointer
 
-         "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point 
+         "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x2000FFF0;"        // single hart, hardcoded stack at end of 64K BRAM
+         "li sp, 0x1FFF0000;"        // single hart, hardcoded stack at end of DDR3 minus 64K
          "mv s0, sp;"                // set frame pointer
 #endif
          // Clear BSS
