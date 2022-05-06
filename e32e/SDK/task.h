@@ -6,6 +6,14 @@ extern volatile struct STaskContext *tasks;
 
 typedef void(*taskfunc)();
 
+#define TASK_MAX_BREAKPOINTS 16
+
+struct STaskBreakpoint
+{
+	uint32_t address;				// Address of replaced instruction / breakpoint
+	uint32_t originalinstruction;	// Instruction we replaced with EBREAK
+};
+
 struct STaskContext {
     taskfunc task;      // Task entry point
     uint32_t HART;      // HART affinity mask
@@ -14,6 +22,11 @@ struct STaskContext {
     uint32_t regs[64];  // Integer and float registers
 	void *taskstack;	// Allocated by task caller
 	uint32_t stacksize;	// Size of stack to set up stack pointer with
+	uint32_t ctrlc;		// Stop on first chance
+	uint32_t breakhit;	// Breakpoint hit
+	uint32_t num_breakpoints;									// Breakpoint count
+	struct STaskBreakpoint breakpoints[TASK_MAX_BREAKPOINTS];	// Breakpoints
+	const char *name;											// Task name
 };
 
 void InitTasks(struct STaskContext *_ctx);

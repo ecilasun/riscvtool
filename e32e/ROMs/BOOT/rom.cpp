@@ -19,6 +19,10 @@
 #include "gpu.h"
 //#include "debugger.h"
 
+//asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1 (writeback D$)
+//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
+//asm volatile("fence.i;"); // FENCE.I (invalidate I$)
+
 #define REQ_CheckAlive			0x00000000
 #define REQ_InstallTISR			0x00000001
 #define REQ_StartExecutable		0x00000002
@@ -72,7 +76,7 @@ void HandleUART()
 {
 	//gdb_handler(task_array, num_tasks);
 
-	//*IO_UARTRXTX = 0x13; // XOFF
+	// *IO_UARTRXTX = 0x13; // XOFF
 	//UARTFlush();
 
 	// Echo back incoming bytes
@@ -86,7 +90,7 @@ void HandleUART()
 	}
 	UARTFlush();
 
-	//*IO_UARTRXTX = 0x11; // XON
+	// *IO_UARTRXTX = 0x11; // XON
 	//UARTFlush();
 }
 
@@ -175,9 +179,9 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
 		}
 		break;
 
-		/*case CAUSE_USER_ECALL:
-		case CAUSE_SUPERVISOR_ECALL:
-		case CAUSE_HYPERVISOR_ECALL:*/
+		//case CAUSE_USER_ECALL:
+		//case CAUSE_SUPERVISOR_ECALL:
+		//case CAUSE_HYPERVISOR_ECALL:
 		case CAUSE_MACHINE_ECALL:
 		{
 
@@ -206,16 +210,16 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
 		}
 		break;
 
-		/*case CAUSE_MISALIGNED_FETCH:
-		case CAUSE_FETCH_ACCESS:
-		case CAUSE_ILLEGAL_INSTRUCTION:
-		case CAUSE_MISALIGNED_LOAD:
-		case CAUSE_LOAD_ACCESS:
-		case CAUSE_MISALIGNED_STORE:
-		case CAUSE_STORE_ACCESS:
-		case CAUSE_FETCH_PAGE_FAULT:
-		case CAUSE_LOAD_PAGE_FAULT:
-		case CAUSE_STORE_PAGE_FAULT:*/
+		//case CAUSE_MISALIGNED_FETCH:
+		//case CAUSE_FETCH_ACCESS:
+		//case CAUSE_ILLEGAL_INSTRUCTION:
+		//case CAUSE_MISALIGNED_LOAD:
+		//case CAUSE_LOAD_ACCESS:
+		//case CAUSE_MISALIGNED_STORE:
+		//case CAUSE_STORE_ACCESS:
+		//case CAUSE_FETCH_PAGE_FAULT:
+		//case CAUSE_LOAD_PAGE_FAULT:
+		//case CAUSE_STORE_PAGE_FAULT:
 		default:
 		{
 			UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
@@ -337,9 +341,10 @@ void HandleHARTIRQ(uint32_t hartid)
 		case REQ_StartExecutable:
 		{
 			// Let the main thread know that we're supposed to start an executable at the given address
-			/*uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
-			hartData[hartid*NUMHARTWORDS+2] = progaddress;
-			hartData[hartid*NUMHARTWORDS+3] = 0x1;*/
+			//uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+			//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1
+			//hartData[hartid*NUMHARTWORDS+2] = progaddress;
+			//hartData[hartid*NUMHARTWORDS+3] = 0x1;
 		}
 		break;
 
@@ -371,9 +376,9 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 		if (code == 0xB) // Machine External Interrupt (hardware)
 		{
 			// HARTs 1..7 don't use these yet (see service request handler below to add support)
-			/*if (value & 0x00000001) HandleUART();
-			if (value & 0x00000002) HandleButtons();
-			if (value & 0x00000004) HandleKeyboard();*/
+			//if (value & 0x00000001) HandleUART();
+			//if (value & 0x00000002) HandleButtons();
+			//if (value & 0x00000004) HandleKeyboard();
 
 			// Service request handler
 			if (value & 0x00000010) HandleHARTIRQ(hartid);
@@ -421,9 +426,9 @@ void InstallWorkerISR()
 	swap_csr(mtvec, worker_interrupt_service_routine);
 
 	// Set up timer interrupt for this HART
-	/*uint64_t now = E32ReadTime();
-	uint64_t future = now + 512; // Set to happen very soon, around similar points in time for all HARTs except #0
-	E32SetTimeCompare(future);*/
+	//uint64_t now = E32ReadTime();
+	//uint64_t future = now + 512; // Set to happen very soon, around similar points in time for all HARTs except #0
+	//E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
 	// Enable machine hardware interrupts
@@ -532,12 +537,6 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 		// If this is a section worth loading...
 		if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
 		{
-			/*UARTWriteHex(sheader.m_Addr);
-			UARTWrite(" @");
-			UARTWriteHex(sheader.m_Offset);
-			UARTWrite(" ");
-			UARTWriteHex(sheader.m_Size);
-			UARTWrite("\n");*/
 			// ...place it in memory
 			uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
 			f_lseek(fp, sheader.m_Offset);
@@ -548,7 +547,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 	free(names);
 }
 
-void RunExecutable(const int /*hartID*/, const char *filename, const bool reportError)
+void RunExecutable(const int hartID, const char *filename, const bool reportError)
 {
 	FIL fp;
 	FRESULT fr = f_open(&fp, filename, FA_READ);
@@ -580,17 +579,17 @@ void RunExecutable(const int /*hartID*/, const char *filename, const bool report
 				: "=m" (branchaddress) : : 
 			);
 		}
-		/*else
-		{
-			asm volatile(
-				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-			);
+		//else
+		//{
+		//	asm volatile(
+		//		".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+		//	);
 
 			// Use a REQ# to get another core to boot the executable
-			HARTMAILBOX[hartID] = REQ_StartExecutable;
-			HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = branchaddress; // Executable is at this address
-			HARTIRQ[hartID] = 1;
-		}*/
+		//	HARTMAILBOX[hartID] = REQ_StartExecutable;
+		//	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = branchaddress; // Executable is at this address
+		//	HARTIRQ[hartID] = 1;
+		//}
 
 		//if (hartID == 0)
 		{
@@ -653,14 +652,14 @@ void ParseCommands()
 	{
 		mainloopdone = 1;
 	}
-	/*else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
-	{
-		char *param = strtok(nullptr, " ");
-		if (param != nullptr)
-			defaultHardID = atoi(param);
-		else
-			defaultHardID = 0;
-	}*/
+	//else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
+	//{
+	//	char *param = strtok(nullptr, " ");
+	//	if (param != nullptr)
+	//		defaultHardID = atoi(param);
+	//	else
+	//		defaultHardID = 0;
+	//}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
 		// Build a file name from the input string
@@ -736,6 +735,19 @@ void workermain()
 
 	while (1)
 	{
+		/*if ((hartid==1) && (HARTMAILBOX[1] != 0))
+		{
+			asm volatile(
+				".word 0xFC200073;" // CDISCARD.D.L1
+			);
+			uint32_t *somewhere = (uint32_t*)0x1A000000;
+			*somewhere = *somewhere ^ 0xBABECAFE;
+			asm volatile(
+				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+			);
+			HARTMAILBOX[1] = 0x0;
+		}*/
+
 		// Halt on wakeup
 		asm volatile("wfi;");
 
@@ -757,6 +769,22 @@ void workermain()
 
 int main()
 {
+	/*uint32_t *somewhere = (uint32_t*)0x1A000000;
+	*somewhere = 0xCAFEBABE;
+	asm volatile(
+		".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+	);
+	HARTMAILBOX[1] = 0xFFFFFFFF;
+
+	while (HARTMAILBOX[1] != 0x0) { }
+	asm volatile(
+		".word 0xFC200073;" // CDISCARD.D.L1
+	);
+	UARTWriteHex(*somewhere);
+
+	while(1){ }
+	return 0;*/
+
 	// Attempt to mount file system on micro-SD card
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)

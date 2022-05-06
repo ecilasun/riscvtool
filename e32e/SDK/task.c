@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+const char *dummyname="dummy";
+
 // NOTE: Call with memory allocated for task tracking purposes
 // with sufficient space for MAX_TASKS*sizeof(STaskContext) bytes
 void InitTasks(struct STaskContext *_ctx)
@@ -16,6 +18,15 @@ void InitTasks(struct STaskContext *_ctx)
 		_ctx[i].regs[2] = 0x0;
 		_ctx[i].regs[8] = 0x0;
 		_ctx[i].task = (taskfunc)0x0;
+		_ctx[i].ctrlc = 0;
+		_ctx[i].breakhit = 0;
+		_ctx[i].name = dummyname;
+		_ctx[i].num_breakpoints = 0;
+		for (int j=0;j<TASK_MAX_BREAKPOINTS;++j)
+		{
+			_ctx[i].breakpoints[j].address = 0x0;
+			_ctx[i].breakpoints[j].originalinstruction = 0x0;
+		}
 	}
 }
 
