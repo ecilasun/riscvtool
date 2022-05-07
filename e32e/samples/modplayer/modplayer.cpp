@@ -5,6 +5,7 @@
 
 #include "core.h"
 #include "gpu.h"
+#include "leds.h"
 #include "apu.h"
 #include "ps2.h"
 #include "sdcard.h"
@@ -157,6 +158,9 @@ static long play_module( signed char *module )
 			downsample( mix_buffer, buffer, BUFFER_SAMPLES * OVERSAMPLE );
 			crossfeed( buffer, BUFFER_SAMPLES );
 			reverb( buffer, BUFFER_SAMPLES );
+
+			//asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1 (writeback D$)
+
 			samples_remaining -= count;
 
 			// TODO: If 'buffer' is placed in AudioRAM, the APU
@@ -168,6 +172,10 @@ static long play_module( signed char *module )
 			uint32_t *src = (uint32_t *)buffer;
 			for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
 				*APUOUTPUT = src[i];
+
+			// Trigger visuals
+			/*int hartID = 1;
+			HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0xFFFFFFFF;*/
 
 			// Press down arrow to stop
 			/*int stop = 0;
@@ -217,11 +225,51 @@ void PlayMODFile(const char *fname)
 	}
 }
 
-int main( int argc, char **argv )
+/*uint32_t vumeterTISR(const uint32_t hartID)
 {
+	static uint32_t cycle = 0;
+
+	if (HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] != 0x0)
+	{
+		HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0x0;
+
+		SetLEDState(cycle%2 ? 0x55 : 0xAA);
+
+		/*asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)*/
+
+		// Now load the actual data
+		short *src = (short *)buffer;
+		for (uint32_t i=0; i<BUFFER_SAMPLES/2; ++i)
+		{
+			int H = int(src[i]/512);
+			H = H>=120 ? 119 : H;
+			H = H<0 ? 0 : H;
+			H += 120;
+			GPUFB[i+H*FRAME_WIDTH] = cycle;
+		}
+
+		*GPUCTL = cycle;
+		++cycle;
+
+		// Force cache invalidation by loading something one full cache away
+		uint32_t *src32 = (uint32_t *)((uint32_t)buffer+32768);
+		for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
+			GPUFBWORD[i] = src32[i];
+	}
+
+	return 1;
+}*/
+
+int main()
+{
+	SetLEDState(0x00);
+
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 		return -1;
+
+	/*InstallTimerISR(1, vumeterTISR, TEN_MILLISECONDS_IN_TICKS);
+	while(HARTMAILBOX[1] != 0x0) asm volatile("nop;");*/
 
 	PlayMODFile("sd:test.mod");
 
