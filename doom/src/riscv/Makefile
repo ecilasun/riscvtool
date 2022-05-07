@@ -39,6 +39,7 @@ SOURCES_doom_arch := \
 	../../../e32e/SDK/spi.c \
 	../../../e32e/SDK/gpu.c \
 	../../../e32e/SDK/apu.c \
+	../../../e32e/SDK/leds.c \
 	../../../e32e/SDK/buttons.c \
 	../../../e32e/SDK/ringbuffer.c \
 	../../../e32e/SDK/ps2.c \

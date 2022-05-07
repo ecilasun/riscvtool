@@ -18,7 +18,7 @@ volatile uint32_t *HARTMAILBOX = (volatile uint32_t* )0x80000000;
 // at this address will wake the corresponding HART
 // from WFI. The awake HART needs to write a zero
 // from its ISR to the same address to stop further IRQs
-volatile uint8_t *HARTIRQ = (volatile uint8_t* )0x80001050;
+volatile uint8_t *HARTIRQ = (volatile uint8_t* )0x80001040;
 
 #define STDOUT_FILENO 1
 
@@ -76,11 +76,11 @@ uint32_t ClockToUs(uint64_t clk)
    return (uint32_t)(clk / ONE_MICROSECOND_IN_TICKS);
 }
 
-void ClockMsToHMS(uint32_t ms, uint32_t &hours, uint32_t &minutes, uint32_t &seconds)
+void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *seconds)
 {
-   hours = ms / 3600000;
-   minutes = (ms % 3600000) / 60000;
-   seconds = ((ms % 360000) % 60000) / 1000;
+   *hours = ms / 3600000;
+   *minutes = (ms % 3600000) / 60000;
+   *seconds = ((ms % 360000) % 60000) / 1000;
 }
 
 void E32SetTimeCompare(const uint64_t future)

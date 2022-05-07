@@ -42,7 +42,7 @@ int main()
 		uint64_t clk = E32ReadTime();
 		uint32_t milliseconds = ClockToMs(clk);
 		uint32_t hours, minutes, seconds;
-		ClockMsToHMS(milliseconds, hours,minutes,seconds);
+		ClockMsToHMS(milliseconds, &hours,&minutes,&seconds);
 
 		// Check keyboard entry
 		uint32_t val;

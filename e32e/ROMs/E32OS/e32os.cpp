@@ -7,8 +7,7 @@
 #include "workercore.h"
 #include "maincore.h"
 
-// uint32_t *OSMEM = (uint32_t*)0x1FFF0000; // Last 64K of DDR3 memory
-uint32_t *OSMEM = (uint32_t*)0x00000100;
+uint32_t *OSMEM = (uint32_t*)0x1FFF0000; // Last 64K of DDR3 memory, 8KBytes of space per HART
 
 // Worker CPU entry point
 void workermain()

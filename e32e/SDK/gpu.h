@@ -17,5 +17,5 @@ extern volatile uint32_t *GPUCTL;
 
 void ClearScreen(uint32_t bgcolor);
 uint32_t DrawText(const int col, const int row, const char *message);
-void DrawText(const int col, const int row, const int length, const char *message);
+void DrawTextLen(const int col, const int row, const int length, const char *message);
 uint32_t DrawDecimal(const int col, const int row, const int32_t i);

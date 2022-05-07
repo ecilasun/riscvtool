@@ -9,11 +9,12 @@
 #include "rvcrt0.h"
 
 #include "core.h"
+#include "leds.h"
+#include "buttons.h"
 #include "uart.h"
 #include "elf.h"
 #include "sdcard.h"
 #include "fat32/ff.h"
-#include "buttons.h"
 #include "ps2.h"
 #include "ringbuffer.h"
 #include "gpu.h"
@@ -60,7 +61,7 @@ static int defaultHardID = 0;
 static int mainloopdone = 0;
 
 // Space for per-hart data
-static uint32_t *hartData = nullptr;
+static uint32_t *OSScratchMem = (uint32_t*)0x1FFF0000;
 
 // Main file system object
 FATFS Fs;
@@ -99,6 +100,7 @@ void HandleButtons()
 	while (*BUTTONCHANGEAVAIL)
 	{
 		uint32_t change = *BUTTONCHANGE;
+
 		UARTWrite("Button state change: ");
 		UARTWriteHex(change);
 		UARTWrite("\n");
@@ -125,7 +127,7 @@ void HandleTimer()
 	UARTWrite("│ ████████   ▒   ████████ │\n");
 	UARTWrite("│ ██████████   ██████████ │\n");
 	UARTWrite("│                         │\n");
-	UARTWrite("│ E32OS v0.164            │\n");
+	UARTWrite("│ E32OS v0.166            │\n");
 	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
 	UARTWrite("│                         │\n");
 	UARTWrite("│ HARTS: ");
@@ -326,8 +328,8 @@ void HandleHARTIRQ(uint32_t hartid)
 			uint32_t TISR_Interval = HARTMAILBOX[hartid*HARTPARAMCOUNT+1+NUM_HARTS];
 
 			// Store for later retreival
-			hartData[hartid*NUMHARTWORDS+0] = TISR;
-			hartData[hartid*NUMHARTWORDS+1] = TISR_Interval;
+			OSScratchMem[hartid*NUMHARTWORDS+0] = TISR;
+			OSScratchMem[hartid*NUMHARTWORDS+1] = TISR_Interval;
 
 			uint64_t now = E32ReadTime();
 			uint64_t future = now + TISR_Interval;
@@ -343,8 +345,8 @@ void HandleHARTIRQ(uint32_t hartid)
 			// Let the main thread know that we're supposed to start an executable at the given address
 			//uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
 			//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1
-			//hartData[hartid*NUMHARTWORDS+2] = progaddress;
-			//hartData[hartid*NUMHARTWORDS+3] = 0x1;
+			//OSScratchMem[hartid*NUMHARTWORDS+2] = progaddress;
+			//OSScratchMem[hartid*NUMHARTWORDS+3] = 0x1;
 		}
 		break;
 
@@ -388,7 +390,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 		{
 			uint32_t keepAlive = 0;
 			// Chain into the TISR if there is one installed
-			uint32_t TISR = hartData[hartid*NUMHARTWORDS+0];
+			uint32_t TISR = OSScratchMem[hartid*NUMHARTWORDS+0];
 
 			// If there's an installed routine, call it
 			if (TISR)
@@ -397,7 +399,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 			if (keepAlive) // TISR wishes to stay alive for next time
 			{
 				// Re-set the timer interval to wake up again
-				uint32_t TISR_Interval = hartData[hartid*NUMHARTWORDS+1];
+				uint32_t TISR_Interval = OSScratchMem[hartid*NUMHARTWORDS+1];
 				uint64_t now = E32ReadTime();
 				uint64_t future = now + TISR_Interval;
 				E32SetTimeCompare(future);
@@ -405,8 +407,8 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 			else // TISR wishes to be terminated
 			{
 				// Uninstall the routine
-				hartData[hartid*NUMHARTWORDS+0] = 0x0;
-				hartData[hartid*NUMHARTWORDS+1] = 0x0;
+				OSScratchMem[hartid*NUMHARTWORDS+0] = 0x0;
+				OSScratchMem[hartid*NUMHARTWORDS+1] = 0x0;
 
 				// Set timecmp to a distant future
 				swap_csr(0x801, 0xFFFFFFFF);
@@ -752,11 +754,11 @@ void workermain()
 		asm volatile("wfi;");
 
 		// We're signalled to run something
-		/*if (hartData[hartid*NUMHARTWORDS+3] != 0x0)
+		/*if (OSScratchMem[hartid*NUMHARTWORDS+3] != 0x0)
 		{
-			hartData[hartid*NUMHARTWORDS+3] = 0;
+			OSScratchMem[hartid*NUMHARTWORDS+3] = 0;
 
-			uint32_t progaddress = hartData[hartid*NUMHARTWORDS+2];
+			uint32_t progaddress = OSScratchMem[hartid*NUMHARTWORDS+2];
 			asm volatile(
 				"fence.i;"          // Invalidate I$
 				"lw s0, %0;"        // Target branch address
@@ -785,6 +787,9 @@ int main()
 	while(1){ }
 	return 0;*/
 
+	// Start with all LEDs off
+	SetLEDState(0x0);
+
 	// Attempt to mount file system on micro-SD card
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
@@ -806,9 +811,9 @@ int main()
 	if (havedrive)
 		RunExecutable(0, "autoexec.elf", false); // Boots on HART#0 if found
 
-	// Set up per-HART scratch memory
-	hartData = (uint32_t*)malloc(sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS);
-	__builtin_memset(hartData, 0x0, sizeof(uint32_t)*NUM_HARTS*NUMHARTWORDS);
+	// Clear per-HART scratch memory in DDR3 memory (8Kbytes per HART)
+	for (uint32_t i=0; i<NUM_HARTS*NUMHARTWORDS; i++)
+		OSScratchMem[i] = 0x00000000;
 
 	// Install interrupt service routines
 	// NOTE: Only after this point on timers / hw interrupts / illegal instruction exceptions start functioning
@@ -836,9 +841,6 @@ int main()
 		if (ProcessKeyEvents())
 			ParseCommands();
 	}
-
-	// Somehow, we have exited the main loop
-	free(hartData);
 
 	return 0;
 }

@@ -148,7 +148,7 @@ void EchoConsoleHexByte(const int32_t i)
 void DrawConsole()
 {
     for (int cy=0;cy<CONSOLE_ROWS;++cy)
-        DrawText(0, cy*8, CONSOLE_COLUMNS, &consoleText[cy*CONSOLE_COLUMNS]);
+        DrawTextLen(0, cy*8, CONSOLE_COLUMNS, &consoleText[cy*CONSOLE_COLUMNS]);
 }
 
 void ConsoleStringAtRow(char *target)

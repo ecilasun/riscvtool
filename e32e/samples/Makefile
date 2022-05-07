@@ -26,6 +26,7 @@ folders = \
 	bvh \
 	interrupt \
 	miniterm \
+	led \
 
 # Rules
 

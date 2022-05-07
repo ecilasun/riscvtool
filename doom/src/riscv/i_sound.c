@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "leds.h"
 #include "apu.h"
 #include "core.h"
 #include "uart.h"
@@ -58,13 +59,27 @@ int lengths[NUMSFX];
 #ifdef SNDINTR
 uint32_t audioworker(const uint32_t hartid)
 {
-	asm volatile(
-		".word 0xFC200073;" // Invalidate D$ (CDISCARD.D.L1) so that HART#4 can re-read it
-	);
+	// Wait for trigger
+	while (1)
+	{
+		uint32_t trigger = HARTMAILBOX[4*HARTPARAMCOUNT+0+NUM_HARTS];
+		if (trigger != 0)
+		{
+			HARTMAILBOX[4*HARTPARAMCOUNT+0+NUM_HARTS] = 0;
 
-	uint32_t *src = (uint32_t *)mixbuffer;
-	for (uint32_t i=0; i<SAMPLECOUNT; ++i)
-		*APUOUTPUT = src[i];
+			SetLEDState(0x1); // Busy
+
+			// Make sure we'll re-load from RAM for an accurate image of what's written by HART#0
+			asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
+
+			uint32_t *src = (uint32_t *)mixbuffer;
+
+			for (uint32_t i=0; i<SAMPLECOUNT; ++i)
+				*APUOUTPUT = src[i];
+
+			SetLEDState(0x0); // Done
+		}
+	}
 
 	return 1; // Keep alive
 }
@@ -297,8 +312,8 @@ I_InitSound()
 
 #ifdef SNDINTR
 	printf("I_InitSound installing TISR\n");
-	// TISR Repeats every 100 ms (10 times per second)
-	InstallTimerISR(4, audioworker, TEN_MILLISECONDS_IN_TICKS);
+	// TISR Repeats every 1 ms (1000 times per second)
+	InstallTimerISR(4, audioworker, ONE_MILLISECOND_IN_TICKS);
 	// Wait until ackknowledged by the HART
 	while(HARTMAILBOX[4] != 0x0) asm volatile("nop;");
 #endif
@@ -398,9 +413,10 @@ I_UpdateSound(void)
     }
 
 #ifdef SNDINTR
-	asm volatile(
-		".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1) so that HART#4 can read it
-	);
+	// Make sure this data makes it to RAM
+	asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1 (writeback D$)
+	// Trigger worker thread
+	HARTMAILBOX[4*HARTPARAMCOUNT+0+NUM_HARTS] = 0xFFFFFFFF;
 #endif
 }
 

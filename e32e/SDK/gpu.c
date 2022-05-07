@@ -44,7 +44,7 @@ void ClearScreen(uint32_t bgcolor)
 		GPUFBWORD[w] = bgcolor;
 }
 
-void DrawText(const int col, const int row, const int length, const char *message)
+void DrawTextLen(const int col, const int row, const int length, const char *message)
 {
 	int i = 0;
 	uint32_t* residentfont32 = (uint32_t*)residentfont;
