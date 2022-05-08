@@ -235,7 +235,7 @@ void PlayMODFile(const char *fname)
 
 		SetLEDState(cycle%2 ? 0x55 : 0xAA);
 
-		/*asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)*/
+		//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
 
 		// Now load the actual data
 		short *src = (short *)buffer;
