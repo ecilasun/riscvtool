@@ -478,20 +478,9 @@ void ListFiles(const char *path)
 		UARTWrite(FRtoString[re]);
 }
 
-void CLF()
+void ClearTerminal()
 {
-	// We work with single framebuffer in the ROM to keep things simple
-	FrameBufferSelect(0, 0);
-
-	// Write to FB0, display FB0
-	for (int y=0;y<240;++y)
-		for (int x=0;x<80;++x)
-		GPUFBWORD[x+y*80] = 0x00000000;
-}
-
-void CLS()
-{
-	UARTWrite("\033[0m\033[2J");
+	UARTWrite("\033[H\033[0m\033[2J");
 }
 
 void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
@@ -641,7 +630,7 @@ void ParseCommands()
 	}
 	else if (!strcmp(command, "cls")) // Clear terminal screen
 	{
-		CLS();
+		ClearTerminal();
 	}
 	else if (!strcmp(command, "stop")) // Halt the system by returning from main function
 	{
@@ -793,11 +782,8 @@ int main()
 	else
 		havedrive = 1;
 
-	// Clear framebuffers
-	CLF();
-
 	// Clear all attributes, clear screen, print boot message
-	CLS();
+	ClearTerminal();
 
 	// If there's an autoexec.elf on the SDCard, start it
 	// Note that this code does not need to return here
