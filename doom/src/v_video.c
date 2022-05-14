@@ -495,5 +495,5 @@ void V_Init (void)
 
     // Set up direct access to frame buffer 0 to avoid memcopy
     // (this is uncached memory for the time being in E32E architecture)
-    screens[0] = (byte*)GPUFB;
+    //screens[0] = (byte*)GPUFB;
 }
