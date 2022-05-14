@@ -100,14 +100,11 @@ void DecodeJPEG(const char *fname)
 
 	njDone();
 
-	// Write to FB0
-	*GPUCTL = 0;
+	// Write to FB0, show FB0
+	FrameBufferSelect(0, 0);
 
 	for (uint32_t i=0;i<80*240;++i)
 		GPUFBWORD[i] = ((uint32_t*)image)[i];
-
-	// Show FB0 (write to FB1)
-	*GPUCTL = 1;
 }
 
 void Setup()

@@ -15,6 +15,7 @@ extern volatile uint32_t *GPUCTL;
 #define FRAME_WIDTH_IN_WORDS 80
 #define FRAME_HEIGHT 240
 
+void FrameBufferSelect(uint32_t cpupage, uint32_t displaypage);
 void ClearScreen(uint32_t bgcolor);
 uint32_t DrawText(const int col, const int row, const char *message);
 void DrawTextLen(const int col, const int row, const int length, const char *message);

@@ -9,8 +9,6 @@
 #include "uart.h"
 #include "gpu.h"
 
-uint8_t *mandelbuffer = nullptr;
-
 int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
    int iteration = 0;
@@ -53,7 +51,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
             c = int(1.f*ratio*255);
          }
 
-         mandelbuffer[col + (row*320)] = c;
+         GPUFB[col + (row*320)] = c;
       }
    }
 
@@ -75,10 +73,6 @@ int main(int argc, char ** argv)
 		GPUPAL_32[i] = MAKERGBPALETTECOLOR(j, j, j);
 	}
 
-	mandelbuffer = (uint8_t*)malloc(320*240);
-
-    uint32_t page = 0;
-
     float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
     float X = -0.235125f;
     float Y = 0.827215f;
@@ -86,6 +80,7 @@ int main(int argc, char ** argv)
     uint64_t prevreti = E32ReadRetiredInstructions();
     uint32_t prevms = ClockToMs(E32ReadTime());
     uint32_t ips = 0;
+	FrameBufferSelect(0, 0);
     while(1)
     {
         // Generate one line of mandelbrot into offscreen buffer
@@ -94,17 +89,10 @@ int main(int argc, char ** argv)
 
         uint32_t ms = ClockToMs(E32ReadTime());
 
-		if ((row%32) == 0) // Update every 32nd row
+		if ((row%128) == 0) // Update every 128th row
 		{
-			for (uint32_t i=0;i<80*240;++i)
-				GPUFBWORD[i] = ((uint32_t*)mandelbuffer)[i];
-
 			DrawText(0, 0, "IPS:");
 			DrawDecimal(0, 8, ips);
-
-			*GPUCTL = page;
-
-	        page = (page + 1)%2;
 		}
 
 		if (row == 239)
@@ -119,8 +107,6 @@ int main(int argc, char ** argv)
             prevreti = reti;
         }
     }
-
-	free(mandelbuffer);
 
     return 0;
 }

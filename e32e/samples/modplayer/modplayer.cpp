@@ -125,12 +125,9 @@ static long read_module_length( const char *filename ) {
 
 void DrawWaveform()
 {
-	static uint32_t cycle = 0;
 	uint32_t *src = (uint32_t *)buffer;
 	for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
 		GPUFBWORD[i] = src[i];
-	*GPUCTL = cycle;
-	++cycle;
 }
 
 static long play_module( signed char *module )
@@ -262,6 +259,7 @@ void PlayMODFile(const char *fname)
 
 int main()
 {
+	FrameBufferSelect(0, 0);
 	SetLEDState(0x00);
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);

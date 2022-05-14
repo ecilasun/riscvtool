@@ -4,6 +4,8 @@
 
 int main()
 {
+	FrameBufferSelect(0, 0);
+
     UARTWrite("Hello, world!\n");
 
 	*GPUCTL = 0;

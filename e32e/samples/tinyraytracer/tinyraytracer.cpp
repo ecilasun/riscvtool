@@ -7,9 +7,6 @@
 #include "uart.h"
 #include "gpu.h"
 
-static uint32_t frame = 0;
-uint8_t *outputbuffer = nullptr;
-
 /*******************************************************************/
 
 typedef int BOOL;
@@ -46,7 +43,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
 	B = BOFF/64;
 	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
-	outputbuffer[x+y*320] = RGB;
+	GPUFB[x+y*320] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -313,13 +310,6 @@ void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 			vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
 			graphics_set_pixel(i,j,C.x,C.y,C.z);
 		}
-		// Previous line and current line to GPU framebuffer (to avoid interleaved visuals)
-		int strt = (j-1);
-		strt = strt<0 ? 0:strt;
-		for (int i=strt; i<=j; ++i)
-			__builtin_memcpy((void*)&GPUFB[strt*FRAME_WIDTH], &outputbuffer[strt*FRAME_WIDTH], FRAME_WIDTH*2);
-		++frame;
-		*GPUCTL = frame;
 	}
 }
 
@@ -373,9 +363,7 @@ int main()
 
     UARTWrite("starting scene generation\n");
 
-	outputbuffer = (uint8_t*)malloc(FRAME_WIDTH*FRAME_HEIGHT);
-	frame = 0;
-	*GPUCTL = frame;
+	FrameBufferSelect(0, 0);
 
     uint64_t startclock = E32ReadTime();
 

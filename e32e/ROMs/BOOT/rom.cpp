@@ -480,20 +480,13 @@ void ListFiles(const char *path)
 
 void CLF()
 {
-	// Write to FB0, display FB1
-	*GPUCTL = 0;
+	// We work with single framebuffer in the ROM to keep things simple
+	FrameBufferSelect(0, 0);
+
+	// Write to FB0, display FB0
 	for (int y=0;y<240;++y)
 		for (int x=0;x<80;++x)
 		GPUFBWORD[x+y*80] = 0x00000000;
-
-	// Write to FB1, display FB0
-	*GPUCTL = 1;
-	for (int y=0;y<240;++y)
-		for (int x=0;x<80;++x)
-		GPUFBWORD[x+y*80] = 0x00000000;
-
-	// Back to displaying FB1
-	*GPUCTL = 0;
 }
 
 void CLS()

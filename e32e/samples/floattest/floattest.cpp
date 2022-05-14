@@ -431,7 +431,7 @@ int main()
 		offset += float(deltams)*0.002f;
 
 		// Advance and show frame
-		*GPUCTL = frame;
+		FrameBufferSelect(frame, frame^1);
 		++frame;
 	}
 

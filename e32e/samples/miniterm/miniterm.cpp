@@ -24,7 +24,7 @@ int main()
 
 	// Set output page
 	uint32_t page = 0;
-	*GPUCTL = page;
+	FrameBufferSelect(page, page^1);
 
 	// Startup message
 	ClearConsole();
@@ -156,7 +156,7 @@ int main()
 		}
 
 		page = (page+1)%2;
-		*GPUCTL = page;
+		FrameBufferSelect(page, page^1);
    }
 
    return 0;
