@@ -24,10 +24,6 @@
 //asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
 //asm volatile("fence.i;"); // FENCE.I (invalidate I$)
 
-#define REQ_CheckAlive			0x00000000
-#define REQ_InstallTISR			0x00000001
-#define REQ_StartExecutable		0x00000002
-
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -331,6 +327,7 @@ void HandleHARTIRQ(uint32_t hartid)
 			OSScratchMem[hartid*NUMHARTWORDS+0] = TISR;
 			OSScratchMem[hartid*NUMHARTWORDS+1] = TISR_Interval;
 
+			// Will start after interval
 			uint64_t now = E32ReadTime();
 			uint64_t future = now + TISR_Interval;
 			E32SetTimeCompare(future);
@@ -394,7 +391,10 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 
 			// If there's an installed routine, call it
 			if (TISR)
-				keepAlive = ((t_timerISR)TISR)(hartid);
+			{
+				((t_timerISR)TISR)(hartid);
+				keepAlive = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+			}
 
 			if (keepAlive) // TISR wishes to stay alive for next time
 			{

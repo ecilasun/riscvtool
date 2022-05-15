@@ -1,13 +1,14 @@
 #include "core.h"
 #include "uart.h"
 
-uint32_t mytimerthing(const uint32_t hartID)
+void mytimerthing(const uint32_t hartID)
 {
 	UARTWrite("Tick: HART#");
 	UARTWriteDecimal(hartID);
 	UARTWrite("\n");
 
-	return 1; // NOTE: Return zero to be terminated after execution
+	// Keep alive (zero to terminate)
+	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = 1;
 }
 
 int main()

@@ -13,6 +13,8 @@
 
 #include "micromod/micromod.h"
 
+#define MULTICORE
+
 FATFS Fs;
 
 #define SAMPLING_FREQ  48000  /* 48khz. */
@@ -125,9 +127,22 @@ static long read_module_length( const char *filename ) {
 
 void DrawWaveform()
 {
-	uint32_t *src = (uint32_t *)buffer;
-	for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
-		GPUFBWORD[i] = src[i];
+	ClearScreen(0x0F0F0F0F); // White
+
+	int16_t *src = (int16_t *)buffer;
+	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
+	{
+		int16_t L = src[x*2+0];
+		int16_t R = src[x*2+1];
+		L = L/64;
+		L = L < -110 ? -110 : L;
+		L = L > 110 ? 110 : L;
+		R = R/64;
+		R = R < -110 ? -110 : R;
+		R = R > 110 ? 110 : R;
+		GPUFBWORD[x + (L+110)*FRAME_WIDTH_IN_WORDS] = 0x01010101; // Blue
+		GPUFBWORD[x + (R+110)*FRAME_WIDTH_IN_WORDS] = 0x04040404; // Red
+	}
 }
 
 static long play_module( signed char *module )
@@ -156,8 +171,6 @@ static long play_module( signed char *module )
 			crossfeed( buffer, BUFFER_SAMPLES );
 			reverb( buffer, BUFFER_SAMPLES );
 
-			//asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1 (writeback D$)
-
 			samples_remaining -= count;
 
 			// TODO: If 'buffer' is placed in AudioRAM, the APU
@@ -169,10 +182,6 @@ static long play_module( signed char *module )
 			uint32_t *src = (uint32_t *)buffer;
 			for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
 				*APUOUTPUT = src[i];
-
-			// Trigger visuals
-			/*int hartID = 1;
-			HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0xFFFFFFFF;*/
 
 			// Press down arrow to stop
 			/*int stop = 0;
@@ -191,7 +200,13 @@ static long play_module( signed char *module )
 			if( samples_remaining <= 0 || result != 0 )
 				playing = 0;
 
+#if defined(MULTICORE)
+			const int hartID = 1;
+			asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1 (writeback D$)
+			HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0xFFFFFFFF;
+#else
 			DrawWaveform();
+#endif
 		}
 	}
 	else
@@ -222,40 +237,31 @@ void PlayMODFile(const char *fname)
 	}
 }
 
-/*uint32_t vumeterTISR(const uint32_t hartID)
+#if defined(MULTICORE)
+void vumeterTISR(const uint32_t hartID)
 {
-	static uint32_t cycle = 0;
-
 	if (HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] != 0x0)
 	{
 		HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0x0;
 
-		SetLEDState(cycle%2 ? 0x55 : 0xAA);
+		SetLEDState(0x1); // Busy
 
 		//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
-
-		// Now load the actual data
-		short *src = (short *)buffer;
-		for (uint32_t i=0; i<BUFFER_SAMPLES/2; ++i)
-		{
-			int H = int(src[i]/512);
-			H = H>=120 ? 119 : H;
-			H = H<0 ? 0 : H;
-			H += 120;
-			GPUFB[i+H*FRAME_WIDTH] = cycle;
-		}
-
-		*GPUCTL = cycle;
-		++cycle;
 
 		// Force cache invalidation by loading something one full cache away
 		uint32_t *src32 = (uint32_t *)((uint32_t)buffer+32768);
 		for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
-			GPUFBWORD[i] = src32[i];
+			GPUFBWORD[i+19000] = src32[i];
+
+		DrawWaveform();
+
+		SetLEDState(0x0); // Not busy
 	}
 
-	return 1;
-}*/
+	// Keep alive (zero to terminate)
+	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = 1;
+}
+#endif
 
 int main()
 {
@@ -266,8 +272,10 @@ int main()
 	if (mountattempt != FR_OK)
 		return -1;
 
-	/*InstallTimerISR(1, vumeterTISR, TEN_MILLISECONDS_IN_TICKS);
-	while(HARTMAILBOX[1] != 0x0) asm volatile("nop;");*/
+#if defined(MULTICORE)
+	InstallTimerISR(1, vumeterTISR, TEN_MILLISECONDS_IN_TICKS);
+	while(HARTMAILBOX[1] != 0x0) asm volatile("nop;");
+#endif
 
 	PlayMODFile("sd:test.mod");
 

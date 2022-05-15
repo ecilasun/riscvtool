@@ -5,6 +5,10 @@
 
 #include <encoding.h>
 
+#define REQ_CheckAlive			0x00000000
+#define REQ_InstallTISR			0x00000001
+#define REQ_StartExecutable		0x00000002
+
 #define ONE_SECOND_IN_TICKS				10000000
 #define HUNDRED_MILLISECONDS_IN_TICKS	1000000
 #define TEN_MILLISECONDS_IN_TICKS		100000
@@ -24,8 +28,8 @@ uint64_t E32ReadRetiredInstructions();
 extern volatile uint32_t *HARTMAILBOX;
 extern volatile uint8_t *HARTIRQ;
 
-// User defined timer interrupt service routine signature
-typedef uint32_t (*t_timerISR)(const uint32_t hartID);
+// User defined timer interrupt service routine signature, set HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] to nonzero to stay alive
+typedef void (*t_timerISR)(const uint32_t hartID);
 void InstallTimerISR(const uint32_t hartID, t_timerISR tisr, const uint32_t interval);
 
 // Number of parameters per hart, stored at offset NUM_HARTS

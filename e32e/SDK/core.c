@@ -29,7 +29,7 @@ void InstallTimerISR(const uint32_t hartID, t_timerISR tisr, const uint32_t inte
 	// Install a timer interrupt routione for given HART
 	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = (uint32_t)tisr;
 	HARTMAILBOX[hartID*HARTPARAMCOUNT+1+NUM_HARTS] = interval;
-	HARTMAILBOX[hartID] = 0x00000001;
+	HARTMAILBOX[hartID] = REQ_InstallTISR;
 
 	// Trigger HART IRQ to wake up given HART's ISR
 	HARTIRQ[hartID] = 1;

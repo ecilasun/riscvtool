@@ -30,6 +30,7 @@
 #include <math.h>
 
 #include "leds.h"
+#include "gpu.h"
 #include "apu.h"
 #include "core.h"
 #include "uart.h"
@@ -57,31 +58,31 @@ int*            channelrightvol_lookup[NUM_CHANNELS];
 int lengths[NUMSFX];
 
 #ifdef SNDINTR
-uint32_t audioworker(const uint32_t hartid)
+void audioworker(const uint32_t hartid)
 {
-	// Wait for trigger
-	while (1)
+	if (HARTMAILBOX[4*HARTPARAMCOUNT+0+NUM_HARTS] != 0x0)
 	{
-		uint32_t trigger = HARTMAILBOX[4*HARTPARAMCOUNT+0+NUM_HARTS];
-		if (trigger != 0)
-		{
-			HARTMAILBOX[4*HARTPARAMCOUNT+0+NUM_HARTS] = 0;
+		HARTMAILBOX[4*HARTPARAMCOUNT+0+NUM_HARTS] = 0x0;
 
-			SetLEDState(0x1); // Busy
+		SetLEDState(0x1); // Busy
 
-			// Make sure we'll re-load from RAM for an accurate image of what's written by HART#0
-			asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
+		// Make sure we'll re-load from RAM for an accurate image of what's written by HART#0
+		//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
 
-			uint32_t *src = (uint32_t *)mixbuffer;
+		// Force cache invalidation by loading something one full cache away
+		uint32_t *src32 = (uint32_t *)((uint32_t)mixbuffer+32768);
+		for (uint32_t i=0; i<SAMPLECOUNT; ++i)
+			GPUFBWORD[i+19000] = src32[i];
 
-			for (uint32_t i=0; i<SAMPLECOUNT; ++i)
-				*APUOUTPUT = src[i];
+		uint32_t *src = (uint32_t *)mixbuffer;
+		for (uint32_t i=0; i<SAMPLECOUNT; ++i)
+			*APUOUTPUT = src[i];
 
-			SetLEDState(0x0); // Done
-		}
+		SetLEDState(0x0); // Done
 	}
 
-	return 1; // Keep alive
+	// Keep alive (zero to terminate)
+	HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS] = 1;
 }
 #endif
 
@@ -313,7 +314,7 @@ I_InitSound()
 #ifdef SNDINTR
 	printf("I_InitSound installing TISR\n");
 	// TISR Repeats every 1 ms (1000 times per second)
-	InstallTimerISR(4, audioworker, ONE_MILLISECOND_IN_TICKS);
+	InstallTimerISR(4, audioworker, TEN_MILLISECONDS_IN_TICKS);
 	// Wait until ackknowledged by the HART
 	while(HARTMAILBOX[4] != 0x0) asm volatile("nop;");
 #endif
