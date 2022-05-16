@@ -4,12 +4,7 @@ This project contains a set of helper utilities and sample code, as well as the 
 
 Currently ROM images and samples are provided for the following platform, under their respective directies:
 - E32E (Most up-to-date and latest version actively developed)
-- E32 - soon to be deprecated
-- E32C - soon to be deprecated
-- E32D - soon to be deprecated
-- NekoIchi - soon to be deprecated
-- NekoSan - soon to be deprecated
-- NekoYon - soon to be deprecated
+- NekoIchi (ROM for the article over at http://displayoutput.com/)
 
 # Prerequisites
 
