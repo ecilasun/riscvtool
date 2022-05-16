@@ -405,20 +405,13 @@ int main()
     uint64_t startclock = E32ReadTime();
 	while(1)
 	{
-		// Clear
-		for (int y=0;y<240;++y)
-		{
-			for (int x=0;x<80;++x)
-			{
-				GPUFBWORD[x+y*80] = 0x00000000;
-			}
-		}
+		ClearScreen(0x00000000);
 
 		// Draw waveform
 		for (int x=0;x<320;++x)
 		{
-			float V1 = cos(offset + 3.1415927f * float(x)/320.f)*60.f;
-			float V2 = sin(offset*3.3f + 3.1415927f * float(x)/640.f)*60.f;
+			float V1 = cosf(offset + 3.1415927f * float(x)/320.f)*60.f;
+			float V2 = sinf(offset*3.3f + 3.1415927f * float(x)/640.f)*60.f;
 			int K = int(V1+V2)+120;
 			if (K<240 && K>=0)
 				GPUFB[x+K*320] = 0x0C;

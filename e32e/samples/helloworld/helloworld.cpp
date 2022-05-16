@@ -6,11 +6,11 @@ int main()
 {
 	FrameBufferSelect(0, 0);
 
+	// Output to UART port
     UARTWrite("Hello, world!\n");
 
-	*GPUCTL = 0;
+	// Show on the connected display
 	DrawText(0,0,"Hello, world!");
-	*GPUCTL = 1;
 
     return 0;
 }
