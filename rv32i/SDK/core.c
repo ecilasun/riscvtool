@@ -268,13 +268,10 @@ extern "C" {
          int i = 0;
          while (cptr != eptr)
          {
-            UARTPutChar(*cptr);
-            if (i%128==0) // time to flush the FIFO
-               UARTFlush();
+			 *IO_UARTTX = *cptr;
             ++i;
             ++cptr;
          }
-         UARTFlush();
          return len;
       }
       else return 0;
