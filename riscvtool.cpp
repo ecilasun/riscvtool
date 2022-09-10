@@ -218,6 +218,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
     printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
 
     // Send all binary sections to their correct addresses
+    int totalwritten = 0;
     for(int i=0; i<fheader->m_SHNum; ++i)
     {
         SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*i);
@@ -227,9 +228,12 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
             unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
             for (unsigned int i=0; i<sheader->m_Size; ++i)
             {
-                if (i!=0 && ((i%16) == 0))
+                if (totalwritten!=0 && ((totalwritten%16) == 0))
                     printf("\n");
+                ++totalwritten;
+
                 printf("%.2X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
+
                 if (((i+1)%4)==0 && i!=sheader->m_Size-1)
                     printf(" "); // 32bit separator
             }
@@ -239,95 +243,35 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
             unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
             for (unsigned int i=0;i<sheader->m_Size/4;++i)
             {
-                if (i!=0 && ((i%4) == 0))
+                if (totalwritten!=0 && ((totalwritten%4) == 0))
                     printf("\n");
+                ++totalwritten;
+
                 printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
             }
-            // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
-            unsigned int leftover = 4-((sheader->m_Size/4)%4);
-            if (leftover!=4)
-                for (unsigned int i=0;i<leftover;++i)
-                    printf("00000000");
         }
         else if (groupsize == 32) // 256bit groups (32 bytes)
         {
             unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-            for (unsigned int i=0;i<sheader->m_Size/4;++i)
+            for (unsigned int i=0;i<sheader->m_Size/8;++i)
             {
-                if (i!=0 && ((i%8) == 0))
+                if (totalwritten!=0 && ((totalwritten%8) == 0))
                     printf("\n");
+                ++totalwritten;
+
                 printf("%.8X", litteendian[(i&0xFFFFFFF8) + 7-(i%8)]);
             }
-            // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
-            unsigned int leftover = 8-((sheader->m_Size/4)%8);
-            if (leftover!=8)
-                for (unsigned int i=0;i<leftover;++i)
-                    printf("00000000");
         }
-
-        if (sheader->m_Size)
-            printf("\n");
     }
+
+    // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
+    /*unsigned int leftover = 4-((totalwritten/4)%4);
+    printf("total: %d left: %d\n", totalwritten, leftover);
+    if (leftover!=4)
+        for (unsigned int i=0;i<leftover;++i)
+            printf("00000000");*/
+
     printf(";");
-
-    // Parse the header and check the magic word
-    /*SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
-
-    if (fheader->m_Magic != 0x464C457F)
-    {
-        printf("Unknown magic, expecting 0x7F followed by 'ELF', got '%c%c%c%c' (%.8X)\n", fheader->m_Magic&0x000000FF, (fheader->m_Magic&0x0000FF00)>>8, (fheader->m_Magic&0x00FF0000)>>16, (fheader->m_Magic&0xFF000000)>>24, fheader->m_Magic);
-        return;
-    }
-
-    // Parse the header and dump the executable
-    SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinary+fheader->m_PHOff);
-
-    printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
-    //uint32_t sz = pheader->m_MemSz < pheader->m_FileSz ? pheader->m_MemSz : pheader->m_FileSz;
-    if (groupsize == 4) // 32bit groups (4 bytes)
-    {
-        unsigned char *litteendian = (unsigned char *)(_elfbinary+pheader->m_Offset);
-        for (unsigned int i=0; i<pheader->m_FileSz; ++i)
-        {
-            if (i!=0 && ((i%16) == 0))
-                printf("\n");
-            printf("%.2X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
-            if (((i+1)%4)==0 && i!=pheader->m_FileSz-1)
-                printf(" "); // 32bit separator
-        }
-    }
-    else if (groupsize == 16) // 128bit groups (16 bytes)
-    {
-        unsigned int *litteendian = (unsigned int *)(_elfbinary+pheader->m_Offset);
-        for (unsigned int i=0;i<pheader->m_FileSz/4;++i)
-        {
-            if (i!=0 && ((i%4) == 0))
-                printf("\n");
-            printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
-        }
-        // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
-        unsigned int leftover = 4-((pheader->m_FileSz/4)%4);
-        if (leftover!=4)
-            for (unsigned int i=0;i<leftover;++i)
-                printf("00000000");
-    }
-    else if (groupsize == 32) // 256bit groups (32 bytes)
-    {
-        unsigned int *litteendian = (unsigned int *)(_elfbinary+pheader->m_Offset);
-        for (unsigned int i=0;i<pheader->m_FileSz/4;++i)
-        {
-            if (i!=0 && ((i%8) == 0))
-                printf("\n");
-            printf("%.8X", litteendian[(i&0xFFFFFFF8) + 7-(i%8)]);
-        }
-        // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
-        unsigned int leftover = 8-((pheader->m_FileSz/4)%8);
-        if (leftover!=8)
-            for (unsigned int i=0;i<leftover;++i)
-                printf("00000000");
-    }
-
-    printf(";");*/
 }
 
 void dumpelf(char *_filename, unsigned int groupsize)
