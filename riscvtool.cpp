@@ -205,7 +205,9 @@ struct SElfSectionHeader32
 };
 #pragma pack(pop)
 
-void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
+#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
+
+void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsigned int groupsize)
 {
     SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
 
@@ -215,63 +217,56 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
         return;
     }
 
+    // Allocate space to work in and clear to all zeros
+    uint32_t *workblock = new uint32_t[_filebytesize/4 + 16];
+    memset(workblock, 0x0, _filebytesize+64);
+
     printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
 
     // Send all binary sections to their correct addresses
-    int totalwritten = 0;
+    int woffset = 0;
     for(int i=0; i<fheader->m_SHNum; ++i)
     {
         SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*i);
 
-        if (groupsize == 4) // 32bit groups (4 bytes)
+        if (sheader->m_Flags & 0x00000007 && sheader->m_Size!=0) // writeable/alloc/exec and non-zero
         {
-            unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
-            for (unsigned int i=0; i<sheader->m_Size; ++i)
+            if (groupsize == 4) // 32bit groups (4 bytes)
             {
-                if (totalwritten!=0 && ((totalwritten%16) == 0))
-                    printf("\n");
-                ++totalwritten;
-
-                printf("%.2X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
-
-                if (((i+1)%4)==0 && i!=sheader->m_Size-1)
-                    printf(" "); // 32bit separator
+                unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
+                for (unsigned int i=0; i<sheader->m_Size; ++i)
+                    workblock[woffset++] = litteendian[(i&0xFFFFFFFC) + 3-(i%4)];
             }
-        }
-        else if (groupsize == 16) // 128bit groups (16 bytes)
-        {
-            unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-            for (unsigned int i=0;i<sheader->m_Size/4;++i)
+            else if (groupsize == 16) // 128bit groups (16 bytes)
             {
-                if (totalwritten!=0 && ((totalwritten%4) == 0))
-                    printf("\n");
-                ++totalwritten;
-
-                printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
+                unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
+                for (unsigned int i=0;i<sheader->m_Size/4;++i)
+                    workblock[woffset++] = litteendian[(i&0xFFFFFFFC) + 3-(i%4)];
             }
-        }
-        else if (groupsize == 32) // 256bit groups (32 bytes)
-        {
-            unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-            for (unsigned int i=0;i<sheader->m_Size/8;++i)
+            else if (groupsize == 32) // 256bit groups (32 bytes)
             {
-                if (totalwritten!=0 && ((totalwritten%8) == 0))
-                    printf("\n");
-                ++totalwritten;
-
-                printf("%.8X", litteendian[(i&0xFFFFFFF8) + 7-(i%8)]);
+                unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
+                for (unsigned int i=0;i<sheader->m_Size/8;++i)
+                    workblock[woffset++] = litteendian[(i&0xFFFFFFF8) + 7-(i%8)];
             }
         }
     }
 
-    // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
-    /*unsigned int leftover = 4-((totalwritten/4)%4);
-    printf("total: %d left: %d\n", totalwritten, leftover);
-    if (leftover!=4)
-        for (unsigned int i=0;i<leftover;++i)
-            printf("00000000");*/
+    // Pad to avoid misaligned data
+    if (groupsize>4)
+        woffset = EAlignUp(woffset, groupsize/4);
 
-    printf(";");
+    for(int i=0; i<woffset; ++i)
+    {
+        int breakpoint = (i!=0) && (groupsize == 4 ? (i%16==0) : (groupsize == 16 ? (i%4==0) : (groupsize == 32 ? (i%8==0) : 0)));
+        if (breakpoint)
+            printf("\n");
+        printf("%.8X", workblock[i]);
+    }
+
+    delete [] workblock;
+
+    printf(";\n");
 }
 
 void dumpelf(char *_filename, unsigned int groupsize)
@@ -296,7 +291,7 @@ void dumpelf(char *_filename, unsigned int groupsize)
     fread(bytestosend, 1, filebytesize, fp);
     fclose(fp);
 
-    parseelfheader(bytestosend, groupsize);
+    parseelfheader(bytestosend, filebytesize, groupsize);
 
     delete [] bytestosend;
 }
