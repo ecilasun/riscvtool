@@ -10,14 +10,26 @@
 
 #include "core.h"
 #include "leds.h"
-#include "uart.h"
+//#include "uart.h"
 
+// Per-HART entry point
+void workermain()
+{
+	//uint32_t hartid = read_csr(mhartid);
+
+	while(1)
+	{
+		// TODO: Per-HART stuff
+	}
+}
+
+// Common entry point
 int main()
 {
-	// Start with all LEDs off
-	SetLEDState(0x0);
+	uint32_t hartid = read_csr(mhartid);
 
-	UARTWrite("rv32i\n");
+	// HART#0 turns off all LEDs
+	if (hartid == 0) SetLEDState(0x0);
 
 	while(1)
 	{

@@ -6,619 +6,454 @@ EXEC_P, HAS_SYMS, D_PAGED
 start address 0x00000000
 
 Program Header:
-0x70000003 off    0x000019ed vaddr 0x00000000 paddr 0x00000000 align 2**0
+0x70000003 off    0x0000183d vaddr 0x00000000 paddr 0x00000000 align 2**0
          filesz 0x00000020 memsz 0x00000000 flags r--
     LOAD off    0x00001000 vaddr 0x00000000 paddr 0x00000000 align 2**12
-         filesz 0x000009c0 memsz 0x000009c4 flags rwx
+         filesz 0x00000810 memsz 0x00000814 flags rwx
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .boot         00000064  00000000  00000000  00001000  2**2
+  0 .boot         0000008c  00000000  00000000  00001000  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .text         0000040c  00000064  00000064  00001064  2**2
+  1 .text         000002ac  0000008c  0000008c  0000108c  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000007  00000470  00000470  00001470  2**2
+  2 .eh_frame     00000080  00000338  00000338  00001338  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .eh_frame     000000dc  00000478  00000478  00001478  2**2
+  3 .data         00000430  000003b8  000003b8  000013b8  2**3
+                  CONTENTS, ALLOC, LOAD, DATA
+  4 .got          0000001c  000007e8  000007e8  000017e8  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  5 .got.plt      00000008  00000804  00000804  00001804  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  6 .sdata        00000004  0000080c  0000080c  0000180c  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  4 .data         00000438  00000558  00000558  00001558  2**3
-                  CONTENTS, ALLOC, LOAD, DATA
-  5 .got          00000024  00000990  00000990  00001990  2**2
-                  CONTENTS, ALLOC, LOAD, DATA
-  6 .got.plt      00000008  000009b4  000009b4  000019b4  2**2
-                  CONTENTS, ALLOC, LOAD, DATA
-  7 .sdata        00000004  000009bc  000009bc  000019bc  2**2
-                  CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .sbss         00000004  000009c0  000009c0  000019c0  2**2
+  7 .sbss         00000004  00000810  00000810  00001810  2**2
                   ALLOC
-  9 .comment      0000002d  00000000  00000000  000019c0  2**0
+  8 .comment      0000002d  00000000  00000000  00001810  2**0
                   CONTENTS, READONLY
- 10 .riscv.attributes 00000020  00000000  00000000  000019ed  2**0
+  9 .riscv.attributes 00000020  00000000  00000000  0000183d  2**0
                   CONTENTS, READONLY
 SYMBOL TABLE:
 00000000 l    d  .boot	00000000 .boot
-00000064 l    d  .text	00000000 .text
-00000470 l    d  .rodata	00000000 .rodata
-00000478 l    d  .eh_frame	00000000 .eh_frame
-00000558 l    d  .data	00000000 .data
-00000990 l    d  .got	00000000 .got
-000009b4 l    d  .got.plt	00000000 .got.plt
-000009bc l    d  .sdata	00000000 .sdata
-000009c0 l    d  .sbss	00000000 .sbss
+0000008c l    d  .text	00000000 .text
+00000338 l    d  .eh_frame	00000000 .eh_frame
+000003b8 l    d  .data	00000000 .data
+000007e8 l    d  .got	00000000 .got
+00000804 l    d  .got.plt	00000000 .got.plt
+0000080c l    d  .sdata	00000000 .sdata
+00000810 l    d  .sbss	00000000 .sbss
 00000000 l    d  .comment	00000000 .comment
 00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
 00000000 l    df *ABS*	00000000 rom.cpp
-0000004c l       .boot	00000000 noatexitfound
+00000078 l       .boot	00000000 workerhartstart
+00000060 l       .boot	00000000 noatexitfound
 00000000 l    df *ABS*	00000000 lib_a-memset.o
-00000000 l    df *ABS*	00000000 div.o
-00000000 l    df *ABS*	00000000 uart.c
 00000000 l    df *ABS*	00000000 leds.c
 00000000 l    df *ABS*	00000000 atexit.c
 00000000 l    df *ABS*	00000000 fini.c
 00000000 l    df *ABS*	00000000 init.c
 00000000 l    df *ABS*	00000000 __atexit.c
+00000000 l    df *ABS*	00000000 uart.c
 00000000 l    df *ABS*	00000000 core.c
 00000000 l    df *ABS*	00000000 impure.c
-00000568 l     O .data	00000428 impure_data
-00000477 l       .rodata	00000000 __fini_array_end
-00000477 l       .rodata	00000000 __fini_array_start
-00000477 l       .rodata	00000000 __init_array_end
-00000477 l       .rodata	00000000 __preinit_array_end
-00000990 l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
-00000477 l       .rodata	00000000 __init_array_start
-00000477 l       .rodata	00000000 __preinit_array_start
-000011c0 g       *ABS*	00000000 __global_pointer$
-00000560 g       .data	00000000 _fdata
-00000230 g     F .text	00000024 _Z9UARTFlushv
-000002cc g     F .text	00000014 _Z11SetLEDStatem
-00000477 g       .rodata	00000000 _etext
-000011c0 g       .sdata	00000000 _gp
-00000254 g     F .text	00000014 _Z11UARTPutCharc
-00000064 g       .boot	00000000 _boot
-00000560 g     O .data	00000004 LEDSTATE
-00000148 g     F .text	00000048 .hidden __hidden___udivsi3
-00000148 g     F .text	00000048 .hidden __udivsi3
-000009c4 g       .sbss	00000000 _bss_start
-000009bc g     O .sdata	00000004 _global_impure_ptr
-00000348 g     F .text	0000008c __libc_init_array
-00000218 g     F .text	00000018 _Z11UARTHasDatav
-000009c4 g       .sbss	00000000 _bss_end
-000002f4 g     F .text	00000054 __libc_fini_array
-00000190 g     F .text	00000010 .hidden __umodsi3
-00000064 g       .boot	00000000 _ftext
-00000000 g     F .boot	00000064 _start
-000003d4 g     F .text	0000009c __register_exitproc
-00000064 g     F .text	000000dc memset
-000001f4 g     F .text	00000024 main
-000009c0 g     O .sbss	00000004 __malloc_max_total_mem
-00000268 g     F .text	00000064 _Z9UARTWritePKc
-00000140 g     F .text	00000084 .hidden __divsi3
-000002e0 g     F .text	00000014 atexit
-0000055c g     O .data	00000004 IO_UARTTX
-000009c4 g       .sbss	00000000 __BSS_END__$
-00000990 g       .data	00000000 _edata
-000009c8 g       .sbss	00000000 _end
-000001c4 g     F .text	00000030 .hidden __modsi3
-00000558 g     O .data	00000004 IO_UARTStatus
-00000064 g     F .boot	00000000 _exit
-000009c0 g       .sbss	00000000 _fbss
+000003c0 l     O .data	00000428 impure_data
+00000338 l       .eh_frame	00000000 __fini_array_end
+00000338 l       .eh_frame	00000000 __fini_array_start
+00000338 l       .eh_frame	00000000 __init_array_end
+00000338 l       .eh_frame	00000000 __preinit_array_end
+000007e8 l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
+00000338 l       .eh_frame	00000000 __init_array_start
+00000338 l       .eh_frame	00000000 __preinit_array_start
+00001010 g       *ABS*	00000000 __global_pointer$
+000003c0 g       .data	00000000 _fdata
+00000194 g     F .text	00000014 _Z11SetLEDStatem
+00000338 g       .text	00000000 _etext
+00001010 g       .sdata	00000000 _gp
+0000008c g       .boot	00000000 _boot
+000003b8 g     O .data	00000004 LEDSTATE
+00000814 g       .sbss	00000000 _bss_start
+0000080c g     O .sdata	00000004 _global_impure_ptr
+00000210 g     F .text	0000008c __libc_init_array
+00000814 g       .sbss	00000000 _bss_end
+000001bc g     F .text	00000054 __libc_fini_array
+0000008c g       .boot	00000000 _ftext
+00000000 g     F .boot	0000008c _start
+0000029c g     F .text	0000009c __register_exitproc
+0000008c g     F .text	000000dc memset
+0000016c g     F .text	00000028 main
+00000810 g     O .sbss	00000004 __malloc_max_total_mem
+000001a8 g     F .text	00000014 atexit
+00000814 g       .sbss	00000000 __BSS_END__$
+000007e8 g       .data	00000000 _edata
+00000818 g       .sbss	00000000 _end
+0000008c g     F .boot	00000000 _exit
+00000810 g       .sbss	00000000 _fbss
+00000168 g     F .text	00000004 _Z10workermainv
 
 
 
 Disassembly of section .boot:
 
 00000000 <_start>:
-   0:	00001197          	auipc	gp,0x1
-   4:	9941a183          	lw	gp,-1644(gp) # 994 <_GLOBAL_OFFSET_TABLE_+0x4>
-   8:	00010137          	lui	sp,0x10
-   c:	f0010113          	addi	sp,sp,-256 # ff00 <__global_pointer$+0xed40>
-  10:	00010413          	mv	s0,sp
-  14:	00001517          	auipc	a0,0x1
-  18:	98c52503          	lw	a0,-1652(a0) # 9a0 <_GLOBAL_OFFSET_TABLE_+0x10>
-  1c:	00001617          	auipc	a2,0x1
-  20:	99062603          	lw	a2,-1648(a2) # 9ac <_GLOBAL_OFFSET_TABLE_+0x1c>
-  24:	40a60633          	sub	a2,a2,a0
-  28:	00000593          	li	a1,0
-  2c:	038000ef          	jal	ra,64 <_exit>
-  30:	00001517          	auipc	a0,0x1
-  34:	97452503          	lw	a0,-1676(a0) # 9a4 <_GLOBAL_OFFSET_TABLE_+0x14>
-  38:	00050a63          	beqz	a0,4c <noatexitfound>
-  3c:	00001517          	auipc	a0,0x1
-  40:	00001517          	auipc	a0,0x1
-  44:	95c52503          	lw	a0,-1700(a0) # 99c <_GLOBAL_OFFSET_TABLE_+0xc>
-  48:	298000ef          	jal	ra,2e0 <atexit>
+   0:	00000197          	auipc	gp,0x0
+   4:	7ec1a183          	lw	gp,2028(gp) # 7ec <_GLOBAL_OFFSET_TABLE_+0x4>
+   8:	f14024f3          	csrr	s1,mhartid
+   c:	00849493          	slli	s1,s1,0x8
+  10:	00010937          	lui	s2,0x10
+  14:	e0090913          	addi	s2,s2,-512 # fe00 <__global_pointer$+0xedf0>
+  18:	40990933          	sub	s2,s2,s1
+  1c:	00090113          	mv	sp,s2
+  20:	00010413          	mv	s0,sp
+  24:	04049a63          	bnez	s1,78 <workerhartstart>
+  28:	00000517          	auipc	a0,0x0
+  2c:	7d052503          	lw	a0,2000(a0) # 7f8 <_GLOBAL_OFFSET_TABLE_+0x10>
+  30:	00000617          	auipc	a2,0x0
+  34:	7d062603          	lw	a2,2000(a2) # 800 <_GLOBAL_OFFSET_TABLE_+0x18>
+  38:	40a60633          	sub	a2,a2,a0
+  3c:	00000593          	li	a1,0
+  40:	04c000ef          	jal	ra,8c <_exit>
+  44:	00000517          	auipc	a0,0x0
+  48:	7b852503          	lw	a0,1976(a0) # 7fc <_GLOBAL_OFFSET_TABLE_+0x14>
+  4c:	00050a63          	beqz	a0,60 <noatexitfound>
+  50:	00001517          	auipc	a0,0x1
+  54:	00000517          	auipc	a0,0x0
+  58:	7a052503          	lw	a0,1952(a0) # 7f4 <_GLOBAL_OFFSET_TABLE_+0xc>
+  5c:	14c000ef          	jal	ra,1a8 <atexit>
 
-0000004c <noatexitfound>:
-  4c:	2fc000ef          	jal	ra,348 <__libc_init_array>
-  50:	00012503          	lw	a0,0(sp)
-  54:	00410593          	addi	a1,sp,4
-  58:	00000613          	li	a2,0
-  5c:	1980006f          	j	1f4 <main>
-  60:	00100073          	ebreak
+00000060 <noatexitfound>:
+  60:	1b0000ef          	jal	ra,210 <__libc_init_array>
+  64:	00012503          	lw	a0,0(sp)
+  68:	00410593          	addi	a1,sp,4
+  6c:	00000613          	li	a2,0
+  70:	0fc0006f          	j	16c <main>
+  74:	00100073          	ebreak
+
+00000078 <workerhartstart>:
+  78:	00012503          	lw	a0,0(sp)
+  7c:	00410593          	addi	a1,sp,4
+  80:	00000613          	li	a2,0
+  84:	0e40006f          	j	168 <_Z10workermainv>
+  88:	00100073          	ebreak
 
 Disassembly of section .text:
 
-00000064 <memset>:
-  64:	00f00313          	li	t1,15
-  68:	00050713          	mv	a4,a0
-  6c:	02c37e63          	bgeu	t1,a2,a8 <memset+0x44>
-  70:	00f77793          	andi	a5,a4,15
-  74:	0a079063          	bnez	a5,114 <memset+0xb0>
-  78:	08059263          	bnez	a1,fc <memset+0x98>
-  7c:	ff067693          	andi	a3,a2,-16
-  80:	00f67613          	andi	a2,a2,15
-  84:	00e686b3          	add	a3,a3,a4
-  88:	00b72023          	sw	a1,0(a4)
-  8c:	00b72223          	sw	a1,4(a4)
-  90:	00b72423          	sw	a1,8(a4)
-  94:	00b72623          	sw	a1,12(a4)
-  98:	01070713          	addi	a4,a4,16
-  9c:	fed766e3          	bltu	a4,a3,88 <memset+0x24>
-  a0:	00061463          	bnez	a2,a8 <memset+0x44>
-  a4:	00008067          	ret
-  a8:	40c306b3          	sub	a3,t1,a2
-  ac:	00269693          	slli	a3,a3,0x2
-  b0:	00000297          	auipc	t0,0x0
-  b4:	005686b3          	add	a3,a3,t0
-  b8:	00c68067          	jr	12(a3)
-  bc:	00b70723          	sb	a1,14(a4)
-  c0:	00b706a3          	sb	a1,13(a4)
-  c4:	00b70623          	sb	a1,12(a4)
-  c8:	00b705a3          	sb	a1,11(a4)
-  cc:	00b70523          	sb	a1,10(a4)
-  d0:	00b704a3          	sb	a1,9(a4)
-  d4:	00b70423          	sb	a1,8(a4)
-  d8:	00b703a3          	sb	a1,7(a4)
-  dc:	00b70323          	sb	a1,6(a4)
-  e0:	00b702a3          	sb	a1,5(a4)
-  e4:	00b70223          	sb	a1,4(a4)
-  e8:	00b701a3          	sb	a1,3(a4)
-  ec:	00b70123          	sb	a1,2(a4)
-  f0:	00b700a3          	sb	a1,1(a4)
-  f4:	00b70023          	sb	a1,0(a4)
-  f8:	00008067          	ret
-  fc:	0ff5f593          	zext.b	a1,a1
- 100:	00859693          	slli	a3,a1,0x8
- 104:	00d5e5b3          	or	a1,a1,a3
- 108:	01059693          	slli	a3,a1,0x10
- 10c:	00d5e5b3          	or	a1,a1,a3
- 110:	f6dff06f          	j	7c <memset+0x18>
- 114:	00279693          	slli	a3,a5,0x2
- 118:	00000297          	auipc	t0,0x0
- 11c:	005686b3          	add	a3,a3,t0
- 120:	00008293          	mv	t0,ra
- 124:	fa0680e7          	jalr	-96(a3)
- 128:	00028093          	mv	ra,t0
- 12c:	ff078793          	addi	a5,a5,-16
- 130:	40f70733          	sub	a4,a4,a5
- 134:	00f60633          	add	a2,a2,a5
- 138:	f6c378e3          	bgeu	t1,a2,a8 <memset+0x44>
- 13c:	f3dff06f          	j	78 <memset+0x14>
+0000008c <memset>:
+  8c:	00f00313          	li	t1,15
+  90:	00050713          	mv	a4,a0
+  94:	02c37e63          	bgeu	t1,a2,d0 <memset+0x44>
+  98:	00f77793          	andi	a5,a4,15
+  9c:	0a079063          	bnez	a5,13c <memset+0xb0>
+  a0:	08059263          	bnez	a1,124 <memset+0x98>
+  a4:	ff067693          	andi	a3,a2,-16
+  a8:	00f67613          	andi	a2,a2,15
+  ac:	00e686b3          	add	a3,a3,a4
+  b0:	00b72023          	sw	a1,0(a4)
+  b4:	00b72223          	sw	a1,4(a4)
+  b8:	00b72423          	sw	a1,8(a4)
+  bc:	00b72623          	sw	a1,12(a4)
+  c0:	01070713          	addi	a4,a4,16
+  c4:	fed766e3          	bltu	a4,a3,b0 <memset+0x24>
+  c8:	00061463          	bnez	a2,d0 <memset+0x44>
+  cc:	00008067          	ret
+  d0:	40c306b3          	sub	a3,t1,a2
+  d4:	00269693          	slli	a3,a3,0x2
+  d8:	00000297          	auipc	t0,0x0
+  dc:	005686b3          	add	a3,a3,t0
+  e0:	00c68067          	jr	12(a3)
+  e4:	00b70723          	sb	a1,14(a4)
+  e8:	00b706a3          	sb	a1,13(a4)
+  ec:	00b70623          	sb	a1,12(a4)
+  f0:	00b705a3          	sb	a1,11(a4)
+  f4:	00b70523          	sb	a1,10(a4)
+  f8:	00b704a3          	sb	a1,9(a4)
+  fc:	00b70423          	sb	a1,8(a4)
+ 100:	00b703a3          	sb	a1,7(a4)
+ 104:	00b70323          	sb	a1,6(a4)
+ 108:	00b702a3          	sb	a1,5(a4)
+ 10c:	00b70223          	sb	a1,4(a4)
+ 110:	00b701a3          	sb	a1,3(a4)
+ 114:	00b70123          	sb	a1,2(a4)
+ 118:	00b700a3          	sb	a1,1(a4)
+ 11c:	00b70023          	sb	a1,0(a4)
+ 120:	00008067          	ret
+ 124:	0ff5f593          	zext.b	a1,a1
+ 128:	00859693          	slli	a3,a1,0x8
+ 12c:	00d5e5b3          	or	a1,a1,a3
+ 130:	01059693          	slli	a3,a1,0x10
+ 134:	00d5e5b3          	or	a1,a1,a3
+ 138:	f6dff06f          	j	a4 <memset+0x18>
+ 13c:	00279693          	slli	a3,a5,0x2
+ 140:	00000297          	auipc	t0,0x0
+ 144:	005686b3          	add	a3,a3,t0
+ 148:	00008293          	mv	t0,ra
+ 14c:	fa0680e7          	jalr	-96(a3)
+ 150:	00028093          	mv	ra,t0
+ 154:	ff078793          	addi	a5,a5,-16
+ 158:	40f70733          	sub	a4,a4,a5
+ 15c:	00f60633          	add	a2,a2,a5
+ 160:	f6c378e3          	bgeu	t1,a2,d0 <memset+0x44>
+ 164:	f3dff06f          	j	a0 <memset+0x14>
 
-00000140 <__divsi3>:
- 140:	06054063          	bltz	a0,1a0 <__umodsi3+0x10>
- 144:	0605c663          	bltz	a1,1b0 <__umodsi3+0x20>
+00000168 <_Z10workermainv>:
+ 168:	0000006f          	j	168 <_Z10workermainv>
 
-00000148 <__hidden___udivsi3>:
- 148:	00058613          	mv	a2,a1
- 14c:	00050593          	mv	a1,a0
- 150:	fff00513          	li	a0,-1
- 154:	02060c63          	beqz	a2,18c <__hidden___udivsi3+0x44>
- 158:	00100693          	li	a3,1
- 15c:	00b67a63          	bgeu	a2,a1,170 <__hidden___udivsi3+0x28>
- 160:	00c05863          	blez	a2,170 <__hidden___udivsi3+0x28>
- 164:	00161613          	slli	a2,a2,0x1
- 168:	00169693          	slli	a3,a3,0x1
- 16c:	feb66ae3          	bltu	a2,a1,160 <__hidden___udivsi3+0x18>
- 170:	00000513          	li	a0,0
- 174:	00c5e663          	bltu	a1,a2,180 <__hidden___udivsi3+0x38>
- 178:	40c585b3          	sub	a1,a1,a2
- 17c:	00d56533          	or	a0,a0,a3
- 180:	0016d693          	srli	a3,a3,0x1
- 184:	00165613          	srli	a2,a2,0x1
- 188:	fe0696e3          	bnez	a3,174 <__hidden___udivsi3+0x2c>
- 18c:	00008067          	ret
+0000016c <main>:
+ 16c:	f14027f3          	csrr	a5,mhartid
+ 170:	00079e63          	bnez	a5,18c <main+0x20>
+ 174:	ff010113          	addi	sp,sp,-16
+ 178:	00000513          	li	a0,0
+ 17c:	00112623          	sw	ra,12(sp)
+ 180:	014000ef          	jal	ra,194 <_Z11SetLEDStatem>
+ 184:	10500073          	wfi
+ 188:	ffdff06f          	j	184 <main+0x18>
+ 18c:	10500073          	wfi
+ 190:	ffdff06f          	j	18c <main+0x20>
 
-00000190 <__umodsi3>:
- 190:	00008293          	mv	t0,ra
- 194:	fb5ff0ef          	jal	ra,148 <__hidden___udivsi3>
- 198:	00058513          	mv	a0,a1
- 19c:	00028067          	jr	t0 # 118 <memset+0xb4>
- 1a0:	40a00533          	neg	a0,a0
- 1a4:	00b04863          	bgtz	a1,1b4 <__umodsi3+0x24>
- 1a8:	40b005b3          	neg	a1,a1
- 1ac:	f9dff06f          	j	148 <__hidden___udivsi3>
- 1b0:	40b005b3          	neg	a1,a1
- 1b4:	00008293          	mv	t0,ra
- 1b8:	f91ff0ef          	jal	ra,148 <__hidden___udivsi3>
- 1bc:	40a00533          	neg	a0,a0
- 1c0:	00028067          	jr	t0
+00000194 <_Z11SetLEDStatem>:
+ 194:	00000797          	auipc	a5,0x0
+ 198:	65c7a783          	lw	a5,1628(a5) # 7f0 <_GLOBAL_OFFSET_TABLE_+0x8>
+ 19c:	0007a783          	lw	a5,0(a5)
+ 1a0:	00a7a023          	sw	a0,0(a5)
+ 1a4:	00008067          	ret
 
-000001c4 <__modsi3>:
- 1c4:	00008293          	mv	t0,ra
- 1c8:	0005ca63          	bltz	a1,1dc <__modsi3+0x18>
- 1cc:	00054c63          	bltz	a0,1e4 <__modsi3+0x20>
- 1d0:	f79ff0ef          	jal	ra,148 <__hidden___udivsi3>
- 1d4:	00058513          	mv	a0,a1
- 1d8:	00028067          	jr	t0
- 1dc:	40b005b3          	neg	a1,a1
- 1e0:	fe0558e3          	bgez	a0,1d0 <__modsi3+0xc>
- 1e4:	40a00533          	neg	a0,a0
- 1e8:	f61ff0ef          	jal	ra,148 <__hidden___udivsi3>
- 1ec:	40b00533          	neg	a0,a1
- 1f0:	00028067          	jr	t0
+000001a8 <atexit>:
+ 1a8:	00050593          	mv	a1,a0
+ 1ac:	00000693          	li	a3,0
+ 1b0:	00000613          	li	a2,0
+ 1b4:	00000513          	li	a0,0
+ 1b8:	0e40006f          	j	29c <__register_exitproc>
 
-000001f4 <main>:
- 1f4:	ff010113          	addi	sp,sp,-16
- 1f8:	00000513          	li	a0,0
- 1fc:	00112623          	sw	ra,12(sp)
- 200:	0cc000ef          	jal	ra,2cc <_Z11SetLEDStatem>
- 204:	00000517          	auipc	a0,0x0
- 208:	26c50513          	addi	a0,a0,620 # 470 <__register_exitproc+0x9c>
- 20c:	05c000ef          	jal	ra,268 <_Z9UARTWritePKc>
- 210:	10500073          	wfi
- 214:	ffdff06f          	j	210 <main+0x1c>
+000001bc <__libc_fini_array>:
+ 1bc:	ff010113          	addi	sp,sp,-16
+ 1c0:	00812423          	sw	s0,8(sp)
+ 1c4:	33800793          	li	a5,824
+ 1c8:	33800413          	li	s0,824
+ 1cc:	40f40433          	sub	s0,s0,a5
+ 1d0:	00912223          	sw	s1,4(sp)
+ 1d4:	00112623          	sw	ra,12(sp)
+ 1d8:	40245493          	srai	s1,s0,0x2
+ 1dc:	02048063          	beqz	s1,1fc <__libc_fini_array+0x40>
+ 1e0:	ffc40413          	addi	s0,s0,-4
+ 1e4:	00f40433          	add	s0,s0,a5
+ 1e8:	00042783          	lw	a5,0(s0)
+ 1ec:	fff48493          	addi	s1,s1,-1
+ 1f0:	ffc40413          	addi	s0,s0,-4
+ 1f4:	000780e7          	jalr	a5
+ 1f8:	fe0498e3          	bnez	s1,1e8 <__libc_fini_array+0x2c>
+ 1fc:	00c12083          	lw	ra,12(sp)
+ 200:	00812403          	lw	s0,8(sp)
+ 204:	00412483          	lw	s1,4(sp)
+ 208:	01010113          	addi	sp,sp,16
+ 20c:	00008067          	ret
 
-00000218 <_Z11UARTHasDatav>:
- 218:	00000797          	auipc	a5,0x0
- 21c:	7987a783          	lw	a5,1944(a5) # 9b0 <_GLOBAL_OFFSET_TABLE_+0x20>
- 220:	0007a783          	lw	a5,0(a5)
- 224:	0007a503          	lw	a0,0(a5)
- 228:	00157513          	andi	a0,a0,1
- 22c:	00008067          	ret
+00000210 <__libc_init_array>:
+ 210:	ff010113          	addi	sp,sp,-16
+ 214:	00812423          	sw	s0,8(sp)
+ 218:	01212023          	sw	s2,0(sp)
+ 21c:	33800793          	li	a5,824
+ 220:	33800713          	li	a4,824
+ 224:	00112623          	sw	ra,12(sp)
+ 228:	00912223          	sw	s1,4(sp)
+ 22c:	40e78933          	sub	s2,a5,a4
+ 230:	02e78263          	beq	a5,a4,254 <__libc_init_array+0x44>
+ 234:	40295913          	srai	s2,s2,0x2
+ 238:	33800413          	li	s0,824
+ 23c:	00000493          	li	s1,0
+ 240:	00042783          	lw	a5,0(s0)
+ 244:	00148493          	addi	s1,s1,1
+ 248:	00440413          	addi	s0,s0,4
+ 24c:	000780e7          	jalr	a5
+ 250:	ff24e8e3          	bltu	s1,s2,240 <__libc_init_array+0x30>
+ 254:	33800793          	li	a5,824
+ 258:	33800713          	li	a4,824
+ 25c:	40e78933          	sub	s2,a5,a4
+ 260:	40295913          	srai	s2,s2,0x2
+ 264:	02e78063          	beq	a5,a4,284 <__libc_init_array+0x74>
+ 268:	33800413          	li	s0,824
+ 26c:	00000493          	li	s1,0
+ 270:	00042783          	lw	a5,0(s0)
+ 274:	00148493          	addi	s1,s1,1
+ 278:	00440413          	addi	s0,s0,4
+ 27c:	000780e7          	jalr	a5
+ 280:	ff24e8e3          	bltu	s1,s2,270 <__libc_init_array+0x60>
+ 284:	00c12083          	lw	ra,12(sp)
+ 288:	00812403          	lw	s0,8(sp)
+ 28c:	00412483          	lw	s1,4(sp)
+ 290:	00012903          	lw	s2,0(sp)
+ 294:	01010113          	addi	sp,sp,16
+ 298:	00008067          	ret
 
-00000230 <_Z9UARTFlushv>:
- 230:	ff010113          	addi	sp,sp,-16
- 234:	00112623          	sw	ra,12(sp)
- 238:	fe1ff0ef          	jal	ra,218 <_Z11UARTHasDatav>
- 23c:	00051863          	bnez	a0,24c <_Z9UARTFlushv+0x1c>
- 240:	00c12083          	lw	ra,12(sp)
- 244:	01010113          	addi	sp,sp,16
- 248:	00008067          	ret
- 24c:	00000013          	nop
- 250:	fe9ff06f          	j	238 <_Z9UARTFlushv+0x8>
-
-00000254 <_Z11UARTPutCharc>:
- 254:	00000797          	auipc	a5,0x0
- 258:	7547a783          	lw	a5,1876(a5) # 9a8 <_GLOBAL_OFFSET_TABLE_+0x18>
- 25c:	0007a783          	lw	a5,0(a5)
- 260:	00a7a023          	sw	a0,0(a5)
- 264:	00008067          	ret
-
-00000268 <_Z9UARTWritePKc>:
- 268:	ff010113          	addi	sp,sp,-16
- 26c:	00812423          	sw	s0,8(sp)
- 270:	00912223          	sw	s1,4(sp)
- 274:	00112623          	sw	ra,12(sp)
- 278:	01212023          	sw	s2,0(sp)
- 27c:	00050493          	mv	s1,a0
- 280:	00000413          	li	s0,0
- 284:	008487b3          	add	a5,s1,s0
- 288:	0007c503          	lbu	a0,0(a5)
- 28c:	00051e63          	bnez	a0,2a8 <_Z9UARTWritePKc+0x40>
- 290:	00c12083          	lw	ra,12(sp)
- 294:	00812403          	lw	s0,8(sp)
- 298:	00412483          	lw	s1,4(sp)
- 29c:	00012903          	lw	s2,0(sp)
- 2a0:	01010113          	addi	sp,sp,16
- 2a4:	00008067          	ret
- 2a8:	fadff0ef          	jal	ra,254 <_Z11UARTPutCharc>
- 2ac:	30000593          	li	a1,768
- 2b0:	00240513          	addi	a0,s0,2
- 2b4:	00140913          	addi	s2,s0,1
- 2b8:	f0dff0ef          	jal	ra,1c4 <__modsi3>
- 2bc:	00051463          	bnez	a0,2c4 <_Z9UARTWritePKc+0x5c>
- 2c0:	f71ff0ef          	jal	ra,230 <_Z9UARTFlushv>
- 2c4:	00090413          	mv	s0,s2
- 2c8:	fbdff06f          	j	284 <_Z9UARTWritePKc+0x1c>
-
-000002cc <_Z11SetLEDStatem>:
- 2cc:	00000797          	auipc	a5,0x0
- 2d0:	6cc7a783          	lw	a5,1740(a5) # 998 <_GLOBAL_OFFSET_TABLE_+0x8>
- 2d4:	0007a783          	lw	a5,0(a5)
- 2d8:	00a7a023          	sw	a0,0(a5)
- 2dc:	00008067          	ret
-
-000002e0 <atexit>:
- 2e0:	00050593          	mv	a1,a0
- 2e4:	00000693          	li	a3,0
- 2e8:	00000613          	li	a2,0
- 2ec:	00000513          	li	a0,0
- 2f0:	0e40006f          	j	3d4 <__register_exitproc>
-
-000002f4 <__libc_fini_array>:
- 2f4:	ff010113          	addi	sp,sp,-16
- 2f8:	00812423          	sw	s0,8(sp)
- 2fc:	47700793          	li	a5,1143
- 300:	47700413          	li	s0,1143
- 304:	40f40433          	sub	s0,s0,a5
- 308:	00912223          	sw	s1,4(sp)
- 30c:	00112623          	sw	ra,12(sp)
- 310:	40245493          	srai	s1,s0,0x2
- 314:	02048063          	beqz	s1,334 <__libc_fini_array+0x40>
- 318:	ffc40413          	addi	s0,s0,-4
- 31c:	00f40433          	add	s0,s0,a5
- 320:	00042783          	lw	a5,0(s0)
- 324:	fff48493          	addi	s1,s1,-1
- 328:	ffc40413          	addi	s0,s0,-4
- 32c:	000780e7          	jalr	a5
- 330:	fe0498e3          	bnez	s1,320 <__libc_fini_array+0x2c>
- 334:	00c12083          	lw	ra,12(sp)
- 338:	00812403          	lw	s0,8(sp)
- 33c:	00412483          	lw	s1,4(sp)
- 340:	01010113          	addi	sp,sp,16
- 344:	00008067          	ret
-
-00000348 <__libc_init_array>:
- 348:	ff010113          	addi	sp,sp,-16
- 34c:	00812423          	sw	s0,8(sp)
- 350:	01212023          	sw	s2,0(sp)
- 354:	47700793          	li	a5,1143
- 358:	47700713          	li	a4,1143
- 35c:	00112623          	sw	ra,12(sp)
- 360:	00912223          	sw	s1,4(sp)
- 364:	40e78933          	sub	s2,a5,a4
- 368:	02e78263          	beq	a5,a4,38c <__libc_init_array+0x44>
- 36c:	40295913          	srai	s2,s2,0x2
- 370:	47700413          	li	s0,1143
- 374:	00000493          	li	s1,0
- 378:	00042783          	lw	a5,0(s0)
- 37c:	00148493          	addi	s1,s1,1
- 380:	00440413          	addi	s0,s0,4
- 384:	000780e7          	jalr	a5
- 388:	ff24e8e3          	bltu	s1,s2,378 <__libc_init_array+0x30>
- 38c:	47700793          	li	a5,1143
- 390:	47700713          	li	a4,1143
- 394:	40e78933          	sub	s2,a5,a4
- 398:	40295913          	srai	s2,s2,0x2
- 39c:	02e78063          	beq	a5,a4,3bc <__libc_init_array+0x74>
- 3a0:	47700413          	li	s0,1143
- 3a4:	00000493          	li	s1,0
- 3a8:	00042783          	lw	a5,0(s0)
- 3ac:	00148493          	addi	s1,s1,1
- 3b0:	00440413          	addi	s0,s0,4
- 3b4:	000780e7          	jalr	a5
- 3b8:	ff24e8e3          	bltu	s1,s2,3a8 <__libc_init_array+0x60>
- 3bc:	00c12083          	lw	ra,12(sp)
- 3c0:	00812403          	lw	s0,8(sp)
- 3c4:	00412483          	lw	s1,4(sp)
- 3c8:	00012903          	lw	s2,0(sp)
- 3cc:	01010113          	addi	sp,sp,16
- 3d0:	00008067          	ret
-
-000003d4 <__register_exitproc>:
- 3d4:	000017b7          	lui	a5,0x1
- 3d8:	9bc7a703          	lw	a4,-1604(a5) # 9bc <_global_impure_ptr>
- 3dc:	14872783          	lw	a5,328(a4)
- 3e0:	04078c63          	beqz	a5,438 <__register_exitproc+0x64>
- 3e4:	0047a703          	lw	a4,4(a5)
- 3e8:	01f00813          	li	a6,31
- 3ec:	06e84e63          	blt	a6,a4,468 <__register_exitproc+0x94>
- 3f0:	00271813          	slli	a6,a4,0x2
- 3f4:	02050663          	beqz	a0,420 <__register_exitproc+0x4c>
- 3f8:	01078333          	add	t1,a5,a6
- 3fc:	08c32423          	sw	a2,136(t1)
- 400:	1887a883          	lw	a7,392(a5)
- 404:	00100613          	li	a2,1
- 408:	00e61633          	sll	a2,a2,a4
- 40c:	00c8e8b3          	or	a7,a7,a2
- 410:	1917a423          	sw	a7,392(a5)
- 414:	10d32423          	sw	a3,264(t1)
- 418:	00200693          	li	a3,2
- 41c:	02d50463          	beq	a0,a3,444 <__register_exitproc+0x70>
- 420:	00170713          	addi	a4,a4,1
- 424:	00e7a223          	sw	a4,4(a5)
- 428:	010787b3          	add	a5,a5,a6
- 42c:	00b7a423          	sw	a1,8(a5)
- 430:	00000513          	li	a0,0
- 434:	00008067          	ret
- 438:	14c70793          	addi	a5,a4,332
- 43c:	14f72423          	sw	a5,328(a4)
- 440:	fa5ff06f          	j	3e4 <__register_exitproc+0x10>
- 444:	18c7a683          	lw	a3,396(a5)
- 448:	00170713          	addi	a4,a4,1
- 44c:	00e7a223          	sw	a4,4(a5)
- 450:	00c6e6b3          	or	a3,a3,a2
- 454:	18d7a623          	sw	a3,396(a5)
- 458:	010787b3          	add	a5,a5,a6
- 45c:	00b7a423          	sw	a1,8(a5)
- 460:	00000513          	li	a0,0
- 464:	00008067          	ret
- 468:	fff00513          	li	a0,-1
- 46c:	00008067          	ret
-
-Disassembly of section .rodata:
-
-00000470 <_etext-0x7>:
- 470:	7672                	.2byte	0x7672
- 472:	0a693233          	.4byte	0xa693233
-	...
+0000029c <__register_exitproc>:
+ 29c:	000017b7          	lui	a5,0x1
+ 2a0:	80c7a703          	lw	a4,-2036(a5) # 80c <_global_impure_ptr>
+ 2a4:	14872783          	lw	a5,328(a4)
+ 2a8:	04078c63          	beqz	a5,300 <__register_exitproc+0x64>
+ 2ac:	0047a703          	lw	a4,4(a5)
+ 2b0:	01f00813          	li	a6,31
+ 2b4:	06e84e63          	blt	a6,a4,330 <__register_exitproc+0x94>
+ 2b8:	00271813          	slli	a6,a4,0x2
+ 2bc:	02050663          	beqz	a0,2e8 <__register_exitproc+0x4c>
+ 2c0:	01078333          	add	t1,a5,a6
+ 2c4:	08c32423          	sw	a2,136(t1)
+ 2c8:	1887a883          	lw	a7,392(a5)
+ 2cc:	00100613          	li	a2,1
+ 2d0:	00e61633          	sll	a2,a2,a4
+ 2d4:	00c8e8b3          	or	a7,a7,a2
+ 2d8:	1917a423          	sw	a7,392(a5)
+ 2dc:	10d32423          	sw	a3,264(t1)
+ 2e0:	00200693          	li	a3,2
+ 2e4:	02d50463          	beq	a0,a3,30c <__register_exitproc+0x70>
+ 2e8:	00170713          	addi	a4,a4,1
+ 2ec:	00e7a223          	sw	a4,4(a5)
+ 2f0:	010787b3          	add	a5,a5,a6
+ 2f4:	00b7a423          	sw	a1,8(a5)
+ 2f8:	00000513          	li	a0,0
+ 2fc:	00008067          	ret
+ 300:	14c70793          	addi	a5,a4,332
+ 304:	14f72423          	sw	a5,328(a4)
+ 308:	fa5ff06f          	j	2ac <__register_exitproc+0x10>
+ 30c:	18c7a683          	lw	a3,396(a5)
+ 310:	00170713          	addi	a4,a4,1
+ 314:	00e7a223          	sw	a4,4(a5)
+ 318:	00c6e6b3          	or	a3,a3,a2
+ 31c:	18d7a623          	sw	a3,396(a5)
+ 320:	010787b3          	add	a5,a5,a6
+ 324:	00b7a423          	sw	a1,8(a5)
+ 328:	00000513          	li	a0,0
+ 32c:	00008067          	ret
+ 330:	fff00513          	li	a0,-1
+ 334:	00008067          	ret
 
 Disassembly of section .eh_frame:
 
-00000478 <.eh_frame>:
- 478:	0010                	.2byte	0x10
- 47a:	0000                	.2byte	0x0
- 47c:	0000                	.2byte	0x0
- 47e:	0000                	.2byte	0x0
- 480:	00527a03          	.4byte	0x527a03
- 484:	7c01                	.2byte	0x7c01
- 486:	0101                	.2byte	0x101
- 488:	00020d1b          	.4byte	0x20d1b
- 48c:	0010                	.2byte	0x10
- 48e:	0000                	.2byte	0x0
- 490:	0018                	.2byte	0x18
- 492:	0000                	.2byte	0x0
- 494:	fb6c                	.2byte	0xfb6c
- 496:	ffff                	.2byte	0xffff
- 498:	0064                	.2byte	0x64
- 49a:	0000                	.2byte	0x0
- 49c:	0000                	.2byte	0x0
- 49e:	0000                	.2byte	0x0
- 4a0:	0010                	.2byte	0x10
- 4a2:	0000                	.2byte	0x0
- 4a4:	002c                	.2byte	0x2c
- 4a6:	0000                	.2byte	0x0
- 4a8:	fbbc                	.2byte	0xfbbc
- 4aa:	ffff                	.2byte	0xffff
+00000338 <__fini_array_end>:
+ 338:	0010                	.2byte	0x10
+ 33a:	0000                	.2byte	0x0
+ 33c:	0000                	.2byte	0x0
+ 33e:	0000                	.2byte	0x0
+ 340:	00527a03          	.4byte	0x527a03
+ 344:	7c01                	.2byte	0x7c01
+ 346:	0101                	.2byte	0x101
+ 348:	00020d1b          	.4byte	0x20d1b
+ 34c:	0010                	.2byte	0x10
+ 34e:	0000                	.2byte	0x0
+ 350:	0018                	.2byte	0x18
+ 352:	0000                	.2byte	0x0
+ 354:	fcac                	.2byte	0xfcac
+ 356:	ffff                	.2byte	0xffff
+ 358:	008c                	.2byte	0x8c
+ 35a:	0000                	.2byte	0x0
+ 35c:	0000                	.2byte	0x0
+ 35e:	0000                	.2byte	0x0
+ 360:	0010                	.2byte	0x10
+ 362:	0000                	.2byte	0x0
+ 364:	002c                	.2byte	0x2c
+ 366:	0000                	.2byte	0x0
+ 368:	fd24                	.2byte	0xfd24
+ 36a:	ffff                	.2byte	0xffff
 	...
- 4b4:	0014                	.2byte	0x14
- 4b6:	0000                	.2byte	0x0
- 4b8:	0040                	.2byte	0x40
- 4ba:	0000                	.2byte	0x0
- 4bc:	fd38                	.2byte	0xfd38
- 4be:	ffff                	.2byte	0xffff
- 4c0:	0024                	.2byte	0x24
- 4c2:	0000                	.2byte	0x0
- 4c4:	4400                	.2byte	0x4400
- 4c6:	100e                	.2byte	0x100e
- 4c8:	8148                	.2byte	0x8148
- 4ca:	0001                	.2byte	0x1
- 4cc:	0010                	.2byte	0x10
- 4ce:	0000                	.2byte	0x0
- 4d0:	0058                	.2byte	0x58
- 4d2:	0000                	.2byte	0x0
- 4d4:	fd44                	.2byte	0xfd44
- 4d6:	ffff                	.2byte	0xffff
- 4d8:	0018                	.2byte	0x18
- 4da:	0000                	.2byte	0x0
- 4dc:	0000                	.2byte	0x0
- 4de:	0000                	.2byte	0x0
- 4e0:	001c                	.2byte	0x1c
- 4e2:	0000                	.2byte	0x0
- 4e4:	006c                	.2byte	0x6c
- 4e6:	0000                	.2byte	0x0
- 4e8:	fd48                	.2byte	0xfd48
- 4ea:	ffff                	.2byte	0xffff
- 4ec:	0024                	.2byte	0x24
- 4ee:	0000                	.2byte	0x0
- 4f0:	4400                	.2byte	0x4400
- 4f2:	100e                	.2byte	0x100e
- 4f4:	8144                	.2byte	0x8144
- 4f6:	4c01                	.2byte	0x4c01
- 4f8:	c10a                	.2byte	0xc10a
- 4fa:	0e44                	.2byte	0xe44
- 4fc:	4400                	.2byte	0x4400
- 4fe:	0010000b          	.4byte	0x10000b
- 502:	0000                	.2byte	0x0
- 504:	008c                	.2byte	0x8c
- 506:	0000                	.2byte	0x0
- 508:	fd4c                	.2byte	0xfd4c
- 50a:	ffff                	.2byte	0xffff
- 50c:	0014                	.2byte	0x14
- 50e:	0000                	.2byte	0x0
- 510:	0000                	.2byte	0x0
- 512:	0000                	.2byte	0x0
- 514:	0028                	.2byte	0x28
- 516:	0000                	.2byte	0x0
- 518:	00a0                	.2byte	0xa0
- 51a:	0000                	.2byte	0x0
- 51c:	fd4c                	.2byte	0xfd4c
- 51e:	ffff                	.2byte	0xffff
- 520:	0064                	.2byte	0x64
- 522:	0000                	.2byte	0x0
- 524:	4400                	.2byte	0x4400
- 526:	100e                	.2byte	0x100e
- 528:	8850                	.2byte	0x8850
- 52a:	8902                	.2byte	0x8902
- 52c:	92018103          	lb	sp,-1760(gp) # ae0 <_end+0x118>
- 530:	5804                	.2byte	0x5804
- 532:	c10a                	.2byte	0xc10a
- 534:	c844                	.2byte	0xc844
- 536:	c944                	.2byte	0xc944
- 538:	d244                	.2byte	0xd244
- 53a:	0e44                	.2byte	0xe44
- 53c:	4400                	.2byte	0x4400
- 53e:	0010000b          	.4byte	0x10000b
- 542:	0000                	.2byte	0x0
- 544:	00cc                	.2byte	0xcc
- 546:	0000                	.2byte	0x0
- 548:	fd84                	.2byte	0xfd84
- 54a:	ffff                	.2byte	0xffff
- 54c:	0014                	.2byte	0x14
- 54e:	0000                	.2byte	0x0
- 550:	0000                	.2byte	0x0
+ 374:	0010                	.2byte	0x10
+ 376:	0000                	.2byte	0x0
+ 378:	0040                	.2byte	0x40
+ 37a:	0000                	.2byte	0x0
+ 37c:	fdec                	.2byte	0xfdec
+ 37e:	ffff                	.2byte	0xffff
+ 380:	0004                	.2byte	0x4
+ 382:	0000                	.2byte	0x0
+ 384:	0000                	.2byte	0x0
+ 386:	0000                	.2byte	0x0
+ 388:	0018                	.2byte	0x18
+ 38a:	0000                	.2byte	0x0
+ 38c:	0054                	.2byte	0x54
+ 38e:	0000                	.2byte	0x0
+ 390:	fddc                	.2byte	0xfddc
+ 392:	ffff                	.2byte	0xffff
+ 394:	0028                	.2byte	0x28
+ 396:	0000                	.2byte	0x0
+ 398:	4c00                	.2byte	0x4c00
+ 39a:	100e                	.2byte	0x100e
+ 39c:	8148                	.2byte	0x8148
+ 39e:	4c01                	.2byte	0x4c01
+ 3a0:	000e                	.2byte	0xe
+ 3a2:	00c1                	.2byte	0xc1
+ 3a4:	0010                	.2byte	0x10
+ 3a6:	0000                	.2byte	0x0
+ 3a8:	0070                	.2byte	0x70
+ 3aa:	0000                	.2byte	0x0
+ 3ac:	fde8                	.2byte	0xfde8
+ 3ae:	ffff                	.2byte	0xffff
+ 3b0:	0014                	.2byte	0x14
+ 3b2:	0000                	.2byte	0x0
+ 3b4:	0000                	.2byte	0x0
 	...
 
 Disassembly of section .data:
 
-00000558 <IO_UARTStatus>:
- 558:	0008                	.2byte	0x8
- 55a:	8000                	.2byte	0x8000
-
-0000055c <IO_UARTTX>:
- 55c:	0004                	.2byte	0x4
- 55e:	8000                	.2byte	0x8000
-
-00000560 <LEDSTATE>:
- 560:	0010                	.2byte	0x10
- 562:	8000                	.2byte	0x8000
- 564:	0000                	.2byte	0x0
+000003b8 <LEDSTATE>:
+ 3b8:	0010                	.2byte	0x10
+ 3ba:	8000                	.2byte	0x8000
+ 3bc:	0000                	.2byte	0x0
 	...
 
-00000568 <impure_data>:
- 568:	0000                	.2byte	0x0
- 56a:	0000                	.2byte	0x0
- 56c:	0854                	.2byte	0x854
- 56e:	0000                	.2byte	0x0
- 570:	08bc                	.2byte	0x8bc
- 572:	0000                	.2byte	0x0
- 574:	0924                	.2byte	0x924
+000003c0 <impure_data>:
+ 3c0:	0000                	.2byte	0x0
+ 3c2:	0000                	.2byte	0x0
+ 3c4:	06ac                	.2byte	0x6ac
+ 3c6:	0000                	.2byte	0x0
+ 3c8:	0714                	.2byte	0x714
+ 3ca:	0000                	.2byte	0x0
+ 3cc:	077c                	.2byte	0x77c
 	...
- 60e:	0000                	.2byte	0x0
- 610:	0001                	.2byte	0x1
- 612:	0000                	.2byte	0x0
- 614:	0000                	.2byte	0x0
- 616:	0000                	.2byte	0x0
- 618:	330e                	.2byte	0x330e
- 61a:	abcd                	.2byte	0xabcd
- 61c:	1234                	.2byte	0x1234
- 61e:	e66d                	.2byte	0xe66d
- 620:	deec                	.2byte	0xdeec
- 622:	0005                	.2byte	0x5
- 624:	0000000b          	.4byte	0xb
+ 466:	0000                	.2byte	0x0
+ 468:	0001                	.2byte	0x1
+ 46a:	0000                	.2byte	0x0
+ 46c:	0000                	.2byte	0x0
+ 46e:	0000                	.2byte	0x0
+ 470:	330e                	.2byte	0x330e
+ 472:	abcd                	.2byte	0xabcd
+ 474:	1234                	.2byte	0x1234
+ 476:	e66d                	.2byte	0xe66d
+ 478:	deec                	.2byte	0xdeec
+ 47a:	0005                	.2byte	0x5
+ 47c:	0000000b          	.4byte	0xb
 	...
 
 Disassembly of section .got:
 
-00000990 <_GLOBAL_OFFSET_TABLE_>:
- 990:	0000                	.2byte	0x0
- 992:	0000                	.2byte	0x0
- 994:	11c0                	.2byte	0x11c0
- 996:	0000                	.2byte	0x0
- 998:	0560                	.2byte	0x560
- 99a:	0000                	.2byte	0x0
- 99c:	02f4                	.2byte	0x2f4
- 99e:	0000                	.2byte	0x0
- 9a0:	09c0                	.2byte	0x9c0
- 9a2:	0000                	.2byte	0x0
- 9a4:	02e0                	.2byte	0x2e0
- 9a6:	0000                	.2byte	0x0
- 9a8:	055c                	.2byte	0x55c
- 9aa:	0000                	.2byte	0x0
- 9ac:	09c4                	.2byte	0x9c4
- 9ae:	0000                	.2byte	0x0
- 9b0:	0558                	.2byte	0x558
+000007e8 <_GLOBAL_OFFSET_TABLE_>:
+ 7e8:	0000                	.2byte	0x0
+ 7ea:	0000                	.2byte	0x0
+ 7ec:	1010                	.2byte	0x1010
+ 7ee:	0000                	.2byte	0x0
+ 7f0:	03b8                	.2byte	0x3b8
+ 7f2:	0000                	.2byte	0x0
+ 7f4:	01bc                	.2byte	0x1bc
+ 7f6:	0000                	.2byte	0x0
+ 7f8:	0810                	.2byte	0x810
+ 7fa:	0000                	.2byte	0x0
+ 7fc:	01a8                	.2byte	0x1a8
+ 7fe:	0000                	.2byte	0x0
+ 800:	0814                	.2byte	0x814
 	...
 
 Disassembly of section .got.plt:
 
-000009b4 <.got.plt>:
- 9b4:	ffff                	.2byte	0xffff
- 9b6:	ffff                	.2byte	0xffff
- 9b8:	0000                	.2byte	0x0
+00000804 <.got.plt>:
+ 804:	ffff                	.2byte	0xffff
+ 806:	ffff                	.2byte	0xffff
+ 808:	0000                	.2byte	0x0
 	...
 
 Disassembly of section .sdata:
 
-000009bc <_global_impure_ptr>:
- 9bc:	0568                	.2byte	0x568
+0000080c <_global_impure_ptr>:
+ 80c:	03c0                	.2byte	0x3c0
 	...
 
 Disassembly of section .sbss:
 
-000009c0 <__malloc_max_total_mem>:
- 9c0:	0000                	.2byte	0x0
+00000810 <__malloc_max_total_mem>:
+ 810:	0000                	.2byte	0x0
 	...
 
 Disassembly of section .comment:

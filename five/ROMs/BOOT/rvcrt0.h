@@ -4,7 +4,7 @@
 
 // This unit has more than one HART
 // Defined this to allow for auto-setup of per-HART stacks
-//#define MULTIHART
+#define MULTIHART
 
 extern "C"
 {
@@ -24,15 +24,15 @@ extern "C"
 
 #if defined(MULTIHART)
          "csrr	s1, mhartid;"        // get hart id
-         "slli	s1, s1, 12;"         // hartid*4096 (4K (2^12) default stack)
-         "li s2, 0x1FFF0000;"        // stack top of last HART in DDR3 memory (near end of 512MBytes minus 16 bytes), leave 64K at the end for OS tables
-         "sub s2, s2, s1;"           // base - hartid*4096
-         "mv sp, s2;"                // set new hart stack pointer
-         "mv s0, sp;"                // set frame pointer
+         "slli	s1, s1, 8;"          // hartid*256 (256b (2^8) default stack)
+         "li s2, 0x0000FE00;"       // stack top of last HART in BMEM (near end of 64KBytes)
+         "sub s2, s2, s1;"          // base - hartid*256
+         "mv sp, s2;"               // set new hart stack pointer
+         "mv s0, sp;"               // set frame pointer
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x0000FF00;"        // single hart, hardcoded stack at end of BMEM (256 bytes)
+         "li sp, 0x0000FE00;"        // single hart, hardcoded stack at end of BMEM (512 bytes)
          "mv s0, sp;"                // set frame pointer
 #endif
          // Clear BSS
