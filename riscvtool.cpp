@@ -225,9 +225,9 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
 
     // Send all binary sections to their correct addresses
     int woffset = 0;
-    for(int i=0; i<fheader->m_SHNum; ++i)
+    for(int sec=0; sec<fheader->m_SHNum; ++sec)
     {
-        SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*i);
+        SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*sec);
 
         if (sheader->m_Flags & 0x00000007 && sheader->m_Size!=0) // writeable/alloc/exec and non-zero
         {
@@ -235,19 +235,28 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
             {
                 unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
                 for (unsigned int i=0; i<sheader->m_Size; ++i)
-                    workblock[woffset++] = litteendian[(i&0xFFFFFFFC) + 3-(i%4)];
+                {
+                    workblock[(woffset&0xFFFFFFFC) + 3-(woffset%4)] = litteendian[i];
+                    woffset++;
+                }
             }
             else if (groupsize == 16) // 128bit groups (16 bytes)
             {
                 unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-                for (unsigned int i=0;i<sheader->m_Size/4;++i)
-                    workblock[woffset++] = litteendian[(i&0xFFFFFFFC) + 3-(i%4)];
+                for (unsigned int i=0; i<sheader->m_Size/4; ++i)
+                {
+                    workblock[(woffset&0xFFFFFFFC) + (3-(woffset%4))] = litteendian[i];
+                    woffset++;
+                }
             }
             else if (groupsize == 32) // 256bit groups (32 bytes)
             {
                 unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
                 for (unsigned int i=0;i<sheader->m_Size/8;++i)
-                    workblock[woffset++] = litteendian[(i&0xFFFFFFF8) + 7-(i%8)];
+                {
+                    workblock[(woffset&0xFFFFFFF8) + 7-(woffset%8)] = litteendian[i];
+                    woffset++;
+                }
             }
         }
     }
