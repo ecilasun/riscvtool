@@ -207,8 +207,71 @@ struct SElfSectionHeader32
 
 void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
 {
-    // Parse the header and check the magic word
     SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
+
+    if (fheader->m_Magic != 0x464C457F)
+    {
+        printf("Unknown magic, expecting 0x7F followed by 'ELF', got '%c%c%c%c' (%.8X)\n", fheader->m_Magic&0x000000FF, (fheader->m_Magic&0x0000FF00)>>8, (fheader->m_Magic&0x00FF0000)>>16, (fheader->m_Magic&0xFF000000)>>24, fheader->m_Magic);
+        return;
+    }
+
+    printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
+
+    // Send all binary sections to their correct addresses
+    for(int i=0; i<fheader->m_SHNum; ++i)
+    {
+        SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*i);
+
+        if (groupsize == 4) // 32bit groups (4 bytes)
+        {
+            unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
+            for (unsigned int i=0; i<sheader->m_Size; ++i)
+            {
+                if (i!=0 && ((i%16) == 0))
+                    printf("\n");
+                printf("%.2X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
+                if (((i+1)%4)==0 && i!=sheader->m_Size-1)
+                    printf(" "); // 32bit separator
+            }
+        }
+        else if (groupsize == 16) // 128bit groups (16 bytes)
+        {
+            unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
+            for (unsigned int i=0;i<sheader->m_Size/4;++i)
+            {
+                if (i!=0 && ((i%4) == 0))
+                    printf("\n");
+                printf("%.8X", litteendian[(i&0xFFFFFFFC) + 3-(i%4)]);
+            }
+            // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
+            unsigned int leftover = 4-((sheader->m_Size/4)%4);
+            if (leftover!=4)
+                for (unsigned int i=0;i<leftover;++i)
+                    printf("00000000");
+        }
+        else if (groupsize == 32) // 256bit groups (32 bytes)
+        {
+            unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
+            for (unsigned int i=0;i<sheader->m_Size/4;++i)
+            {
+                if (i!=0 && ((i%8) == 0))
+                    printf("\n");
+                printf("%.8X", litteendian[(i&0xFFFFFFF8) + 7-(i%8)]);
+            }
+            // NOTE: IT IS VERY IMPORTANT THAT EACH OUTPUT IS PADDED WITH TRAILING ZEROS TO AVOID MIS-INTERPRETATION OF INPUT DATA!
+            unsigned int leftover = 8-((sheader->m_Size/4)%8);
+            if (leftover!=8)
+                for (unsigned int i=0;i<leftover;++i)
+                    printf("00000000");
+        }
+
+        if (sheader->m_Size)
+            printf("\n");
+    }
+    printf(";");
+
+    // Parse the header and check the magic word
+    /*SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinary;
 
     if (fheader->m_Magic != 0x464C457F)
     {
@@ -264,7 +327,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int groupsize)
                 printf("00000000");
     }
 
-    printf(";");
+    printf(";");*/
 }
 
 void dumpelf(char *_filename, unsigned int groupsize)
@@ -292,32 +355,6 @@ void dumpelf(char *_filename, unsigned int groupsize)
     parseelfheader(bytestosend, groupsize);
 
     delete [] bytestosend;
-}
-
-unsigned int generateelfuploadpackage(unsigned char *_elfbinaryread, unsigned char *_elfbinaryout)
-{
-    // Parse the header and check the magic word
-    SElfFileHeader32 *fheader = (SElfFileHeader32 *)_elfbinaryread;
-
-    if (fheader->m_Magic != 0x464C457F)
-    {
-        printf("ERROR: Unknown magic, expecting 0x7F followed by 'ELF', got '%c%c%c%c' (%.8X)\n", fheader->m_Magic&0x000000FF, (fheader->m_Magic&0x0000FF00)>>8, (fheader->m_Magic&0x00FF0000)>>16, (fheader->m_Magic&0xFF000000)>>24, fheader->m_Magic);
-        return 0xFFFFFFFF;
-    }
-
-    // Parse the header and dump the executable
-    SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinaryread+fheader->m_PHOff);
-
-    // Aliasing to re-use same buffer
-    unsigned int *targetarea = (unsigned int*)_elfbinaryout;
-    unsigned int *sourcearea = (unsigned int*)(_elfbinaryread+pheader->m_Offset);
-    unsigned int binarysize = pheader->m_MemSz;
-
-    printf("Preparing binary package\n");
-    for (unsigned int i=0;i<binarysize/4;++i)
-        targetarea[i] = sourcearea[i];
-
-    return binarysize;
 }
 
 void sendelf(char *_filename, const unsigned int _target=0x00000000)
