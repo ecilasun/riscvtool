@@ -5,6 +5,7 @@ extern volatile uint32_t *IO_UARTTX;
 extern volatile uint32_t *IO_UARTStatus;
 extern volatile uint32_t *IO_UARTCtl;
 
+void UARTEnableInterrupt(int enable);
 void UARTFlush();
 int UARTHasData();
 void UARTPutChar(const char _char);
