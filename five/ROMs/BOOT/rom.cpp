@@ -48,9 +48,9 @@ int main()
 		UARTWrite("│ ██████   ▒▒▒▒▒   ██████ │\n");
 		UARTWrite("│ ████████   ▒   ████████ │\n");
 		UARTWrite("│ ██████████   ██████████ │\n");
-		UARTWrite("│                         │\n");
+		UARTWrite("├─────────────────────────┤\n");
 		UARTWrite("│ (c)2022 Engin Cilasun   │\n");
-		UARTWrite("│ HARTS: 2                │\n");
+		UARTWrite("│ HOTAS Controller v0.0   │\n");
 		UARTWrite("└─────────────────────────┘\n\n");
 	}
 
