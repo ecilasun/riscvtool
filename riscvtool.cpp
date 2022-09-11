@@ -224,13 +224,16 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
     printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
 
     // Send all binary sections to their correct addresses
-    int woffset = 0;
+    int totalout = 0;
     for(int sec=0; sec<fheader->m_SHNum; ++sec)
     {
         SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*sec);
 
         if (sheader->m_Flags & 0x00000007 && sheader->m_Size!=0) // writeable/alloc/exec and non-zero
         {
+            totalout += sheader->m_Size/4;
+            int woffset = sheader->m_Addr/4;
+
             if (groupsize == 4) // 32bit groups (4 bytes)
             {
                 unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
@@ -263,9 +266,9 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
 
     // Pad to avoid misaligned data
     if (groupsize>4)
-        woffset = EAlignUp(woffset, groupsize/4);
+        totalout = EAlignUp(totalout, groupsize/4);
 
-    for(int i=0; i<woffset; ++i)
+    for(int i=0; i<totalout; ++i)
     {
         int breakpoint = (i!=0) && (groupsize == 4 ? (i%16==0) : (groupsize == 16 ? (i%4==0) : (groupsize == 32 ? (i%8==0) : 0)));
         if (breakpoint)
