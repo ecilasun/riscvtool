@@ -19,7 +19,8 @@ void workermain()
 
 	while(1)
 	{
-		// TODO: Per-HART stuff
+		// TODO: Wake up to process interrupt requests
+		asm volatile("wfi;");
 	}
 }
 
@@ -33,6 +34,7 @@ int main()
 
 	while(1)
 	{
+		// TODO: Wake up to process interrupt requests
 		asm volatile("wfi;");
 	}
 
