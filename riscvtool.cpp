@@ -275,7 +275,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
 
     delete [] workblock;
 
-    printf(";\n");
+    printf(";");
 }
 
 void dumpelf(char *_filename, unsigned int groupsize)
