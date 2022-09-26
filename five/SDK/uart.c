@@ -31,13 +31,6 @@ uint8_t UARTRead()
         return 0;
 }
 
-void UARTPutChar(const char _char)
-{
-    // Warning! This might overflow the output FIFO.
-    // It is advised to call UARTFlush() before using it.
-    *IO_UARTTX = (uint32_t)_char;
-}
-
 void UARTWrite(const char *_message)
 {
     // Emit all characters from the input string
