@@ -375,8 +375,8 @@ int main()
 
     // Splash screen
 		UARTWrite("\033[H\033[0m\033[2J");
-		UARTWrite("CPU: 1x rv32i @120MHz\n");
-		UARTWrite("BUS: AXI4 bus @120MHz\n");
+		UARTWrite("CPU: 1x rv32i @100MHz\n");
+		UARTWrite("BUS: AXI4 bus @100MHz\n");
 		UARTWrite("RAM: 131072 bytes\n");
 		//UARTWrite("┌─┐ ├─┤└─┘\n\n");
 	}
