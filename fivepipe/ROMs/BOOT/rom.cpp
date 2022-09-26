@@ -367,30 +367,32 @@ int main()
 	// Only on one core
 	if (hartid == 0)
 	{
+		// Ready to handle hardware & software interrupts
+		InstallMainISR();
+
+    // Reset debug LEDs
 		SetLEDState(0x0);
 
+    // Splash screen
 		UARTWrite("\033[H\033[0m\033[2J");
 		UARTWrite("CPU: 1x rv32i @120MHz\n");
 		UARTWrite("BUS: AXI4 bus @120MHz\n");
 		UARTWrite("RAM: 131072 bytes\n");
 		//UARTWrite("┌─┐ ├─┤└─┘\n\n");
-
-		// Ready to handle hardware & software interrupts
-		InstallMainISR();
 	}
 
-    init_scene();
+  // Ray trace test
+  init_scene();
+  UARTWrite("running tinyraytracertty\n");
 
-    uint64_t startclock = E32ReadTime();
+  uint64_t startclock = E32ReadTime();
+  render(spheres, nb_spheres, lights, nb_lights);
+  uint64_t endclock = E32ReadTime();
 
-    UARTWrite("running tinyraytracertty\n");
-    render(spheres, nb_spheres, lights, nb_lights);
-
-    uint64_t endclock = E32ReadTime();
-    uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("\ntinyraytracertty took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms at 80x80 resolution\n");
+  uint32_t deltams = ClockToMs(endclock-startclock);
+  UARTWrite("\ntinyraytracertty took ");
+  UARTWriteDecimal((unsigned int)deltams);
+  UARTWrite(" ms at 80x80 resolution\n");
 
 	while(1)
 	{
