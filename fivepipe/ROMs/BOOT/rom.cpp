@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
+#include <stdint.h>
 #include <math.h>
 
 #include "rvcrt0.h"
@@ -16,32 +17,108 @@
 #include "uart.h"
 #include "isr.h"
 
-/*******************************************************************/
-/* Modified by Engin Cilasun to fit the E32 graphics architecture  */
-/* from Bruno Levy's original port of 2020                         */
+/* A port of Dmitry Sokolov's tiny raytracer to C and to FemtoRV32 */
+/* Displays on the small OLED display and/or HDMI                  */
+/* Bruno Levy, 2020                                                */
 /* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
+/* Modified to fit custom architecture by Engin Cilasun            */
+
 /*******************************************************************/
 
 typedef int BOOL;
 
-static inline float fmax(float x, float y) { return x>y?x:y; }
-static inline float fmin(float x, float y) { return x<y?x:y; }
+static inline float max(float x, float y) { return x>y?x:y; }
+static inline float min(float x, float y) { return x<y?x:y; }
+
+/*******************************************************************/
+
+// If you want to adapt tinyraytracer to your own platform, there are
+// mostly two macros and two functions to write:
+//   graphics_width
+//   graphics_height
+//   graphics_init()
+//   graphics_set_pixel()
+//
+// You can also write the following functions (or leave them empty if
+// you do not need them):
+//   graphics_terminate()
+//   stats_begin_frame()
+//   stats_begin_pixel()
+//   stats_end_pixel()
+//   stats_end_frame()
+
 
 // Size of the screen
 // Replace with your own variables or values
-#define graphics_width  80
-#define graphics_height 80
+
+// Benchmark
+// - graphics deactivated (else UART waiting loop gives
+//   different results according to CPU freq / UART baud rate
+//   ratio).
+// - smaller image size (for faster run in simulation)
+
+static int graphics_width  = 120;
+static int graphics_height = 60;
+
+static int bench_run = 0;
+
+// Two pixels per character using UTF8 character set
+// (comment-out if terminal does not support it)
+//#define graphics_double_lines
+
+// Replace with your own stuff to initialize graphics
+static inline void graphics_init() {
+    UARTWrite("\033[48;5;16m\033[H\033[2J");
+}
+
+// Replace with your own stuff to terminate graphics or leave empty
+// Here I send <ctrl><D> to the UART, to exit the simulation in Verilator,
+// it is captured by special code in RTL/DEVICES/uart.v
+static inline void graphics_terminate() {
+    UARTWrite("\033[48;5;16m\033[38;5;15m");
+}
 
 // Replace with your own code.
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
-  r = fmax(0.0f, fmin(1.0f, r));
-  g = fmax(0.0f, fmin(1.0f, g));
-  b = fmax(0.0f, fmin(1.0f, b));
-
-    uint8_t R = (uint8_t)(255.0f * r);
-    uint8_t G = (uint8_t)(255.0f * g);
-    uint8_t B = (uint8_t)(255.0f * b);
-
+   r = max(0.0f, min(1.0f, r));
+   g = max(0.0f, min(1.0f, g));
+   b = max(0.0f, min(1.0f, b));
+   uint8_t R = (uint8_t)(255.0f * r);
+   uint8_t G = (uint8_t)(255.0f * g);
+   uint8_t B = (uint8_t)(255.0f * b);
+   // graphics output deactivated for bench run
+   if(bench_run) {
+       if(y & 1) {
+	  if(x == graphics_width-1) {
+	     UARTWriteDecimal(y/2);
+	  }
+       }
+       return;
+   }
+#ifdef graphics_double_lines
+   static uint8_t prev_R=0;
+   static uint8_t prev_G=0;
+   static uint8_t prev_B=0;
+   if(y&1) {
+       if((R == prev_R) && (G == prev_G) && (B == prev_B)) {
+	   printf("\033[48;2;%d;%d;%dm ",(int)R,(int)G,(int)B);
+       } else {
+	   printf("\033[48;2;%d;%d;%dm",(int)prev_R,(int)prev_G,(int)prev_B);
+	   printf("\033[38;2;%d;%d;%dm",(int)R,(int)G,(int)B);
+	   // https://www.w3.org/TR/xml-entity-names/025.html
+	   // https://onlineunicodetools.com/convert-unicode-to-utf8
+	   printf("\xE2\x96\x83");
+       }
+       if(x == graphics_width-1) {
+	   printf("\033[38;2;0;0;0m");	   
+	   printf("\033[48;2;0;0;0m\n");
+       }
+   } else {
+       prev_R = R;
+       prev_G = G;
+       prev_B = B;
+   }
+#else   
     UARTWrite("\033[48;2;");
     UARTWriteDecimal(R);
     UARTWrite(";");
@@ -49,8 +126,70 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
     UARTWrite(";");
     UARTWriteDecimal(B);
     UARTWrite("m ");
-    if(x==graphics_width-1)
-        UARTWrite("\033[48;2;0;0;0m");
+   if(x==graphics_width-1)
+       UARTWrite("\033[48;2;0;0;0m");
+#endif   
+}
+
+
+// Begins statistics collection for current pixel
+// Leave emtpy if not needed.
+// There are these two levels because on some
+// femtorv32 cores (quark, tachyon), the clock tick counter does not
+// have sufficient bits and will wrap during the time taken by
+// rendering a frame (up to several minutes).
+static inline void stats_begin_pixel() {
+}
+
+// Ends statistics collection for current pixel
+// Leave emtpy if not needed.
+static inline void stats_end_pixel() {
+}
+
+// Print "fixed point" number (integer/1000)
+static void printk(uint64_t kx) {
+    int intpart  = (int)(kx / 1000);
+    int fracpart = (int)(kx % 1000);
+    UARTWriteDecimal(intpart);
+    UARTWrite(".");
+    if(fracpart<100) {
+	    UARTWrite("0");
+    }
+    if(fracpart<10) {
+	    UARTWrite("0");
+    }
+    UARTWriteDecimal(fracpart);
+}
+
+static uint64_t instret_start;
+static uint64_t cycles_start;
+
+// Begins statistics collection for current frame.
+// Leave emtpy if not needed.
+static inline void stats_begin_frame() {
+    instret_start = rdinstret();
+    cycles_start  = rdcycle();
+}
+
+// Ends statistics collection for current frame
+// and displays result.
+// Leave emtpy if not needed.
+static inline void stats_end_frame() {
+   graphics_terminate();
+   uint64_t instret = rdinstret() - instret_start;
+   uint64_t cycles = rdcycle()    - cycles_start ;
+   uint64_t kCPI       = cycles*1000/instret;
+   uint64_t pixels     = graphics_width * graphics_height;
+   uint64_t kRAYSTONES = (pixels*1000000000)/cycles;
+   UARTWrite("\n");
+   UARTWriteDecimal(graphics_width);
+   UARTWrite("x");
+   UARTWriteDecimal(graphics_height);
+   UARTWrite("      ");
+   UARTWrite(bench_run ? "no gfx output (measurement is accurate)" : "gfx output (measurement is NOT accurate)");
+   UARTWrite("CPI="); printk(kCPI); UARTWrite("     ");
+   UARTWrite("RAYSTONES="); printk(kRAYSTONES);
+   UARTWrite("\n");
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -176,7 +315,7 @@ vec3 reflect(vec3 I, vec3 N) {
 
 vec3 refract(vec3 I, vec3 N, float eta_t, float eta_i /* =1.f */) {
   // Snell's law
-  float cosi = -fmax(-1.f, fmin(1.f, vec3_dot(I,N)));
+  float cosi = -max(-1.f, min(1.f, vec3_dot(I,N)));
   // if the ray comes from the inside the object, swap the air and the media  
   if (cosi<0) return refract(I, vec3_neg(N), eta_i, eta_t); 
     float eta = eta_i / eta_t;
@@ -218,7 +357,7 @@ BOOL scene_intersect(
 	             : make_vec3(.3, .2, .1);
     }
   }
-  return fmin(spheres_dist, checkerboard_dist)<1000;
+  return min(spheres_dist, checkerboard_dist)<1000;
 }
 
 vec3 cast_ray(
@@ -281,9 +420,9 @@ vec3 cast_ray(
     ) continue ;
     
     diffuse_light_intensity  +=
-                  lights[i].intensity * fmax(0.f, vec3_dot(light_dir,N));
+                  lights[i].intensity * max(0.f, vec3_dot(light_dir,N));
      
-    float abc = fmax(
+    float abc = max(
 	           0.f, vec3_dot(vec3_neg(reflect(vec3_neg(light_dir), N)),dir)
 	        );
     float def = material.specular_exponent;
@@ -303,18 +442,39 @@ vec3 cast_ray(
   return result;
 }
 
-#define M_PI 3.14159265358979323846 
+static inline void render_pixel(
+    int i, int j, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights
+) {
+   const float fov  = 3.14159265358979323846/3.;
+   stats_begin_pixel();
+   float dir_x =  (i + 0.5) - graphics_width/2.;
+   float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
+   float dir_z = -graphics_height/(2.*tan(fov/2.));
+   vec3 C = cast_ray(
+       make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)),
+       spheres, nb_spheres, lights, nb_lights, 0
+   );
+   graphics_set_pixel(i,j,C.x,C.y,C.z);
+   stats_end_pixel();
+}
+
 void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
-  const float fov  = M_PI/3.;
-  for (int j = 0; j<graphics_height; j++) { // actual rendering loop
+   stats_begin_frame();
+#ifdef graphics_double_lines  
+   for (int j = 0; j<graphics_height; j+=2) { 
+      for (int i = 0; i<graphics_width; i++) {
+	  render_pixel(i,j  ,spheres,nb_spheres,lights,nb_lights);
+	  render_pixel(i,j+1,spheres,nb_spheres,lights,nb_lights);	  
+      }
+   }
+#else
+  for (int j = 0; j<graphics_height; j++) { 
     for (int i = 0; i<graphics_width; i++) {
-      float dir_x =  (i + 0.5) - graphics_width/2.;
-      float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
-      float dir_z = -graphics_height/(2.*tan(fov/2.));
-      vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-      graphics_set_pixel(i,j,C.x,C.y,C.z);
+      render_pixel(i,j  ,spheres,nb_spheres,lights,nb_lights);
     }
   }
+#endif
+   stats_end_frame();
 }
 
 int nb_spheres = 4;
@@ -381,18 +541,18 @@ int main()
 		//UARTWrite("┌─┐ ├─┤└─┘\n\n");
 	}
 
-  // Ray trace test
   init_scene();
-  UARTWrite("running tinyraytracertty\n");
 
-  uint64_t startclock = E32ReadTime();
+  bench_run = 1;
+  graphics_width  = 40;
+  graphics_height = 20;
+  UARTWrite("Running without graphic output (for accurate measurement)...\n");
   render(spheres, nb_spheres, lights, nb_lights);
-  uint64_t endclock = E32ReadTime();
 
-  uint32_t deltams = ClockToMs(endclock-startclock);
-  UARTWrite("\ntinyraytracertty took ");
-  UARTWriteDecimal((unsigned int)deltams);
-  UARTWrite(" ms at 80x80 resolution\n");
+  bench_run = 0;
+  graphics_width = 120;
+  graphics_height = 60;
+  render(spheres, nb_spheres, lights, nb_lights);
 
 	while(1)
 	{
