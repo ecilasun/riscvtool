@@ -370,9 +370,9 @@ int main()
 		SetLEDState(0x0);
 
 		UARTWrite("\033[H\033[0m\033[2J");
-		UARTWrite("CPU: 1x rv32i @200MHz\n");
-		UARTWrite("BUS: AXI4 bus @200MHz\n");
-		UARTWrite("RAM: 65536 bytes\n");
+		UARTWrite("CPU: 1x rv32i @120MHz\n");
+		UARTWrite("BUS: AXI4 bus @120MHz\n");
+		UARTWrite("RAM: 131072 bytes\n");
 		//UARTWrite("┌─┐ ├─┤└─┘\n\n");
 
 		// Ready to handle hardware & software interrupts
@@ -381,8 +381,16 @@ int main()
 
     init_scene();
 
+    uint64_t startclock = E32ReadTime();
+
     UARTWrite("running tinyraytracertty\n");
     render(spheres, nb_spheres, lights, nb_lights);
+
+    uint64_t endclock = E32ReadTime();
+    uint32_t deltams = ClockToMs(endclock-startclock);
+    UARTWrite("\ntinyraytracertty took ");
+    UARTWriteDecimal((unsigned int)deltams);
+    UARTWrite(" ms at 80x80 resolution\n");
 
 	while(1)
 	{
