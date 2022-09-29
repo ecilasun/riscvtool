@@ -4,49 +4,44 @@ Encoding
 [31:7]  [6:0]
 data    opcode
 
-Register indices
+Internal registers
 
 Name     Index    Size    Purpose
 ---------------------------------------------------------------------------
-r0-r31 | [0:31] | 32bit | CPU registers or CSR indices (architecture specific) depending on the instruction encoding
-PC     |   [32] | 32bit | Current program counter
-immd   |   [33] | 32bit | Immediate value calculated from instruction encoding
-offt   |   [34] | 32bit | Address offset register
-stat   |   [35] | 32bit | Status register, [0]branchready, [1]compare true, [31:2]unused
-cval   |   [36] | 32bit | Current register value loaded
-lval   |   [37] | 32bit | Result of the load operation
-sval   |   [38] | 32bit | Value for the pending store operation
-lflg   |   [39] | 32bit | Flags for each register to mark 'busy for load'
-sflg   |   [40] | 32bit | Flags for each register to mark 'busy for store'
-dadr   |   [41] | 32bit | Address register for load/store
-badr   |   [42] | 32bit | Calculated branch address
+r0-r31 | [0:31] | 32bit | CPU registers
+imm    | [31+0] | 24bit | Immediate value calculated from instruction encoding, sign extended to 32 bits on read if needed
+oper   | [31+1] | 12bit | Packed bits pointing at CPU register indices
+creg   | [31+2] |  1bit | Compare result register
+lreg   | [31+3] | 32bit | Pending load bit mask for CPU registers
+sreg   | [31+4] | 32bit | Pending store bit mask for CPU registers
+addr   | [31+5] | 32bit | Data address register
+ofst   | [31+6] | 32bit | Offset register
+
 ---------------------------------------------------------------------------
 
 Opcodes
-  
-?RRRRR_RAA_0000: rsel R, a/b: operand[AA] = R (select register R as operand A/B/C/D for following instruction)
-??????_OOO_0001: move.op: a <= op(b) (branch writes to PC with op equal to nothing or a compare)
-??????_?CC_0010: cmp.cop: cmpval <= a op b ? 1 : 0
-??????_???_0011: csel: regval <= cmpval ? a : b
-??????_???_0100: load target [daddr]: Start a load request from implied daddr register into target register, set corresponding lflg bit to one
-??????_???_0101: lwait target: Wait for target register's lflg bit to become zero (only inserted if a lflg register is being read)
-??????_??U_0110: unblock.unit: Execute unit will unblock the given unit
-??????_??U_0111: waitfor.unit: Execute unit will wait for the given unit to unblock it
-??????_?TT_1000: 
-??????_???_1001: 
-??????_???_1010: 
-??????_???_1011: 
-??????_???_1100: 
-??????_???_1101: 
-??????_???_1110: 
-??????_???_1111: exception [etype]
+wait(c) -> wait for conditional to become true
+regs(r) -> if high bit is set, it's an internal register, otherwise it's a CPU register
+mem() -> always starts a read request at addr+offset
 
-idx(A):
-  00: operand A
-  01: operand B
-  10: operand C
-  11: operand D
-op(O):
+????????_????????.BBBB_BBAAA_AAA_0000: rsel A, B:    oper <= {B, A};                           Select the two operand registers for following instruction
+????????_????????.????_?????_OOO_0001: move.op:      regs[A] <= op(regs[B]);                   Branch writes to PC with op equal to nothing or a compare
+????????_????????.????_?????_?CC_0010: cmp.cop:      creg <= op(regs[A], regs[B]) ? 1 : 0;     Compare register A to register B and set creg to result
+????????_????????.????_?????_???_0011: csel:         regs[A] <= creg ? regs[A] : regs[B];      Select either register A or register B to replace contents of register A
+????????_????????.????_?????_???_0100: load:         regs[A] <= mem(); lreg[A] <= 1;           Start load into register A and mark it as busy-for-load
+????????_????????.????_?????_???_0101: lwait target: wait(lreg[A]==0);                         Wait for target register's lflg bit to become zero (only inserted if a lflg register is being read)
+????????_????????.????_?????_??U_0110: unblock.unit:                                           Execute unit will unblock the given unit
+????????_????????.????_?????_??U_0111: waitfor.unit:                                           Execute unit will wait for the given unit to unblock it
+????????_????????.IIII_IIIII_III_1000: ldli I:       imm <= {12'd0, I};                        Load lower 12 bits of immediate register (always clears the upper 12 bits to 0)
+????????_????????.IIII_IIIII_III_1001: ldhi I:       imm[23:12] <= I;                          Load upper 12 bits of immediate register (to be sign extended on read)
+????????_????????.IIII_IIIII_III_1010: ldla I:                                                 Load lower 12 bits of address register (always clears the upper 12 bits to 0)
+????????_????????.IIII_IIIII_III_1011: ldha I:                                                 Load upper 12 bits of address register
+????????_????????.????_?????_???_1100: store:
+????????_????????.????_?????_???_1101: 
+????????_????????.????_?????_???_1110: 
+????????_????????.????_?????_?TT_1111: exception.etype
+
+.op(O):
   000: adi: transient add immediate to source)
   001: ado: transient add offset to source
   010: if: conditional move depending on last compare result
@@ -55,15 +50,15 @@ op(O):
   101: 
   110: 
   111: copy: no op, pass through copy
-cop(C):
+.cop(C):
   00: eq
   01: less
   10: zero
   11: greaterequal
-unit(U):
+.unit(U):
   0: fetchunit
   1: other(none)
-etype(T):
+.etype(T):
   00: illegal instruction
   01: hw_interrupt(external or timer) or exception
   10: other(none)
@@ -73,60 +68,22 @@ Example
 
 00000000 <_start>:
    0:	0000b197          	auipc	gp,0xb
-                        move.imm immd, 0xb
-                        move.adi gp, PC
    4:	03c1a183          	lw	gp,60(gp) # b03c <_GLOBAL_OFFSET_TABLE_+0x4>
-                        move.imm offt, 60
-                        move.ado daddr, gp // daddr = gp+60
-                        load gp // lflg[gp]=1
    8:	f14024f3          	csrr	s1,mhartid
-                        move s1, csr_mhartid
    c:	00849493          	slli	s1,s1,0x8
-                        move.imm immd, 0x8
-                        move.sll s1, immd
   10:	00020937          	lui	s2,0x20
-                        move.imm s2, 0x20
   14:	f0090913          	addi	s2,s2,-256 # 1ff00 <__global_pointer$+0x14680>
-                        move.imm immd, -256
-                        move s2, immd
   18:	40990933          	sub	s2,s2,s1
-                        move.sub s2, s1
   1c:	00090113          	mv	sp,s2
-                        move sp, s2
   20:	00010413          	mv	s0,sp
-                        move s0, sp
   24:	04049a63          	bnez	s1,78 <workerhartstart>
-                        move.imm badr, 78
-                        move.imm offt, 4
-                        move.ado cval, PC // cval = PC+4
-                        cmp.ne s1, r0     // !=0?, exec unit will always do the compare and signal Fetch with the result bit + resume strobe
-                        csel badr, cval   // Either keep badr (true) or replace with cval (PC+4, false)
-                        unblock.fetchunit // Branch address is already output, just unblock fetch unit which sets PC to either bradr(true) or PC+4(false)
   28:	0000b517          	auipc	a0,0xb
-  
   2c:	02c52503          	lw	a0,44(a0) # b054 <_GLOBAL_OFFSET_TABLE_+0x1c>
-                        move.imm offt, 44
-                        move.ado daddr, a0 // daddr = a0+44
-                        load a0, 0 // lflg[a0]=1, load into lval[0]
   30:	0000b617          	auipc	a2,0xb
-                        // Other operations here
   34:	03862603          	lw	a2,56(a2) # b068 <_GLOBAL_OFFSET_TABLE_+0x30>
-                        move.imm offt, 56
-                        move.ado daddr, a2
-                        load a2, 1 // lflg[a2]=1, load into lval[1]
   38:	40a60633          	sub	a2,a2,a0
-                        // lflg[a0]==1 and lflg[a2]==1, and we read both, therefore insert lwait here
-                        lwait a0 // wait for lflg[a0]==0
-                        move a0, lval[0]
-                        lwait a2 // wait for lflg[a2]==0
-                        move a2, lval[1]
-                        move.sub a2, a0
-
   3c:	00000593          	li	a1,0
   40:	050000ef          	jal	ra,90 <memset>
-                        move.imm badr, 90
-                        move ra, PC
-                        // Fetch changes PC to badr here
   44:	0000b517          	auipc	a0,0xb
   48:	01852503          	lw	a0,24(a0) # b05c <_GLOBAL_OFFSET_TABLE_+0x24>
   4c:	00050a63          	beqz	a0,60 <noatexitfound>
