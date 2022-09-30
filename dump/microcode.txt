@@ -11,6 +11,7 @@ lreg   | [31+4] | 32bit | Pending load bit mask for CPU registers
 sreg   | [31+5] | 32bit | Pending store bit mask for CPU registers
 addr   | [31+6] | 32bit | Data address register
 ofst   | [31+7] | 32bit | Offset register
+jump   | [31+8] | 32bit | Jump destination register
 
 ---------------------------------------------------------------------------
 
@@ -34,7 +35,7 @@ mem() -> always starts a read request at addr+offset
 ????????_????????.????_?????_???_1011: 
 ????????_????????.????_?????_???_1100: 
 ????????_????????.????_?????_???_1101: 
-????????_????????.????_?????_???_1110: 
+????????_????????.????_?????_???_1110: noop:
 ????????_????????.????_?????_?TT_1111: exception.etype
 
 .op(O):
@@ -67,28 +68,51 @@ Example
                   rsel gp, PC // imm loaded with 0x0000B000
                   move.adi // gp <= PC + imm
    4:	03c1a183          	lw	gp,60(gp) # b03c <_GLOBAL_OFFSET_TABLE_+0x4>
-                  rsel addr, gp
-                  move.adi // addr <= gp+60
+                  rsel addr, gp // imm loaded with 60
+                  move.adi // addr <= gp + imm
                   rsel gp, zero
                   setlreg 1 // mark gp busy for load
                   load // start load
    8:	f14024f3          	csrr	s1,mhartid
-                  rsel addr, zero
-                  move.adi // addr <= 0 + CSR address of mhartid in immediate register
+                  rsel addr, zero // imm loaded with address of mhartid
+                  move.adi // addr <= 0 + imm
                   rsel s1, zero
                   setlreg 1 // mark s1 busy for load
-                  load
+                  load.word
    c:	00849493          	slli	s1,s1,0x8
-                  lwait // wait for s1 to become available (still selected)
+                  lwait // wait for s1 to become available (still selected), imm loaded with 8
                   move.sll // s1 <= s1 << imm
   10:	00020937          	lui	s2,0x20
+                  rsel s2, zero // imm loaded with 20
+                  move.ui // s2 <= unsigned(imm)
   14:	f0090913          	addi	s2,s2,-256 # 1ff00 <__global_pointer$+0x14680>
+                  // imm loaded with -256
+                  move.adi // s2 already selected, s2 <= s2 + imm
   18:	40990933          	sub	s2,s2,s1
+                  rsel s2, s1
+                  move.sub // s2 <= s2 - s1
   1c:	00090113          	mv	sp,s2
+                  rsel sp, s2
+                  move.copy // sp <= s2
   20:	00010413          	mv	s0,sp
+                  rsel s0, sp
+                  move.copy // s0 <= sp
   24:	04049a63          	bnez	s1,78 <workerhartstart>
+                  rsel s1, PC // imm is loaded with sign extended 78, jump loaded with PC + 4
+                  cmp.nez // creg <= s1 != 0 ? 1:0
+                  rsel tmp, PC // NOTE: okay to overwrite s1 instead?
+                  move.adi // tmp <= PC + imm
+                  csel jump, tmp // if creg==1, jump <= PC + imm
+                  unblock.fetchunit // can now resume from new PC which is 'jump' register's value
   28:	0000b517          	auipc	a0,0xb
+                  rsel ao, PC // imm loaded with 0x0000B000
+                  move.adi // a0 <= PC + imm
   2c:	02c52503          	lw	a0,44(a0) # b054 <_GLOBAL_OFFSET_TABLE_+0x1c>
+                  rsel addr, a0 // imm loaded with 44
+                  move.adi // addr <= a0 + imm
+                  rsel a0, zero
+                  setlreg 1 // mark a0 busy for load
+                  load // start load
   30:	0000b617          	auipc	a2,0xb
   34:	03862603          	lw	a2,56(a2) # b068 <_GLOBAL_OFFSET_TABLE_+0x30>
   38:	40a60633          	sub	a2,a2,a0
