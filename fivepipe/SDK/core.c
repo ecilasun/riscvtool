@@ -31,6 +31,22 @@ uint64_t E32ReadTime()
    return now;
 }
 
+uint64_t E32ReadCycles()
+{
+   uint32_t cyclehigh, cyclelow, tmp;
+   asm volatile(
+      "1:\n"
+      "rdcycleh %0\n"
+      "rdcycle %1\n"
+      "rdcycleh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (cyclehigh), "=&r" (cyclelow), "=&r" (tmp)
+   );
+
+   uint64_t now = ((uint64_t)(cyclehigh)<<32) | cyclelow;
+   return now;
+}
+
 uint64_t E32ReadRetiredInstructions()
 {
    uint32_t retihigh, retilow;
@@ -44,6 +60,13 @@ uint64_t E32ReadRetiredInstructions()
    uint64_t reti = ((uint64_t)(retihigh)<<32) | retilow;
 
    return reti;
+}
+
+void E32SetTimeCompare(const uint64_t future)
+{
+   // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
+   swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));
+   swap_csr(0x800, ((uint32_t)(future&0x00000000FFFFFFFF)));
 }
 
 uint32_t ClockToMs(uint64_t clk)
@@ -61,13 +84,6 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
    *hours = ms / 3600000;
    *minutes = (ms % 3600000) / 60000;
    *seconds = ((ms % 360000) % 60000) / 1000;
-}
-
-void E32SetTimeCompare(const uint64_t future)
-{
-   // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
-   swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));
-   swap_csr(0x800, ((uint32_t)(future&0x00000000FFFFFFFF)));
 }
 
 // C stdlib overrides

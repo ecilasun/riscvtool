@@ -20,11 +20,13 @@
 #define NUM_HARTS 8
 
 uint64_t E32ReadTime();
+uint64_t E32ReadCycles();
+uint64_t E32ReadRetiredInstructions();
+void E32SetTimeCompare(const uint64_t future);
+
 uint32_t ClockToMs(uint64_t clk);
 uint32_t ClockToUs(uint64_t clk);
 void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *seconds);
-void E32SetTimeCompare(const uint64_t future);
-uint64_t E32ReadRetiredInstructions();
 
 extern volatile uint32_t *HARTMAILBOX;
 extern volatile uint8_t *HARTIRQ;
