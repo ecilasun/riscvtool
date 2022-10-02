@@ -155,8 +155,8 @@ static uint64_t cycles_start;
 // Begins statistics collection for current frame.
 // Leave emtpy if not needed.
 static inline void stats_begin_frame() {
-    instret_start = rdinstret();
-    cycles_start  = rdcycle();
+    instret_start = E32ReadRetiredInstructions();
+    cycles_start  = E32ReadCycles();
 }
 
 // Ends statistics collection for current frame
@@ -164,8 +164,8 @@ static inline void stats_begin_frame() {
 // Leave emtpy if not needed.
 static inline void stats_end_frame() {
    graphics_terminate();
-   uint64_t instret = rdinstret() - instret_start;
-   uint64_t cycles = rdcycle()    - cycles_start ;
+   uint64_t instret = E32ReadRetiredInstructions() - instret_start;
+   uint64_t cycles = E32ReadCycles()    - cycles_start ;
    uint64_t kCPI       = cycles*1000/instret;
    uint64_t pixels     = graphics_width * graphics_height;
    uint64_t kRAYSTONES = (pixels*1000000000)/cycles;
