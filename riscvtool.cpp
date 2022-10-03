@@ -239,7 +239,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
                 unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
                 for (unsigned int i=0; i<sheader->m_Size; ++i)
                 {
-                    workblock[(woffset&0xFFFFFFFC) + 3-(woffset%4)] = litteendian[i];
+                    workblock[(woffset&0xFFFFFFFC) + (3-(woffset%4))] = litteendian[i];
                     woffset++;
                 }
             }
@@ -255,9 +255,9 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
             else if (groupsize == 32) // 256bit groups (32 bytes)
             {
                 unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-                for (unsigned int i=0;i<sheader->m_Size/8;++i)
+                for (unsigned int i=0; i<sheader->m_Size/4; ++i)
                 {
-                    workblock[(woffset&0xFFFFFFF8) + 7-(woffset%8)] = litteendian[i];
+                    workblock[(woffset&0xFFFFFFF8) + (7-(woffset%8))] = litteendian[i];
                     woffset++;
                 }
             }
@@ -265,8 +265,10 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
     }
 
     // Pad to avoid misaligned data
-    if (groupsize>4)
+    if (groupsize == 16)
         totalout = EAlignUp(totalout, groupsize/4);
+    if (groupsize == 32)
+        totalout = EAlignUp(totalout, groupsize/8);
 
     for(int i=0; i<totalout; ++i)
     {
