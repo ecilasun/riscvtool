@@ -236,10 +236,10 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
 
             if (groupsize == 4) // 32bit groups (4 bytes)
             {
-                unsigned char *litteendian = (unsigned char *)(_elfbinary+sheader->m_Offset);
+                unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
                 for (unsigned int i=0; i<sheader->m_Size; ++i)
                 {
-                    workblock[(woffset&0xFFFFFFFC) + (3-(woffset%4))] = litteendian[i];
+                    workblock[(woffset&0xFFFFFFFC) + (woffset%4)] = litteendian[i];
                     woffset++;
                 }
             }
@@ -265,6 +265,8 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
     }
 
     // Pad to avoid misaligned data
+    if (groupsize == 4)
+        totalout = EAlignUp(totalout, groupsize);
     if (groupsize == 16)
         totalout = EAlignUp(totalout, groupsize/4);
     if (groupsize == 32)
@@ -272,7 +274,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
 
     for(int i=0; i<totalout; ++i)
     {
-        int breakpoint = (i!=0) && (groupsize == 4 ? (i%16==0) : (groupsize == 16 ? (i%4==0) : (groupsize == 32 ? (i%8==0) : 0)));
+        int breakpoint = (i!=0) && (groupsize == 4 ? 1 : (groupsize == 16 ? (i%4==0) : (groupsize == 32 ? (i%8==0) : 0)));
         if (breakpoint)
             printf("\n");
         printf("%.8X", workblock[i]);
