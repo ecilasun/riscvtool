@@ -55,9 +55,9 @@ int main()
 
 	while(1)
 	{
-    uint32_t voltage = *XADCPORT;
-    UARTWriteDecimal(voltage);
-    UARTWrite("\n");
+    	uint32_t voltage = *XADCPORT;
+    	UARTWriteDecimal(voltage);
+    	UARTWrite("\n");
 
 		// TODO: Wake up to process hardware interrupt requests
 		//asm volatile("wfi;");
