@@ -53,11 +53,17 @@ int main()
 		InstallMainISR();
 	}
 
+	uint32_t prevVoltage = 0xC004CAFE;
 	while(1)
 	{
     	uint32_t voltage = *XADCPORT;
-    	UARTWriteDecimal(voltage);
-    	UARTWrite("\n");
+
+		if (prevVoltage != voltage)
+		{
+			UARTWriteDecimal(voltage);
+			UARTWrite("\n");
+			prevVoltage = voltage;
+		}
 
 		// TODO: Wake up to process hardware interrupt requests
 		//asm volatile("wfi;");
