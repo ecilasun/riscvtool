@@ -54,9 +54,10 @@ int main()
 	}
 
 	uint32_t prevVoltage = 0xC004CAFE;
+	uint32_t voltage = 0x00000000;
 	while(1)
 	{
-    	uint32_t voltage = *XADCPORT;
+    	voltage = (voltage + *XADCPORT)>>1;
 
 		if (prevVoltage != voltage)
 		{
