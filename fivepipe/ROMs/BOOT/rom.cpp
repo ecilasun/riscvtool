@@ -38,15 +38,15 @@ int main()
 	// Only on one core
 	if (hartid == 0)
 	{
-    // Splash screen
+    	// Splash screen
 		/*UARTWrite("\033[H\033[0m\033[2J");
-    UARTWrite("HOTAS controller v0.1 (c) Engin Cilasun\n");
+    	UARTWrite("HOTAS controller v0.1 (c) Engin Cilasun\n");
 		UARTWrite("CPU: 1x rv32i @100MHz\n");
 		UARTWrite("BUS: AXI4 bus @100MHz\n");
 		UARTWrite("RAM: 131072 bytes\n");*/
 		//UARTWrite("┌─┐ ├─┤└─┘\n\n");
 
-    // Reset debug LEDs
+    	// Reset debug LEDs
 		SetLEDState(0x0);
 
 		// Ready to handle hardware & software interrupts
@@ -57,17 +57,17 @@ int main()
 	uint32_t voltage = 0x00000000;
 	while(1)
 	{
-    	voltage = (voltage + *XADCPORT)>>1;
+		// Wake up to process hardware interrupt requests
+		asm volatile("wfi;");
 
+		// While we're awake, also run some voltage measurements
+    	voltage = (voltage + *XADCPORT)>>1;
 		if (prevVoltage != voltage)
 		{
 			UARTWriteDecimal(voltage);
 			UARTWrite("\n");
 			prevVoltage = voltage;
 		}
-
-		// TODO: Wake up to process hardware interrupt requests
-		//asm volatile("wfi;");
 	}
 
 	return 0;

@@ -9,7 +9,7 @@ void HandleMainTimer()
 	SetLEDState(ledstate++);
 
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + TEN_MILLISECONDS_IN_TICKS;
+	uint64_t future = now + (TEN_MILLISECONDS_IN_TICKS/4);
 	E32SetTimeCompare(future);
 }
 
@@ -133,7 +133,7 @@ void InstallMainISR()
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + ONE_SECOND_IN_TICKS;
+	uint64_t future = now + (TEN_MILLISECONDS_IN_TICKS/4);
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
