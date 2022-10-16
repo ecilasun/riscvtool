@@ -13,7 +13,7 @@ Program Header:
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .boot         0000008c  00000000  00000000  00001000  2**2
+  0 .boot         00000088  00000000  00000000  00001000  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
   1 .text         00000ab0  00000090  00000090  00001090  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
@@ -51,8 +51,8 @@ SYMBOL TABLE:
 00000000 l    d  .comment	00000000 .comment
 00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
 00000000 l    df *ABS*	00000000 rom.cpp
-00000078 l       .boot	00000000 workerhartstart
-00000060 l       .boot	00000000 noatexitfound
+00000074 l       .boot	00000000 workerhartstart
+0000005c l       .boot	00000000 noatexitfound
 00000000 l    df *ABS*	00000000 lib_a-memset.o
 00000000 l    df *ABS*	00000000 div.o
 00000000 l    df *ABS*	00000000 isr.cpp
@@ -81,7 +81,7 @@ SYMBOL TABLE:
 000007cc g     F .text	00000014 _Z17E32SetTimeComparey
 00000df0 g       .rodata	00000000 _etext
 00001c50 g       .sdata	00000000 _gp
-0000008c g       .boot	00000000 _boot
+00000088 g       .boot	00000000 _boot
 00000900 g     F .text	000001a4 memcpy
 00000ff0 g     O .data	00000004 LEDSTATE
 00000174 g     F .text	00000048 .hidden __hidden___udivsi3
@@ -93,8 +93,8 @@ SYMBOL TABLE:
 0000145c g       .bss	00000000 _bss_end
 00000808 g     F .text	0000005c __libc_fini_array
 000001bc g     F .text	00000010 .hidden __umodsi3
-0000008c g       .boot	00000000 _ftext
-00000000 g     F .boot	0000008c _start
+00000088 g       .boot	00000000 _ftext
+00000000 g     F .boot	00000088 _start
 00000694 g     F .text	00000124 _Z16UARTWriteDecimall
 00000fe8 g     O .data	00000004 XADCPORT
 00000aa4 g     F .text	0000009c __register_exitproc
@@ -112,7 +112,7 @@ SYMBOL TABLE:
 00001460 g       .bss	00000000 _end
 000001f0 g     F .text	00000030 .hidden __modsi3
 00000268 g     F .text	00000168 _Z14HandleMainTrapmmmm
-0000008c g     F .boot	00000000 _exit
+00000088 g     F .boot	00000000 _exit
 000007b8 g     F .text	00000014 _Z11E32ReadTimev
 0000058c g     F .text	00000108 _Z12UARTWriteHexm
 00001458 g       .sbss	00000000 _fbss
@@ -127,41 +127,40 @@ Disassembly of section .boot:
    4:	4241a183          	lw	gp,1060(gp) # 1424 <_GLOBAL_OFFSET_TABLE_+0x4>
    8:	f14024f3          	csrr	s1,mhartid
    c:	00849493          	slli	s1,s1,0x8
-  10:	00020937          	lui	s2,0x20
-  14:	f0090913          	addi	s2,s2,-256 # 1ff00 <__global_pointer$+0x1e2b0>
-  18:	40990933          	sub	s2,s2,s1
-  1c:	00090113          	mv	sp,s2
-  20:	00010413          	mv	s0,sp
-  24:	04049a63          	bnez	s1,78 <workerhartstart>
-  28:	00001517          	auipc	a0,0x1
-  2c:	40c52503          	lw	a0,1036(a0) # 1434 <_GLOBAL_OFFSET_TABLE_+0x14>
-  30:	00001617          	auipc	a2,0x1
-  34:	41462603          	lw	a2,1044(a2) # 1444 <_GLOBAL_OFFSET_TABLE_+0x24>
-  38:	40a60633          	sub	a2,a2,a0
-  3c:	00000593          	li	a1,0
-  40:	050000ef          	jal	ra,90 <memset>
-  44:	00001517          	auipc	a0,0x1
-  48:	3f452503          	lw	a0,1012(a0) # 1438 <_GLOBAL_OFFSET_TABLE_+0x18>
-  4c:	00050a63          	beqz	a0,60 <noatexitfound>
+  10:	0001f937          	lui	s2,0x1f
+  14:	40990933          	sub	s2,s2,s1
+  18:	00090113          	mv	sp,s2
+  1c:	00010413          	mv	s0,sp
+  20:	04049a63          	bnez	s1,74 <workerhartstart>
+  24:	00001517          	auipc	a0,0x1
+  28:	41052503          	lw	a0,1040(a0) # 1434 <_GLOBAL_OFFSET_TABLE_+0x14>
+  2c:	00001617          	auipc	a2,0x1
+  30:	41862603          	lw	a2,1048(a2) # 1444 <_GLOBAL_OFFSET_TABLE_+0x24>
+  34:	40a60633          	sub	a2,a2,a0
+  38:	00000593          	li	a1,0
+  3c:	054000ef          	jal	ra,90 <memset>
+  40:	00001517          	auipc	a0,0x1
+  44:	3f852503          	lw	a0,1016(a0) # 1438 <_GLOBAL_OFFSET_TABLE_+0x18>
+  48:	00050a63          	beqz	a0,5c <noatexitfound>
+  4c:	00001517          	auipc	a0,0x1
   50:	00001517          	auipc	a0,0x1
-  54:	00001517          	auipc	a0,0x1
-  58:	3d852503          	lw	a0,984(a0) # 142c <_GLOBAL_OFFSET_TABLE_+0xc>
-  5c:	798000ef          	jal	ra,7f4 <atexit>
+  54:	3dc52503          	lw	a0,988(a0) # 142c <_GLOBAL_OFFSET_TABLE_+0xc>
+  58:	79c000ef          	jal	ra,7f4 <atexit>
 
-00000060 <noatexitfound>:
-  60:	005000ef          	jal	ra,864 <__libc_init_array>
-  64:	00012503          	lw	a0,0(sp)
-  68:	00410593          	addi	a1,sp,4
-  6c:	00000613          	li	a2,0
-  70:	4840006f          	j	4f4 <main>
-  74:	00100073          	ebreak
+0000005c <noatexitfound>:
+  5c:	009000ef          	jal	ra,864 <__libc_init_array>
+  60:	00012503          	lw	a0,0(sp)
+  64:	00410593          	addi	a1,sp,4
+  68:	00000613          	li	a2,0
+  6c:	4880006f          	j	4f4 <main>
+  70:	00100073          	ebreak
 
-00000078 <workerhartstart>:
-  78:	00012503          	lw	a0,0(sp)
-  7c:	00410593          	addi	a1,sp,4
-  80:	00000613          	li	a2,0
-  84:	4680006f          	j	4ec <_Z10workermainv>
-  88:	00100073          	ebreak
+00000074 <workerhartstart>:
+  74:	00012503          	lw	a0,0(sp)
+  78:	00410593          	addi	a1,sp,4
+  7c:	00000613          	li	a2,0
+  80:	46c0006f          	j	4ec <_Z10workermainv>
+  84:	00100073          	ebreak
 
 Disassembly of section .text:
 
@@ -432,7 +431,7 @@ Disassembly of section .text:
  474:	01412f03          	lw	t5,20(sp)
  478:	01012f83          	lw	t6,16(sp)
  47c:	05010113          	addi	sp,sp,80
- 480:	30200073          	mret
+ :	30200073          	mret
  484:	00c12583          	lw	a1,12(sp)
  488:	ffc68693          	addi	a3,a3,-4
  48c:	dddff0ef          	jal	ra,268 <_Z14HandleMainTrapmmmm>
@@ -1331,7 +1330,7 @@ Disassembly of section .eh_frame:
  ede:	0000                	.2byte	0x0
  ee0:	f120                	.2byte	0xf120
  ee2:	ffff                	.2byte	0xffff
- ee4:	008c                	.2byte	0x8c
+ ee4:	0088                	.2byte	0x88
  ee6:	0000                	.2byte	0x0
  ee8:	0000                	.2byte	0x0
  eea:	0000                	.2byte	0x0
@@ -1339,7 +1338,7 @@ Disassembly of section .eh_frame:
  eee:	0000                	.2byte	0x0
  ef0:	0100                	.2byte	0x100
  ef2:	0000                	.2byte	0x0
- ef4:	f198                	.2byte	0xf198
+ ef4:	f194                	.2byte	0xf194
  ef6:	ffff                	.2byte	0xffff
 	...
  f00:	0010                	.2byte	0x10
