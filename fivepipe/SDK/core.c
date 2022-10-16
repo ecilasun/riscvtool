@@ -92,7 +92,7 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
 //#undef errno
 //int nerrno;
 static uint8_t *heap_start  = (uint8_t*)0x00010000;
-static uint8_t *heap_end    = (uint8_t*)0x0001FF00; // stack space at end (256 bytes per core)
+static uint8_t *heap_end    = (uint8_t*)0x0001F000; // stack space at end (256 bytes per core)
 
 #ifdef __cplusplus
 extern "C" {
