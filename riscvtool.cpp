@@ -232,7 +232,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
         if (sheader->m_Flags & 0x00000007 && sheader->m_Size!=0) // writeable/alloc/exec and non-zero
         {
             totalout += sheader->m_Size/4;
-            int woffset = sheader->m_Addr/4;
+            int woffset = (sheader->m_Addr-fheader->m_Entry)/4;
 
             if (groupsize == 4) // 32bit groups (4 bytes)
             {
