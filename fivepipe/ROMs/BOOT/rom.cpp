@@ -15,6 +15,7 @@
 #include "core.h"
 #include "leds.h"
 #include "uart.h"
+#include "gpu.h"
 #include "xadc.h"
 #include "isr.h"
 
@@ -55,6 +56,11 @@ int main()
 
 	uint32_t prevVoltage = 0xC004CAFE;
 	uint32_t voltage = 0x00000000;
+
+	// Clear VRAM - note, this is cached, need a D$ flush at the end for GPU to see writes!
+	uint32_t vramoffset = 0;
+	uint32_t vramval = 0xA9C83AFD;
+
 	while(1)
 	{
 		// Wake up to process hardware interrupt requests
@@ -66,6 +72,10 @@ int main()
 		{
 			UARTWriteDecimal(voltage);
 			UARTWrite("\n");
+
+			VRAM[vramoffset++] = vramval++;
+			vramoffset %= 320*240/4;
+
 			prevVoltage = voltage;
 		}
 	}
