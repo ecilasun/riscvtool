@@ -1,12 +1,25 @@
 #include "core.h"
 #include "leds.h"
+#include "xadc.h"
 #include "uart.h"
+
+uint32_t prevVoltage = 0xC004CAFE;
+uint32_t voltage = 0x00000000;
 
 void HandleMainTimer()
 {
 	// Roll LEDs
-	static uint32_t ledstate = 0;
-	SetLEDState(ledstate++);
+	static uint32_t scrollingleds = 0;
+	SetLEDState(scrollingleds++);
+
+	// While we're awake, also run some voltage measurements
+	voltage = (voltage + *XADCPORT)>>1;
+	if (prevVoltage != voltage)
+	{
+		UARTWriteDecimal(voltage);
+		UARTWrite("\n");
+		prevVoltage = voltage;
+	}
 
 	uint64_t now = E32ReadTime();
 	uint64_t future = now + TEN_MILLISECONDS_IN_TICKS;
