@@ -321,7 +321,7 @@ void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 			vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
 			graphics_set_pixel(i,j,C.x,C.y,C.z);
 		}
-
+    // Make sure this scanline is visible by flushing it to VRAM
 		asm volatile( ".word 0xFC000073;"); // Invalidate & Write Back D$ (CFLUSH.D.L1)
 	}
 }
@@ -373,6 +373,18 @@ int main()
 {
  	// Reset debug LEDs
 	SetLEDState(0x0);
+
+  // Set RGB palette
+  uint8_t target = 0;
+  for (int b=0;b<4;++b)
+    for (int g=0;g<8;++g)
+      for (int r=0;r<8;++r)
+        GPUSetPal(target++, MAKECOLORRGB24(r*32, g*32, b*64));
+
+  // Set scan-out address
+  // One can allocate some memory aligned to 64 bytes and pass
+  // the pointer to this function to set that memory to be the display scan-out
+  //GPUSetVPage((uint32_t)VRAM); // This is already the default
 
   init_scene();
   render(spheres, nb_spheres, lights, nb_lights);
