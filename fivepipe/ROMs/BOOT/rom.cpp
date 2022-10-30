@@ -308,15 +308,12 @@ vec3 cast_ray(
 }
 
 #define M_PI 3.14159265358979323846 
-static uint32_t ledstate = 0;
 void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 {
 	const float fov  = M_PI/3.f;
 	float dir_z = -FRAME_HEIGHT/(2.*tan(fov/2.f));
 	for (int j = 0; j<FRAME_HEIGHT; j++)// actual rendering loop
 	{
-		SetLEDState(ledstate++);
-
 		float dir_y = -(j + 0.5f) + FRAME_HEIGHT/2.f; // this flips the image.
 		for (int i = 0; i<FRAME_WIDTH; i++)
 		{
@@ -324,6 +321,8 @@ void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 			vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
 			graphics_set_pixel(i,j,C.x,C.y,C.z);
 		}
+
+		asm volatile( ".word 0xFC000073;"); // Invalidate & Write Back D$ (CFLUSH.D.L1)
 	}
 }
 
@@ -372,21 +371,11 @@ void workermain()
 // HART[0] entry point
 int main()
 {
-	{
-    	// Splash screen
-		/*UARTWrite("\033[H\033[0m\033[2J");
-    	UARTWrite("HOTAS controller v0.1 (c) Engin Cilasun\n");
-		UARTWrite("CPU: 1x rv32i @100MHz\n");
-		UARTWrite("BUS: AXI4 bus @100MHz\n");
-		UARTWrite("RAM: 131072 bytes\n");*/
-		//UARTWrite("┌─┐ ├─┤└─┘\n\n");
-	}
-
-   	// Reset debug LEDs
+ 	// Reset debug LEDs
 	SetLEDState(0x0);
 
-	init_scene();
-    render(spheres, nb_spheres, lights, nb_lights);
+  init_scene();
+  render(spheres, nb_spheres, lights, nb_lights);
 
 	// Only on first core
 	uint32_t hartid = read_csr(mhartid);
