@@ -27,7 +27,7 @@ FILESYSTEM ?= -DDISABLE_FILESYSTEM
 ROMWORDSIZE ?= 16
 # 512 bit cache lines makes 64 bytes per line
 # 256 cache lines makes total cache size 16 Kbytes
-RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 --param l1-cache-line-size=64 --param l1-cache-size=16 -Wall -Os -ffreestanding -march=rv32i -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug -fPIC -nostartfiles
+RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 --param l1-cache-line-size=64 --param l1-cache-size=16 -Wall -Os -ffreestanding -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug -fPIC -nostartfiles
 
 incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
 objs  :=
