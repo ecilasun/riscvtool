@@ -372,7 +372,7 @@ void workermain()
 int main()
 {
  	// Reset debug LEDs
-	SetLEDState(0x0);
+	LEDSetState(0x0);
 
   // Set RGB palette
   uint8_t target = 0;

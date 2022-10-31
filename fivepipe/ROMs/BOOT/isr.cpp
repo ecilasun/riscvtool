@@ -2,6 +2,7 @@
 #include "leds.h"
 #include "xadc.h"
 #include "uart.h"
+#include "gpu.h"
 
 uint32_t prevVoltage = 0xC004CAFE;
 uint32_t voltage = 0x00000000;
@@ -10,7 +11,10 @@ void HandleMainTimer()
 {
 	// Roll LEDs
 	static uint32_t scrollingleds = 0;
-	SetLEDState(scrollingleds++);
+	LEDSetState(scrollingleds++);
+
+	// Scroll the screen
+	GPUSetVPage((uint32_t)VRAM + (scrollingleds%240)*320);
 
 	// While we're awake, also run some voltage measurements
 	voltage = (voltage + *XADCPORT)>>1;
