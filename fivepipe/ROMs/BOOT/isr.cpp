@@ -4,29 +4,14 @@
 #include "uart.h"
 #include "gpu.h"
 
-uint32_t prevVoltage = 0xC004CAFE;
-uint32_t voltage = 0x00000000;
-
 void HandleMainTimer()
 {
 	// Roll LEDs
 	static uint32_t scrollingleds = 0;
 	LEDSetState(scrollingleds++);
 
-	// Scroll the screen
-	GPUSetVPage((uint32_t)VRAM + (scrollingleds%240)*320);
-
-	// While we're awake, also run some voltage measurements
-	voltage = (voltage + *XADCPORT)>>1;
-	if (prevVoltage != voltage)
-	{
-		UARTWriteDecimal(voltage);
-		UARTWrite("\n");
-		prevVoltage = voltage;
-	}
-
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + TEN_MILLISECONDS_IN_TICKS;
+	uint64_t future = now + ONE_MILLISECOND_IN_TICKS;
 	E32SetTimeCompare(future);
 }
 
@@ -150,7 +135,7 @@ void InstallMainISR()
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + TEN_MILLISECONDS_IN_TICKS;
+	uint64_t future = now + ONE_MILLISECOND_IN_TICKS;
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
