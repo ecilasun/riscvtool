@@ -21,8 +21,8 @@ RISCV_PREFIX ?= riscv64-unknown-elf-
 RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 RISCVTOOL ?= ../../build/release/riscvtool
-# No filesystem in this ROM
-FILESYSTEM ?= -DDISABLE_FILESYSTEM
+# No filesystem in this ROM if -DDISABLE_FILESYSTEM is used
+FILESYSTEM ?= 
 # The COE file will be using 16 byte (128bit) output width to match the ROM layout (x4 16byte reads from cache controller)
 ROMWORDSIZE ?= 16
 # 512 bit cache lines makes 64 bytes per line

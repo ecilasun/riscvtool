@@ -12,12 +12,77 @@
 
 #include "rvcrt0.h"
 
+#include "fat32/ff.h"
+
 #include "core.h"
 #include "leds.h"
 #include "uart.h"
 #include "xadc.h"
 #include "gpu.h"
 #include "isr.h"
+
+const char *FRtoString[]={
+	"Succeeded\n",
+	"A hard error occurred in the low level disk I/O layer\n",
+	"Assertion failed\n",
+	"The physical drive cannot work\n",
+	"Could not find the file\n",
+	"Could not find the path\n",
+	"The path name format is invalid\n",
+	"Access denied due to prohibited access or directory full\n",
+	"Access denied due to prohibited access\n",
+	"The file/directory object is invalid\n",
+	"The physical drive is write protected\n",
+	"The logical drive number is invalid\n",
+	"The volume has no work area\n",
+	"There is no valid FAT volume\n",
+	"The f_mkfs() aborted due to any problem\n",
+	"Could not get a grant to access the volume within defined period\n",
+	"The operation is rejected according to the file sharing policy\n",
+	"LFN working buffer could not be allocated\n",
+	"Number of open files > FF_FS_LOCK\n",
+	"Given parameter is invalid\n"
+};
+
+// Main file system object
+FATFS Fs;
+
+void ListFiles(const char *path)
+{
+	DIR dir;
+	FRESULT re = f_opendir(&dir, path);
+	if (re == FR_OK)
+	{
+		FILINFO finf;
+		do{
+			re = f_readdir(&dir, &finf);
+			if (re != FR_OK || finf.fname[0] == 0) // Done scanning dir, or error encountered
+				break;
+
+			char *isexe = strstr(finf.fname, ".elf");
+			int isdir = finf.fattrib&AM_DIR;
+			if (isdir)
+				UARTWrite("\033[32m"); // Green
+			if (isexe!=nullptr)
+				UARTWrite("\033[33m"); // Yellow
+			UARTWrite(finf.fname);
+			if (isdir)
+				UARTWrite(" <dir>");
+			else
+			{
+				UARTWrite(" ");
+				UARTWriteDecimal((int32_t)finf.fsize);
+				UARTWrite("b");
+			}
+			UARTWrite("\033[0m\n");
+
+		} while(1);
+
+		f_closedir(&dir);
+	}
+	else
+		UARTWrite(FRtoString[re]);
+}
 
 // HART[1..N-1] entry point
 void workermain()
@@ -37,17 +102,24 @@ int main()
  	// Reset debug LEDs
 	LEDSetState(0x0);
 
-  // Set low bit RGB color palette
-  /*uint8_t target = 0;
-  for (int b=0;b<4;++b)
-    for (int g=0;g<8;++g)
-      for (int r=0;r<8;++r)
-        GPUSetPal(target++, MAKECOLORRGB24(r*32, g*32, b*64));*/
+	// File system test
+	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	if (mountattempt!=FR_OK)
+		UARTWrite(FRtoString[mountattempt]);
+	else
+		ListFiles("sd:");
 
-  // Set scan-out address
-  // One can allocate some memory aligned to 64 bytes and pass
-  // the pointer to this function to set that memory to be the display scan-out
-  //GPUSetVPage((uint32_t)VRAM); // This is already the default
+	// Set low bit RGB color palette
+	/*uint8_t target = 0;
+	for (int b=0;b<4;++b)
+	for (int g=0;g<8;++g)
+		for (int r=0;r<8;++r)
+		GPUSetPal(target++, MAKECOLORRGB24(r*32, g*32, b*64));*/
+
+	// Set scan-out address
+	// One can allocate some memory aligned to 64 bytes and pass
+	// the pointer to this function to set that memory to be the display scan-out
+	//GPUSetVPage((uint32_t)VRAM); // This is already the default
 
 	// Only on first core
 	uint32_t hartid = read_csr(mhartid);
