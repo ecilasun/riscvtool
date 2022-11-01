@@ -25,14 +25,14 @@ extern "C"
 #if defined(MULTIHART)
          "csrr	s1, mhartid;"        // get hart id
          "slli	s1, s1, 8;"          // hartid*256 (256b (2^8) default stack)
-         "li s2, 0x0003FFF0;"       // stack top of last HART in BMEM
+         "li s2, 0x1FFF0000;"       // stack top of last HART in BMEM
          "sub s2, s2, s1;"          // base - hartid*256
          "mv sp, s2;"               // set new hart stack pointer
          "mv s0, sp;"               // set frame pointer
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x0003FFF0;"        // single hart, hardcoded stack at end of BMEM (512 bytes)
+         "li sp, 0x1FFF0000;"        // single hart, hardcoded stack at end of BMEM (512 bytes)
          "mv s0, sp;"                // set frame pointer
 #endif
          // Clear BSS
