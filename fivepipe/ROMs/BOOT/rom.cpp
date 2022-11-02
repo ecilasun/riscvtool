@@ -103,7 +103,7 @@ int ProcessKeyEvents()
 	uint32_t val = 0;
 	// Consume one entry per execution
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
-	int R = RingBufferRead(&val, 4);
+	int R = PS2RingBufferRead(&val, 4);
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
@@ -134,12 +134,12 @@ int ProcessKeyEvents()
 				}
 				else
 				{
-					commandline[cmdlen++] = ScanToASCII(val, uppercase);
+					commandline[cmdlen++] = PS2ScanToASCII(val, uppercase);
 					if (cmdlen>=511)
 						cmdlen = 511;
 					commandline[cmdlen] = 0;
 				}
-				UARTPutChar(ScanToASCII(val, uppercase));
+				UARTPutChar(PS2ScanToASCII(val, uppercase));
 			}
 		}
 	}
@@ -208,7 +208,7 @@ void workermain()
 int main()
 {
 	LEDSetState(0);
-	InitRingBuffer();
+	PS2InitRingBuffer();
 
 	UARTWrite("┌─────────────────────────┐\n");
 	UARTWrite("│ E32OS v0.0              │\n");

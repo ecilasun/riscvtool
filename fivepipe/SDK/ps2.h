@@ -8,9 +8,9 @@ extern volatile uint32_t *PS2KEYBOARDDATAAVAIL;
 
 // Call this from an interrupt service routine to populate
 // a key 256 half map in S-RAM
-void ScanKeyboard(uint16_t *_keymap);
-char ScanToASCII(const uint8_t _code, const uint8_t _uppercase);
+void PS2ScanKeyboard(uint16_t *_keymap);
+char PS2ScanToASCII(const uint8_t _code, const uint8_t _uppercase);
 
-void InitRingBuffer();
-uint32_t RingBufferRead(void* pvDest, const uint32_t cbDest);
-uint32_t RingBufferWrite(const void* pvSrc, const uint32_t cbSrc);
+void PS2InitRingBuffer();
+uint32_t PS2RingBufferRead(void* pvDest, const uint32_t cbDest);
+uint32_t PS2RingBufferWrite(const void* pvSrc, const uint32_t cbSrc);

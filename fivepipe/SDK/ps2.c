@@ -4,7 +4,7 @@
 volatile uint32_t *PS2KEYBOARDDATA = (volatile uint32_t* )0x80000050;
 volatile uint32_t *PS2KEYBOARDDATAAVAIL = (volatile uint32_t* )0x80000058;
 
-void ScanKeyboard(uint16_t *_keymap)
+void PS2ScanKeyboard(uint16_t *_keymap)
 {
     uint32_t ext = 0;
     uint32_t brk = 0;
@@ -74,7 +74,7 @@ char scantoasciitable_uppercase[] = {
     ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' '  // F
 };
 
-char ScanToASCII(const uint8_t _code, const uint8_t _uppercase)
+char PS2ScanToASCII(const uint8_t _code, const uint8_t _uppercase)
 {
     return _uppercase ? scantoasciitable_uppercase[_code] : scantoasciitable_lowercase[_code];
 }
@@ -94,7 +94,7 @@ static uint8_t *m_ringBuffer;
 volatile static uint32_t *m_readOffset;
 volatile static uint32_t *m_writeOffset;
 
-void InitRingBuffer()
+void PS2InitRingBuffer()
 {
     // Might be missing initialization based on platform, so we use code to initialize
     m_ringBuffer  = (uint8_t *)0x1FFFF000;
@@ -105,7 +105,7 @@ void InitRingBuffer()
     *m_writeOffset = 0;
 }
 
-uint32_t __attribute__ ((noinline)) RingBufferRead(void* pvDest, const uint32_t cbDest)
+uint32_t __attribute__ ((noinline)) PS2RingBufferRead(void* pvDest, const uint32_t cbDest)
 {
     uint32_t readOffset = *m_readOffset;
     const uint32_t writeOffset = *m_writeOffset;
@@ -133,7 +133,7 @@ uint32_t __attribute__ ((noinline)) RingBufferRead(void* pvDest, const uint32_t 
     return 1;
 }
 
-uint32_t __attribute__ ((noinline)) RingBufferWrite(const void* pvSrc, const uint32_t cbSrc)
+uint32_t __attribute__ ((noinline)) PS2RingBufferWrite(const void* pvSrc, const uint32_t cbSrc)
 {
     const uint32_t readOffset = *m_readOffset;
     uint32_t writeOffset = *m_writeOffset;

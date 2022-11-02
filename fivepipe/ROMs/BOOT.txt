@@ -143,13 +143,13 @@ SYMBOL TABLE:
 2000a000 g       *ABS*	00000000 __global_pointer$
 20001750 g     F .text	00000014 _Z11LEDSetStatem
 20008b00 g       .data	00000000 _fdata
+200017f8 g     F .text	00000020 _Z14PS2ScanToASCIIhh
 20005d2c g     F .text	00000004 __malloc_unlock
 20001cf4 g     F .text	00000120 _Z17SDReadSingleBlockmPhS_
 20000c34 g     F .text	00000150 _Z16ProcessKeyEventsv
 2000981c g     O .bss	00000200 keymapprev
 200066bc g     F .text	00000098 __strtok_r
 20008d60 g     O .data	00000100 scantoasciitable_uppercase
-20001764 g     F .text	00000094 _Z12ScanKeyboardPt
 200016e4 g     F .text	00000014 _Z17E32SetTimeComparey
 20009814 g     O .sbss	00000004 errno
 20007e7c g       .rodata	00000000 _etext
@@ -160,6 +160,7 @@ SYMBOL TABLE:
 20000088 g       .boot	00000000 _boot
 2000509c g     F .text	00000034 _Z14memTestDataBusPVm
 20005b84 g     F .text	000001a4 memcpy
+2000183c g     F .text	00000088 _Z17PS2RingBufferReadPvm
 20004fdc g     F .text	00000030 disk_initialize
 20008d5c g     O .data	00000004 LEDSTATE
 20001954 g     F .text	0000001c _Z7SPITxRxh
@@ -185,7 +186,6 @@ SYMBOL TABLE:
 20004e44 g     F .text	00000064 ff_uni2oem
 20005264 g     F .text	0000005c __libc_fini_array
 20001a60 g     F .text	0000003c _Z11SDResponse1v
-2000183c g     F .text	00000088 _Z14RingBufferReadPvm
 20008d58 g     O .data	00000004 IO_SPIRXTX
 20005d8c g     F .text	00000088 strcat
 20006928 g     F .text	0000030c _free_r
@@ -201,20 +201,19 @@ SYMBOL TABLE:
 20004994 g     F .text	000004b0 f_readdir
 2000a2f8 g     O .bss	00000028 __malloc_current_mallinfo
 20000718 g     F .text	00000044 _Z15HandleMainTimerv
+20001818 g     F .text	00000024 _Z17PS2InitRingBufferv
 200066a8 g     F .text	00000014 strtok
 20008f64 g     O .data	00000004 PS2KEYBOARDDATA
 20005b0c g     F .text	00000078 memcmp
 200093a0 g     O .data	00000408 __malloc_av_
 20005d28 g     F .text	00000004 __malloc_lock
 20000ac8 g     F .text	0000016c _Z9ListFilesPKc
-20001818 g     F .text	00000024 _Z14InitRingBufferv
 20000090 g     F .text	000000dc memset
 20000ef0 g     F .text	000002c0 main
 20009808 g     O .sbss	00000004 __malloc_max_total_mem
 200014c8 g     F .text	00000024 _Z9UARTWritePKc
 20000d84 g     F .text	00000164 _Z13ParseCommandsv
 200042b8 g     F .text	0000021c f_sync
-200017f8 g     F .text	00000020 _Z11ScanToASCIIhh
 20001c28 g     F .text	000000cc _Z10SDCardInitv
 2000537c g     F .text	00000790 _malloc_r
 20003888 g     F .text	00000084 f_mount
@@ -241,6 +240,8 @@ SYMBOL TABLE:
 2000390c g     F .text	00000748 f_open
 2000504c g     F .text	00000040 disk_write
 200011b0 g     F .text	00000264 _Z29ParseELFHeaderAndLoadSectionsP3FILP16SElfFileHeader32Rm
+200018c4 g     F .text	00000090 _Z18PS2RingBufferWritePKvm
+20001764 g     F .text	00000094 _Z15PS2ScanKeyboardPt
 20000824 g     F .text	00000168 _Z14HandleMainTrapmmmm
 20000088 g     F .boot	00000000 _exit
 200016d0 g     F .text	00000014 _Z11E32ReadTimev
@@ -249,7 +250,6 @@ SYMBOL TABLE:
 2000500c g     F .text	00000040 disk_read
 200051d0 g     F .text	00000080 _Z13memTestDevicePVmm
 20005e14 g     F .text	00000140 strchr
-200018c4 g     F .text	00000090 _Z15RingBufferWritePKvm
 20008b00 g     O .data	00000050 FRtoString
 20001f5c g     F .text	000000a8 _Z21SDWriteMultipleBlocksPKhmm
 20009c20 g     O .bss	00000238 Fs
@@ -781,7 +781,7 @@ Disassembly of section .text:
 200007d4:	00f41023          	sh	a5,0(s0)
 200007d8:	00400593          	li	a1,4
 200007dc:	00098513          	mv	a0,s3
-200007e0:	0e4010ef          	jal	ra,200018c4 <_Z15RingBufferWritePKvm>
+200007e0:	0e4010ef          	jal	ra,200018c4 <_Z18PS2RingBufferWritePKvm>
 200007e4:	00148493          	addi	s1,s1,1
 200007e8:	00240413          	addi	s0,s0,2
 200007ec:	00290913          	addi	s2,s2,2
@@ -796,7 +796,7 @@ Disassembly of section .text:
 20000810:	03010113          	addi	sp,sp,48
 20000814:	00008067          	ret
 20000818:	00090513          	mv	a0,s2
-2000081c:	749000ef          	jal	ra,20001764 <_Z12ScanKeyboardPt>
+2000081c:	749000ef          	jal	ra,20001764 <_Z15PS2ScanKeyboardPt>
 20000820:	f6dff06f          	j	2000078c <_Z14HandleKeyboardv+0x30>
 
 20000824 <_Z14HandleMainTrapmmmm>:
@@ -1076,7 +1076,7 @@ Disassembly of section .text:
 20000c4c:	304797f3          	csrrw	a5,mie,a5
 20000c50:	00400593          	li	a1,4
 20000c54:	00c10513          	addi	a0,sp,12
-20000c58:	3e5000ef          	jal	ra,2000183c <_Z14RingBufferReadPvm>
+20000c58:	3e5000ef          	jal	ra,2000183c <_Z17PS2RingBufferReadPvm>
 20000c5c:	000017b7          	lui	a5,0x1
 20000c60:	88878793          	addi	a5,a5,-1912 # 888 <_start-0x1ffff778>
 20000c64:	304797f3          	csrrw	a5,mie,a5
@@ -1097,7 +1097,7 @@ Disassembly of section .text:
 20000ca0:	0ff57513          	zext.b	a0,a0
 20000ca4:	00148793          	addi	a5,s1,1
 20000ca8:	00f42023          	sw	a5,0(s0)
-20000cac:	34d000ef          	jal	ra,200017f8 <_Z11ScanToASCIIhh>
+20000cac:	34d000ef          	jal	ra,200017f8 <_Z14PS2ScanToASCIIhh>
 20000cb0:	edc18793          	addi	a5,gp,-292 # 20009edc <_ZL11commandline>
 20000cb4:	00042683          	lw	a3,0(s0)
 20000cb8:	009784b3          	add	s1,a5,s1
@@ -1145,7 +1145,7 @@ Disassembly of section .text:
 20000d60:	00000413          	li	s0,0
 20000d64:	00c14503          	lbu	a0,12(sp)
 20000d68:	c1c1c583          	lbu	a1,-996(gp) # 20009c1c <_ZZ16ProcessKeyEventsvE9uppercase>
-20000d6c:	28d000ef          	jal	ra,200017f8 <_Z11ScanToASCIIhh>
+20000d6c:	28d000ef          	jal	ra,200017f8 <_Z14PS2ScanToASCIIhh>
 20000d70:	00009797          	auipc	a5,0x9
 20000d74:	a687a783          	lw	a5,-1432(a5) # 200097d8 <_GLOBAL_OFFSET_TABLE_+0x30>
 20000d78:	0007a783          	lw	a5,0(a5)
@@ -1255,7 +1255,7 @@ Disassembly of section .text:
 20000f00:	00912a23          	sw	s1,20(sp)
 20000f04:	01212823          	sw	s2,16(sp)
 20000f08:	049000ef          	jal	ra,20001750 <_Z11LEDSetStatem>
-20000f0c:	10d000ef          	jal	ra,20001818 <_Z14InitRingBufferv>
+20000f0c:	10d000ef          	jal	ra,20001818 <_Z17PS2InitRingBufferv>
 20000f10:	00006517          	auipc	a0,0x6
 20000f14:	24450513          	addi	a0,a0,580 # 20007154 <__clz_tab+0x45c>
 20000f18:	5b0000ef          	jal	ra,200014c8 <_Z9UARTWritePKc>
@@ -1810,12 +1810,12 @@ Disassembly of section .text:
 2000175c:	00a7a023          	sw	a0,0(a5)
 20001760:	00008067          	ret
 
-20001764 <_Z12ScanKeyboardPt>:
+20001764 <_Z15PS2ScanKeyboardPt>:
 20001764:	00008797          	auipc	a5,0x8
 20001768:	0547a783          	lw	a5,84(a5) # 200097b8 <_GLOBAL_OFFSET_TABLE_+0x10>
 2000176c:	0007a583          	lw	a1,0(a5)
 20001770:	0005a683          	lw	a3,0(a1)
-20001774:	06068c63          	beqz	a3,200017ec <_Z12ScanKeyboardPt+0x88>
+20001774:	06068c63          	beqz	a3,200017ec <_Z15PS2ScanKeyboardPt+0x88>
 20001778:	00008797          	auipc	a5,0x8
 2000177c:	0547a783          	lw	a5,84(a5) # 200097cc <_GLOBAL_OFFSET_TABLE_+0x24>
 20001780:	0007a603          	lw	a2,0(a5)
@@ -1823,17 +1823,17 @@ Disassembly of section .text:
 20001788:	00000713          	li	a4,0
 2000178c:	00062783          	lw	a5,0(a2)
 20001790:	0ff7f793          	zext.b	a5,a5
-20001794:	00d79c63          	bne	a5,a3,200017ac <_Z12ScanKeyboardPt+0x48>
+20001794:	00d79c63          	bne	a5,a3,200017ac <_Z15PS2ScanKeyboardPt+0x48>
 20001798:	0005a783          	lw	a5,0(a1)
-2000179c:	fe078ee3          	beqz	a5,20001798 <_Z12ScanKeyboardPt+0x34>
+2000179c:	fe078ee3          	beqz	a5,20001798 <_Z15PS2ScanKeyboardPt+0x34>
 200017a0:	00062783          	lw	a5,0(a2)
 200017a4:	00200713          	li	a4,2
 200017a8:	0ff7f793          	zext.b	a5,a5
 200017ac:	0f000813          	li	a6,240
 200017b0:	00000693          	li	a3,0
-200017b4:	01079c63          	bne	a5,a6,200017cc <_Z12ScanKeyboardPt+0x68>
+200017b4:	01079c63          	bne	a5,a6,200017cc <_Z15PS2ScanKeyboardPt+0x68>
 200017b8:	0005a783          	lw	a5,0(a1)
-200017bc:	fe078ee3          	beqz	a5,200017b8 <_Z12ScanKeyboardPt+0x54>
+200017bc:	fe078ee3          	beqz	a5,200017b8 <_Z15PS2ScanKeyboardPt+0x54>
 200017c0:	00062783          	lw	a5,0(a2)
 200017c4:	00100693          	li	a3,1
 200017c8:	0ff7f793          	zext.b	a5,a5
@@ -1847,19 +1847,19 @@ Disassembly of section .text:
 200017e8:	00008067          	ret
 200017ec:	00000713          	li	a4,0
 200017f0:	00000793          	li	a5,0
-200017f4:	fd9ff06f          	j	200017cc <_Z12ScanKeyboardPt+0x68>
+200017f4:	fd9ff06f          	j	200017cc <_Z15PS2ScanKeyboardPt+0x68>
 
-200017f8 <_Z11ScanToASCIIhh>:
+200017f8 <_Z14PS2ScanToASCIIhh>:
 200017f8:	00008797          	auipc	a5,0x8
 200017fc:	fbc7a783          	lw	a5,-68(a5) # 200097b4 <_GLOBAL_OFFSET_TABLE_+0xc>
-20001800:	00059663          	bnez	a1,2000180c <_Z11ScanToASCIIhh+0x14>
+20001800:	00059663          	bnez	a1,2000180c <_Z14PS2ScanToASCIIhh+0x14>
 20001804:	00008797          	auipc	a5,0x8
 20001808:	fbc7a783          	lw	a5,-68(a5) # 200097c0 <_GLOBAL_OFFSET_TABLE_+0x18>
 2000180c:	00a787b3          	add	a5,a5,a0
 20001810:	0007c503          	lbu	a0,0(a5)
 20001814:	00008067          	ret
 
-20001818 <_Z14InitRingBufferv>:
+20001818 <_Z17PS2InitRingBufferv>:
 20001818:	1ffff7b7          	lui	a5,0x1ffff
 2000181c:	0ef1a223          	sw	a5,228(gp) # 2000a0e4 <_ZL12m_ringBuffer>
 20001820:	41078713          	addi	a4,a5,1040 # 1ffff410 <_start-0xbf0>
@@ -1870,7 +1870,7 @@ Disassembly of section .text:
 20001834:	4207a023          	sw	zero,1056(a5)
 20001838:	00008067          	ret
 
-2000183c <_Z14RingBufferReadPvm>:
+2000183c <_Z17PS2RingBufferReadPvm>:
 2000183c:	ff010113          	addi	sp,sp,-16
 20001840:	01212023          	sw	s2,0(sp)
 20001844:	0e018913          	addi	s2,gp,224 # 2000a0e0 <_ZL12m_readOffset>
@@ -1882,13 +1882,13 @@ Disassembly of section .text:
 2000185c:	0007a783          	lw	a5,0(a5)
 20001860:	00812423          	sw	s0,8(sp)
 20001864:	409787b3          	sub	a5,a5,s1
-20001868:	04b7ea63          	bltu	a5,a1,200018bc <_Z14RingBufferReadPvm+0x80>
+20001868:	04b7ea63          	bltu	a5,a1,200018bc <_Z17PS2RingBufferReadPvm+0x80>
 2000186c:	00058413          	mv	s0,a1
 20001870:	00000013          	nop
 20001874:	40000613          	li	a2,1024
 20001878:	3ff4f793          	andi	a5,s1,1023
 2000187c:	40f60633          	sub	a2,a2,a5
-20001880:	00c5f463          	bgeu	a1,a2,20001888 <_Z14RingBufferReadPvm+0x4c>
+20001880:	00c5f463          	bgeu	a1,a2,20001888 <_Z17PS2RingBufferReadPvm+0x4c>
 20001884:	00058613          	mv	a2,a1
 20001888:	0e41a583          	lw	a1,228(gp) # 2000a0e4 <_ZL12m_ringBuffer>
 2000188c:	00f585b3          	add	a1,a1,a5
@@ -1904,9 +1904,9 @@ Disassembly of section .text:
 200018b4:	01010113          	addi	sp,sp,16
 200018b8:	00008067          	ret
 200018bc:	00000513          	li	a0,0
-200018c0:	fe5ff06f          	j	200018a4 <_Z14RingBufferReadPvm+0x68>
+200018c0:	fe5ff06f          	j	200018a4 <_Z17PS2RingBufferReadPvm+0x68>
 
-200018c4 <_Z15RingBufferWritePKvm>:
+200018c4 <_Z18PS2RingBufferWritePKvm>:
 200018c4:	ff010113          	addi	sp,sp,-16
 200018c8:	01212023          	sw	s2,0(sp)
 200018cc:	0dc18913          	addi	s2,gp,220 # 2000a0dc <_ZL13m_writeOffset>
@@ -1919,12 +1919,12 @@ Disassembly of section .text:
 200018e8:	00112623          	sw	ra,12(sp)
 200018ec:	00812423          	sw	s0,8(sp)
 200018f0:	409787b3          	sub	a5,a5,s1
-200018f4:	04b7ec63          	bltu	a5,a1,2000194c <_Z15RingBufferWritePKvm+0x88>
+200018f4:	04b7ec63          	bltu	a5,a1,2000194c <_Z18PS2RingBufferWritePKvm+0x88>
 200018f8:	3ff4f793          	andi	a5,s1,1023
 200018fc:	40000613          	li	a2,1024
 20001900:	40f60633          	sub	a2,a2,a5
 20001904:	00058413          	mv	s0,a1
-20001908:	00c5f463          	bgeu	a1,a2,20001910 <_Z15RingBufferWritePKvm+0x4c>
+20001908:	00c5f463          	bgeu	a1,a2,20001910 <_Z18PS2RingBufferWritePKvm+0x4c>
 2000190c:	00058613          	mv	a2,a1
 20001910:	00050593          	mv	a1,a0
 20001914:	0e41a503          	lw	a0,228(gp) # 2000a0e4 <_ZL12m_ringBuffer>
@@ -1942,7 +1942,7 @@ Disassembly of section .text:
 20001944:	01010113          	addi	sp,sp,16
 20001948:	00008067          	ret
 2000194c:	00000513          	li	a0,0
-20001950:	fe5ff06f          	j	20001934 <_Z15RingBufferWritePKvm+0x70>
+20001950:	fe5ff06f          	j	20001934 <_Z18PS2RingBufferWritePKvm+0x70>
 
 20001954 <_Z7SPITxRxh>:
 20001954:	00008797          	auipc	a5,0x8

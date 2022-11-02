@@ -25,7 +25,7 @@ void HandleKeyboard()
 {
 	// Consume all key state changes from FIFO and update the key map
 	while (*PS2KEYBOARDDATAAVAIL)
-		ScanKeyboard(keymap);
+		PS2ScanKeyboard(keymap);
 
 	// If there's a difference between the previous keymap and current one, generate events for each change
 	for (uint32_t i=0; i<256; ++i)
@@ -46,7 +46,7 @@ void HandleKeyboard()
 			// is running on this core during ISR. So attempt once, and bail out
 			// if we can't write...
 			//while(RingBufferWrite(&val, 4) == 0) { }
-			RingBufferWrite(&val, 4);
+			PS2RingBufferWrite(&val, 4);
 		}
 	}
 }
