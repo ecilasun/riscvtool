@@ -12,13 +12,19 @@ const static uint32_t c_sizeMask = c_cbBufferSize - 1;
 // These need to persist in same memory location betwen ROM and loaded ELF
 // so that we don't read from wrong space (or not read at all)
 // NOTE: Ring buffer is normally placed at 0x80000200 in the mailbox
-volatile uint32_t m_readOffset  = 0;
-volatile uint32_t m_writeOffset = 0;
+volatile uint32_t *m_readOffset  = (volatile uint32_t *)0x1FFF0410;
+volatile uint32_t *m_writeOffset = (volatile uint32_t *)0x1FFF0420;
+
+void InitRingBuffer()
+{
+    *m_readOffset = 0;
+    *m_writeOffset = 0;
+}
 
 uint32_t __attribute__ ((noinline)) RingBufferRead(uint8_t *ringbuffer, void* pvDest, const uint32_t cbDest)
 {
-    uint32_t readOffset = m_readOffset;
-    const uint32_t writeOffset = m_writeOffset;
+    uint32_t readOffset = *m_readOffset;
+    const uint32_t writeOffset = *m_writeOffset;
 
     const uint32_t cbAvailable = writeOffset - readOffset;
     if( cbDest > cbAvailable )
@@ -38,15 +44,15 @@ uint32_t __attribute__ ((noinline)) RingBufferRead(uint8_t *ringbuffer, void* pv
     //EAssert(bytesLeft == 0, "Item not an exact multiple of ring buffer, this will cause multiple memcpy() calls during Read()");
 
     readOffset += cbDest;
-    m_readOffset = readOffset;
+    *m_readOffset = readOffset;
 
     return 1;
 }
 
 uint32_t __attribute__ ((noinline)) RingBufferWrite(uint8_t *ringbuffer, const void* pvSrc, const uint32_t cbSrc)
 {
-    const uint32_t readOffset = m_readOffset;
-    uint32_t writeOffset = m_writeOffset;
+    const uint32_t readOffset = *m_readOffset;
+    uint32_t writeOffset = *m_writeOffset;
 
     const uint32_t cbAvailable = c_cbBufferSize - ( writeOffset - readOffset );
     if( cbSrc > cbAvailable )
@@ -66,7 +72,7 @@ uint32_t __attribute__ ((noinline)) RingBufferWrite(uint8_t *ringbuffer, const v
     asm volatile ("nop;"); // Stop compiler reordering
 
     writeOffset += cbSrc;
-    m_writeOffset = writeOffset;
+    *m_writeOffset = writeOffset;
 
     return 1;
 }

@@ -17,7 +17,7 @@ void ScanKeyboard(uint16_t *_keymap)
     {
         ext = 2;
         // Wait for next in sequence
-        while (*PS2KEYBOARDDATAAVAIL == 00) { }
+        while (*PS2KEYBOARDDATAAVAIL == 0x0) { }
         code = (*PS2KEYBOARDDATA)&0xFF;
     }
 
@@ -25,7 +25,7 @@ void ScanKeyboard(uint16_t *_keymap)
     {
         brk = 1;
         // Wait for next in sequence
-        while (*PS2KEYBOARDDATAAVAIL == 00) { }
+        while (*PS2KEYBOARDDATAAVAIL == 0x0) { }
         code = (*PS2KEYBOARDDATA)&0xFF;
     }
 

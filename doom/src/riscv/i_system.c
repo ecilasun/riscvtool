@@ -42,7 +42,7 @@
 #include "ringbuffer.h"
 #include "ps2.h"
 
-uint8_t keyboardringbuffer[1024];
+uint8_t *keyboardringbuffer = (uint8_t*)0x1FFF0000;
 
 void
 I_Init(void)
