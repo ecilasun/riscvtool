@@ -3,6 +3,15 @@
 #include "xadc.h"
 #include "uart.h"
 #include "gpu.h"
+#include "ps2.h"
+#include "ringbuffer.h"
+
+// Keyboard map is at top of S-RAM (512 bytes)
+uint16_t keymap[256];
+// Previous key map to be able to track deltas (512 bytes)
+uint16_t keymapprev[256];
+// Declared in main app
+extern uint8_t *keyboardringbuffer;
 
 void HandleMainTimer()
 {
@@ -13,6 +22,36 @@ void HandleMainTimer()
 	uint64_t now = E32ReadTime();
 	uint64_t future = now + ONE_MILLISECOND_IN_TICKS;
 	E32SetTimeCompare(future);
+}
+
+void HandleKeyboard()
+{
+	// Consume all key state changes from FIFO and update the key map
+	while (*PS2KEYBOARDDATAAVAIL)
+		ScanKeyboard(keymap);
+
+	// If there's a difference between the previous keymap and current one, generate events for each change
+	for (uint32_t i=0; i<256; ++i)
+	{
+		// Skip keyboard OK (when plugged in)
+		if (i==0xAA)
+			continue;
+
+		// Generate key up/down events
+		uint32_t prevval = (uint32_t)keymapprev[i];
+		uint32_t val = (uint32_t)keymap[i];
+		if (prevval^val) // Mismatch, this considered an event
+		{
+			// Store new state in previous state buffer since we're done reading it
+			keymapprev[i] = val;
+			// Wait for adequate space in ring buffer to write
+			// NOTE: We'll simply hang if ringbuffer is full because nothing else
+			// is running on this core during ISR. So attempt once, and bail out
+			// if we can't write...
+			//while(RingBufferWrite(keyboardringbuffer, &val, 4) == 0) { }
+			RingBufferWrite(keyboardringbuffer, &val, 4);
+		}
+	}
 }
 
 void HandleMainTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, const uint32_t PC)
@@ -114,7 +153,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) main_ISR
 			// Route based on hardware type
 			//if (value & 0x00000001) HandleUART();
 			//if (value & 0x00000002) HandleButtons();
-			//if (value & 0x00000004) HandleKeyboard();
+			if (value & 0x00000004) HandleKeyboard();
 		}
 
 		if (code == 0x7) // Machine Timer Interrupt (timer)

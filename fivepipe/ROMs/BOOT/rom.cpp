@@ -19,7 +19,16 @@
 #include "uart.h"
 #include "xadc.h"
 #include "gpu.h"
+#include "ps2.h"
+#include "ringbuffer.h"
+
 #include "isr.h"
+#include "util.h"
+
+static char currentdir[512] = "sd:";
+static char commandline[512] = "";
+static char filename[128] = "";
+static int cmdlen = 0;
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -46,6 +55,9 @@ const char *FRtoString[]={
 
 // Main file system object
 FATFS Fs;
+
+// Keyboard event ring buffer (1024 bytes)
+uint8_t keyboardringbuffer[1024];
 
 void ListFiles(const char *path)
 {
@@ -84,6 +96,104 @@ void ListFiles(const char *path)
 		UARTWrite(FRtoString[re]);
 }
 
+int ProcessKeyEvents()
+{
+	static int uppercase = 0;
+	int parseit = 0;
+
+	// Any pending keyboard events to handle?
+	uint32_t val = 0;
+	// Consume one entry per execution
+	swap_csr(mie, MIP_MSIP | MIP_MTIP);
+	int R = RingBufferRead(keyboardringbuffer, &val, 4);
+	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+	if (R)
+	{
+		uint32_t key = val&0xFF;
+		// Toggle caps
+		if (key == 0x58)
+			uppercase = !uppercase;
+
+		// Key up
+		if (val&0x00000100)
+		{
+			if (key == 0x12 || key == 0x59) // Right/left shift up
+				uppercase = 0;
+		}
+		else // Key down
+		{
+			if (key == 0x12 || key == 0x59) // Right/left shift down
+				uppercase = 1;
+			else
+			{
+				if (key == 0x5A) // Enter
+					parseit = 1;
+				else if (key == 0x66) // Backspace
+				{
+					cmdlen--;
+					if (cmdlen < 0) cmdlen = 0;
+					commandline[cmdlen] = 0;
+				}
+				else
+				{
+					commandline[cmdlen++] = ScanToASCII(val, uppercase);
+					if (cmdlen>=511)
+						cmdlen = 511;
+					commandline[cmdlen] = 0;
+				}
+				UARTPutChar(ScanToASCII(val, uppercase));
+			}
+		}
+	}
+
+	return parseit;
+}
+
+void ParseCommands()
+{
+	// Grab first token, if any
+	const char *command = strtok(commandline, " ");
+
+	if (!strcmp(command, "help")) // Help text
+	{
+		UARTWrite("\033[34m\033[47m\033[7mdir\033[0m: show list of files in working directory\n");
+		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
+		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
+	}
+	else if (!strcmp(command, "cwd"))
+	{
+		// Use first parameter to set current directory
+		char *param = strtok(nullptr, " ");
+		if (param != nullptr)
+			strcpy(currentdir, param);
+		else
+			strcpy(currentdir, "sd:");
+	}
+	else if (!strcmp(command, "pwd"))
+	{
+		UARTWrite(currentdir);
+		UARTWrite("\n");
+	}
+	else if (!strcmp(command, "dir")) // List directory
+	{
+		UARTWrite("\n");
+		UARTWrite(currentdir);
+		UARTWrite("\n");
+		ListFiles(currentdir);
+	}
+	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
+	{
+		// Build a file name from the input string
+		strcpy(filename, currentdir);
+		strcat(filename, command);
+		strcat(filename, ".elf");
+		RunExecutable(filename, true);
+	}
+
+	cmdlen = 0;
+	commandline[0]=0;
+}
+
 // HART[1..N-1] entry point
 void workermain()
 {
@@ -99,6 +209,11 @@ void workermain()
 // HART[0] entry point
 int main()
 {
+	UARTWrite("┌─────────────────────────┐\n");
+	UARTWrite("│ E32OS v0.0              │\n");
+	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
+	UARTWrite("└─────────────────────────┘\n\n");
+
  	// Reset debug LEDs
 	LEDSetState(0x0);
 
@@ -137,6 +252,10 @@ int main()
 	{
 		// Main loop will only wake up at hardware interrupt requests
 		//asm volatile("wfi;");
+
+		// Handle input
+		if (ProcessKeyEvents())
+			ParseCommands();
 
 		// While we're awake, also run some voltage measurements
 		voltage = (voltage + *XADCPORT)>>1;
