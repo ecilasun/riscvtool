@@ -191,7 +191,7 @@ void ParseCommands()
 	}
 
 	cmdlen = 0;
-	commandline[0]=0;
+	commandline[0] = 0;
 }
 
 // HART[1..N-1] entry point
@@ -244,18 +244,23 @@ int main()
 		InstallMainISR();
 	}
 
-	uint32_t prevVoltage = 0xC004CAFE;
-	uint32_t voltage = 0x00000000;
-	uint32_t x = 0;
-
 	while(1)
 	{
 		// Main loop will only wake up at hardware interrupt requests
-		//asm volatile("wfi;");
+		asm volatile("wfi;");
 
 		// Handle input
 		if (ProcessKeyEvents())
 			ParseCommands();
+	}
+
+	return 0;
+}
+
+/*
+	uint32_t prevVoltage = 0xC004CAFE;
+	uint32_t voltage = 0x00000000;
+	uint32_t x = 0;
 
 		// While we're awake, also run some voltage measurements
 		voltage = (voltage + *XADCPORT)>>1;
@@ -276,11 +281,4 @@ int main()
 			x = (x+1)%320;
 			prevVoltage = voltage;
 		}
-
-		// Flip between vram page 0 and page 1
-		//GPUSetVPage((uint32_t)VRAM + (scrollingleds%2)*320*240);
-
-	}
-
-	return 0;
-}
+*/

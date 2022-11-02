@@ -8,7 +8,7 @@ UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
 # --specs=nano.specs -std=c++14 -> need to use g++
-CFLAGS=-mcmodel=medany -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer --param l1-cache-line-size=64 --param l1-cache-size=32 -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer --param l1-cache-line-size=64 --param l1-cache-size=32 -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -33,16 +33,14 @@ SOURCES_doom_arch := \
 	../../../3rdparty/fat32/diskio.c \
 	../../../3rdparty/fat32/ffsystem.c \
 	../../../3rdparty/fat32/ffunicode.c \
-	../../../e32e/SDK/core.c \
-	../../../e32e/SDK/sdcard.c \
-	../../../e32e/SDK/uart.c \
-	../../../e32e/SDK/spi.c \
-	../../../e32e/SDK/gpu.c \
-	../../../e32e/SDK/apu.c \
-	../../../e32e/SDK/leds.c \
-	../../../e32e/SDK/buttons.c \
-	../../../e32e/SDK/ringbuffer.c \
-	../../../e32e/SDK/ps2.c \
+	../../../fivepipe/SDK/core.c \
+	../../../fivepipe/SDK/sdcard.c \
+	../../../fivepipe/SDK/uart.c \
+	../../../fivepipe/SDK/spi.c \
+	../../../fivepipe/SDK/gpu.c \
+	../../../fivepipe/SDK/leds.c \
+	../../../fivepipe/SDK/ringbuffer.c \
+	../../../fivepipe/SDK/ps2.c \
 	$(NULL)
 
 # start.S

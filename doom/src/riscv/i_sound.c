@@ -31,7 +31,6 @@
 
 #include "leds.h"
 #include "gpu.h"
-#include "apu.h"
 #include "core.h"
 #include "uart.h"
 
@@ -424,9 +423,9 @@ I_UpdateSound(void)
 void
 I_SubmitSound(void)
 {
-	uint32_t *src = (uint32_t *)mixbuffer;
+	/*uint32_t *src = (uint32_t *)mixbuffer;
 	for (uint32_t i=0; i<SAMPLECOUNT; ++i)
-		*APUOUTPUT = src[i];
+		*APUOUTPUT = src[i];*/
 }
 
 void

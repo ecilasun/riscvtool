@@ -29,8 +29,6 @@
 #include "core.h"
 #include "gpu.h"
 
-static uint32_t writepage = 0;
-
 void
 I_InitGraphics(void)
 {
@@ -52,7 +50,7 @@ I_SetPalette(byte* palette)
 		r = gammatable[usegamma][*palette++];
 		g = gammatable[usegamma][*palette++];
 		b = gammatable[usegamma][*palette++];
-		GPUPAL_32[i] = MAKERGBPALETTECOLOR(r, g, b);
+		GPUSetPal(i, MAKECOLORRGB24(r, g, b));
 	}
 }
 
@@ -66,19 +64,9 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// NOTE: This is unnecessary, E32E has direct scan-out buffers that the CPU can write to
-	// with built-in double-buffering, therefore this copy is redundant.
-	// We set up screen[0] to point at GPUFB0 in v_video.c to avoid the following.
-
-	// This is here just to be 'correct' and not performant
-	uint32_t *VID = (uint32_t *)screens[0];
-	for (int L=0; L<(SCREENWIDTH/4)*SCREENHEIGHT; ++L)
-		GPUFBWORD[L] = VID[L];
-
-	// Swap to the next write page
-	// This will switch the scanout hardware to the page we're not writing to anymore (i.e. Flip())
-	writepage++;
-	FrameBufferSelect(writepage, writepage^1);
+	//uint32_t *VID = (uint32_t *)screens[0];
+	uint32_t addrs = (uint32_t)(screens[0]);
+	GPUSetVPage(addrs);
 }
 
 

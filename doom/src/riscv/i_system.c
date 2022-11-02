@@ -39,11 +39,10 @@
 #include "core.h"
 #include "console.h"
 #include "uart.h"
-#include "buttons.h"
 #include "ringbuffer.h"
 #include "ps2.h"
 
-uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
+uint8_t keyboardringbuffer[1024];
 
 void
 I_Init(void)
