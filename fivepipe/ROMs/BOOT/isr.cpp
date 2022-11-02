@@ -4,14 +4,11 @@
 #include "uart.h"
 #include "gpu.h"
 #include "ps2.h"
-#include "ringbuffer.h"
 
 // Keyboard map is at top of S-RAM (512 bytes)
 uint16_t keymap[256];
 // Previous key map to be able to track deltas (512 bytes)
 uint16_t keymapprev[256];
-// Declared in main app
-extern uint8_t *keyboardringbuffer;
 
 void HandleMainTimer()
 {
@@ -48,8 +45,8 @@ void HandleKeyboard()
 			// NOTE: We'll simply hang if ringbuffer is full because nothing else
 			// is running on this core during ISR. So attempt once, and bail out
 			// if we can't write...
-			//while(RingBufferWrite(keyboardringbuffer, &val, 4) == 0) { }
-			RingBufferWrite(keyboardringbuffer, &val, 4);
+			//while(RingBufferWrite(&val, 4) == 0) { }
+			RingBufferWrite(&val, 4);
 		}
 	}
 }

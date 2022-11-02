@@ -20,7 +20,6 @@
 #include "xadc.h"
 #include "gpu.h"
 #include "ps2.h"
-#include "ringbuffer.h"
 
 #include "isr.h"
 #include "util.h"
@@ -57,9 +56,6 @@ const char *FRtoString[]={
 
 // Main file system object
 FATFS Fs;
-
-// Keyboard event ring buffer (1024 bytes)
-uint8_t *keyboardringbuffer = (uint8_t*)0x1FFF0000;
 
 void ListFiles(const char *path)
 {
@@ -107,7 +103,7 @@ int ProcessKeyEvents()
 	uint32_t val = 0;
 	// Consume one entry per execution
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
-	int R = RingBufferRead(keyboardringbuffer, &val, 4);
+	int R = RingBufferRead(&val, 4);
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
