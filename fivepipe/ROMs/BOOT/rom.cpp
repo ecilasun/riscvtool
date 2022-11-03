@@ -155,6 +155,7 @@ void ParseCommands()
 		UARTWrite("\033[34m\033[47m\033[7mdir\033[0m: show list of files in working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
+		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -169,6 +170,10 @@ void ParseCommands()
 	{
 		UARTWrite(currentdir);
 		UARTWrite("\n");
+	}
+	else if(!strcmp(command, "cls"))
+	{
+		UARTWrite("\033[H\033[0m\033[2J");
 	}
 	else if (!strcmp(command, "dir")) // List directory
 	{

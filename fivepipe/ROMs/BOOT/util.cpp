@@ -78,6 +78,9 @@ void RunExecutable(const char *filename, const bool reportError)
             : "=m" (branchaddress) : : 
         );
 
+		UARTWrite("Return from .elf, will hang\n");
+		while (1) { asm volatile( "nop;"); };
+
 		// TODO: Executables don't come back yet, deal with this then
 		// f_mount(&Fs, "sd:", 1);
 	}
