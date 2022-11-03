@@ -54,6 +54,7 @@ int main(void)
 	FATFS Fs;
 	UARTWrite("Mounting SDCard\n");
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);
 	else

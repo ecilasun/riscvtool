@@ -67,6 +67,9 @@ void RunExecutable(const char *filename, const bool reportError)
 		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
 		f_close(&fp);
 
+		// Unmount volume so the next application can mount it again
+		f_mount(nullptr, "sd:", 1);
+
         asm volatile(
             ".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
             "fence.i;"          // Invalidate I$
@@ -74,6 +77,9 @@ void RunExecutable(const char *filename, const bool reportError)
             "jalr s0;"          // Branch to the entry point
             : "=m" (branchaddress) : : 
         );
+
+		// TODO: Executables don't come back yet, deal with this then
+		// f_mount(&Fs, "sd:", 1);
 	}
 	else
 	{

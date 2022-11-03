@@ -39,7 +39,6 @@ SOURCES_doom_arch := \
 	../../../fivepipe/SDK/spi.c \
 	../../../fivepipe/SDK/gpu.c \
 	../../../fivepipe/SDK/leds.c \
-	../../../fivepipe/SDK/ringbuffer.c \
 	../../../fivepipe/SDK/ps2.c \
 	$(NULL)
 

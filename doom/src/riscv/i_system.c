@@ -39,10 +39,7 @@
 #include "core.h"
 #include "console.h"
 #include "uart.h"
-#include "ringbuffer.h"
 #include "ps2.h"
-
-uint8_t *keyboardringbuffer = (uint8_t*)0x1FFF0000;
 
 void
 I_Init(void)
@@ -80,7 +77,7 @@ I_GetEvent(void)
 	// NOTE: OS feeds keyboard input to us from an ISR
 	uint32_t val;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
-	int R = RingBufferRead(keyboardringbuffer, (uint8_t*)&val, 4);
+	int R = PS2RingBufferRead((uint8_t*)&val, 4);
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
@@ -116,7 +113,7 @@ I_GetEvent(void)
 			case 0x14: event.data1 = KEY_RCTRL; break;
 			//case 0x11: event.data1 = KEY_RALT; break; // 0xE0+0x11
 			case 0x11: event.data1 = KEY_LALT; break;
-			default: event.data1 = ScanToASCII(key, false); break; // Always lowercase
+			default: event.data1 = PS2ScanToASCII(key, false); break; // Always lowercase
 		}
 
 		/*if (key == 0x4A) // '/?' key to fire

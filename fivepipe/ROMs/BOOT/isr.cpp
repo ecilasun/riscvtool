@@ -16,8 +16,11 @@ void HandleMainTimer()
 	static uint32_t scrollingleds = 0;
 	LEDSetState(scrollingleds++);
 
+	// This is currently a do-notthing timer handler ticking at 100ms
+	// It will eventually become a task scheduler
+
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + ONE_MILLISECOND_IN_TICKS;
+	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
 	E32SetTimeCompare(future);
 }
 
@@ -46,6 +49,8 @@ void HandleKeyboard()
 			// is running on this core during ISR. So attempt once, and bail out
 			// if we can't write...
 			//while(RingBufferWrite(&val, 4) == 0) { }
+			// Ideally, this buffer should not overflow as long as the receiving app
+			// is alive and well.
 			PS2RingBufferWrite(&val, 4);
 		}
 	}
@@ -171,7 +176,7 @@ void InstallMainISR()
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + ONE_MILLISECOND_IN_TICKS;
+	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
