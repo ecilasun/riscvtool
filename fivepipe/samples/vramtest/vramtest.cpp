@@ -9,9 +9,9 @@ int main( int argc, char **argv )
 
 	do {
 		// Video scan-out page
-		volatile uint32_t *readpage = VRAM + (cycle^1 ? 80*240 : 0);
+		volatile uint32_t *readpage = (volatile uint32_t *)((uint32_t)VRAM + (cycle^1) ? 80*240 : 0);
 		// Video write page
-		volatile uint32_t *writepage = VRAM + (cycle^1 ? 0 : 80*240);
+		volatile uint32_t *writepage = (volatile uint32_t *)((uint32_t)VRAM + (cycle^1) ? 0 : 80*240);
 		// Same, as byte access
 		volatile uint8_t *writepagebyte = (volatile uint8_t*)writepage;
 

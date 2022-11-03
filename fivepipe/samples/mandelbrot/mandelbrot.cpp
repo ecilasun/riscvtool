@@ -82,6 +82,8 @@ int main(int argc, char ** argv)
    uint32_t prevms = ClockToMs(E32ReadTime());
    uint32_t ips = 0;
 
+   UARTWrite("mandelbrot\n");
+
    while(1)
    {
       // Generate one line of mandelbrot into offscreen buffer

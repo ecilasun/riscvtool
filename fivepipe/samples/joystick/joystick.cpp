@@ -11,6 +11,8 @@ int main( int argc, char **argv )
 	uint32_t voltage = 0x00000000;
 	uint32_t x = 0;
 
+    printf("AUX0 voltage display\n");
+
     while (1)
     {
         voltage = (voltage + *XADCPORT)>>1;
