@@ -18,6 +18,7 @@ folders = \
 	jpegview \
 	mandelbrot \
 	memtest \
+	joystick \
 
 # Rules
 
