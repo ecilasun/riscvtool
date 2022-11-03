@@ -100,6 +100,7 @@ void DecodeJPEG(const char *fname)
 
 	njDone();
 
+    asm volatile( ".word 0xFC000073;");
 	GPUSetVPage((uint32_t)image);
 }
 

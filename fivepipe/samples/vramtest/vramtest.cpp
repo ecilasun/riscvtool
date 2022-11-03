@@ -36,6 +36,9 @@ int main( int argc, char **argv )
 			for (int x=0;x<80;++x)
 				writepage[x+y*80] = writepage[x+(y+208)*80] ^ 0xFFFFFFFF;
 
+		// Flush data cache at last pixel so we can see a coherent image
+		asm volatile( ".word 0xFC000073;");
+
 		// Flip
 		++cycle;
 	} while (1);
