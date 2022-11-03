@@ -208,11 +208,6 @@ int main()
 	LEDSetState(0);
 	PS2InitRingBuffer();
 
-	UARTWrite("┌─────────────────────────┐\n");
-	UARTWrite("│ NON-OS v0.001           │\n");
-	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
-	UARTWrite("└─────────────────────────┘\n\n");
-
 	// File system test
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)

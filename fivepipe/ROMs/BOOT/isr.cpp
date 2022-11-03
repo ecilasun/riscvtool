@@ -12,16 +12,21 @@ uint16_t keymapprev[256];
 
 void HandleMainTimer()
 {
-	// Roll LEDs
-	static uint32_t scrollingleds = 0;
-	LEDSetState(scrollingleds++);
+	// Splash screen
+	UARTWrite("┌─────────────────────────┐\n");
+	UARTWrite("│ NON-OS v0.001           │\n");
+	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
+	UARTWrite("└─────────────────────────┘\n\n");
 
 	// This is currently a do-notthing timer handler ticking at 100ms
 	// It will eventually become a task scheduler
 
-	uint64_t now = E32ReadTime();
-	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
-	E32SetTimeCompare(future);
+	// Set up a time in far far future
+	E32SetTimeCompare(0xFFFFFFFFFFFFFFFFULL);
+
+	//uint64_t now = E32ReadTime();
+	//uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
+	//E32SetTimeCompare(future);
 }
 
 void HandleKeyboard()
@@ -176,7 +181,7 @@ void InstallMainISR()
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
+	uint64_t future = now + ONE_SECOND_IN_TICKS;
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)

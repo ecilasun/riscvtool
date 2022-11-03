@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <math.h>
 #include "core.h"
 #include "uart.h"
@@ -6,6 +7,8 @@
 int main( int argc, char **argv )
 {
 	uint32_t cycle = 0;
+
+	printf("Video scanout test\n");
 
 	do {
 		// Video scan-out page

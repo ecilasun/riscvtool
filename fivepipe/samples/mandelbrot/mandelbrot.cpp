@@ -78,10 +78,6 @@ int main(int argc, char ** argv)
    float X = -0.235125f;
    float Y = 0.827215f;
 
-   uint64_t prevreti = E32ReadRetiredInstructions();
-   uint32_t prevms = ClockToMs(E32ReadTime());
-   uint32_t ips = 0;
-
    UARTWrite("mandelbrot\n");
 
    while(1)
@@ -90,25 +86,8 @@ int main(int argc, char ** argv)
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
       mandelbrotFloat(X,Y,R);
 
-      uint32_t ms = ClockToMs(E32ReadTime());
-
       if (row == 239)
-      {
          R += 0.001f; // Zoom
-
-         UARTWrite("IPS:");
-         UARTWriteDecimal(ips);
-         UARTWrite("\n");
-      }
-
-      if (ms-prevms > 1000)
-      {
-         prevms += 1000; // So that we have the leftover time carried over
-
-         uint64_t reti = E32ReadRetiredInstructions();
-         ips = (reti-prevreti);
-         prevreti = reti;
-      }
    }
 
    return 0;
