@@ -8,7 +8,7 @@ UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
 # --specs=nano.specs -std=c++14 -> need to use g++
-CFLAGS=-mcmodel=medany -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer --param l1-cache-line-size=64 --param l1-cache-size=32 -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -fPIC -lgcc -lm -Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer --param l1-cache-line-size=64 --param l1-cache-size=32 -Wl,--gc-section --specs=nano.specs -Wl,-strip-debug -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 CFLAGS += \
 	-DNORMALUNIX \
