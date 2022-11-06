@@ -159,6 +159,7 @@ void ParseCommands()
 		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7msdtest\033[0m: turn sdcard off and on rapidly for test\n");
+		UARTWrite("\033[34m\033[47m\033[7mtemp\033[0m: show curent temperature\n");
 		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
 		UARTWrite("\033[34m\033[47m\033[7mload\033[0m: load given ELF without starting it\n");
 		UARTWrite("\033[34m\033[47m\033[7mdump\033[0m: dump memory\n");
@@ -176,6 +177,14 @@ void ParseCommands()
 	{
 		UARTWrite(currentdir);
 		UARTWrite("\n");
+	}
+	else if (!strcmp(command, "pwd"))
+	{
+		uint32_t tempsample = *XADCTEMP;
+		uint32_t temperature_centigrates = (tempsample*504) / 4096 - 273;
+		UARTWrite("Approximate temperature: ");
+		UARTWriteDecimal(temperature_centigrates);
+		UARTWrite(" C\n");
 	}
 	else if (!strcmp(command, "sdtest"))
 	{
@@ -270,7 +279,8 @@ int main()
 
 	UARTWrite("Initializing upper half of DDR3...\n");
 	uint32_t *ddr3mem = (uint32_t*)0;
-	for (uint32_t i=0x00000000;i<0x10000000;++i)
+	const uint32_t numwords = 0x10000000 / 4;
+	for (uint32_t i=0;i<numwords;++i)
 		ddr3mem[i] = 0xCDCDCDCD;
 	UARTWrite("Done\n");
 
