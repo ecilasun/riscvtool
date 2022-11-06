@@ -4,7 +4,7 @@
 #include "uart.h"
 #include "gpu.h"
 
-int main( int argc, char **argv )
+int main()
 {
     printf("Hello, world!\n");
 

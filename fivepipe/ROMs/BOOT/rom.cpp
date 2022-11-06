@@ -158,8 +158,7 @@ void ParseCommands()
 		UARTWrite("\033[34m\033[47m\033[7mdir\033[0m: show list of files in working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
-		UARTWrite("\033[34m\033[47m\033[7msdoff\033[0m: turn sdcard off\n");
-		UARTWrite("\033[34m\033[47m\033[7msdon\033[0m: turn sdcard on\n");
+		UARTWrite("\033[34m\033[47m\033[7msdtest\033[0m: turn sdcard off and on rapidly for test\n");
 		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
 		UARTWrite("\033[34m\033[47m\033[7mload\033[0m: load given ELF without starting it\n");
 		UARTWrite("\033[34m\033[47m\033[7mdump\033[0m: dump memory\n");
@@ -178,16 +177,11 @@ void ParseCommands()
 		UARTWrite(currentdir);
 		UARTWrite("\n");
 	}
-	else if (!strcmp(command, "sdoff"))
+	else if (!strcmp(command, "sdtest"))
 	{
 		f_mount(nullptr, "sd:", 1);
-		UARTWrite("Turning the SDCard off\n");
 		SDCardControl(0x0);
-	}
-	else if (!strcmp(command, "sdon"))
-	{
 		SDCardControl(0x3);
-		UARTWrite("Turning the SDCard on\n");
 		FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 		if (mountattempt!=FR_OK)
 			UARTWrite(FRtoString[mountattempt]);
@@ -274,12 +268,20 @@ int main()
 	UARTWrite("Powering SDCard device\n");
 	SDCardControl(0x3); // Chip select enable/ Power on
 
+	UARTWrite("Initializing upper half of DDR3...\n");
+	uint32_t *ddr3mem = (uint32_t*)0;
+	for (uint32_t i=0x00000000;i<0x10000000;++i)
+		ddr3mem[i] = 0xCDCDCDCD;
+	UARTWrite("Done\n");
+
 	// File system test
+	UARTWrite("Mounting filesystem\n");
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);
 
 	// Only on first core
+	UARTWrite("Installing ISR\n");
 	uint32_t hartid = read_csr(mhartid);
 	if (hartid == 0)
 	{
@@ -287,6 +289,7 @@ int main()
 		InstallMainISR();
 	}
 
+	UARTWrite("Ready\n");
 	while(1)
 	{
 		// Main loop will only wake up at hardware interrupt requests

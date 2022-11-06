@@ -65,7 +65,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
    //if( di>0.5 ) d=0.0;
 }
 
-int main(int argc, char ** argv)
+int main()
 {
    // Grayscale palette
    for (uint32_t i=0;i<256;++i)

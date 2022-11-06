@@ -2,6 +2,7 @@
 #include "gpu.h"
 #include "sdcard.h"
 #include "fat32/ff.h"
+#include "uart.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,19 +67,13 @@ void DecodeJPEG(const char *fname)
 		f_read(&fp, rawjpeg, fp.obj.objsize, &readlen);
 		f_close(&fp);
 
-		uint64_t begin = E32ReadTime();
 		nj_result_t jres = njDecode(rawjpeg, fp.obj.objsize);
-		uint64_t end = E32ReadTime();
-		uint32_t decodems = ClockToMs(end-begin);
-		printf("decoded in %d ms\n", int(decodems));
 
 		if (jres == NJ_OK)
 		{
-			begin = E32ReadTime();
-
 			int W = njGetWidth();
 			int H = njGetHeight();
-			printf("width:%d height:%d color:%d\n", W, H, njIsColor());
+
 			int iW = W>320 ? 320 : W;
 			int iH = H>208 ? 208 : H;
 			uint8_t *img = njGetImage();
@@ -112,13 +107,7 @@ void DecodeJPEG(const char *fname)
 					for (int i=0;i<iW;++i)
 						image[i+j*320] = img[i+j*W];
 			}
-
-			end = E32ReadTime();
-			uint32_t ditherms = ClockToMs(end-begin);
-			printf("dithered in %d ms\n", int(ditherms));
 		}
-		else
-			printf("failed to decode image\n");
 	}
 
 	njDone();
@@ -137,17 +126,16 @@ void Setup()
 				GPUSetPal(target++, MAKECOLORRGB24(r*36, g*36, b*85));
 }
 
-int main( int argc, char **argv )
+int main()
 {
 	Setup();
 
-	printf("Powering SDCard device\n");
 	SDCardControl(0x3);
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 	{
-		printf("ERROR: %s", FRtoString[mountattempt]);
+		UARTWrite(FRtoString[mountattempt]);
 		return -1;
 	}
 
@@ -156,7 +144,6 @@ int main( int argc, char **argv )
 
 	DecodeJPEG("sd:test.jpg");
 
-	printf("Turning off SDCard device\n");
 	SDCardControl(0x0);
 
 	return 0;
