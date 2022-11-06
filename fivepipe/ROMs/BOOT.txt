@@ -6,12 +6,10 @@ EXEC_P, HAS_SYMS, D_PAGED
 start address 0x20000000
 
 Program Header:
-0x70000003 off    0x0000af3d vaddr 0x00000000 paddr 0x00000000 align 2**0
+0x70000003 off    0x0000a5b5 vaddr 0x00000000 paddr 0x00000000 align 2**0
          filesz 0x00000025 memsz 0x00000000 flags r--
     LOAD off    0x00001000 vaddr 0x20000000 paddr 0x20000000 align 2**12
-         filesz 0x00008678 memsz 0x00008678 flags r-x
-    LOAD off    0x0000a000 vaddr 0x20020000 paddr 0x20020000 align 2**12
-         filesz 0x00000f10 memsz 0x00001a28 flags rw-
+         filesz 0x00009588 memsz 0x0000a0a0 flags rwx
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
@@ -23,57 +21,57 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   3 .eh_frame     00000c74  20007a04  20007a04  00008a04  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  4 .data         00000ea8  20020000  20020000  0000a000  2**3
+  4 .data         00000ea8  20008678  20008678  00009678  2**3
                   CONTENTS, ALLOC, LOAD, DATA
-  5 .got          00000050  20020ea8  20020ea8  0000aea8  2**2
+  5 .got          00000050  20009520  20009520  0000a520  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .got.plt      00000008  20020ef8  20020ef8  0000aef8  2**2
+  6 .got.plt      00000008  20009570  20009570  0000a570  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .sdata        00000010  20020f00  20020f00  0000af00  2**2
+  7 .sdata        00000010  20009578  20009578  0000a578  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .sbss         00000010  20020f10  20020f10  0000af10  2**2
+  8 .sbss         00000010  20009588  20009588  0000a588  2**2
                   ALLOC
-  9 .bss          00000b08  20020f20  20020f20  0000af10  2**2
+  9 .bss          00000b08  20009598  20009598  0000a588  2**2
                   ALLOC
- 10 .comment      0000002d  00000000  00000000  0000af10  2**0
+ 10 .comment      0000002d  00000000  00000000  0000a588  2**0
                   CONTENTS, READONLY
- 11 .riscv.attributes 00000025  00000000  00000000  0000af3d  2**0
+ 11 .riscv.attributes 00000025  00000000  00000000  0000a5b5  2**0
                   CONTENTS, READONLY
 SYMBOL TABLE:
 20000000 l    d  .boot	00000000 .boot
 200000a0 l    d  .text	00000000 .text
 200069c0 l    d  .rodata	00000000 .rodata
 20007a04 l    d  .eh_frame	00000000 .eh_frame
-20020000 l    d  .data	00000000 .data
-20020ea8 l    d  .got	00000000 .got
-20020ef8 l    d  .got.plt	00000000 .got.plt
-20020f00 l    d  .sdata	00000000 .sdata
-20020f10 l    d  .sbss	00000000 .sbss
-20020f20 l    d  .bss	00000000 .bss
+20008678 l    d  .data	00000000 .data
+20009520 l    d  .got	00000000 .got
+20009570 l    d  .got.plt	00000000 .got.plt
+20009578 l    d  .sdata	00000000 .sdata
+20009588 l    d  .sbss	00000000 .sbss
+20009598 l    d  .bss	00000000 .bss
 00000000 l    d  .comment	00000000 .comment
 00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
 00000000 l    df *ABS*	00000000 rom.cpp
 20000080 l       .boot	00000000 workerhartstart
 20000068 l       .boot	00000000 noatexitfound
-20021324 l     O .bss	00000004 _ZZ16ProcessKeyEventsvE9uppercase
-20021560 l     O .bss	00000004 _ZL6cmdlen
-200215e4 l     O .bss	00000200 _ZL11commandline
-20020250 l     O .data	00000200 _ZL10currentdir
-20020050 l     O .data	00000200 _ZL8execname
-20021320 l     O .bss	00000004 _ZZ13ParseCommandsvE8lastaddr
-20021564 l     O .bss	00000080 _ZL8filename
+2000999c l     O .bss	00000004 _ZZ16ProcessKeyEventsvE9uppercase
+20009bd8 l     O .bss	00000004 _ZL6cmdlen
+20009c5c l     O .bss	00000200 _ZL11commandline
+200088c8 l     O .data	00000200 _ZL10currentdir
+200086c8 l     O .data	00000200 _ZL8execname
+20009998 l     O .bss	00000004 _ZZ13ParseCommandsvE8lastaddr
+20009bdc l     O .bss	00000080 _ZL8filename
 00000000 l    df *ABS*	00000000 lib_a-memset.o
 00000000 l    df *ABS*	00000000 lib_a-strcmp.o
 00000000 l    df *ABS*	00000000 isr.cpp
 00000000 l    df *ABS*	00000000 util.cpp
 00000000 l    df *ABS*	00000000 uart.c
 00000000 l    df *ABS*	00000000 core.c
-20020454 l     O .data	00000004 _ZL10heap_start
+20008acc l     O .data	00000004 _ZL10heap_start
 00000000 l    df *ABS*	00000000 leds.c
 00000000 l    df *ABS*	00000000 ps2.c
-200217ec l     O .bss	00000004 _ZL12m_ringBuffer
-200217e8 l     O .bss	00000004 _ZL12m_readOffset
-200217e4 l     O .bss	00000004 _ZL13m_writeOffset
+20009e64 l     O .bss	00000004 _ZL12m_ringBuffer
+20009e60 l     O .bss	00000004 _ZL12m_readOffset
+20009e5c l     O .bss	00000004 _ZL13m_writeOffset
 00000000 l    df *ABS*	00000000 sdcard.c
 00000000 l    df *ABS*	00000000 ff.c
 20001cc4 l     F .text	0000002c _ZL8ld_dwordPKh
@@ -81,17 +79,17 @@ SYMBOL TABLE:
 20001d1c l     F .text	0000003c _ZL10clmt_clustP3FILm
 20001d58 l     F .text	00000030 _ZL7sum_sfnPKh
 20001d88 l     F .text	000000e0 _ZL12get_ldnumberPPKc
-2002066c l     O .data	0000000c _ZL9VolumeStr
-200219f0 l     O .bss	00000001 _ZL7CurrVol
+20008ce4 l     O .data	0000000c _ZL9VolumeStr
+2000a068 l     O .bss	00000001 _ZL7CurrVol
 20001e68 l     F .text	00000070 _ZL8validateP7FFOBJIDPP5FATFS
 20001ed8 l     F .text	00000094 _ZL11sync_windowP5FATFS
 20001f6c l     F .text	00000068 _ZL11move_windowP5FATFSm
 20001fd4 l     F .text	0000018c _ZL8check_fsP5FATFSm
 20002160 l     F .text	000001f0 _ZL7put_fatP5FATFSmm
 20002350 l     F .text	000003dc _ZL12mount_volumePPKcPP5FATFSh
-200219f4 l     O .bss	0000000c _ZL5FatFs
-200219f2 l     O .bss	00000002 _ZL4Fsid
-200217f0 l     O .bss	00000200 _ZL6LfnBuf
+2000a06c l     O .bss	0000000c _ZL5FatFs
+2000a06a l     O .bss	00000002 _ZL4Fsid
+20009e68 l     O .bss	00000200 _ZL6LfnBuf
 2000272c l     F .text	00000038 _ZL8ld_clustP5FATFSPKh.isra.0
 20002764 l     F .text	00000150 _ZL7get_fatP7FFOBJIDm.isra.0
 200028b4 l     F .text	000001ac _ZL12create_chainP7FFOBJIDm
@@ -134,86 +132,86 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 gpu.c
 00000000 l    df *ABS*	00000000 spi.c
 00000000 l    df *ABS*	00000000 impure.c
-20020678 l     O .data	00000428 impure_data
+20008cf0 l     O .data	00000428 impure_data
 20007a01 l       .rodata	00000000 __fini_array_end
 20007a01 l       .rodata	00000000 __fini_array_start
 20007a01 l       .rodata	00000000 __init_array_end
 20007a01 l       .rodata	00000000 __preinit_array_end
-20020ea8 l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
+20009520 l     O .got	00000000 _GLOBAL_OFFSET_TABLE_
 20007a01 l       .rodata	00000000 __init_array_start
 20007a01 l       .rodata	00000000 __preinit_array_start
 20005a14 g     F .text	000000b0 strcpy
-20021700 g       *ABS*	00000000 __global_pointer$
+20009d80 g       *ABS*	00000000 __global_pointer$
 2000132c g     F .text	00000014 _Z11LEDSetStatem
 20008680 g       .data	00000000 _fdata
 200013d4 g     F .text	00000020 _Z14PS2ScanToASCIIhh
 200057ec g     F .text	00000004 __malloc_unlock
 20001918 g     F .text	0000012c _Z17SDReadSingleBlockmPhS_
 20000824 g     F .text	00000150 _Z16ProcessKeyEventsv
-20020f20 g     O .bss	00000200 keymapprev
+20009598 g     O .bss	00000200 keymapprev
 2000617c g     F .text	00000098 __strtok_r
-20020464 g     O .data	00000100 scantoasciitable_uppercase
+20008adc g     O .data	00000100 scantoasciitable_uppercase
 20004d20 g     F .text	0000000c __errno
 200012e4 g     F .text	00000014 _Z17E32SetTimeComparey
-20020f1c g     O .sbss	00000004 errno
+20009594 g     O .sbss	00000004 errno
 20007a01 g       .rodata	00000000 _etext
 00000400 g       *ABS*	00000000 __stack_size
-20021700 g       .sdata	00000000 _gp
+20009d80 g       .sdata	00000000 _gp
 20004b44 g     F .text	000000f0 ff_wtoupper
-20020664 g     O .data	00000004 PS2KEYBOARDDATAAVAIL
+20008cdc g     O .data	00000004 PS2KEYBOARDDATAAVAIL
 20000094 g       .boot	00000000 _boot
 20005644 g     F .text	000001a4 memcpy
 20001418 g     F .text	00000088 _Z17PS2RingBufferReadPvm
 20004c40 g     F .text	00000030 disk_initialize
-20020460 g     O .data	00000004 LEDSTATE
+20008ad8 g     O .data	00000004 LEDSTATE
 20001530 g     F .text	0000001c _Z7SPITxRxh
 20004e24 g     F .text	00000010 malloc
-20020f20 g       .bss	00000000 _bss_start
+20009598 g       .bss	00000000 _bss_start
 20000668 g     F .text	00000050 _Z14InstallMainISRv
-20020f18 g     O .sbss	00000004 __malloc_top_pad
+20009590 g     O .sbss	00000004 __malloc_top_pad
 20004c34 g     F .text	0000000c disk_status
 200057f0 g     F .text	0000005c _sbrk_r
 20001ae8 g     F .text	000000bc _Z20SDReadMultipleBlocksPhmm
 200045c8 g     F .text	00000030 f_closedir
 20004cf0 g     F .text	00000010 disk_ioctl
-20020f14 g     O .sbss	00000004 __malloc_max_sbrked_mem
-20020f0c g     O .sdata	00000004 _global_impure_ptr
+2000958c g     O .sbss	00000004 __malloc_max_sbrked_mem
+20009584 g     O .sdata	00000004 _global_impure_ptr
 20004d88 g     F .text	0000009c __libc_init_array
 200012f8 g     F .text	00000034 _sbrk
-20020564 g     O .data	00000100 scantoasciitable_lowercase
+20008bdc g     O .data	00000100 scantoasciitable_lowercase
 20006404 g     F .text	0000001c strtol
 20006988 g     F .text	00000038 strnlen
-20021a28 g       .bss	00000000 _bss_end
+2000a0a0 g       .bss	00000000 _bss_end
 20004aa8 g     F .text	00000064 ff_uni2oem
 20004d2c g     F .text	0000005c __libc_fini_array
 2000166c g     F .text	0000003c _Z11SDResponse1v
 20001c60 g     F .text	00000014 _Z13SDCardControlh
-2002045c g     O .data	00000004 IO_SPIRXTX
+20008ad4 g     O .data	00000004 IO_SPIRXTX
 2000584c g     F .text	00000088 strcat
 200065f4 g     F .text	00000308 _free_r
 2000174c g     F .text	00000064 _Z6SDIdlev
 20004138 g     F .text	0000003c f_close
 20000094 g       .boot	00000000 _ftext
-20020f04 g     O .sdata	00000004 __malloc_sbrk_base
+2000957c g     O .sdata	00000004 __malloc_sbrk_base
 20000000 g     F .boot	00000094 _start
 20005ee0 g     F .text	00000288 strstr
 200011f4 g     F .text	000000dc _Z16UARTWriteDecimall
 20006420 g     F .text	0000009c __register_exitproc
 20003cb8 g     F .text	00000264 f_read
 200045f8 g     F .text	000004b0 f_readdir
-20021a00 g     O .bss	00000028 __malloc_current_mallinfo
+2000a078 g     O .bss	00000028 __malloc_current_mallinfo
 200002f8 g     F .text	0000004c _Z15HandleMainTimerv
 200013f4 g     F .text	00000024 _Z17PS2InitRingBufferv
 00000400 g       *ABS*	00000000 __stack_size$
 20006168 g     F .text	00000014 strtok
-20020668 g     O .data	00000004 PS2KEYBOARDDATA
+20008ce0 g     O .data	00000004 PS2KEYBOARDDATA
 200055cc g     F .text	00000078 memcmp
-20020aa0 g     O .data	00000408 __malloc_av_
+20009118 g     O .data	00000408 __malloc_av_
 200057e8 g     F .text	00000004 __malloc_lock
 200006b8 g     F .text	0000016c _Z9ListFilesPKc
 200000a0 g     F .text	000000dc memset
 20000c60 g     F .text	0000007c main
-20020f10 g     O .sbss	00000004 __malloc_max_total_mem
+20009588 g     O .sbss	00000004 __malloc_max_total_mem
 200010c8 g     F .text	00000024 _Z9UARTWritePKc
 20000974 g     F .text	000002e4 _Z13ParseCommandsv
 20003f1c g     F .text	0000021c f_sync
@@ -228,20 +226,20 @@ SYMBOL TABLE:
 2000017c g     F .text	0000017c strcmp
 2000154c g     F .text	00000030 _Z8SPIBlankv
 20004174 g     F .text	00000398 f_lseek
-20020458 g     O .data	00000004 IO_SPICTL
+20008ad0 g     O .data	00000004 IO_SPICTL
 20001c74 g     F .text	00000050 _Z13SDCardStartupv
 2000157c g     F .text	000000f0 _Z5SDCmd13SDCardCommandm
 20004d00 g     F .text	00000014 atexit
-20020450 g     O .data	00000004 IO_UARTTX
+20008ac8 g     O .data	00000004 IO_UARTTX
 200017b0 g     F .text	00000094 _Z19SDCheckVoltageRangev
-20020f00 g     O .sdata	00000004 _impure_ptr
+20009578 g     O .sdata	00000004 _impure_ptr
 20000580 g     F .text	000000dc _Z8main_ISRv
 200016a8 g     F .text	000000a4 _Z11SDResponse7Pm
-20021a28 g       .bss	00000000 __BSS_END__$
+2000a0a0 g       .bss	00000000 __BSS_END__$
 20000f98 g     F .text	00000130 _Z14LoadExecutablePKcb
-20020ea8 g       .data	00000000 _edata
-20021a28 g       .bss	00000000 _end
-20020f08 g     O .sdata	00000004 __malloc_trim_threshold
+20009520 g       .data	00000000 _edata
+2000a0a0 g       .bss	00000000 _end
+20009580 g     O .sdata	00000004 __malloc_trim_threshold
 20003570 g     F .text	00000748 f_open
 20004cb0 g     F .text	00000040 disk_write
 20000cdc g     F .text	000002bc _Z29ParseELFHeaderAndLoadSectionsP3FILP16SElfFileHeader32Rm
@@ -252,15 +250,15 @@ SYMBOL TABLE:
 2000040c g     F .text	00000168 _Z14HandleMainTrapmmmm
 20000094 g     F .boot	00000000 _exit
 200012d0 g     F .text	00000014 _Z11E32ReadTimev
-20021120 g     O .bss	00000200 keymap
+20009798 g     O .bss	00000200 keymap
 200068fc g     F .text	0000008c strlen
 20004c70 g     F .text	00000040 disk_read
 200058d4 g     F .text	00000140 strchr
-20020000 g     O .data	00000050 FRtoString
+20008678 g     O .data	00000050 FRtoString
 20001ba4 g     F .text	000000bc _Z21SDWriteMultipleBlocksPKhmm
-20021328 g     O .bss	00000238 Fs
+200099a0 g     O .bss	00000238 Fs
 200010ec g     F .text	00000108 _Z12UARTWriteHexm
-20020f10 g       .sbss	00000000 _fbss
+20009588 g       .sbss	00000000 _fbss
 20000c58 g     F .text	00000008 _Z10workermainv
 20004e34 g     F .text	00000010 free
 
@@ -269,31 +267,31 @@ SYMBOL TABLE:
 Disassembly of section .boot:
 
 20000000 <_start>:
-20000000:	00021197          	auipc	gp,0x21
-20000004:	eac1a183          	lw	gp,-340(gp) # 20020eac <_GLOBAL_OFFSET_TABLE_+0x4>
+20000000:	00009197          	auipc	gp,0x9
+20000004:	5241a183          	lw	gp,1316(gp) # 20009524 <_GLOBAL_OFFSET_TABLE_+0x4>
 20000008:	f14024f3          	csrr	s1,mhartid
 2000000c:	20000137          	lui	sp,0x20000
 20000010:	f0010113          	addi	sp,sp,-256 # 1fffff00 <__stack_size+0x1ffffb00>
-20000014:	00021417          	auipc	s0,0x21
-20000018:	eb842403          	lw	s0,-328(s0) # 20020ecc <_GLOBAL_OFFSET_TABLE_+0x24>
+20000014:	00009417          	auipc	s0,0x9
+20000018:	53042403          	lw	s0,1328(s0) # 20009544 <_GLOBAL_OFFSET_TABLE_+0x24>
 2000001c:	028484b3          	mul	s1,s1,s0
 20000020:	40990933          	sub	s2,s2,s1
 20000024:	00090113          	mv	sp,s2
 20000028:	00010413          	mv	s0,sp
 2000002c:	04049a63          	bnez	s1,20000080 <workerhartstart>
-20000030:	00021517          	auipc	a0,0x21
-20000034:	ea452503          	lw	a0,-348(a0) # 20020ed4 <_GLOBAL_OFFSET_TABLE_+0x2c>
-20000038:	00021617          	auipc	a2,0x21
-2000003c:	eb062603          	lw	a2,-336(a2) # 20020ee8 <_GLOBAL_OFFSET_TABLE_+0x40>
+20000030:	00009517          	auipc	a0,0x9
+20000034:	51c52503          	lw	a0,1308(a0) # 2000954c <_GLOBAL_OFFSET_TABLE_+0x2c>
+20000038:	00009617          	auipc	a2,0x9
+2000003c:	52862603          	lw	a2,1320(a2) # 20009560 <_GLOBAL_OFFSET_TABLE_+0x40>
 20000040:	40a60633          	sub	a2,a2,a0
 20000044:	00000593          	li	a1,0
 20000048:	058000ef          	jal	ra,200000a0 <memset>
-2000004c:	00021517          	auipc	a0,0x21
-20000050:	e9052503          	lw	a0,-368(a0) # 20020edc <_GLOBAL_OFFSET_TABLE_+0x34>
+2000004c:	00009517          	auipc	a0,0x9
+20000050:	50852503          	lw	a0,1288(a0) # 20009554 <_GLOBAL_OFFSET_TABLE_+0x34>
 20000054:	00050a63          	beqz	a0,20000068 <noatexitfound>
 20000058:	00001517          	auipc	a0,0x1
-2000005c:	00021517          	auipc	a0,0x21
-20000060:	e6852503          	lw	a0,-408(a0) # 20020ec4 <_GLOBAL_OFFSET_TABLE_+0x1c>
+2000005c:	00009517          	auipc	a0,0x9
+20000060:	4e052503          	lw	a0,1248(a0) # 2000953c <_GLOBAL_OFFSET_TABLE_+0x1c>
 20000064:	49d040ef          	jal	ra,20004d00 <atexit>
 
 20000068 <noatexitfound>:
@@ -376,7 +374,7 @@ Disassembly of section .text:
 20000184:	00377713          	andi	a4,a4,3
 20000188:	10071063          	bnez	a4,20000288 <strcmp+0x10c>
 2000018c:	7f7f87b7          	lui	a5,0x7f7f8
-20000190:	f7f78793          	addi	a5,a5,-129 # 7f7f7f7f <__BSS_END__$+0x5f7d6557>
+20000190:	f7f78793          	addi	a5,a5,-129 # 7f7f7f7f <__BSS_END__$+0x5f7ededf>
 20000194:	00052603          	lw	a2,0(a0)
 20000198:	0005a683          	lw	a3,0(a1)
 2000019c:	00f672b3          	and	t0,a2,a5
@@ -497,17 +495,17 @@ Disassembly of section .text:
 20000358:	01312e23          	sw	s3,28(sp)
 2000035c:	01412c23          	sw	s4,24(sp)
 20000360:	01512a23          	sw	s5,20(sp)
-20000364:	00021417          	auipc	s0,0x21
-20000368:	b5442403          	lw	s0,-1196(s0) # 20020eb8 <_GLOBAL_OFFSET_TABLE_+0x10>
-2000036c:	00021917          	auipc	s2,0x21
-20000370:	b8092903          	lw	s2,-1152(s2) # 20020eec <_GLOBAL_OFFSET_TABLE_+0x44>
+20000364:	00009417          	auipc	s0,0x9
+20000368:	1cc42403          	lw	s0,460(s0) # 20009530 <_GLOBAL_OFFSET_TABLE_+0x10>
+2000036c:	00009917          	auipc	s2,0x9
+20000370:	1f892903          	lw	s2,504(s2) # 20009564 <_GLOBAL_OFFSET_TABLE_+0x44>
 20000374:	00042783          	lw	a5,0(s0)
 20000378:	0007a483          	lw	s1,0(a5)
 2000037c:	08049263          	bnez	s1,20000400 <_Z14HandleKeyboardv+0xbc>
-20000380:	00021417          	auipc	s0,0x21
-20000384:	b3042403          	lw	s0,-1232(s0) # 20020eb0 <_GLOBAL_OFFSET_TABLE_+0x8>
-20000388:	00021917          	auipc	s2,0x21
-2000038c:	b6492903          	lw	s2,-1180(s2) # 20020eec <_GLOBAL_OFFSET_TABLE_+0x44>
+20000380:	00009417          	auipc	s0,0x9
+20000384:	1a842403          	lw	s0,424(s0) # 20009528 <_GLOBAL_OFFSET_TABLE_+0x8>
+20000388:	00009917          	auipc	s2,0x9
+2000038c:	1dc92903          	lw	s2,476(s2) # 20009564 <_GLOBAL_OFFSET_TABLE_+0x44>
 20000390:	0aa00a13          	li	s4,170
 20000394:	00c10993          	addi	s3,sp,12
 20000398:	10000a93          	li	s5,256
@@ -694,8 +692,8 @@ Disassembly of section .text:
 20000668 <_Z14InstallMainISRv>:
 20000668:	ff010113          	addi	sp,sp,-16
 2000066c:	00112623          	sw	ra,12(sp)
-20000670:	00021797          	auipc	a5,0x21
-20000674:	8747a783          	lw	a5,-1932(a5) # 20020ee4 <_GLOBAL_OFFSET_TABLE_+0x3c>
+20000670:	00009797          	auipc	a5,0x9
+20000674:	eec7a783          	lw	a5,-276(a5) # 2000955c <_GLOBAL_OFFSET_TABLE_+0x3c>
 20000678:	305797f3          	csrrw	a5,mtvec,a5
 2000067c:	455000ef          	jal	ra,200012d0 <_Z11E32ReadTimev>
 20000680:	00050793          	mv	a5,a0
@@ -799,8 +797,8 @@ Disassembly of section .text:
 20000800:	18010113          	addi	sp,sp,384
 20000804:	00008067          	ret
 20000808:	00251513          	slli	a0,a0,0x2
-2000080c:	00020797          	auipc	a5,0x20
-20000810:	6e47a783          	lw	a5,1764(a5) # 20020ef0 <_GLOBAL_OFFSET_TABLE_+0x48>
+2000080c:	00009797          	auipc	a5,0x9
+20000810:	d5c7a783          	lw	a5,-676(a5) # 20009568 <_GLOBAL_OFFSET_TABLE_+0x48>
 20000814:	00a787b3          	add	a5,a5,a0
 20000818:	0007a503          	lw	a0,0(a5)
 2000081c:	0ad000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
@@ -826,19 +824,19 @@ Disassembly of section .text:
 20000864:	0ff57793          	zext.b	a5,a0
 20000868:	10057713          	andi	a4,a0,256
 2000086c:	04d79e63          	bne	a5,a3,200008c8 <_Z16ProcessKeyEventsv+0xa4>
-20000870:	c2418693          	addi	a3,gp,-988 # 20021324 <_ZZ16ProcessKeyEventsvE9uppercase>
+20000870:	c1c18693          	addi	a3,gp,-996 # 2000999c <_ZZ16ProcessKeyEventsvE9uppercase>
 20000874:	0006a783          	lw	a5,0(a3)
 20000878:	0017b793          	seqz	a5,a5
 2000087c:	00f6a023          	sw	a5,0(a3)
 20000880:	06071063          	bnez	a4,200008e0 <_Z16ProcessKeyEventsv+0xbc>
-20000884:	e6018413          	addi	s0,gp,-416 # 20021560 <_ZL6cmdlen>
+20000884:	e5818413          	addi	s0,gp,-424 # 20009bd8 <_ZL6cmdlen>
 20000888:	00042483          	lw	s1,0(s0)
-2000088c:	c241c583          	lbu	a1,-988(gp) # 20021324 <_ZZ16ProcessKeyEventsvE9uppercase>
+2000088c:	c1c1c583          	lbu	a1,-996(gp) # 2000999c <_ZZ16ProcessKeyEventsvE9uppercase>
 20000890:	0ff57513          	zext.b	a0,a0
 20000894:	00148793          	addi	a5,s1,1
 20000898:	00f42023          	sw	a5,0(s0)
 2000089c:	339000ef          	jal	ra,200013d4 <_Z14PS2ScanToASCIIhh>
-200008a0:	ee418793          	addi	a5,gp,-284 # 200215e4 <_ZL11commandline>
+200008a0:	edc18793          	addi	a5,gp,-292 # 20009c5c <_ZL11commandline>
 200008a4:	00042683          	lw	a3,0(s0)
 200008a8:	009784b3          	add	s1,a5,s1
 200008ac:	00a48023          	sb	a0,0(s1)
@@ -853,7 +851,7 @@ Disassembly of section .text:
 200008d0:	00e78663          	beq	a5,a4,200008dc <_Z16ProcessKeyEventsv+0xb8>
 200008d4:	05900713          	li	a4,89
 200008d8:	00e79463          	bne	a5,a4,200008e0 <_Z16ProcessKeyEventsv+0xbc>
-200008dc:	c201a223          	sw	zero,-988(gp) # 20021324 <_ZZ16ProcessKeyEventsvE9uppercase>
+200008dc:	c001ae23          	sw	zero,-996(gp) # 2000999c <_ZZ16ProcessKeyEventsvE9uppercase>
 200008e0:	00000413          	li	s0,0
 200008e4:	01c12083          	lw	ra,28(sp)
 200008e8:	00040513          	mv	a0,s0
@@ -866,12 +864,12 @@ Disassembly of section .text:
 20000904:	05900713          	li	a4,89
 20000908:	00e79863          	bne	a5,a4,20000918 <_Z16ProcessKeyEventsv+0xf4>
 2000090c:	00100793          	li	a5,1
-20000910:	c2f1a223          	sw	a5,-988(gp) # 20021324 <_ZZ16ProcessKeyEventsvE9uppercase>
+20000910:	c0f1ae23          	sw	a5,-996(gp) # 2000999c <_ZZ16ProcessKeyEventsvE9uppercase>
 20000914:	fcdff06f          	j	200008e0 <_Z16ProcessKeyEventsv+0xbc>
 20000918:	05a00713          	li	a4,90
 2000091c:	00100413          	li	s0,1
 20000920:	02e78a63          	beq	a5,a4,20000954 <_Z16ProcessKeyEventsv+0x130>
-20000924:	e6018693          	addi	a3,gp,-416 # 20021560 <_ZL6cmdlen>
+20000924:	e5818693          	addi	a3,gp,-424 # 20009bd8 <_ZL6cmdlen>
 20000928:	06600613          	li	a2,102
 2000092c:	0006a703          	lw	a4,0(a3)
 20000930:	f4c79ae3          	bne	a5,a2,20000884 <_Z16ProcessKeyEventsv+0x60>
@@ -879,15 +877,15 @@ Disassembly of section .text:
 20000938:	0007d463          	bgez	a5,20000940 <_Z16ProcessKeyEventsv+0x11c>
 2000093c:	00000793          	li	a5,0
 20000940:	00f6a023          	sw	a5,0(a3)
-20000944:	ee418713          	addi	a4,gp,-284 # 200215e4 <_ZL11commandline>
+20000944:	edc18713          	addi	a4,gp,-292 # 20009c5c <_ZL11commandline>
 20000948:	00e787b3          	add	a5,a5,a4
 2000094c:	00078023          	sb	zero,0(a5)
 20000950:	00000413          	li	s0,0
 20000954:	00c14503          	lbu	a0,12(sp)
-20000958:	c241c583          	lbu	a1,-988(gp) # 20021324 <_ZZ16ProcessKeyEventsvE9uppercase>
+20000958:	c1c1c583          	lbu	a1,-996(gp) # 2000999c <_ZZ16ProcessKeyEventsvE9uppercase>
 2000095c:	279000ef          	jal	ra,200013d4 <_Z14PS2ScanToASCIIhh>
-20000960:	00020797          	auipc	a5,0x20
-20000964:	5807a783          	lw	a5,1408(a5) # 20020ee0 <_GLOBAL_OFFSET_TABLE_+0x38>
+20000960:	00009797          	auipc	a5,0x9
+20000964:	bf87a783          	lw	a5,-1032(a5) # 20009558 <_GLOBAL_OFFSET_TABLE_+0x38>
 20000968:	0007a783          	lw	a5,0(a5)
 2000096c:	00a7a023          	sw	a0,0(a5)
 20000970:	f75ff06f          	j	200008e4 <_Z16ProcessKeyEventsv+0xc0>
@@ -896,7 +894,7 @@ Disassembly of section .text:
 20000974:	fe010113          	addi	sp,sp,-32
 20000978:	00006597          	auipc	a1,0x6
 2000097c:	3bc58593          	addi	a1,a1,956 # 20006d34 <strnlen+0x3ac>
-20000980:	ee418513          	addi	a0,gp,-284 # 200215e4 <_ZL11commandline>
+20000980:	edc18513          	addi	a0,gp,-292 # 20009c5c <_ZL11commandline>
 20000984:	00812c23          	sw	s0,24(sp)
 20000988:	00112e23          	sw	ra,28(sp)
 2000098c:	00912a23          	sw	s1,20(sp)
@@ -937,13 +935,13 @@ Disassembly of section .text:
 20000a18:	750050ef          	jal	ra,20006168 <strtok>
 20000a1c:	00050593          	mv	a1,a0
 20000a20:	02050a63          	beqz	a0,20000a54 <_Z13ParseCommandsv+0xe0>
-20000a24:	00020517          	auipc	a0,0x20
-20000a28:	82c50513          	addi	a0,a0,-2004 # 20020250 <_ZL10currentdir>
+20000a24:	00008517          	auipc	a0,0x8
+20000a28:	ea450513          	addi	a0,a0,-348 # 200088c8 <_ZL10currentdir>
 20000a2c:	7e9040ef          	jal	ra,20005a14 <strcpy>
 20000a30:	01c12083          	lw	ra,28(sp)
 20000a34:	01812403          	lw	s0,24(sp)
-20000a38:	e601a023          	sw	zero,-416(gp) # 20021560 <_ZL6cmdlen>
-20000a3c:	ee018223          	sb	zero,-284(gp) # 200215e4 <_ZL11commandline>
+20000a38:	e401ac23          	sw	zero,-424(gp) # 20009bd8 <_ZL6cmdlen>
+20000a3c:	ec018e23          	sb	zero,-292(gp) # 20009c5c <_ZL11commandline>
 20000a40:	01412483          	lw	s1,20(sp)
 20000a44:	01012903          	lw	s2,16(sp)
 20000a48:	00c12983          	lw	s3,12(sp)
@@ -957,8 +955,8 @@ Disassembly of section .text:
 20000a68:	00040513          	mv	a0,s0
 20000a6c:	f10ff0ef          	jal	ra,2000017c <strcmp>
 20000a70:	00051e63          	bnez	a0,20000a8c <_Z13ParseCommandsv+0x118>
-20000a74:	0001f517          	auipc	a0,0x1f
-20000a78:	7dc50513          	addi	a0,a0,2012 # 20020250 <_ZL10currentdir>
+20000a74:	00008517          	auipc	a0,0x8
+20000a78:	e5450513          	addi	a0,a0,-428 # 200088c8 <_ZL10currentdir>
 20000a7c:	64c000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
 20000a80:	00006517          	auipc	a0,0x6
 20000a84:	7ec50513          	addi	a0,a0,2028 # 2000726c <strnlen+0x8e4>
@@ -979,14 +977,14 @@ Disassembly of section .text:
 20000ac0:	00006517          	auipc	a0,0x6
 20000ac4:	7ac50513          	addi	a0,a0,1964 # 2000726c <strnlen+0x8e4>
 20000ac8:	600000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
-20000acc:	0001f517          	auipc	a0,0x1f
-20000ad0:	78450513          	addi	a0,a0,1924 # 20020250 <_ZL10currentdir>
+20000acc:	00008517          	auipc	a0,0x8
+20000ad0:	dfc50513          	addi	a0,a0,-516 # 200088c8 <_ZL10currentdir>
 20000ad4:	5f4000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
 20000ad8:	00006517          	auipc	a0,0x6
 20000adc:	79450513          	addi	a0,a0,1940 # 2000726c <strnlen+0x8e4>
 20000ae0:	5e8000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
-20000ae4:	0001f517          	auipc	a0,0x1f
-20000ae8:	76c50513          	addi	a0,a0,1900 # 20020250 <_ZL10currentdir>
+20000ae4:	00008517          	auipc	a0,0x8
+20000ae8:	de450513          	addi	a0,a0,-540 # 200088c8 <_ZL10currentdir>
 20000aec:	bcdff0ef          	jal	ra,200006b8 <_Z9ListFilesPKc>
 20000af0:	f41ff06f          	j	20000a30 <_Z13ParseCommandsv+0xbc>
 20000af4:	00006597          	auipc	a1,0x6
@@ -999,12 +997,12 @@ Disassembly of section .text:
 20000b10:	658050ef          	jal	ra,20006168 <strtok>
 20000b14:	00050593          	mv	a1,a0
 20000b18:	02050263          	beqz	a0,20000b3c <_Z13ParseCommandsv+0x1c8>
-20000b1c:	0001f517          	auipc	a0,0x1f
-20000b20:	53450513          	addi	a0,a0,1332 # 20020050 <_ZL8execname>
+20000b1c:	00008517          	auipc	a0,0x8
+20000b20:	bac50513          	addi	a0,a0,-1108 # 200086c8 <_ZL8execname>
 20000b24:	6f1040ef          	jal	ra,20005a14 <strcpy>
 20000b28:	00000593          	li	a1,0
-20000b2c:	0001f517          	auipc	a0,0x1f
-20000b30:	52450513          	addi	a0,a0,1316 # 20020050 <_ZL8execname>
+20000b2c:	00008517          	auipc	a0,0x8
+20000b30:	b9c50513          	addi	a0,a0,-1124 # 200086c8 <_ZL8execname>
 20000b34:	464000ef          	jal	ra,20000f98 <_Z14LoadExecutablePKcb>
 20000b38:	ef9ff06f          	j	20000a30 <_Z13ParseCommandsv+0xbc>
 20000b3c:	00006597          	auipc	a1,0x6
@@ -1032,7 +1030,7 @@ Disassembly of section .text:
 20000b94:	1a498993          	addi	s3,s3,420 # 20006d34 <strnlen+0x3ac>
 20000b98:	00049863          	bnez	s1,20000ba8 <_Z13ParseCommandsv+0x234>
 20000b9c:	04040413          	addi	s0,s0,64
-20000ba0:	c281a023          	sw	s0,-992(gp) # 20021320 <_ZZ13ParseCommandsvE8lastaddr>
+20000ba0:	c081ac23          	sw	s0,-1000(gp) # 20009998 <_ZZ13ParseCommandsvE8lastaddr>
 20000ba4:	e8dff06f          	j	20000a30 <_Z13ParseCommandsv+0xbc>
 20000ba8:	00092503          	lw	a0,0(s2)
 20000bac:	fff48493          	addi	s1,s1,-1
@@ -1041,7 +1039,7 @@ Disassembly of section .text:
 20000bb8:	00098513          	mv	a0,s3
 20000bbc:	50c000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
 20000bc0:	fd9ff06f          	j	20000b98 <_Z13ParseCommandsv+0x224>
-20000bc4:	c2018913          	addi	s2,gp,-992 # 20021320 <_ZZ13ParseCommandsvE8lastaddr>
+20000bc4:	c1818913          	addi	s2,gp,-1000 # 20009998 <_ZZ13ParseCommandsvE8lastaddr>
 20000bc8:	00092483          	lw	s1,0(s2)
 20000bcc:	fbf00793          	li	a5,-65
 20000bd0:	04100413          	li	s0,65
@@ -1064,19 +1062,19 @@ Disassembly of section .text:
 20000c14:	4b4000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
 20000c18:	fd5ff06f          	j	20000bec <_Z13ParseCommandsv+0x278>
 20000c1c:	e0040ae3          	beqz	s0,20000a30 <_Z13ParseCommandsv+0xbc>
-20000c20:	0001f597          	auipc	a1,0x1f
-20000c24:	63058593          	addi	a1,a1,1584 # 20020250 <_ZL10currentdir>
-20000c28:	e6418513          	addi	a0,gp,-412 # 20021564 <_ZL8filename>
+20000c20:	00008597          	auipc	a1,0x8
+20000c24:	ca858593          	addi	a1,a1,-856 # 200088c8 <_ZL10currentdir>
+20000c28:	e5c18513          	addi	a0,gp,-420 # 20009bdc <_ZL8filename>
 20000c2c:	5e9040ef          	jal	ra,20005a14 <strcpy>
 20000c30:	00040593          	mv	a1,s0
-20000c34:	e6418513          	addi	a0,gp,-412 # 20021564 <_ZL8filename>
+20000c34:	e5c18513          	addi	a0,gp,-420 # 20009bdc <_ZL8filename>
 20000c38:	415040ef          	jal	ra,2000584c <strcat>
 20000c3c:	00006597          	auipc	a1,0x6
 20000c40:	0d858593          	addi	a1,a1,216 # 20006d14 <strnlen+0x38c>
-20000c44:	e6418513          	addi	a0,gp,-412 # 20021564 <_ZL8filename>
+20000c44:	e5c18513          	addi	a0,gp,-420 # 20009bdc <_ZL8filename>
 20000c48:	405040ef          	jal	ra,2000584c <strcat>
 20000c4c:	00100593          	li	a1,1
-20000c50:	e6418513          	addi	a0,gp,-412 # 20021564 <_ZL8filename>
+20000c50:	e5c18513          	addi	a0,gp,-420 # 20009bdc <_ZL8filename>
 20000c54:	ee1ff06f          	j	20000b34 <_Z13ParseCommandsv+0x1c0>
 
 20000c58 <_Z10workermainv>:
@@ -1097,13 +1095,13 @@ Disassembly of section .text:
 20000c88:	00100613          	li	a2,1
 20000c8c:	00006597          	auipc	a1,0x6
 20000c90:	20058593          	addi	a1,a1,512 # 20006e8c <strnlen+0x504>
-20000c94:	00020517          	auipc	a0,0x20
-20000c98:	26052503          	lw	a0,608(a0) # 20020ef4 <_GLOBAL_OFFSET_TABLE_+0x4c>
+20000c94:	00009517          	auipc	a0,0x9
+20000c98:	8d852503          	lw	a0,-1832(a0) # 2000956c <_GLOBAL_OFFSET_TABLE_+0x4c>
 20000c9c:	051020ef          	jal	ra,200034ec <f_mount>
 20000ca0:	00050e63          	beqz	a0,20000cbc <main+0x5c>
 20000ca4:	00251513          	slli	a0,a0,0x2
-20000ca8:	00020797          	auipc	a5,0x20
-20000cac:	2487a783          	lw	a5,584(a5) # 20020ef0 <_GLOBAL_OFFSET_TABLE_+0x48>
+20000ca8:	00009797          	auipc	a5,0x9
+20000cac:	8c07a783          	lw	a5,-1856(a5) # 20009568 <_GLOBAL_OFFSET_TABLE_+0x48>
 20000cb0:	00a787b3          	add	a5,a5,a0
 20000cb4:	0007a503          	lw	a0,0(a5)
 20000cb8:	410000ef          	jal	ra,200010c8 <_Z9UARTWritePKc>
@@ -1128,7 +1126,7 @@ Disassembly of section .text:
 20000cfc:	01879793          	slli	a5,a5,0x18
 20000d00:	00e7e7b3          	or	a5,a5,a4
 20000d04:	464c4737          	lui	a4,0x464c4
-20000d08:	57f70713          	addi	a4,a4,1407 # 464c457f <__BSS_END__$+0x264a2b57>
+20000d08:	57f70713          	addi	a4,a4,1407 # 464c457f <__BSS_END__$+0x264ba4df>
 20000d0c:	00e78863          	beq	a5,a4,20000d1c <_Z29ParseELFHeaderAndLoadSectionsP3FILP16SElfFileHeader32Rm+0x40>
 20000d10:	00006517          	auipc	a0,0x6
 20000d14:	4d450513          	addi	a0,a0,1236 # 200071e4 <strnlen+0x85c>
@@ -1372,8 +1370,8 @@ Disassembly of section .text:
 200010c4:	fddff06f          	j	200010a0 <_Z14LoadExecutablePKcb+0x108>
 
 200010c8 <_Z9UARTWritePKc>:
-200010c8:	00020797          	auipc	a5,0x20
-200010cc:	e187a783          	lw	a5,-488(a5) # 20020ee0 <_GLOBAL_OFFSET_TABLE_+0x38>
+200010c8:	00008797          	auipc	a5,0x8
+200010cc:	4907a783          	lw	a5,1168(a5) # 20009558 <_GLOBAL_OFFSET_TABLE_+0x38>
 200010d0:	0007a703          	lw	a4,0(a5)
 200010d4:	00054783          	lbu	a5,0(a0)
 200010d8:	00150513          	addi	a0,a0,1
@@ -1476,7 +1474,7 @@ Disassembly of section .text:
 2000124c:	80000537          	lui	a0,0x80000
 20001250:	00a00593          	li	a1,10
 20001254:	00000613          	li	a2,0
-20001258:	a0068693          	addi	a3,a3,-1536 # 3b9aca00 <__BSS_END__$+0x1b98afd8>
+20001258:	a0068693          	addi	a3,a3,-1536 # 3b9aca00 <__BSS_END__$+0x1b9a2960>
 2000125c:	00a00893          	li	a7,10
 20001260:	fff54513          	not	a0,a0
 20001264:	00100313          	li	t1,1
@@ -1522,8 +1520,8 @@ Disassembly of section .text:
 200012f4:	00008067          	ret
 
 200012f8 <_sbrk>:
-200012f8:	0001f697          	auipc	a3,0x1f
-200012fc:	15c68693          	addi	a3,a3,348 # 20020454 <_ZL10heap_start>
+200012f8:	00007697          	auipc	a3,0x7
+200012fc:	7d468693          	addi	a3,a3,2004 # 20008acc <_ZL10heap_start>
 20001300:	00050793          	mv	a5,a0
 20001304:	0006a503          	lw	a0,0(a3)
 20001308:	1ffe0737          	lui	a4,0x1ffe0
@@ -1537,20 +1535,20 @@ Disassembly of section .text:
 20001328:	00008067          	ret
 
 2000132c <_Z11LEDSetStatem>:
-2000132c:	00020797          	auipc	a5,0x20
-20001330:	b907a783          	lw	a5,-1136(a5) # 20020ebc <_GLOBAL_OFFSET_TABLE_+0x14>
+2000132c:	00008797          	auipc	a5,0x8
+20001330:	2087a783          	lw	a5,520(a5) # 20009534 <_GLOBAL_OFFSET_TABLE_+0x14>
 20001334:	0007a783          	lw	a5,0(a5)
 20001338:	00a7a023          	sw	a0,0(a5)
 2000133c:	00008067          	ret
 
 20001340 <_Z15PS2ScanKeyboardPt>:
-20001340:	00020797          	auipc	a5,0x20
-20001344:	b787a783          	lw	a5,-1160(a5) # 20020eb8 <_GLOBAL_OFFSET_TABLE_+0x10>
+20001340:	00008797          	auipc	a5,0x8
+20001344:	1f07a783          	lw	a5,496(a5) # 20009530 <_GLOBAL_OFFSET_TABLE_+0x10>
 20001348:	0007a583          	lw	a1,0(a5)
 2000134c:	0005a683          	lw	a3,0(a1)
 20001350:	06068c63          	beqz	a3,200013c8 <_Z15PS2ScanKeyboardPt+0x88>
-20001354:	00020797          	auipc	a5,0x20
-20001358:	b7c7a783          	lw	a5,-1156(a5) # 20020ed0 <_GLOBAL_OFFSET_TABLE_+0x28>
+20001354:	00008797          	auipc	a5,0x8
+20001358:	1f47a783          	lw	a5,500(a5) # 20009548 <_GLOBAL_OFFSET_TABLE_+0x28>
 2000135c:	0007a603          	lw	a2,0(a5)
 20001360:	0e000693          	li	a3,224
 20001364:	00000713          	li	a4,0
@@ -1576,29 +1574,29 @@ Disassembly of section .text:
 200013b4:	00d76733          	or	a4,a4,a3
 200013b8:	00c50533          	add	a0,a0,a2
 200013bc:	00f76733          	or	a4,a4,a5
-200013c0:	00e51023          	sh	a4,0(a0) # 80000000 <__BSS_END__$+0x5ffde5d8>
+200013c0:	00e51023          	sh	a4,0(a0) # 80000000 <__BSS_END__$+0x5fff5f60>
 200013c4:	00008067          	ret
 200013c8:	00000713          	li	a4,0
 200013cc:	00000793          	li	a5,0
 200013d0:	fd9ff06f          	j	200013a8 <_Z15PS2ScanKeyboardPt+0x68>
 
 200013d4 <_Z14PS2ScanToASCIIhh>:
-200013d4:	00020797          	auipc	a5,0x20
-200013d8:	ae07a783          	lw	a5,-1312(a5) # 20020eb4 <_GLOBAL_OFFSET_TABLE_+0xc>
+200013d4:	00008797          	auipc	a5,0x8
+200013d8:	1587a783          	lw	a5,344(a5) # 2000952c <_GLOBAL_OFFSET_TABLE_+0xc>
 200013dc:	00059663          	bnez	a1,200013e8 <_Z14PS2ScanToASCIIhh+0x14>
-200013e0:	00020797          	auipc	a5,0x20
-200013e4:	ae07a783          	lw	a5,-1312(a5) # 20020ec0 <_GLOBAL_OFFSET_TABLE_+0x18>
+200013e0:	00008797          	auipc	a5,0x8
+200013e4:	1587a783          	lw	a5,344(a5) # 20009538 <_GLOBAL_OFFSET_TABLE_+0x18>
 200013e8:	00a787b3          	add	a5,a5,a0
 200013ec:	0007c503          	lbu	a0,0(a5)
 200013f0:	00008067          	ret
 
 200013f4 <_Z17PS2InitRingBufferv>:
 200013f4:	1ffff7b7          	lui	a5,0x1ffff
-200013f8:	0ef1a623          	sw	a5,236(gp) # 200217ec <_ZL12m_ringBuffer>
+200013f8:	0ef1a223          	sw	a5,228(gp) # 20009e64 <_ZL12m_ringBuffer>
 200013fc:	41078713          	addi	a4,a5,1040 # 1ffff410 <__stack_size+0x1ffff010>
-20001400:	0ee1a423          	sw	a4,232(gp) # 200217e8 <_ZL12m_readOffset>
+20001400:	0ee1a023          	sw	a4,224(gp) # 20009e60 <_ZL12m_readOffset>
 20001404:	42078713          	addi	a4,a5,1056
-20001408:	0ee1a223          	sw	a4,228(gp) # 200217e4 <_ZL13m_writeOffset>
+20001408:	0ce1ae23          	sw	a4,220(gp) # 20009e5c <_ZL13m_writeOffset>
 2000140c:	4007a823          	sw	zero,1040(a5)
 20001410:	4207a023          	sw	zero,1056(a5)
 20001414:	00008067          	ret
@@ -1606,12 +1604,12 @@ Disassembly of section .text:
 20001418 <_Z17PS2RingBufferReadPvm>:
 20001418:	ff010113          	addi	sp,sp,-16
 2000141c:	01212023          	sw	s2,0(sp)
-20001420:	0e818913          	addi	s2,gp,232 # 200217e8 <_ZL12m_readOffset>
+20001420:	0e018913          	addi	s2,gp,224 # 20009e60 <_ZL12m_readOffset>
 20001424:	00092783          	lw	a5,0(s2)
 20001428:	00912223          	sw	s1,4(sp)
 2000142c:	00112623          	sw	ra,12(sp)
 20001430:	0007a483          	lw	s1,0(a5)
-20001434:	0e41a783          	lw	a5,228(gp) # 200217e4 <_ZL13m_writeOffset>
+20001434:	0dc1a783          	lw	a5,220(gp) # 20009e5c <_ZL13m_writeOffset>
 20001438:	0007a783          	lw	a5,0(a5)
 2000143c:	00812423          	sw	s0,8(sp)
 20001440:	409787b3          	sub	a5,a5,s1
@@ -1623,7 +1621,7 @@ Disassembly of section .text:
 20001458:	40f60633          	sub	a2,a2,a5
 2000145c:	00c5f463          	bgeu	a1,a2,20001464 <_Z17PS2RingBufferReadPvm+0x4c>
 20001460:	00058613          	mv	a2,a1
-20001464:	0ec1a583          	lw	a1,236(gp) # 200217ec <_ZL12m_ringBuffer>
+20001464:	0e41a583          	lw	a1,228(gp) # 20009e64 <_ZL12m_ringBuffer>
 20001468:	00f585b3          	add	a1,a1,a5
 2000146c:	1d8040ef          	jal	ra,20005644 <memcpy>
 20001470:	00092783          	lw	a5,0(s2)
@@ -1642,9 +1640,9 @@ Disassembly of section .text:
 200014a0 <_Z18PS2RingBufferWritePKvm>:
 200014a0:	ff010113          	addi	sp,sp,-16
 200014a4:	01212023          	sw	s2,0(sp)
-200014a8:	0e418913          	addi	s2,gp,228 # 200217e4 <_ZL13m_writeOffset>
+200014a8:	0dc18913          	addi	s2,gp,220 # 20009e5c <_ZL13m_writeOffset>
 200014ac:	00092703          	lw	a4,0(s2)
-200014b0:	0e81a783          	lw	a5,232(gp) # 200217e8 <_ZL12m_readOffset>
+200014b0:	0e01a783          	lw	a5,224(gp) # 20009e60 <_ZL12m_readOffset>
 200014b4:	0007a783          	lw	a5,0(a5)
 200014b8:	00912223          	sw	s1,4(sp)
 200014bc:	00072483          	lw	s1,0(a4) # 1ffe0000 <__stack_size+0x1ffdfc00>
@@ -1660,7 +1658,7 @@ Disassembly of section .text:
 200014e4:	00c5f463          	bgeu	a1,a2,200014ec <_Z18PS2RingBufferWritePKvm+0x4c>
 200014e8:	00058613          	mv	a2,a1
 200014ec:	00050593          	mv	a1,a0
-200014f0:	0ec1a503          	lw	a0,236(gp) # 200217ec <_ZL12m_ringBuffer>
+200014f0:	0e41a503          	lw	a0,228(gp) # 20009e64 <_ZL12m_ringBuffer>
 200014f4:	00f50533          	add	a0,a0,a5
 200014f8:	14c040ef          	jal	ra,20005644 <memcpy>
 200014fc:	00000013          	nop
@@ -1678,8 +1676,8 @@ Disassembly of section .text:
 2000152c:	fe5ff06f          	j	20001510 <_Z18PS2RingBufferWritePKvm+0x70>
 
 20001530 <_Z7SPITxRxh>:
-20001530:	00020797          	auipc	a5,0x20
-20001534:	9987a783          	lw	a5,-1640(a5) # 20020ec8 <_GLOBAL_OFFSET_TABLE_+0x20>
+20001530:	00008797          	auipc	a5,0x8
+20001534:	0107a783          	lw	a5,16(a5) # 20009540 <_GLOBAL_OFFSET_TABLE_+0x20>
 20001538:	0007a703          	lw	a4,0(a5)
 2000153c:	00a70023          	sb	a0,0(a4)
 20001540:	0007a783          	lw	a5,0(a5)
@@ -2162,8 +2160,8 @@ Disassembly of section .text:
 20001c5c:	f59ff06f          	j	20001bb4 <_Z21SDWriteMultipleBlocksPKhmm+0x10>
 
 20001c60 <_Z13SDCardControlh>:
-20001c60:	0001f797          	auipc	a5,0x1f
-20001c64:	2787a783          	lw	a5,632(a5) # 20020ed8 <_GLOBAL_OFFSET_TABLE_+0x30>
+20001c60:	00008797          	auipc	a5,0x8
+20001c64:	8f07a783          	lw	a5,-1808(a5) # 20009550 <_GLOBAL_OFFSET_TABLE_+0x30>
 20001c68:	0007a783          	lw	a5,0(a5)
 20001c6c:	00a78023          	sb	a0,0(a5)
 20001c70:	00008067          	ret
@@ -2205,7 +2203,7 @@ Disassembly of section .text:
 
 20001cf0 <_ZL9clst2sectP5FATFSm>:
 20001cf0:	01c52783          	lw	a5,28(a0)
-20001cf4:	ffe58593          	addi	a1,a1,-2 # 3ffffffe <__BSS_END__$+0x1ffde5d6>
+20001cf4:	ffe58593          	addi	a1,a1,-2 # 3ffffffe <__BSS_END__$+0x1fff5f5e>
 20001cf8:	ffe78793          	addi	a5,a5,-2
 20001cfc:	00f5fc63          	bgeu	a1,a5,20001d14 <_ZL9clst2sectP5FATFSm+0x24>
 20001d00:	00a55783          	lhu	a5,10(a0)
@@ -2263,8 +2261,8 @@ Disassembly of section .text:
 20001db8:	0ff57713          	zext.b	a4,a0
 20001dbc:	00900793          	li	a5,9
 20001dc0:	06e7fa63          	bgeu	a5,a4,20001e34 <_ZL12get_ldnumberPPKc+0xac>
-20001dc4:	0001f317          	auipc	t1,0x1f
-20001dc8:	8a830313          	addi	t1,t1,-1880 # 2002066c <_ZL9VolumeStr>
+20001dc4:	00007317          	auipc	t1,0x7
+20001dc8:	f2030313          	addi	t1,t1,-224 # 20008ce4 <_ZL9VolumeStr>
 20001dcc:	00000513          	li	a0,0
 20001dd0:	01900e13          	li	t3,25
 20001dd4:	00300f93          	li	t6,3
@@ -2289,7 +2287,7 @@ Disassembly of section .text:
 20001e20:	00430313          	addi	t1,t1,4
 20001e24:	fbf51ae3          	bne	a0,t6,20001dd8 <_ZL12get_ldnumberPPKc+0x50>
 20001e28:	01c0006f          	j	20001e44 <_ZL12get_ldnumberPPKc+0xbc>
-20001e2c:	2f01c503          	lbu	a0,752(gp) # 200219f0 <_ZL7CurrVol>
+20001e2c:	2e81c503          	lbu	a0,744(gp) # 2000a068 <_ZL7CurrVol>
 20001e30:	00008067          	ret
 20001e34:	00260793          	addi	a5,a2,2
 20001e38:	f8f696e3          	bne	a3,a5,20001dc4 <_ZL12get_ldnumberPPKc+0x3c>
@@ -2644,9 +2642,9 @@ Disassembly of section .text:
 2000237c:	a0dff0ef          	jal	ra,20001d88 <_ZL12get_ldnumberPPKc>
 20002380:	3a054263          	bltz	a0,20002724 <_ZL12mount_volumePPKcPP5FATFSh+0x3d4>
 20002384:	00251713          	slli	a4,a0,0x2
-20002388:	2f418793          	addi	a5,gp,756 # 200219f4 <_ZL5FatFs>
+20002388:	2ec18793          	addi	a5,gp,748 # 2000a06c <_ZL5FatFs>
 2000238c:	00e787b3          	add	a5,a5,a4
-20002390:	0007a403          	lw	s0,0(a5) # f0000000 <__BSS_END__$+0xcffde5d8>
+20002390:	0007a403          	lw	s0,0(a5) # f0000000 <__BSS_END__$+0xcfff5f60>
 20002394:	00050493          	mv	s1,a0
 20002398:	00c00513          	li	a0,12
 2000239c:	02040a63          	beqz	s0,200023d0 <_ZL12mount_volumePPKcPP5FATFSh+0x80>
@@ -2850,12 +2848,12 @@ Disassembly of section .text:
 200026b4:	03840513          	addi	a0,s0,56
 200026b8:	e0cff0ef          	jal	ra,20001cc4 <_ZL8ld_dwordPKh>
 200026bc:	416157b7          	lui	a5,0x41615
-200026c0:	25278793          	addi	a5,a5,594 # 41615252 <__BSS_END__$+0x215f382a>
+200026c0:	25278793          	addi	a5,a5,594 # 41615252 <__BSS_END__$+0x2160b1b2>
 200026c4:	02f51863          	bne	a0,a5,200026f4 <_ZL12mount_volumePPKcPP5FATFSh+0x3a4>
 200026c8:	21c40513          	addi	a0,s0,540
 200026cc:	df8ff0ef          	jal	ra,20001cc4 <_ZL8ld_dwordPKh>
 200026d0:	614177b7          	lui	a5,0x61417
-200026d4:	27278793          	addi	a5,a5,626 # 61417272 <__BSS_END__$+0x413f584a>
+200026d4:	27278793          	addi	a5,a5,626 # 61417272 <__BSS_END__$+0x4140d1d2>
 200026d8:	00f51e63          	bne	a0,a5,200026f4 <_ZL12mount_volumePPKcPP5FATFSh+0x3a4>
 200026dc:	22040513          	addi	a0,s0,544
 200026e0:	de4ff0ef          	jal	ra,20001cc4 <_ZL8ld_dwordPKh>
@@ -2863,7 +2861,7 @@ Disassembly of section .text:
 200026e8:	22440513          	addi	a0,s0,548
 200026ec:	dd8ff0ef          	jal	ra,20001cc4 <_ZL8ld_dwordPKh>
 200026f0:	00a42823          	sw	a0,16(s0)
-200026f4:	2f218713          	addi	a4,gp,754 # 200219f2 <_ZL4Fsid>
+200026f4:	2ea18713          	addi	a4,gp,746 # 2000a06a <_ZL4Fsid>
 200026f8:	00075783          	lhu	a5,0(a4)
 200026fc:	01240023          	sb	s2,0(s0)
 20002700:	00042c23          	sw	zero,24(s0)
@@ -2872,7 +2870,7 @@ Disassembly of section .text:
 2000270c:	0107d793          	srli	a5,a5,0x10
 20002710:	00f71023          	sh	a5,0(a4)
 20002714:	00f41323          	sh	a5,6(s0)
-20002718:	0f018793          	addi	a5,gp,240 # 200217f0 <_ZL6LfnBuf>
+20002718:	0e818793          	addi	a5,gp,232 # 20009e68 <_ZL6LfnBuf>
 2000271c:	00f42623          	sw	a5,12(s0)
 20002720:	cadff06f          	j	200023cc <_ZL12mount_volumePPKcPP5FATFSh+0x7c>
 20002724:	00b00513          	li	a0,11
@@ -3783,7 +3781,7 @@ Disassembly of section .text:
 20003508:	00b12e23          	sw	a1,28(sp)
 2000350c:	87dfe0ef          	jal	ra,20001d88 <_ZL12get_ldnumberPPKc>
 20003510:	04054c63          	bltz	a0,20003568 <f_mount+0x7c>
-20003514:	2f418793          	addi	a5,gp,756 # 200219f4 <_ZL5FatFs>
+20003514:	2ec18793          	addi	a5,gp,748 # 2000a06c <_ZL5FatFs>
 20003518:	00251513          	slli	a0,a0,0x2
 2000351c:	00a78733          	add	a4,a5,a0
 20003520:	00072703          	lw	a4,0(a4)
@@ -5278,7 +5276,7 @@ Disassembly of section .text:
 20004c0c:	fb078793          	addi	a5,a5,-80
 20004c10:	fc9ff06f          	j	20004bd8 <ff_wtoupper+0x94>
 20004c14:	ffffe737          	lui	a4,0xffffe
-20004c18:	3a070713          	addi	a4,a4,928 # ffffe3a0 <__BSS_END__$+0xdffdc978>
+20004c18:	3a070713          	addi	a4,a4,928 # ffffe3a0 <__BSS_END__$+0xdfff4300>
 20004c1c:	00e787b3          	add	a5,a5,a4
 20004c20:	fb9ff06f          	j	20004bd8 <ff_wtoupper+0x94>
 20004c24:	f40594e3          	bnez	a1,20004b6c <ff_wtoupper+0x28>
@@ -5360,8 +5358,8 @@ Disassembly of section .text:
 20004d1c:	6e80106f          	j	20006404 <strtol>
 
 20004d20 <__errno>:
-20004d20:	200217b7          	lui	a5,0x20021
-20004d24:	f007a503          	lw	a0,-256(a5) # 20020f00 <_impure_ptr>
+20004d20:	200097b7          	lui	a5,0x20009
+20004d24:	5787a503          	lw	a0,1400(a5) # 20009578 <_impure_ptr>
 20004d28:	00008067          	ret
 
 20004d2c <__libc_fini_array>:
@@ -5431,15 +5429,15 @@ Disassembly of section .text:
 20004e20:	00008067          	ret
 
 20004e24 <malloc>:
-20004e24:	200217b7          	lui	a5,0x20021
+20004e24:	200097b7          	lui	a5,0x20009
 20004e28:	00050593          	mv	a1,a0
-20004e2c:	f007a503          	lw	a0,-256(a5) # 20020f00 <_impure_ptr>
+20004e2c:	5787a503          	lw	a0,1400(a5) # 20009578 <_impure_ptr>
 20004e30:	0140006f          	j	20004e44 <_malloc_r>
 
 20004e34 <free>:
-20004e34:	200217b7          	lui	a5,0x20021
+20004e34:	200097b7          	lui	a5,0x20009
 20004e38:	00050593          	mv	a1,a0
-20004e3c:	f007a503          	lw	a0,-256(a5) # 20020f00 <_impure_ptr>
+20004e3c:	5787a503          	lw	a0,1400(a5) # 20009578 <_impure_ptr>
 20004e40:	7b40106f          	j	200065f4 <_free_r>
 
 20004e44 <_malloc_r>:
@@ -5465,8 +5463,8 @@ Disassembly of section .text:
 20004e90:	01000493          	li	s1,16
 20004e94:	01800793          	li	a5,24
 20004e98:	00200593          	li	a1,2
-20004e9c:	20021937          	lui	s2,0x20021
-20004ea0:	aa090913          	addi	s2,s2,-1376 # 20020aa0 <__malloc_av_>
+20004e9c:	20009937          	lui	s2,0x20009
+20004ea0:	11890913          	addi	s2,s2,280 # 20009118 <__malloc_av_>
 20004ea4:	00f907b3          	add	a5,s2,a5
 20004ea8:	0047a403          	lw	s0,4(a5)
 20004eac:	ff878713          	addi	a4,a5,-8
@@ -5511,8 +5509,8 @@ Disassembly of section .text:
 20004f48:	03978593          	addi	a1,a5,57
 20004f4c:	03878513          	addi	a0,a5,56
 20004f50:	00359693          	slli	a3,a1,0x3
-20004f54:	20021937          	lui	s2,0x20021
-20004f58:	aa090913          	addi	s2,s2,-1376 # 20020aa0 <__malloc_av_>
+20004f54:	20009937          	lui	s2,0x20009
+20004f58:	11890913          	addi	s2,s2,280 # 20009118 <__malloc_av_>
 20004f5c:	00d906b3          	add	a3,s2,a3
 20004f60:	0046a403          	lw	s0,4(a3)
 20004f64:	ff868693          	addi	a3,a3,-8
@@ -5528,8 +5526,8 @@ Disassembly of section .text:
 20004f8c:	fee654e3          	bge	a2,a4,20004f74 <_malloc_r+0x130>
 20004f90:	00050593          	mv	a1,a0
 20004f94:	01092403          	lw	s0,16(s2)
-20004f98:	20021837          	lui	a6,0x20021
-20004f9c:	aa880813          	addi	a6,a6,-1368 # 20020aa8 <__malloc_av_+0x8>
+20004f98:	20009837          	lui	a6,0x20009
+20004f9c:	12080813          	addi	a6,a6,288 # 20009120 <__malloc_av_+0x8>
 20004fa0:	1f040263          	beq	s0,a6,20005184 <_malloc_r+0x340>
 20004fa4:	00442783          	lw	a5,4(s0)
 20004fa8:	00f00693          	li	a3,15
@@ -5611,9 +5609,9 @@ Disassembly of section .text:
 200050d8:	409b0733          	sub	a4,s6,s1
 200050dc:	00f00793          	li	a5,15
 200050e0:	0ae7c663          	blt	a5,a4,2000518c <_malloc_r+0x348>
-200050e4:	20021cb7          	lui	s9,0x20021
-200050e8:	8181aa83          	lw	s5,-2024(gp) # 20020f18 <__malloc_top_pad>
-200050ec:	f04ca703          	lw	a4,-252(s9) # 20020f04 <__malloc_sbrk_base>
+200050e4:	20009cb7          	lui	s9,0x20009
+200050e8:	8101aa83          	lw	s5,-2032(gp) # 20009590 <__malloc_top_pad>
+200050ec:	57cca703          	lw	a4,1404(s9) # 2000957c <__malloc_sbrk_base>
 200050f0:	fff00793          	li	a5,-1
 200050f4:	01640a33          	add	s4,s0,s6
 200050f8:	01548ab3          	add	s5,s1,s5
@@ -5630,7 +5628,7 @@ Disassembly of section .text:
 20005124:	00050b93          	mv	s7,a0
 20005128:	20f50663          	beq	a0,a5,20005334 <_malloc_r+0x4f0>
 2000512c:	21456263          	bltu	a0,s4,20005330 <_malloc_r+0x4ec>
-20005130:	30018c13          	addi	s8,gp,768 # 20021a00 <__malloc_current_mallinfo>
+20005130:	2f818c13          	addi	s8,gp,760 # 2000a078 <__malloc_current_mallinfo>
 20005134:	000c2583          	lw	a1,0(s8)
 20005138:	00ba85b3          	add	a1,s5,a1
 2000513c:	00bc2023          	sw	a1,0(s8)
@@ -5642,13 +5640,13 @@ Disassembly of section .text:
 20005154:	015b07b3          	add	a5,s6,s5
 20005158:	0017e793          	ori	a5,a5,1
 2000515c:	00fba223          	sw	a5,4(s7)
-20005160:	8141a683          	lw	a3,-2028(gp) # 20020f14 <__malloc_max_sbrked_mem>
+20005160:	80c1a683          	lw	a3,-2036(gp) # 2000958c <__malloc_max_sbrked_mem>
 20005164:	00b6f463          	bgeu	a3,a1,2000516c <_malloc_r+0x328>
-20005168:	80b1aa23          	sw	a1,-2028(gp) # 20020f14 <__malloc_max_sbrked_mem>
-2000516c:	20021737          	lui	a4,0x20021
-20005170:	f1072683          	lw	a3,-240(a4) # 20020f10 <__malloc_max_total_mem>
+20005168:	80b1a623          	sw	a1,-2036(gp) # 2000958c <__malloc_max_sbrked_mem>
+2000516c:	20009737          	lui	a4,0x20009
+20005170:	58872683          	lw	a3,1416(a4) # 20009588 <__malloc_max_total_mem>
 20005174:	00b6f463          	bgeu	a3,a1,2000517c <_malloc_r+0x338>
-20005178:	f0b72823          	sw	a1,-240(a4)
+20005178:	58b72423          	sw	a1,1416(a4)
 2000517c:	000b8413          	mv	s0,s7
 20005180:	1bc0006f          	j	2000533c <_malloc_r+0x4f8>
 20005184:	00492503          	lw	a0,4(s2)
@@ -5666,7 +5664,7 @@ Disassembly of section .text:
 200051b4:	00c42683          	lw	a3,12(s0)
 200051b8:	00842603          	lw	a2,8(s0)
 200051bc:	d09ff06f          	j	20004ec4 <_malloc_r+0x80>
-200051c0:	00c7a403          	lw	s0,12(a5) # fffff00c <__BSS_END__$+0xdffdd5e4>
+200051c0:	00c7a403          	lw	s0,12(a5) # fffff00c <__BSS_END__$+0xdfff4f6c>
 200051c4:	00258593          	addi	a1,a1,2
 200051c8:	dc8786e3          	beq	a5,s0,20004f94 <_malloc_r+0x150>
 200051cc:	ce9ff06f          	j	20004eb4 <_malloc_r+0x70>
@@ -5795,11 +5793,11 @@ Disassembly of section .text:
 200053b8:	fe070ae3          	beqz	a4,200053ac <_malloc_r+0x568>
 200053bc:	000e0593          	mv	a1,t3
 200053c0:	c89ff06f          	j	20005048 <_malloc_r+0x204>
-200053c4:	30018c13          	addi	s8,gp,768 # 20021a00 <__malloc_current_mallinfo>
+200053c4:	2f818c13          	addi	s8,gp,760 # 2000a078 <__malloc_current_mallinfo>
 200053c8:	000c2703          	lw	a4,0(s8)
 200053cc:	00ea8733          	add	a4,s5,a4
 200053d0:	00ec2023          	sw	a4,0(s8)
-200053d4:	f04ca683          	lw	a3,-252(s9)
+200053d4:	57cca683          	lw	a3,1404(s9)
 200053d8:	fff00793          	li	a5,-1
 200053dc:	14f68863          	beq	a3,a5,2000552c <_malloc_r+0x6e8>
 200053e0:	414b87b3          	sub	a5,s7,s4
@@ -5885,7 +5883,7 @@ Disassembly of section .text:
 20005520:	07778513          	addi	a0,a5,119
 20005524:	00359693          	slli	a3,a1,0x3
 20005528:	a2dff06f          	j	20004f54 <_malloc_r+0x110>
-2000552c:	f17ca223          	sw	s7,-252(s9)
+2000552c:	577cae23          	sw	s7,1404(s9)
 20005530:	ebdff06f          	j	200053ec <_malloc_r+0x5a8>
 20005534:	00100793          	li	a5,1
 20005538:	00fba223          	sw	a5,4(s7)
@@ -6078,7 +6076,7 @@ Disassembly of section .text:
 200057fc:	00050413          	mv	s0,a0
 20005800:	00058513          	mv	a0,a1
 20005804:	00112623          	sw	ra,12(sp)
-20005808:	8001ae23          	sw	zero,-2020(gp) # 20020f1c <errno>
+20005808:	8001aa23          	sw	zero,-2028(gp) # 20009594 <errno>
 2000580c:	aedfb0ef          	jal	ra,200012f8 <_sbrk>
 20005810:	fff00793          	li	a5,-1
 20005814:	00f50c63          	beq	a0,a5,2000582c <_sbrk_r+0x3c>
@@ -6087,7 +6085,7 @@ Disassembly of section .text:
 20005820:	00412483          	lw	s1,4(sp)
 20005824:	01010113          	addi	sp,sp,16
 20005828:	00008067          	ret
-2000582c:	81c1a783          	lw	a5,-2020(gp) # 20020f1c <errno>
+2000582c:	8141a783          	lw	a5,-2028(gp) # 20009594 <errno>
 20005830:	fe0784e3          	beqz	a5,20005818 <_sbrk_r+0x28>
 20005834:	00c12083          	lw	ra,12(sp)
 20005838:	00f42023          	sw	a5,0(s0)
@@ -6105,12 +6103,12 @@ Disassembly of section .text:
 20005860:	04079463          	bnez	a5,200058a8 <strcat+0x5c>
 20005864:	00052703          	lw	a4,0(a0)
 20005868:	feff0637          	lui	a2,0xfeff0
-2000586c:	eff60613          	addi	a2,a2,-257 # fefefeff <__BSS_END__$+0xdefce4d7>
+2000586c:	eff60613          	addi	a2,a2,-257 # fefefeff <__BSS_END__$+0xdefe5e5f>
 20005870:	00c707b3          	add	a5,a4,a2
 20005874:	808086b7          	lui	a3,0x80808
 20005878:	fff74713          	not	a4,a4
 2000587c:	00e7f7b3          	and	a5,a5,a4
-20005880:	08068693          	addi	a3,a3,128 # 80808080 <__BSS_END__$+0x607e6658>
+20005880:	08068693          	addi	a3,a3,128 # 80808080 <__BSS_END__$+0x607fdfe0>
 20005884:	00d7f7b3          	and	a5,a5,a3
 20005888:	02079063          	bnez	a5,200058a8 <strcat+0x5c>
 2000588c:	00452703          	lw	a4,4(a0)
@@ -6151,7 +6149,7 @@ Disassembly of section .text:
 20005910:	00f36333          	or	t1,t1,a5
 20005914:	feff0837          	lui	a6,0xfeff0
 20005918:	00e34633          	xor	a2,t1,a4
-2000591c:	eff80813          	addi	a6,a6,-257 # fefefeff <__BSS_END__$+0xdefce4d7>
+2000591c:	eff80813          	addi	a6,a6,-257 # fefefeff <__BSS_END__$+0xdefe5e5f>
 20005920:	010707b3          	add	a5,a4,a6
 20005924:	010605b3          	add	a1,a2,a6
 20005928:	fff74713          	not	a4,a4
@@ -6160,7 +6158,7 @@ Disassembly of section .text:
 20005934:	808088b7          	lui	a7,0x80808
 20005938:	00c5f733          	and	a4,a1,a2
 2000593c:	00e7e7b3          	or	a5,a5,a4
-20005940:	08088893          	addi	a7,a7,128 # 80808080 <__BSS_END__$+0x607e6658>
+20005940:	08088893          	addi	a7,a7,128 # 80808080 <__BSS_END__$+0x607fdfe0>
 20005944:	0117f7b3          	and	a5,a5,a7
 20005948:	02079a63          	bnez	a5,2000597c <strchr+0xa8>
 2000594c:	00452703          	lw	a4,4(a0)
@@ -6191,12 +6189,12 @@ Disassembly of section .text:
 200059b0:	fe0798e3          	bnez	a5,200059a0 <strchr+0xcc>
 200059b4:	00052703          	lw	a4,0(a0)
 200059b8:	feff0637          	lui	a2,0xfeff0
-200059bc:	eff60613          	addi	a2,a2,-257 # fefefeff <__BSS_END__$+0xdefce4d7>
+200059bc:	eff60613          	addi	a2,a2,-257 # fefefeff <__BSS_END__$+0xdefe5e5f>
 200059c0:	fff74793          	not	a5,a4
 200059c4:	808086b7          	lui	a3,0x80808
 200059c8:	00c70733          	add	a4,a4,a2
 200059cc:	00e7f7b3          	and	a5,a5,a4
-200059d0:	08068693          	addi	a3,a3,128 # 80808080 <__BSS_END__$+0x607e6658>
+200059d0:	08068693          	addi	a3,a3,128 # 80808080 <__BSS_END__$+0x607fdfe0>
 200059d4:	00d7f7b3          	and	a5,a5,a3
 200059d8:	02079063          	bnez	a5,200059f8 <strchr+0x124>
 200059dc:	00452703          	lw	a4,4(a0)
@@ -6220,7 +6218,7 @@ Disassembly of section .text:
 20005a1c:	08079263          	bnez	a5,20005aa0 <strcpy+0x8c>
 20005a20:	0005a703          	lw	a4,0(a1)
 20005a24:	7f7f86b7          	lui	a3,0x7f7f8
-20005a28:	f7f68693          	addi	a3,a3,-129 # 7f7f7f7f <__BSS_END__$+0x5f7d6557>
+20005a28:	f7f68693          	addi	a3,a3,-129 # 7f7f7f7f <__BSS_END__$+0x5f7ededf>
 20005a2c:	00d777b3          	and	a5,a4,a3
 20005a30:	00d787b3          	add	a5,a5,a3
 20005a34:	00e7e7b3          	or	a5,a5,a4
@@ -6690,8 +6688,8 @@ Disassembly of section .text:
 20006164:	961ff06f          	j	20005ac4 <two_way_long_needle>
 
 20006168 <strtok>:
-20006168:	200217b7          	lui	a5,0x20021
-2000616c:	f007a603          	lw	a2,-256(a5) # 20020f00 <_impure_ptr>
+20006168:	200097b7          	lui	a5,0x20009
+2000616c:	5787a603          	lw	a2,1400(a5) # 20009578 <_impure_ptr>
 20006170:	00100693          	li	a3,1
 20006174:	05c60613          	addi	a2,a2,92
 20006178:	0040006f          	j	2000617c <__strtok_r>
@@ -6863,17 +6861,17 @@ Disassembly of section .text:
 20006400:	fbdff06f          	j	200063bc <_strtol_l.constprop.0+0x1a8>
 
 20006404 <strtol>:
-20006404:	20021737          	lui	a4,0x20021
+20006404:	20009737          	lui	a4,0x20009
 20006408:	00050793          	mv	a5,a0
-2000640c:	f0072503          	lw	a0,-256(a4) # 20020f00 <_impure_ptr>
+2000640c:	57872503          	lw	a0,1400(a4) # 20009578 <_impure_ptr>
 20006410:	00060693          	mv	a3,a2
 20006414:	00058613          	mv	a2,a1
 20006418:	00078593          	mv	a1,a5
 2000641c:	df9ff06f          	j	20006214 <_strtol_l.constprop.0>
 
 20006420 <__register_exitproc>:
-20006420:	200217b7          	lui	a5,0x20021
-20006424:	f0c7a703          	lw	a4,-244(a5) # 20020f0c <_global_impure_ptr>
+20006420:	200097b7          	lui	a5,0x20009
+20006424:	5847a703          	lw	a4,1412(a5) # 20009584 <_global_impure_ptr>
 20006428:	14872783          	lw	a5,328(a4)
 2000642c:	04078c63          	beqz	a5,20006484 <__register_exitproc+0x64>
 20006430:	0047a703          	lw	a4,4(a5)
@@ -6915,7 +6913,7 @@ Disassembly of section .text:
 200064bc <_malloc_trim_r>:
 200064bc:	fe010113          	addi	sp,sp,-32
 200064c0:	01312623          	sw	s3,12(sp)
-200064c4:	200219b7          	lui	s3,0x20021
+200064c4:	200099b7          	lui	s3,0x20009
 200064c8:	00812c23          	sw	s0,24(sp)
 200064cc:	00912a23          	sw	s1,20(sp)
 200064d0:	01212823          	sw	s2,16(sp)
@@ -6923,7 +6921,7 @@ Disassembly of section .text:
 200064d8:	00112e23          	sw	ra,28(sp)
 200064dc:	00058a13          	mv	s4,a1
 200064e0:	00050913          	mv	s2,a0
-200064e4:	aa098993          	addi	s3,s3,-1376 # 20020aa0 <__malloc_av_>
+200064e4:	11898993          	addi	s3,s3,280 # 20009118 <__malloc_av_>
 200064e8:	b00ff0ef          	jal	ra,200057e8 <__malloc_lock>
 200064ec:	0089a703          	lw	a4,8(s3)
 200064f0:	000017b7          	lui	a5,0x1
@@ -6958,7 +6956,7 @@ Disassembly of section .text:
 20006564:	a8cff0ef          	jal	ra,200057f0 <_sbrk_r>
 20006568:	fff00793          	li	a5,-1
 2000656c:	04f50863          	beq	a0,a5,200065bc <_malloc_trim_r+0x100>
-20006570:	30018793          	addi	a5,gp,768 # 20021a00 <__malloc_current_mallinfo>
+20006570:	2f818793          	addi	a5,gp,760 # 2000a078 <__malloc_current_mallinfo>
 20006574:	0007a703          	lw	a4,0(a5)
 20006578:	0089a683          	lw	a3,8(s3)
 2000657c:	408484b3          	sub	s1,s1,s0
@@ -6984,12 +6982,12 @@ Disassembly of section .text:
 200065cc:	00f00693          	li	a3,15
 200065d0:	40e507b3          	sub	a5,a0,a4
 200065d4:	f4f6dee3          	bge	a3,a5,20006530 <_malloc_trim_r+0x74>
-200065d8:	200216b7          	lui	a3,0x20021
-200065dc:	f046a683          	lw	a3,-252(a3) # 20020f04 <__malloc_sbrk_base>
+200065d8:	200096b7          	lui	a3,0x20009
+200065dc:	57c6a683          	lw	a3,1404(a3) # 2000957c <__malloc_sbrk_base>
 200065e0:	0017e793          	ori	a5,a5,1
 200065e4:	00f72223          	sw	a5,4(a4)
 200065e8:	40d50533          	sub	a0,a0,a3
-200065ec:	30a1a023          	sw	a0,768(gp) # 20021a00 <__malloc_current_mallinfo>
+200065ec:	2ea1ac23          	sw	a0,760(gp) # 2000a078 <__malloc_current_mallinfo>
 200065f0:	f41ff06f          	j	20006530 <_malloc_trim_r+0x74>
 
 200065f4 <_free_r>:
@@ -7003,10 +7001,10 @@ Disassembly of section .text:
 20006610:	9d8ff0ef          	jal	ra,200057e8 <__malloc_lock>
 20006614:	ffc42503          	lw	a0,-4(s0)
 20006618:	ff840713          	addi	a4,s0,-8
-2000661c:	200215b7          	lui	a1,0x20021
+2000661c:	200095b7          	lui	a1,0x20009
 20006620:	ffe57793          	andi	a5,a0,-2
 20006624:	00f70633          	add	a2,a4,a5
-20006628:	aa058593          	addi	a1,a1,-1376 # 20020aa0 <__malloc_av_>
+20006628:	11858593          	addi	a1,a1,280 # 20009118 <__malloc_av_>
 2000662c:	00462683          	lw	a3,4(a2)
 20006630:	0085a803          	lw	a6,8(a1)
 20006634:	ffc6f693          	andi	a3,a3,-4
@@ -7017,10 +7015,10 @@ Disassembly of section .text:
 20006648:	0a051063          	bnez	a0,200066e8 <_free_r+0xf4>
 2000664c:	ff842303          	lw	t1,-8(s0)
 20006650:	00482803          	lw	a6,4(a6)
-20006654:	20021537          	lui	a0,0x20021
+20006654:	20009537          	lui	a0,0x20009
 20006658:	40670733          	sub	a4,a4,t1
 2000665c:	00872883          	lw	a7,8(a4)
-20006660:	aa850513          	addi	a0,a0,-1368 # 20020aa8 <__malloc_av_+0x8>
+20006660:	12050513          	addi	a0,a0,288 # 20009120 <__malloc_av_+0x8>
 20006664:	006787b3          	add	a5,a5,t1
 20006668:	00187813          	andi	a6,a6,1
 2000666c:	14a88263          	beq	a7,a0,200067b0 <_free_r+0x1bc>
@@ -7091,9 +7089,9 @@ Disassembly of section .text:
 20006770:	01010113          	addi	sp,sp,16
 20006774:	878ff06f          	j	200057ec <__malloc_unlock>
 20006778:	00008067          	ret
-2000677c:	20021537          	lui	a0,0x20021
+2000677c:	20009537          	lui	a0,0x20009
 20006780:	00d787b3          	add	a5,a5,a3
-20006784:	aa850513          	addi	a0,a0,-1368 # 20020aa8 <__malloc_av_+0x8>
+20006784:	12050513          	addi	a0,a0,288 # 20009120 <__malloc_av_+0x8>
 20006788:	00862683          	lw	a3,8(a2)
 2000678c:	0ca68e63          	beq	a3,a0,20006868 <_free_r+0x274>
 20006790:	00c62803          	lw	a6,12(a2)
@@ -7125,13 +7123,13 @@ Disassembly of section .text:
 200067f8:	00a686b3          	add	a3,a3,a0
 200067fc:	00f62623          	sw	a5,12(a2)
 20006800:	00c7a423          	sw	a2,8(a5)
-20006804:	200217b7          	lui	a5,0x20021
+20006804:	200097b7          	lui	a5,0x20009
 20006808:	0016e613          	ori	a2,a3,1
-2000680c:	f087a783          	lw	a5,-248(a5) # 20020f08 <__malloc_trim_threshold>
+2000680c:	5807a783          	lw	a5,1408(a5) # 20009580 <__malloc_trim_threshold>
 20006810:	00c72223          	sw	a2,4(a4)
 20006814:	00e5a423          	sw	a4,8(a1)
 20006818:	eaf6ece3          	bltu	a3,a5,200066d0 <_free_r+0xdc>
-2000681c:	8181a583          	lw	a1,-2024(gp) # 20020f18 <__malloc_top_pad>
+2000681c:	8101a583          	lw	a1,-2032(gp) # 20009590 <__malloc_top_pad>
 20006820:	00048513          	mv	a0,s1
 20006824:	c99ff0ef          	jal	ra,200064bc <_malloc_trim_r>
 20006828:	ea9ff06f          	j	200066d0 <_free_r+0xdc>
@@ -7193,7 +7191,7 @@ Disassembly of section .text:
 20006900:	00050713          	mv	a4,a0
 20006904:	04079c63          	bnez	a5,2000695c <strlen+0x60>
 20006908:	7f7f86b7          	lui	a3,0x7f7f8
-2000690c:	f7f68693          	addi	a3,a3,-129 # 7f7f7f7f <__BSS_END__$+0x5f7d6557>
+2000690c:	f7f68693          	addi	a3,a3,-129 # 7f7f7f7f <__BSS_END__$+0x5f7ededf>
 20006910:	fff00593          	li	a1,-1
 20006914:	00072603          	lw	a2,0(a4)
 20006918:	00470713          	addi	a4,a4,4
@@ -7627,8 +7625,8 @@ Disassembly of section .rodata:
 20006cda:	20746573          	csrrsi	a0,0x207,8
 20006cde:	7562                	.2byte	0x7562
 20006ce0:	7474                	.2byte	0x7474
-20006ce2:	74206e6f          	jal	t3,2000d424 <_fdata+0x4da4>
-20006ce6:	6f63206f          	j	200393dc <__BSS_END__$+0x179b4>
+20006ce2:	74206e6f          	jal	t3,2000d424 <__BSS_END__$+0x3384>
+20006ce6:	6f63206f          	j	200393dc <__BSS_END__$+0x2f33c>
 20006cea:	746e                	.2byte	0x746e
 20006cec:	6e69                	.2byte	0x6e69
 20006cee:	6575                	.2byte	0x6575
@@ -7686,7 +7684,7 @@ Disassembly of section .rodata:
 20006d6a:	656c                	.2byte	0x656c
 20006d6c:	6e692073          	csrs	0x6e6,s2
 20006d70:	7720                	.2byte	0x7720
-20006d72:	696b726f          	jal	tp,200be408 <__BSS_END__$+0x9c9e0>
+20006d72:	696b726f          	jal	tp,200be408 <__BSS_END__$+0xb4368>
 20006d76:	676e                	.2byte	0x676e
 20006d78:	6420                	.2byte	0x6420
 20006d7a:	7269                	.2byte	0x7269
@@ -7743,8 +7741,8 @@ Disassembly of section .rodata:
 20006e08:	6269                	.2byte	0x6269
 20006e0a:	656c                	.2byte	0x656c
 20006e0c:	7020                	.2byte	0x7020
-20006e0e:	6974726f          	jal	tp,2004eca4 <__BSS_END__$+0x2d27c>
-20006e12:	6f206e6f          	jal	t3,2000d504 <_fdata+0x4e84>
+20006e0e:	6974726f          	jal	tp,2004eca4 <__BSS_END__$+0x44c04>
+20006e12:	6f206e6f          	jal	t3,2000d504 <__BSS_END__$+0x3464>
 20006e16:	2066                	.2byte	0x2066
 20006e18:	6574                	.2byte	0x6574
 20006e1a:	6d72                	.2byte	0x6d72
@@ -7789,7 +7787,7 @@ Disassembly of section .rodata:
 20006e7a:	706d                	.2byte	0x706d
 20006e7c:	6d20                	.2byte	0x6d20
 20006e7e:	6d65                	.2byte	0x6d65
-20006e80:	0a79726f          	jal	tp,2009e726 <__BSS_END__$+0x7ccfe>
+20006e80:	0a79726f          	jal	tp,2009e726 <__BSS_END__$+0x94686>
 20006e84:	0000                	.2byte	0x0
 20006e86:	0000                	.2byte	0x0
 20006e88:	00647763          	bgeu	s0,t1,20006e96 <strnlen+0x50e>
@@ -7833,7 +7831,7 @@ Disassembly of section .rodata:
 20006ee8:	6472                	.2byte	0x6472
 20006eea:	6520                	.2byte	0x6520
 20006eec:	7272                	.2byte	0x7272
-20006eee:	6f20726f          	jal	tp,2000e5e0 <_fdata+0x5f60>
+20006eee:	6f20726f          	jal	tp,2000e5e0 <__BSS_END__$+0x4540>
 20006ef2:	72756363          	bltu	a0,t2,20007618 <_ZZ11ff_wtoupperE4cvt1+0xc>
 20006ef6:	6572                	.2byte	0x6572
 20006ef8:	2064                	.2byte	0x2064
@@ -7841,7 +7839,7 @@ Disassembly of section .rodata:
 20006efc:	7420                	.2byte	0x7420
 20006efe:	6568                	.2byte	0x6568
 20006f00:	6c20                	.2byte	0x6c20
-20006f02:	6c20776f          	jal	a4,2000e5c4 <_fdata+0x5f44>
+20006f02:	6c20776f          	jal	a4,2000e5c4 <__BSS_END__$+0x4524>
 20006f06:	7665                	.2byte	0x7665
 20006f08:	6c65                	.2byte	0x6c65
 20006f0a:	6420                	.2byte	0x6420
@@ -7996,7 +7994,7 @@ Disassembly of section .rodata:
 20007050:	7469                	.2byte	0x7469
 20007052:	2065                	.2byte	0x2065
 20007054:	7270                	.2byte	0x7270
-20007056:	6365746f          	jal	s0,2005e68c <__BSS_END__$+0x3cc64>
+20007056:	6365746f          	jal	s0,2005e68c <__BSS_END__$+0x545ec>
 2000705a:	6574                	.2byte	0x6574
 2000705c:	0a64                	.2byte	0xa64
 2000705e:	0000                	.2byte	0x0
@@ -8026,7 +8024,7 @@ Disassembly of section .rodata:
 20007092:	6820                	.2byte	0x6820
 20007094:	7361                	.2byte	0x7361
 20007096:	6e20                	.2byte	0x6e20
-20007098:	6f77206f          	j	20079f8e <__BSS_END__$+0x58566>
+20007098:	6f77206f          	j	20079f8e <__BSS_END__$+0x6feee>
 2000709c:	6b72                	.2byte	0x6b72
 2000709e:	6120                	.2byte	0x6120
 200070a0:	6572                	.2byte	0x6572
@@ -8038,7 +8036,7 @@ Disassembly of section .rodata:
 200070ac:	2065                	.2byte	0x2065
 200070ae:	7369                	.2byte	0x7369
 200070b0:	6e20                	.2byte	0x6e20
-200070b2:	6176206f          	j	20069ec8 <__BSS_END__$+0x484a0>
+200070b2:	6176206f          	j	20069ec8 <__BSS_END__$+0x5fe28>
 200070b6:	696c                	.2byte	0x696c
 200070b8:	2064                	.2byte	0x2064
 200070ba:	4146                	.2byte	0x4146
@@ -8061,10 +8059,10 @@ Disassembly of section .rodata:
 200070dc:	6420                	.2byte	0x6420
 200070de:	6575                	.2byte	0x6575
 200070e0:	7420                	.2byte	0x7420
-200070e2:	6e61206f          	j	200197c8 <_fdata+0x11148>
+200070e2:	6e61206f          	j	200197c8 <__BSS_END__$+0xf728>
 200070e6:	2079                	.2byte	0x2079
 200070e8:	7270                	.2byte	0x7270
-200070ea:	656c626f          	jal	tp,200cd740 <__BSS_END__$+0xabd18>
+200070ea:	656c626f          	jal	tp,200cd740 <__BSS_END__$+0xc36a0>
 200070ee:	0a6d                	.2byte	0xa6d
 200070f0:	0000                	.2byte	0x0
 200070f2:	0000                	.2byte	0x0
@@ -8094,11 +8092,11 @@ Disassembly of section .rodata:
 2000712c:	2064                	.2byte	0x2064
 2000712e:	6570                	.2byte	0x6570
 20007130:	6972                	.2byte	0x6972
-20007132:	000a646f          	jal	s0,200ad132 <__BSS_END__$+0x8b70a>
+20007132:	000a646f          	jal	s0,200ad132 <__BSS_END__$+0xa3092>
 20007136:	0000                	.2byte	0x0
 20007138:	6854                	.2byte	0x6854
 2000713a:	2065                	.2byte	0x2065
-2000713c:	7265706f          	j	2005e862 <__BSS_END__$+0x3ce3a>
+2000713c:	7265706f          	j	2005e862 <__BSS_END__$+0x547c2>
 20007140:	7461                	.2byte	0x7461
 20007142:	6f69                	.2byte	0x6f69
 20007144:	206e                	.2byte	0x206e
@@ -8130,9 +8128,9 @@ Disassembly of section .rodata:
 20007186:	6666                	.2byte	0x6666
 20007188:	7265                	.2byte	0x7265
 2000718a:	6320                	.2byte	0x6320
-2000718c:	646c756f          	jal	a0,200ce7d2 <__BSS_END__$+0xacdaa>
+2000718c:	646c756f          	jal	a0,200ce7d2 <__BSS_END__$+0xc4732>
 20007190:	6e20                	.2byte	0x6e20
-20007192:	6220746f          	jal	s0,2000e7b4 <_fdata+0x6134>
+20007192:	6220746f          	jal	s0,2000e7b4 <__BSS_END__$+0x4714>
 20007196:	2065                	.2byte	0x2065
 20007198:	6c61                	.2byte	0x6c61
 2000719a:	6f6c                	.2byte	0x6f6c
@@ -8144,7 +8142,7 @@ Disassembly of section .rodata:
 200071a8:	7265                	.2byte	0x7265
 200071aa:	6f20                	.2byte	0x6f20
 200071ac:	2066                	.2byte	0x2066
-200071ae:	6e65706f          	j	2005e894 <__BSS_END__$+0x3ce6c>
+200071ae:	6e65706f          	j	2005e894 <__BSS_END__$+0x547f4>
 200071b2:	6620                	.2byte	0x6620
 200071b4:	6c69                	.2byte	0x6c69
 200071b6:	7365                	.2byte	0x7365
@@ -8288,7 +8286,7 @@ Disassembly of section .rodata:
 200072ee:	3078                	.2byte	0x3078
 200072f0:	2c31                	.2byte	0x2c31
 200072f2:	6720                	.2byte	0x6720
-200072f4:	3020746f          	jal	s0,2000e5f6 <_fdata+0x5f76>
+200072f4:	3020746f          	jal	s0,2000e5f6 <__BSS_END__$+0x4556>
 200072f8:	0078                	.2byte	0x78
 200072fa:	0000                	.2byte	0x0
 200072fc:	68434453          	.4byte	0x68434453
@@ -8308,7 +8306,7 @@ Disassembly of section .rodata:
 20007320:	4131                	.2byte	0x4131
 20007322:	2c41                	.2byte	0x2c41
 20007324:	6720                	.2byte	0x6720
-20007326:	3020746f          	jal	s0,2000e628 <_fdata+0x5fa8>
+20007326:	3020746f          	jal	s0,2000e628 <__BSS_END__$+0x4588>
 2000732a:	0078                	.2byte	0x78
 2000732c:	61434453          	.4byte	0x61434453
 20007330:	6472                	.2byte	0x6472
@@ -8347,17 +8345,17 @@ Disassembly of section .rodata:
 2000737a:	676e6953          	.4byte	0x676e6953
 2000737e:	656c                	.2byte	0x656c
 20007380:	6c42                	.2byte	0x6c42
-20007382:	3a6b636f          	jal	t1,200bd728 <__BSS_END__$+0x9bd00>
+20007382:	3a6b636f          	jal	t1,200bd728 <__BSS_END__$+0xb3688>
 20007386:	6520                	.2byte	0x6520
 20007388:	7272                	.2byte	0x7272
-2000738a:	7220726f          	jal	tp,2000eaac <_fdata+0x642c>
+2000738a:	7220726f          	jal	tp,2000eaac <__BSS_END__$+0x4a0c>
 2000738e:	7365                	.2byte	0x7365
 20007390:	6f70                	.2byte	0x6f70
 20007392:	736e                	.2byte	0x736e
 20007394:	2065                	.2byte	0x2065
 20007396:	203d                	.2byte	0x203d
 20007398:	72726527          	.4byte	0x72726527
-2000739c:	0a27726f          	jal	tp,2007e43e <__BSS_END__$+0x5ca16>
+2000739c:	0a27726f          	jal	tp,2007e43e <__BSS_END__$+0x7439e>
 200073a0:	0000                	.2byte	0x0
 200073a2:	0000                	.2byte	0x0
 200073a4:	65524453          	.4byte	0x65524453
@@ -8365,10 +8363,10 @@ Disassembly of section .rodata:
 200073aa:	676e6953          	.4byte	0x676e6953
 200073ae:	656c                	.2byte	0x656c
 200073b0:	6c42                	.2byte	0x6c42
-200073b2:	3a6b636f          	jal	t1,200bd758 <__BSS_END__$+0x9bd30>
+200073b2:	3a6b636f          	jal	t1,200bd758 <__BSS_END__$+0xb36b8>
 200073b6:	6520                	.2byte	0x6520
 200073b8:	7272                	.2byte	0x7272
-200073ba:	7220726f          	jal	tp,2000eadc <_fdata+0x645c>
+200073ba:	7220726f          	jal	tp,2000eadc <__BSS_END__$+0x4a3c>
 200073be:	7365                	.2byte	0x7365
 200073c0:	6f70                	.2byte	0x6f70
 200073c2:	736e                	.2byte	0x736e
@@ -8384,10 +8382,10 @@ Disassembly of section .rodata:
 200073da:	676e6953          	.4byte	0x676e6953
 200073de:	656c                	.2byte	0x656c
 200073e0:	6c42                	.2byte	0x6c42
-200073e2:	3a6b636f          	jal	t1,200bd788 <__BSS_END__$+0x9bd60>
+200073e2:	3a6b636f          	jal	t1,200bd788 <__BSS_END__$+0xb36e8>
 200073e6:	6520                	.2byte	0x6520
 200073e8:	7272                	.2byte	0x7272
-200073ea:	7220726f          	jal	tp,2000eb0c <_fdata+0x648c>
+200073ea:	7220726f          	jal	tp,2000eb0c <__BSS_END__$+0x4a6c>
 200073ee:	7365                	.2byte	0x7365
 200073f0:	6f70                	.2byte	0x6f70
 200073f2:	736e                	.2byte	0x736e
@@ -8405,10 +8403,10 @@ Disassembly of section .rodata:
 20007412:	676e6953          	.4byte	0x676e6953
 20007416:	656c                	.2byte	0x656c
 20007418:	6c42                	.2byte	0x6c42
-2000741a:	3a6b636f          	jal	t1,200bd7c0 <__BSS_END__$+0x9bd98>
+2000741a:	3a6b636f          	jal	t1,200bd7c0 <__BSS_END__$+0xb3720>
 2000741e:	6520                	.2byte	0x6520
 20007420:	7272                	.2byte	0x7272
-20007422:	7220726f          	jal	tp,2000eb44 <_fdata+0x64c4>
+20007422:	7220726f          	jal	tp,2000eb44 <__BSS_END__$+0x4aa4>
 20007426:	7365                	.2byte	0x7365
 20007428:	6f70                	.2byte	0x6f70
 2000742a:	736e                	.2byte	0x736e
@@ -8801,7 +8799,7 @@ Disassembly of section .rodata:
 200077a6:	0311                	.2byte	0x311
 200077a8:	03c2                	.2byte	0x3c2
 200077aa:	0002                	.2byte	0x2
-200077ac:	03a303a3          	sb	s10,39(t1) # 20f87639 <__BSS_END__$+0xf65c11>
+200077ac:	03a303a3          	sb	s10,39(t1) # 20f87639 <__BSS_END__$+0xf7d599>
 200077b0:	03c4                	.2byte	0x3c4
 200077b2:	0308                	.2byte	0x308
 200077b4:	03cc                	.2byte	0x3cc
@@ -8847,7 +8845,7 @@ Disassembly of section .rodata:
 2000780c:	00e5                	.2byte	0xe5
 2000780e:	00ea00e7          	jalr	14(s4)
 20007812:	00e800eb          	.4byte	0xe800eb
-20007816:	00ee00ef          	jal	ra,200e7824 <__BSS_END__$+0xc5dfc>
+20007816:	00ee00ef          	jal	ra,200e7824 <__BSS_END__$+0xdd784>
 2000781a:	00ec                	.2byte	0xec
 2000781c:	00c4                	.2byte	0xc4
 2000781e:	00c5                	.2byte	0xc5
@@ -9828,7 +9826,7 @@ Disassembly of section .eh_frame:
 200080c0:	4400                	.2byte	0x4400
 200080c2:	100e                	.2byte	0x100e
 200080c4:	894c                	.2byte	0x894c
-200080c6:	88018103          	lb	sp,-1920(gp) # 20020f80 <keymapprev+0x60>
+200080c6:	88018103          	lb	sp,-1920(gp) # 20009600 <keymapprev+0x68>
 200080ca:	5402                	.2byte	0x5402
 200080cc:	c10a                	.2byte	0xc10a
 200080ce:	c844                	.2byte	0xc844
@@ -9865,7 +9863,7 @@ Disassembly of section .eh_frame:
 2000810e:	100e                	.2byte	0x100e
 20008110:	884c                	.2byte	0x884c
 20008112:	8902                	.2byte	0x8902
-20008114:	02018103          	lb	sp,32(gp) # 20021720 <__global_pointer$+0x20>
+20008114:	02018103          	lb	sp,32(gp) # 20009da0 <__global_pointer$+0x20>
 20008118:	c138                	.2byte	0xc138
 2000811a:	c844                	.2byte	0xc844
 2000811c:	c944                	.2byte	0xc944
@@ -9884,7 +9882,7 @@ Disassembly of section .eh_frame:
 20008136:	100e                	.2byte	0x100e
 20008138:	8850                	.2byte	0x8850
 2000813a:	8902                	.2byte	0x8902
-2000813c:	92018103          	lb	sp,-1760(gp) # 20021020 <keymapprev+0x100>
+2000813c:	92018103          	lb	sp,-1760(gp) # 200096a0 <keymapprev+0x108>
 20008140:	0204                	.2byte	0x204
 20008142:	0a60                	.2byte	0xa60
 20008144:	44c1                	.2byte	0x44c1
@@ -9970,7 +9968,7 @@ Disassembly of section .eh_frame:
 200081f2:	200e                	.2byte	0x200e
 200081f4:	8854                	.2byte	0x8854
 200081f6:	8902                	.2byte	0x8902
-200081f8:	92018103          	lb	sp,-1760(gp) # 20021020 <keymapprev+0x100>
+200081f8:	92018103          	lb	sp,-1760(gp) # 200096a0 <keymapprev+0x108>
 200081fc:	9304                	.2byte	0x9304
 200081fe:	0205                	.2byte	0x205
 20008200:	0a48                	.2byte	0xa48
@@ -10054,7 +10052,7 @@ Disassembly of section .eh_frame:
 200082ac:	4400                	.2byte	0x4400
 200082ae:	300e                	.2byte	0x300e
 200082b0:	8960                	.2byte	0x8960
-200082b2:	88018103          	lb	sp,-1920(gp) # 20020f80 <keymapprev+0x60>
+200082b2:	88018103          	lb	sp,-1920(gp) # 20009600 <keymapprev+0x68>
 200082b6:	9202                	.2byte	0x9202
 200082b8:	9304                	.2byte	0x9304
 200082ba:	9405                	.2byte	0x9405
@@ -10258,7 +10256,7 @@ Disassembly of section .eh_frame:
 20008478:	4400                	.2byte	0x4400
 2000847a:	300e                	.2byte	0x300e
 2000847c:	8958                	.2byte	0x8958
-2000847e:	88018103          	lb	sp,-1920(gp) # 20020f80 <keymapprev+0x60>
+2000847e:	88018103          	lb	sp,-1920(gp) # 20009600 <keymapprev+0x68>
 20008482:	9202                	.2byte	0x9202
 20008484:	9304                	.2byte	0x9304
 20008486:	0305                	.2byte	0x305
@@ -10387,7 +10385,7 @@ Disassembly of section .eh_frame:
 20008594:	44da                	.2byte	0x44da
 20008596:	000e48db          	.4byte	0xe48db
 2000859a:	0b44                	.2byte	0xb44
-2000859c:	0a039403          	lh	s0,160(t2) # 800000a0 <__BSS_END__$+0x5ffde678>
+2000859c:	0a039403          	lh	s0,160(t2) # 800000a0 <__BSS_END__$+0x5fff6000>
 200085a0:	44c1                	.2byte	0x44c1
 200085a2:	44c8                	.2byte	0x44c8
 200085a4:	44c9                	.2byte	0x44c9
@@ -10496,1020 +10494,1022 @@ Disassembly of section .eh_frame:
 
 Disassembly of section .data:
 
-20020000 <FRtoString>:
-20020000:	6ed8                	.2byte	0x6ed8
-20020002:	2000                	.2byte	0x2000
-20020004:	6ee4                	.2byte	0x6ee4
-20020006:	2000                	.2byte	0x2000
-20020008:	6f1c                	.2byte	0x6f1c
-2002000a:	2000                	.2byte	0x2000
-2002000c:	6f30                	.2byte	0x6f30
-2002000e:	2000                	.2byte	0x2000
-20020010:	6f50                	.2byte	0x6f50
-20020012:	2000                	.2byte	0x2000
-20020014:	6f6c                	.2byte	0x6f6c
-20020016:	2000                	.2byte	0x2000
-20020018:	6f88                	.2byte	0x6f88
-2002001a:	2000                	.2byte	0x2000
-2002001c:	6fac                	.2byte	0x6fac
-2002001e:	2000                	.2byte	0x2000
-20020020:	6fe8                	.2byte	0x6fe8
-20020022:	2000                	.2byte	0x2000
-20020024:	7010                	.2byte	0x7010
-20020026:	2000                	.2byte	0x2000
-20020028:	7038                	.2byte	0x7038
-2002002a:	2000                	.2byte	0x2000
-2002002c:	7060                	.2byte	0x7060
-2002002e:	2000                	.2byte	0x2000
-20020030:	7088                	.2byte	0x7088
-20020032:	2000                	.2byte	0x2000
-20020034:	70a8                	.2byte	0x70a8
-20020036:	2000                	.2byte	0x2000
-20020038:	70c8                	.2byte	0x70c8
-2002003a:	2000                	.2byte	0x2000
-2002003c:	70f4                	.2byte	0x70f4
-2002003e:	2000                	.2byte	0x2000
-20020040:	7138                	.2byte	0x7138
-20020042:	2000                	.2byte	0x2000
-20020044:	7178                	.2byte	0x7178
-20020046:	2000                	.2byte	0x2000
-20020048:	71a4                	.2byte	0x71a4
-2002004a:	2000                	.2byte	0x2000
-2002004c:	71c8                	.2byte	0x71c8
-2002004e:	2000                	.2byte	0x2000
+20008678 <FRtoString>:
+20008678:	6ed8                	.2byte	0x6ed8
+2000867a:	2000                	.2byte	0x2000
+2000867c:	6ee4                	.2byte	0x6ee4
+2000867e:	2000                	.2byte	0x2000
 
-20020050 <_ZL8execname>:
-20020050:	6e75                	.2byte	0x6e75
-20020052:	776f6e6b          	.4byte	0x776f6e6b
-20020056:	006e                	.2byte	0x6e
+20008680 <_fdata>:
+20008680:	6f1c                	.2byte	0x6f1c
+20008682:	2000                	.2byte	0x2000
+20008684:	6f30                	.2byte	0x6f30
+20008686:	2000                	.2byte	0x2000
+20008688:	6f50                	.2byte	0x6f50
+2000868a:	2000                	.2byte	0x2000
+2000868c:	6f6c                	.2byte	0x6f6c
+2000868e:	2000                	.2byte	0x2000
+20008690:	6f88                	.2byte	0x6f88
+20008692:	2000                	.2byte	0x2000
+20008694:	6fac                	.2byte	0x6fac
+20008696:	2000                	.2byte	0x2000
+20008698:	6fe8                	.2byte	0x6fe8
+2000869a:	2000                	.2byte	0x2000
+2000869c:	7010                	.2byte	0x7010
+2000869e:	2000                	.2byte	0x2000
+200086a0:	7038                	.2byte	0x7038
+200086a2:	2000                	.2byte	0x2000
+200086a4:	7060                	.2byte	0x7060
+200086a6:	2000                	.2byte	0x2000
+200086a8:	7088                	.2byte	0x7088
+200086aa:	2000                	.2byte	0x2000
+200086ac:	70a8                	.2byte	0x70a8
+200086ae:	2000                	.2byte	0x2000
+200086b0:	70c8                	.2byte	0x70c8
+200086b2:	2000                	.2byte	0x2000
+200086b4:	70f4                	.2byte	0x70f4
+200086b6:	2000                	.2byte	0x2000
+200086b8:	7138                	.2byte	0x7138
+200086ba:	2000                	.2byte	0x2000
+200086bc:	7178                	.2byte	0x7178
+200086be:	2000                	.2byte	0x2000
+200086c0:	71a4                	.2byte	0x71a4
+200086c2:	2000                	.2byte	0x2000
+200086c4:	71c8                	.2byte	0x71c8
+200086c6:	2000                	.2byte	0x2000
+
+200086c8 <_ZL8execname>:
+200086c8:	6e75                	.2byte	0x6e75
+200086ca:	776f6e6b          	.4byte	0x776f6e6b
+200086ce:	006e                	.2byte	0x6e
 	...
 
-20020250 <_ZL10currentdir>:
-20020250:	003a6473          	csrrsi	s0,fcsr,20
+200088c8 <_ZL10currentdir>:
+200088c8:	003a6473          	csrrsi	s0,fcsr,20
 	...
 
-20020450 <IO_UARTTX>:
-20020450:	0004                	.2byte	0x4
-20020452:	8000                	.2byte	0x8000
+20008ac8 <IO_UARTTX>:
+20008ac8:	0004                	.2byte	0x4
+20008aca:	8000                	.2byte	0x8000
 
-20020454 <_ZL10heap_start>:
-20020454:	0000                	.2byte	0x0
-20020456:	0400                	.2byte	0x400
+20008acc <_ZL10heap_start>:
+20008acc:	0000                	.2byte	0x0
+20008ace:	0400                	.2byte	0x400
 
-20020458 <IO_SPICTL>:
-20020458:	0044                	.2byte	0x44
-2002045a:	8000                	.2byte	0x8000
+20008ad0 <IO_SPICTL>:
+20008ad0:	0044                	.2byte	0x44
+20008ad2:	8000                	.2byte	0x8000
 
-2002045c <IO_SPIRXTX>:
-2002045c:	0040                	.2byte	0x40
-2002045e:	8000                	.2byte	0x8000
+20008ad4 <IO_SPIRXTX>:
+20008ad4:	0040                	.2byte	0x40
+20008ad6:	8000                	.2byte	0x8000
 
-20020460 <LEDSTATE>:
-20020460:	0010                	.2byte	0x10
-20020462:	8000                	.2byte	0x8000
+20008ad8 <LEDSTATE>:
+20008ad8:	0010                	.2byte	0x10
+20008ada:	8000                	.2byte	0x8000
 
-20020464 <scantoasciitable_uppercase>:
-20020464:	2020                	.2byte	0x2020
-20020466:	2020                	.2byte	0x2020
-20020468:	2020                	.2byte	0x2020
-2002046a:	2020                	.2byte	0x2020
-2002046c:	2020                	.2byte	0x2020
-2002046e:	2020                	.2byte	0x2020
-20020470:	0b20                	.2byte	0xb20
-20020472:	2060                	.2byte	0x2060
-20020474:	2020                	.2byte	0x2020
-20020476:	2020                	.2byte	0x2020
-20020478:	5120                	.2byte	0x5120
-2002047a:	2021                	.2byte	0x2021
-2002047c:	2020                	.2byte	0x2020
-2002047e:	535a                	.2byte	0x535a
-20020480:	5741                	.2byte	0x5741
-20020482:	2040                	.2byte	0x2040
-20020484:	4320                	.2byte	0x4320
-20020486:	4458                	.2byte	0x4458
-20020488:	2445                	.2byte	0x2445
-2002048a:	20202023          	sw	sp,512(zero) # 200 <__stack_size-0x200>
-2002048e:	4656                	.2byte	0x4656
-20020490:	5254                	.2byte	0x5254
-20020492:	2025                	.2byte	0x2025
-20020494:	4e20                	.2byte	0x4e20
-20020496:	4842                	.2byte	0x4842
-20020498:	205e5947          	.4byte	0x205e5947
-2002049c:	2020                	.2byte	0x2020
-2002049e:	4a4d                	.2byte	0x4a4d
-200204a0:	3755                	.2byte	0x3755
-200204a2:	202a                	.2byte	0x202a
-200204a4:	3c20                	.2byte	0x3c20
-200204a6:	294f494b          	.4byte	0x294f494b
-200204aa:	2028                	.2byte	0x2028
-200204ac:	3e20                	.2byte	0x3e20
-200204ae:	503a6c3f 2020205f 	.8byte	0x2020205f503a6c3f
-200204b6:	2022                	.2byte	0x2022
-200204b8:	20202b7b          	.4byte	0x20202b7b
-200204bc:	2020                	.2byte	0x2020
-200204be:	7d0d                	.2byte	0x7d0d
-200204c0:	7c20                	.2byte	0x7c20
-200204c2:	2020                	.2byte	0x2020
-200204c4:	2020                	.2byte	0x2020
-200204c6:	2020                	.2byte	0x2020
-200204c8:	2020                	.2byte	0x2020
-200204ca:	2008                	.2byte	0x2008
-200204cc:	2020                	.2byte	0x2020
-200204ce:	2020                	.2byte	0x2020
-200204d0:	2020                	.2byte	0x2020
-200204d2:	2020                	.2byte	0x2020
-200204d4:	2020                	.2byte	0x2020
-200204d6:	2020                	.2byte	0x2020
-200204d8:	2020                	.2byte	0x2020
-200204da:	2020201b          	.4byte	0x2020201b
-200204de:	2020                	.2byte	0x2020
-200204e0:	2020                	.2byte	0x2020
-200204e2:	2020                	.2byte	0x2020
-200204e4:	2020                	.2byte	0x2020
-200204e6:	2020                	.2byte	0x2020
-200204e8:	2020                	.2byte	0x2020
-200204ea:	2020                	.2byte	0x2020
-200204ec:	2020                	.2byte	0x2020
-200204ee:	2020                	.2byte	0x2020
-200204f0:	2020                	.2byte	0x2020
-200204f2:	2020                	.2byte	0x2020
-200204f4:	2020                	.2byte	0x2020
-200204f6:	2020                	.2byte	0x2020
-200204f8:	2020                	.2byte	0x2020
-200204fa:	2020                	.2byte	0x2020
-200204fc:	2020                	.2byte	0x2020
-200204fe:	2020                	.2byte	0x2020
-20020500:	2020                	.2byte	0x2020
-20020502:	2020                	.2byte	0x2020
-20020504:	2020                	.2byte	0x2020
-20020506:	2020                	.2byte	0x2020
-20020508:	2020                	.2byte	0x2020
-2002050a:	2020                	.2byte	0x2020
-2002050c:	2020                	.2byte	0x2020
-2002050e:	2020                	.2byte	0x2020
-20020510:	2020                	.2byte	0x2020
-20020512:	2020                	.2byte	0x2020
-20020514:	2020                	.2byte	0x2020
-20020516:	2020                	.2byte	0x2020
-20020518:	2020                	.2byte	0x2020
-2002051a:	2020                	.2byte	0x2020
-2002051c:	2020                	.2byte	0x2020
-2002051e:	2020                	.2byte	0x2020
-20020520:	2020                	.2byte	0x2020
-20020522:	2020                	.2byte	0x2020
-20020524:	2020                	.2byte	0x2020
-20020526:	2020                	.2byte	0x2020
-20020528:	2020                	.2byte	0x2020
-2002052a:	2020                	.2byte	0x2020
-2002052c:	2020                	.2byte	0x2020
-2002052e:	2020                	.2byte	0x2020
-20020530:	2020                	.2byte	0x2020
-20020532:	2020                	.2byte	0x2020
-20020534:	2020                	.2byte	0x2020
-20020536:	2020                	.2byte	0x2020
-20020538:	2020                	.2byte	0x2020
-2002053a:	2020                	.2byte	0x2020
-2002053c:	2020                	.2byte	0x2020
-2002053e:	2020                	.2byte	0x2020
-20020540:	2020                	.2byte	0x2020
-20020542:	2020                	.2byte	0x2020
-20020544:	2020                	.2byte	0x2020
-20020546:	2020                	.2byte	0x2020
-20020548:	2020                	.2byte	0x2020
-2002054a:	2020                	.2byte	0x2020
-2002054c:	2020                	.2byte	0x2020
-2002054e:	2020                	.2byte	0x2020
-20020550:	2020                	.2byte	0x2020
-20020552:	2020                	.2byte	0x2020
-20020554:	2020                	.2byte	0x2020
-20020556:	2020                	.2byte	0x2020
-20020558:	2020                	.2byte	0x2020
-2002055a:	2020                	.2byte	0x2020
-2002055c:	2020                	.2byte	0x2020
-2002055e:	2020                	.2byte	0x2020
-20020560:	2020                	.2byte	0x2020
-20020562:	2020                	.2byte	0x2020
+20008adc <scantoasciitable_uppercase>:
+20008adc:	2020                	.2byte	0x2020
+20008ade:	2020                	.2byte	0x2020
+20008ae0:	2020                	.2byte	0x2020
+20008ae2:	2020                	.2byte	0x2020
+20008ae4:	2020                	.2byte	0x2020
+20008ae6:	2020                	.2byte	0x2020
+20008ae8:	0b20                	.2byte	0xb20
+20008aea:	2060                	.2byte	0x2060
+20008aec:	2020                	.2byte	0x2020
+20008aee:	2020                	.2byte	0x2020
+20008af0:	5120                	.2byte	0x5120
+20008af2:	2021                	.2byte	0x2021
+20008af4:	2020                	.2byte	0x2020
+20008af6:	535a                	.2byte	0x535a
+20008af8:	5741                	.2byte	0x5741
+20008afa:	2040                	.2byte	0x2040
+20008afc:	4320                	.2byte	0x4320
+20008afe:	4458                	.2byte	0x4458
+20008b00:	2445                	.2byte	0x2445
+20008b02:	20202023          	sw	sp,512(zero) # 200 <__stack_size-0x200>
+20008b06:	4656                	.2byte	0x4656
+20008b08:	5254                	.2byte	0x5254
+20008b0a:	2025                	.2byte	0x2025
+20008b0c:	4e20                	.2byte	0x4e20
+20008b0e:	4842                	.2byte	0x4842
+20008b10:	205e5947          	.4byte	0x205e5947
+20008b14:	2020                	.2byte	0x2020
+20008b16:	4a4d                	.2byte	0x4a4d
+20008b18:	3755                	.2byte	0x3755
+20008b1a:	202a                	.2byte	0x202a
+20008b1c:	3c20                	.2byte	0x3c20
+20008b1e:	294f494b          	.4byte	0x294f494b
+20008b22:	2028                	.2byte	0x2028
+20008b24:	3e20                	.2byte	0x3e20
+20008b26:	503a6c3f 2020205f 	.8byte	0x2020205f503a6c3f
+20008b2e:	2022                	.2byte	0x2022
+20008b30:	20202b7b          	.4byte	0x20202b7b
+20008b34:	2020                	.2byte	0x2020
+20008b36:	7d0d                	.2byte	0x7d0d
+20008b38:	7c20                	.2byte	0x7c20
+20008b3a:	2020                	.2byte	0x2020
+20008b3c:	2020                	.2byte	0x2020
+20008b3e:	2020                	.2byte	0x2020
+20008b40:	2020                	.2byte	0x2020
+20008b42:	2008                	.2byte	0x2008
+20008b44:	2020                	.2byte	0x2020
+20008b46:	2020                	.2byte	0x2020
+20008b48:	2020                	.2byte	0x2020
+20008b4a:	2020                	.2byte	0x2020
+20008b4c:	2020                	.2byte	0x2020
+20008b4e:	2020                	.2byte	0x2020
+20008b50:	2020                	.2byte	0x2020
+20008b52:	2020201b          	.4byte	0x2020201b
+20008b56:	2020                	.2byte	0x2020
+20008b58:	2020                	.2byte	0x2020
+20008b5a:	2020                	.2byte	0x2020
+20008b5c:	2020                	.2byte	0x2020
+20008b5e:	2020                	.2byte	0x2020
+20008b60:	2020                	.2byte	0x2020
+20008b62:	2020                	.2byte	0x2020
+20008b64:	2020                	.2byte	0x2020
+20008b66:	2020                	.2byte	0x2020
+20008b68:	2020                	.2byte	0x2020
+20008b6a:	2020                	.2byte	0x2020
+20008b6c:	2020                	.2byte	0x2020
+20008b6e:	2020                	.2byte	0x2020
+20008b70:	2020                	.2byte	0x2020
+20008b72:	2020                	.2byte	0x2020
+20008b74:	2020                	.2byte	0x2020
+20008b76:	2020                	.2byte	0x2020
+20008b78:	2020                	.2byte	0x2020
+20008b7a:	2020                	.2byte	0x2020
+20008b7c:	2020                	.2byte	0x2020
+20008b7e:	2020                	.2byte	0x2020
+20008b80:	2020                	.2byte	0x2020
+20008b82:	2020                	.2byte	0x2020
+20008b84:	2020                	.2byte	0x2020
+20008b86:	2020                	.2byte	0x2020
+20008b88:	2020                	.2byte	0x2020
+20008b8a:	2020                	.2byte	0x2020
+20008b8c:	2020                	.2byte	0x2020
+20008b8e:	2020                	.2byte	0x2020
+20008b90:	2020                	.2byte	0x2020
+20008b92:	2020                	.2byte	0x2020
+20008b94:	2020                	.2byte	0x2020
+20008b96:	2020                	.2byte	0x2020
+20008b98:	2020                	.2byte	0x2020
+20008b9a:	2020                	.2byte	0x2020
+20008b9c:	2020                	.2byte	0x2020
+20008b9e:	2020                	.2byte	0x2020
+20008ba0:	2020                	.2byte	0x2020
+20008ba2:	2020                	.2byte	0x2020
+20008ba4:	2020                	.2byte	0x2020
+20008ba6:	2020                	.2byte	0x2020
+20008ba8:	2020                	.2byte	0x2020
+20008baa:	2020                	.2byte	0x2020
+20008bac:	2020                	.2byte	0x2020
+20008bae:	2020                	.2byte	0x2020
+20008bb0:	2020                	.2byte	0x2020
+20008bb2:	2020                	.2byte	0x2020
+20008bb4:	2020                	.2byte	0x2020
+20008bb6:	2020                	.2byte	0x2020
+20008bb8:	2020                	.2byte	0x2020
+20008bba:	2020                	.2byte	0x2020
+20008bbc:	2020                	.2byte	0x2020
+20008bbe:	2020                	.2byte	0x2020
+20008bc0:	2020                	.2byte	0x2020
+20008bc2:	2020                	.2byte	0x2020
+20008bc4:	2020                	.2byte	0x2020
+20008bc6:	2020                	.2byte	0x2020
+20008bc8:	2020                	.2byte	0x2020
+20008bca:	2020                	.2byte	0x2020
+20008bcc:	2020                	.2byte	0x2020
+20008bce:	2020                	.2byte	0x2020
+20008bd0:	2020                	.2byte	0x2020
+20008bd2:	2020                	.2byte	0x2020
+20008bd4:	2020                	.2byte	0x2020
+20008bd6:	2020                	.2byte	0x2020
+20008bd8:	2020                	.2byte	0x2020
+20008bda:	2020                	.2byte	0x2020
 
-20020564 <scantoasciitable_lowercase>:
-20020564:	2020                	.2byte	0x2020
-20020566:	2020                	.2byte	0x2020
-20020568:	2020                	.2byte	0x2020
-2002056a:	2020                	.2byte	0x2020
-2002056c:	2020                	.2byte	0x2020
-2002056e:	2020                	.2byte	0x2020
-20020570:	0b20                	.2byte	0xb20
-20020572:	2060                	.2byte	0x2060
-20020574:	2020                	.2byte	0x2020
-20020576:	2020                	.2byte	0x2020
-20020578:	7120                	.2byte	0x7120
-2002057a:	2031                	.2byte	0x2031
-2002057c:	2020                	.2byte	0x2020
-2002057e:	737a                	.2byte	0x737a
-20020580:	7761                	.2byte	0x7761
-20020582:	2032                	.2byte	0x2032
-20020584:	6320                	.2byte	0x6320
-20020586:	6478                	.2byte	0x6478
-20020588:	3465                	.2byte	0x3465
-2002058a:	20202033          	.4byte	0x20202033
-2002058e:	6676                	.2byte	0x6676
-20020590:	7274                	.2byte	0x7274
-20020592:	2035                	.2byte	0x2035
-20020594:	6e20                	.2byte	0x6e20
-20020596:	6862                	.2byte	0x6862
-20020598:	20367967          	.4byte	0x20367967
-2002059c:	2020                	.2byte	0x2020
-2002059e:	6a6d                	.2byte	0x6a6d
-200205a0:	3775                	.2byte	0x3775
-200205a2:	2038                	.2byte	0x2038
-200205a4:	2c20                	.2byte	0x2c20
-200205a6:	306f696b          	.4byte	0x306f696b
-200205aa:	2039                	.2byte	0x2039
-200205ac:	2e20                	.2byte	0x2e20
-200205ae:	703b6c2f          	.4byte	0x703b6c2f
-200205b2:	202d                	.2byte	0x202d
-200205b4:	2020                	.2byte	0x2020
-200205b6:	3d5b2027          	.4byte	0x3d5b2027
-200205ba:	2020                	.2byte	0x2020
-200205bc:	2020                	.2byte	0x2020
-200205be:	5d0d                	.2byte	0x5d0d
-200205c0:	5c20                	.2byte	0x5c20
-200205c2:	2020                	.2byte	0x2020
-200205c4:	2020                	.2byte	0x2020
-200205c6:	2020                	.2byte	0x2020
-200205c8:	2020                	.2byte	0x2020
-200205ca:	2008                	.2byte	0x2008
-200205cc:	2020                	.2byte	0x2020
-200205ce:	2020                	.2byte	0x2020
-200205d0:	2020                	.2byte	0x2020
-200205d2:	2020                	.2byte	0x2020
-200205d4:	2020                	.2byte	0x2020
-200205d6:	2020                	.2byte	0x2020
-200205d8:	2020                	.2byte	0x2020
-200205da:	2020201b          	.4byte	0x2020201b
-200205de:	2020                	.2byte	0x2020
-200205e0:	2020                	.2byte	0x2020
-200205e2:	2020                	.2byte	0x2020
-200205e4:	2020                	.2byte	0x2020
-200205e6:	2020                	.2byte	0x2020
-200205e8:	2020                	.2byte	0x2020
-200205ea:	2020                	.2byte	0x2020
-200205ec:	2020                	.2byte	0x2020
-200205ee:	2020                	.2byte	0x2020
-200205f0:	2020                	.2byte	0x2020
-200205f2:	2020                	.2byte	0x2020
-200205f4:	2020                	.2byte	0x2020
-200205f6:	2020                	.2byte	0x2020
-200205f8:	2020                	.2byte	0x2020
-200205fa:	2020                	.2byte	0x2020
-200205fc:	2020                	.2byte	0x2020
-200205fe:	2020                	.2byte	0x2020
-20020600:	2020                	.2byte	0x2020
-20020602:	2020                	.2byte	0x2020
-20020604:	2020                	.2byte	0x2020
-20020606:	2020                	.2byte	0x2020
-20020608:	2020                	.2byte	0x2020
-2002060a:	2020                	.2byte	0x2020
-2002060c:	2020                	.2byte	0x2020
-2002060e:	2020                	.2byte	0x2020
-20020610:	2020                	.2byte	0x2020
-20020612:	2020                	.2byte	0x2020
-20020614:	2020                	.2byte	0x2020
-20020616:	2020                	.2byte	0x2020
-20020618:	2020                	.2byte	0x2020
-2002061a:	2020                	.2byte	0x2020
-2002061c:	2020                	.2byte	0x2020
-2002061e:	2020                	.2byte	0x2020
-20020620:	2020                	.2byte	0x2020
-20020622:	2020                	.2byte	0x2020
-20020624:	2020                	.2byte	0x2020
-20020626:	2020                	.2byte	0x2020
-20020628:	2020                	.2byte	0x2020
-2002062a:	2020                	.2byte	0x2020
-2002062c:	2020                	.2byte	0x2020
-2002062e:	2020                	.2byte	0x2020
-20020630:	2020                	.2byte	0x2020
-20020632:	2020                	.2byte	0x2020
-20020634:	2020                	.2byte	0x2020
-20020636:	2020                	.2byte	0x2020
-20020638:	2020                	.2byte	0x2020
-2002063a:	2020                	.2byte	0x2020
-2002063c:	2020                	.2byte	0x2020
-2002063e:	2020                	.2byte	0x2020
-20020640:	2020                	.2byte	0x2020
-20020642:	2020                	.2byte	0x2020
-20020644:	2020                	.2byte	0x2020
-20020646:	2020                	.2byte	0x2020
-20020648:	2020                	.2byte	0x2020
-2002064a:	2020                	.2byte	0x2020
-2002064c:	2020                	.2byte	0x2020
-2002064e:	2020                	.2byte	0x2020
-20020650:	2020                	.2byte	0x2020
-20020652:	2020                	.2byte	0x2020
-20020654:	2020                	.2byte	0x2020
-20020656:	2020                	.2byte	0x2020
-20020658:	2020                	.2byte	0x2020
-2002065a:	2020                	.2byte	0x2020
-2002065c:	2020                	.2byte	0x2020
-2002065e:	2020                	.2byte	0x2020
-20020660:	2020                	.2byte	0x2020
-20020662:	2020                	.2byte	0x2020
+20008bdc <scantoasciitable_lowercase>:
+20008bdc:	2020                	.2byte	0x2020
+20008bde:	2020                	.2byte	0x2020
+20008be0:	2020                	.2byte	0x2020
+20008be2:	2020                	.2byte	0x2020
+20008be4:	2020                	.2byte	0x2020
+20008be6:	2020                	.2byte	0x2020
+20008be8:	0b20                	.2byte	0xb20
+20008bea:	2060                	.2byte	0x2060
+20008bec:	2020                	.2byte	0x2020
+20008bee:	2020                	.2byte	0x2020
+20008bf0:	7120                	.2byte	0x7120
+20008bf2:	2031                	.2byte	0x2031
+20008bf4:	2020                	.2byte	0x2020
+20008bf6:	737a                	.2byte	0x737a
+20008bf8:	7761                	.2byte	0x7761
+20008bfa:	2032                	.2byte	0x2032
+20008bfc:	6320                	.2byte	0x6320
+20008bfe:	6478                	.2byte	0x6478
+20008c00:	3465                	.2byte	0x3465
+20008c02:	20202033          	.4byte	0x20202033
+20008c06:	6676                	.2byte	0x6676
+20008c08:	7274                	.2byte	0x7274
+20008c0a:	2035                	.2byte	0x2035
+20008c0c:	6e20                	.2byte	0x6e20
+20008c0e:	6862                	.2byte	0x6862
+20008c10:	20367967          	.4byte	0x20367967
+20008c14:	2020                	.2byte	0x2020
+20008c16:	6a6d                	.2byte	0x6a6d
+20008c18:	3775                	.2byte	0x3775
+20008c1a:	2038                	.2byte	0x2038
+20008c1c:	2c20                	.2byte	0x2c20
+20008c1e:	306f696b          	.4byte	0x306f696b
+20008c22:	2039                	.2byte	0x2039
+20008c24:	2e20                	.2byte	0x2e20
+20008c26:	703b6c2f          	.4byte	0x703b6c2f
+20008c2a:	202d                	.2byte	0x202d
+20008c2c:	2020                	.2byte	0x2020
+20008c2e:	3d5b2027          	.4byte	0x3d5b2027
+20008c32:	2020                	.2byte	0x2020
+20008c34:	2020                	.2byte	0x2020
+20008c36:	5d0d                	.2byte	0x5d0d
+20008c38:	5c20                	.2byte	0x5c20
+20008c3a:	2020                	.2byte	0x2020
+20008c3c:	2020                	.2byte	0x2020
+20008c3e:	2020                	.2byte	0x2020
+20008c40:	2020                	.2byte	0x2020
+20008c42:	2008                	.2byte	0x2008
+20008c44:	2020                	.2byte	0x2020
+20008c46:	2020                	.2byte	0x2020
+20008c48:	2020                	.2byte	0x2020
+20008c4a:	2020                	.2byte	0x2020
+20008c4c:	2020                	.2byte	0x2020
+20008c4e:	2020                	.2byte	0x2020
+20008c50:	2020                	.2byte	0x2020
+20008c52:	2020201b          	.4byte	0x2020201b
+20008c56:	2020                	.2byte	0x2020
+20008c58:	2020                	.2byte	0x2020
+20008c5a:	2020                	.2byte	0x2020
+20008c5c:	2020                	.2byte	0x2020
+20008c5e:	2020                	.2byte	0x2020
+20008c60:	2020                	.2byte	0x2020
+20008c62:	2020                	.2byte	0x2020
+20008c64:	2020                	.2byte	0x2020
+20008c66:	2020                	.2byte	0x2020
+20008c68:	2020                	.2byte	0x2020
+20008c6a:	2020                	.2byte	0x2020
+20008c6c:	2020                	.2byte	0x2020
+20008c6e:	2020                	.2byte	0x2020
+20008c70:	2020                	.2byte	0x2020
+20008c72:	2020                	.2byte	0x2020
+20008c74:	2020                	.2byte	0x2020
+20008c76:	2020                	.2byte	0x2020
+20008c78:	2020                	.2byte	0x2020
+20008c7a:	2020                	.2byte	0x2020
+20008c7c:	2020                	.2byte	0x2020
+20008c7e:	2020                	.2byte	0x2020
+20008c80:	2020                	.2byte	0x2020
+20008c82:	2020                	.2byte	0x2020
+20008c84:	2020                	.2byte	0x2020
+20008c86:	2020                	.2byte	0x2020
+20008c88:	2020                	.2byte	0x2020
+20008c8a:	2020                	.2byte	0x2020
+20008c8c:	2020                	.2byte	0x2020
+20008c8e:	2020                	.2byte	0x2020
+20008c90:	2020                	.2byte	0x2020
+20008c92:	2020                	.2byte	0x2020
+20008c94:	2020                	.2byte	0x2020
+20008c96:	2020                	.2byte	0x2020
+20008c98:	2020                	.2byte	0x2020
+20008c9a:	2020                	.2byte	0x2020
+20008c9c:	2020                	.2byte	0x2020
+20008c9e:	2020                	.2byte	0x2020
+20008ca0:	2020                	.2byte	0x2020
+20008ca2:	2020                	.2byte	0x2020
+20008ca4:	2020                	.2byte	0x2020
+20008ca6:	2020                	.2byte	0x2020
+20008ca8:	2020                	.2byte	0x2020
+20008caa:	2020                	.2byte	0x2020
+20008cac:	2020                	.2byte	0x2020
+20008cae:	2020                	.2byte	0x2020
+20008cb0:	2020                	.2byte	0x2020
+20008cb2:	2020                	.2byte	0x2020
+20008cb4:	2020                	.2byte	0x2020
+20008cb6:	2020                	.2byte	0x2020
+20008cb8:	2020                	.2byte	0x2020
+20008cba:	2020                	.2byte	0x2020
+20008cbc:	2020                	.2byte	0x2020
+20008cbe:	2020                	.2byte	0x2020
+20008cc0:	2020                	.2byte	0x2020
+20008cc2:	2020                	.2byte	0x2020
+20008cc4:	2020                	.2byte	0x2020
+20008cc6:	2020                	.2byte	0x2020
+20008cc8:	2020                	.2byte	0x2020
+20008cca:	2020                	.2byte	0x2020
+20008ccc:	2020                	.2byte	0x2020
+20008cce:	2020                	.2byte	0x2020
+20008cd0:	2020                	.2byte	0x2020
+20008cd2:	2020                	.2byte	0x2020
+20008cd4:	2020                	.2byte	0x2020
+20008cd6:	2020                	.2byte	0x2020
+20008cd8:	2020                	.2byte	0x2020
+20008cda:	2020                	.2byte	0x2020
 
-20020664 <PS2KEYBOARDDATAAVAIL>:
-20020664:	0058                	.2byte	0x58
-20020666:	8000                	.2byte	0x8000
+20008cdc <PS2KEYBOARDDATAAVAIL>:
+20008cdc:	0058                	.2byte	0x58
+20008cde:	8000                	.2byte	0x8000
 
-20020668 <PS2KEYBOARDDATA>:
-20020668:	0050                	.2byte	0x50
-2002066a:	8000                	.2byte	0x8000
+20008ce0 <PS2KEYBOARDDATA>:
+20008ce0:	0050                	.2byte	0x50
+20008ce2:	8000                	.2byte	0x8000
 
-2002066c <_ZL9VolumeStr>:
-2002066c:	7520                	.2byte	0x7520
-2002066e:	2000                	.2byte	0x2000
-20020670:	7524                	.2byte	0x7524
-20020672:	2000                	.2byte	0x2000
-20020674:	7528                	.2byte	0x7528
-20020676:	2000                	.2byte	0x2000
+20008ce4 <_ZL9VolumeStr>:
+20008ce4:	7520                	.2byte	0x7520
+20008ce6:	2000                	.2byte	0x2000
+20008ce8:	7524                	.2byte	0x7524
+20008cea:	2000                	.2byte	0x2000
+20008cec:	7528                	.2byte	0x7528
+20008cee:	2000                	.2byte	0x2000
 
-20020678 <impure_data>:
-20020678:	0000                	.2byte	0x0
-2002067a:	0000                	.2byte	0x0
-2002067c:	0964                	.2byte	0x964
-2002067e:	2002                	.2byte	0x2002
-20020680:	09cc                	.2byte	0x9cc
-20020682:	2002                	.2byte	0x2002
-20020684:	0a34                	.2byte	0xa34
-20020686:	2002                	.2byte	0x2002
+20008cf0 <impure_data>:
+20008cf0:	0000                	.2byte	0x0
+20008cf2:	0000                	.2byte	0x0
+20008cf4:	8fdc                	.2byte	0x8fdc
+20008cf6:	2000                	.2byte	0x2000
+20008cf8:	9044                	.2byte	0x9044
+20008cfa:	2000                	.2byte	0x2000
+20008cfc:	90ac                	.2byte	0x90ac
+20008cfe:	2000                	.2byte	0x2000
 	...
-20020720:	0001                	.2byte	0x1
-20020722:	0000                	.2byte	0x0
-20020724:	0000                	.2byte	0x0
-20020726:	0000                	.2byte	0x0
-20020728:	330e                	.2byte	0x330e
-2002072a:	abcd                	.2byte	0xabcd
-2002072c:	1234                	.2byte	0x1234
-2002072e:	e66d                	.2byte	0xe66d
-20020730:	deec                	.2byte	0xdeec
-20020732:	0005                	.2byte	0x5
-20020734:	0000000b          	.4byte	0xb
+20008d98:	0001                	.2byte	0x1
+20008d9a:	0000                	.2byte	0x0
+20008d9c:	0000                	.2byte	0x0
+20008d9e:	0000                	.2byte	0x0
+20008da0:	330e                	.2byte	0x330e
+20008da2:	abcd                	.2byte	0xabcd
+20008da4:	1234                	.2byte	0x1234
+20008da6:	e66d                	.2byte	0xe66d
+20008da8:	deec                	.2byte	0xdeec
+20008daa:	0005                	.2byte	0x5
+20008dac:	0000000b          	.4byte	0xb
 	...
 
-20020aa0 <__malloc_av_>:
+20009118 <__malloc_av_>:
 	...
-20020aa8:	0aa0                	.2byte	0xaa0
-20020aaa:	2002                	.2byte	0x2002
-20020aac:	0aa0                	.2byte	0xaa0
-20020aae:	2002                	.2byte	0x2002
-20020ab0:	0aa8                	.2byte	0xaa8
-20020ab2:	2002                	.2byte	0x2002
-20020ab4:	0aa8                	.2byte	0xaa8
-20020ab6:	2002                	.2byte	0x2002
-20020ab8:	0ab0                	.2byte	0xab0
-20020aba:	2002                	.2byte	0x2002
-20020abc:	0ab0                	.2byte	0xab0
-20020abe:	2002                	.2byte	0x2002
-20020ac0:	0ab8                	.2byte	0xab8
-20020ac2:	2002                	.2byte	0x2002
-20020ac4:	0ab8                	.2byte	0xab8
-20020ac6:	2002                	.2byte	0x2002
-20020ac8:	0ac0                	.2byte	0xac0
-20020aca:	2002                	.2byte	0x2002
-20020acc:	0ac0                	.2byte	0xac0
-20020ace:	2002                	.2byte	0x2002
-20020ad0:	0ac8                	.2byte	0xac8
-20020ad2:	2002                	.2byte	0x2002
-20020ad4:	0ac8                	.2byte	0xac8
-20020ad6:	2002                	.2byte	0x2002
-20020ad8:	0ad0                	.2byte	0xad0
-20020ada:	2002                	.2byte	0x2002
-20020adc:	0ad0                	.2byte	0xad0
-20020ade:	2002                	.2byte	0x2002
-20020ae0:	0ad8                	.2byte	0xad8
-20020ae2:	2002                	.2byte	0x2002
-20020ae4:	0ad8                	.2byte	0xad8
-20020ae6:	2002                	.2byte	0x2002
-20020ae8:	0ae0                	.2byte	0xae0
-20020aea:	2002                	.2byte	0x2002
-20020aec:	0ae0                	.2byte	0xae0
-20020aee:	2002                	.2byte	0x2002
-20020af0:	0ae8                	.2byte	0xae8
-20020af2:	2002                	.2byte	0x2002
-20020af4:	0ae8                	.2byte	0xae8
-20020af6:	2002                	.2byte	0x2002
-20020af8:	0af0                	.2byte	0xaf0
-20020afa:	2002                	.2byte	0x2002
-20020afc:	0af0                	.2byte	0xaf0
-20020afe:	2002                	.2byte	0x2002
-20020b00:	0af8                	.2byte	0xaf8
-20020b02:	2002                	.2byte	0x2002
-20020b04:	0af8                	.2byte	0xaf8
-20020b06:	2002                	.2byte	0x2002
-20020b08:	0b00                	.2byte	0xb00
-20020b0a:	2002                	.2byte	0x2002
-20020b0c:	0b00                	.2byte	0xb00
-20020b0e:	2002                	.2byte	0x2002
-20020b10:	0b08                	.2byte	0xb08
-20020b12:	2002                	.2byte	0x2002
-20020b14:	0b08                	.2byte	0xb08
-20020b16:	2002                	.2byte	0x2002
-20020b18:	0b10                	.2byte	0xb10
-20020b1a:	2002                	.2byte	0x2002
-20020b1c:	0b10                	.2byte	0xb10
-20020b1e:	2002                	.2byte	0x2002
-20020b20:	0b18                	.2byte	0xb18
-20020b22:	2002                	.2byte	0x2002
-20020b24:	0b18                	.2byte	0xb18
-20020b26:	2002                	.2byte	0x2002
-20020b28:	0b20                	.2byte	0xb20
-20020b2a:	2002                	.2byte	0x2002
-20020b2c:	0b20                	.2byte	0xb20
-20020b2e:	2002                	.2byte	0x2002
-20020b30:	0b28                	.2byte	0xb28
-20020b32:	2002                	.2byte	0x2002
-20020b34:	0b28                	.2byte	0xb28
-20020b36:	2002                	.2byte	0x2002
-20020b38:	0b30                	.2byte	0xb30
-20020b3a:	2002                	.2byte	0x2002
-20020b3c:	0b30                	.2byte	0xb30
-20020b3e:	2002                	.2byte	0x2002
-20020b40:	0b38                	.2byte	0xb38
-20020b42:	2002                	.2byte	0x2002
-20020b44:	0b38                	.2byte	0xb38
-20020b46:	2002                	.2byte	0x2002
-20020b48:	0b40                	.2byte	0xb40
-20020b4a:	2002                	.2byte	0x2002
-20020b4c:	0b40                	.2byte	0xb40
-20020b4e:	2002                	.2byte	0x2002
-20020b50:	0b48                	.2byte	0xb48
-20020b52:	2002                	.2byte	0x2002
-20020b54:	0b48                	.2byte	0xb48
-20020b56:	2002                	.2byte	0x2002
-20020b58:	0b50                	.2byte	0xb50
-20020b5a:	2002                	.2byte	0x2002
-20020b5c:	0b50                	.2byte	0xb50
-20020b5e:	2002                	.2byte	0x2002
-20020b60:	0b58                	.2byte	0xb58
-20020b62:	2002                	.2byte	0x2002
-20020b64:	0b58                	.2byte	0xb58
-20020b66:	2002                	.2byte	0x2002
-20020b68:	0b60                	.2byte	0xb60
-20020b6a:	2002                	.2byte	0x2002
-20020b6c:	0b60                	.2byte	0xb60
-20020b6e:	2002                	.2byte	0x2002
-20020b70:	0b68                	.2byte	0xb68
-20020b72:	2002                	.2byte	0x2002
-20020b74:	0b68                	.2byte	0xb68
-20020b76:	2002                	.2byte	0x2002
-20020b78:	0b70                	.2byte	0xb70
-20020b7a:	2002                	.2byte	0x2002
-20020b7c:	0b70                	.2byte	0xb70
-20020b7e:	2002                	.2byte	0x2002
-20020b80:	0b78                	.2byte	0xb78
-20020b82:	2002                	.2byte	0x2002
-20020b84:	0b78                	.2byte	0xb78
-20020b86:	2002                	.2byte	0x2002
-20020b88:	0b80                	.2byte	0xb80
-20020b8a:	2002                	.2byte	0x2002
-20020b8c:	0b80                	.2byte	0xb80
-20020b8e:	2002                	.2byte	0x2002
-20020b90:	0b88                	.2byte	0xb88
-20020b92:	2002                	.2byte	0x2002
-20020b94:	0b88                	.2byte	0xb88
-20020b96:	2002                	.2byte	0x2002
-20020b98:	0b90                	.2byte	0xb90
-20020b9a:	2002                	.2byte	0x2002
-20020b9c:	0b90                	.2byte	0xb90
-20020b9e:	2002                	.2byte	0x2002
-20020ba0:	0b98                	.2byte	0xb98
-20020ba2:	2002                	.2byte	0x2002
-20020ba4:	0b98                	.2byte	0xb98
-20020ba6:	2002                	.2byte	0x2002
-20020ba8:	0ba0                	.2byte	0xba0
-20020baa:	2002                	.2byte	0x2002
-20020bac:	0ba0                	.2byte	0xba0
-20020bae:	2002                	.2byte	0x2002
-20020bb0:	0ba8                	.2byte	0xba8
-20020bb2:	2002                	.2byte	0x2002
-20020bb4:	0ba8                	.2byte	0xba8
-20020bb6:	2002                	.2byte	0x2002
-20020bb8:	0bb0                	.2byte	0xbb0
-20020bba:	2002                	.2byte	0x2002
-20020bbc:	0bb0                	.2byte	0xbb0
-20020bbe:	2002                	.2byte	0x2002
-20020bc0:	0bb8                	.2byte	0xbb8
-20020bc2:	2002                	.2byte	0x2002
-20020bc4:	0bb8                	.2byte	0xbb8
-20020bc6:	2002                	.2byte	0x2002
-20020bc8:	0bc0                	.2byte	0xbc0
-20020bca:	2002                	.2byte	0x2002
-20020bcc:	0bc0                	.2byte	0xbc0
-20020bce:	2002                	.2byte	0x2002
-20020bd0:	0bc8                	.2byte	0xbc8
-20020bd2:	2002                	.2byte	0x2002
-20020bd4:	0bc8                	.2byte	0xbc8
-20020bd6:	2002                	.2byte	0x2002
-20020bd8:	0bd0                	.2byte	0xbd0
-20020bda:	2002                	.2byte	0x2002
-20020bdc:	0bd0                	.2byte	0xbd0
-20020bde:	2002                	.2byte	0x2002
-20020be0:	0bd8                	.2byte	0xbd8
-20020be2:	2002                	.2byte	0x2002
-20020be4:	0bd8                	.2byte	0xbd8
-20020be6:	2002                	.2byte	0x2002
-20020be8:	0be0                	.2byte	0xbe0
-20020bea:	2002                	.2byte	0x2002
-20020bec:	0be0                	.2byte	0xbe0
-20020bee:	2002                	.2byte	0x2002
-20020bf0:	0be8                	.2byte	0xbe8
-20020bf2:	2002                	.2byte	0x2002
-20020bf4:	0be8                	.2byte	0xbe8
-20020bf6:	2002                	.2byte	0x2002
-20020bf8:	0bf0                	.2byte	0xbf0
-20020bfa:	2002                	.2byte	0x2002
-20020bfc:	0bf0                	.2byte	0xbf0
-20020bfe:	2002                	.2byte	0x2002
-20020c00:	0bf8                	.2byte	0xbf8
-20020c02:	2002                	.2byte	0x2002
-20020c04:	0bf8                	.2byte	0xbf8
-20020c06:	2002                	.2byte	0x2002
-20020c08:	0c00                	.2byte	0xc00
-20020c0a:	2002                	.2byte	0x2002
-20020c0c:	0c00                	.2byte	0xc00
-20020c0e:	2002                	.2byte	0x2002
-20020c10:	0c08                	.2byte	0xc08
-20020c12:	2002                	.2byte	0x2002
-20020c14:	0c08                	.2byte	0xc08
-20020c16:	2002                	.2byte	0x2002
-20020c18:	0c10                	.2byte	0xc10
-20020c1a:	2002                	.2byte	0x2002
-20020c1c:	0c10                	.2byte	0xc10
-20020c1e:	2002                	.2byte	0x2002
-20020c20:	0c18                	.2byte	0xc18
-20020c22:	2002                	.2byte	0x2002
-20020c24:	0c18                	.2byte	0xc18
-20020c26:	2002                	.2byte	0x2002
-20020c28:	0c20                	.2byte	0xc20
-20020c2a:	2002                	.2byte	0x2002
-20020c2c:	0c20                	.2byte	0xc20
-20020c2e:	2002                	.2byte	0x2002
-20020c30:	0c28                	.2byte	0xc28
-20020c32:	2002                	.2byte	0x2002
-20020c34:	0c28                	.2byte	0xc28
-20020c36:	2002                	.2byte	0x2002
-20020c38:	0c30                	.2byte	0xc30
-20020c3a:	2002                	.2byte	0x2002
-20020c3c:	0c30                	.2byte	0xc30
-20020c3e:	2002                	.2byte	0x2002
-20020c40:	0c38                	.2byte	0xc38
-20020c42:	2002                	.2byte	0x2002
-20020c44:	0c38                	.2byte	0xc38
-20020c46:	2002                	.2byte	0x2002
-20020c48:	0c40                	.2byte	0xc40
-20020c4a:	2002                	.2byte	0x2002
-20020c4c:	0c40                	.2byte	0xc40
-20020c4e:	2002                	.2byte	0x2002
-20020c50:	0c48                	.2byte	0xc48
-20020c52:	2002                	.2byte	0x2002
-20020c54:	0c48                	.2byte	0xc48
-20020c56:	2002                	.2byte	0x2002
-20020c58:	0c50                	.2byte	0xc50
-20020c5a:	2002                	.2byte	0x2002
-20020c5c:	0c50                	.2byte	0xc50
-20020c5e:	2002                	.2byte	0x2002
-20020c60:	0c58                	.2byte	0xc58
-20020c62:	2002                	.2byte	0x2002
-20020c64:	0c58                	.2byte	0xc58
-20020c66:	2002                	.2byte	0x2002
-20020c68:	0c60                	.2byte	0xc60
-20020c6a:	2002                	.2byte	0x2002
-20020c6c:	0c60                	.2byte	0xc60
-20020c6e:	2002                	.2byte	0x2002
-20020c70:	0c68                	.2byte	0xc68
-20020c72:	2002                	.2byte	0x2002
-20020c74:	0c68                	.2byte	0xc68
-20020c76:	2002                	.2byte	0x2002
-20020c78:	0c70                	.2byte	0xc70
-20020c7a:	2002                	.2byte	0x2002
-20020c7c:	0c70                	.2byte	0xc70
-20020c7e:	2002                	.2byte	0x2002
-20020c80:	0c78                	.2byte	0xc78
-20020c82:	2002                	.2byte	0x2002
-20020c84:	0c78                	.2byte	0xc78
-20020c86:	2002                	.2byte	0x2002
-20020c88:	0c80                	.2byte	0xc80
-20020c8a:	2002                	.2byte	0x2002
-20020c8c:	0c80                	.2byte	0xc80
-20020c8e:	2002                	.2byte	0x2002
-20020c90:	0c88                	.2byte	0xc88
-20020c92:	2002                	.2byte	0x2002
-20020c94:	0c88                	.2byte	0xc88
-20020c96:	2002                	.2byte	0x2002
-20020c98:	0c90                	.2byte	0xc90
-20020c9a:	2002                	.2byte	0x2002
-20020c9c:	0c90                	.2byte	0xc90
-20020c9e:	2002                	.2byte	0x2002
-20020ca0:	0c98                	.2byte	0xc98
-20020ca2:	2002                	.2byte	0x2002
-20020ca4:	0c98                	.2byte	0xc98
-20020ca6:	2002                	.2byte	0x2002
-20020ca8:	0ca0                	.2byte	0xca0
-20020caa:	2002                	.2byte	0x2002
-20020cac:	0ca0                	.2byte	0xca0
-20020cae:	2002                	.2byte	0x2002
-20020cb0:	0ca8                	.2byte	0xca8
-20020cb2:	2002                	.2byte	0x2002
-20020cb4:	0ca8                	.2byte	0xca8
-20020cb6:	2002                	.2byte	0x2002
-20020cb8:	0cb0                	.2byte	0xcb0
-20020cba:	2002                	.2byte	0x2002
-20020cbc:	0cb0                	.2byte	0xcb0
-20020cbe:	2002                	.2byte	0x2002
-20020cc0:	0cb8                	.2byte	0xcb8
-20020cc2:	2002                	.2byte	0x2002
-20020cc4:	0cb8                	.2byte	0xcb8
-20020cc6:	2002                	.2byte	0x2002
-20020cc8:	0cc0                	.2byte	0xcc0
-20020cca:	2002                	.2byte	0x2002
-20020ccc:	0cc0                	.2byte	0xcc0
-20020cce:	2002                	.2byte	0x2002
-20020cd0:	0cc8                	.2byte	0xcc8
-20020cd2:	2002                	.2byte	0x2002
-20020cd4:	0cc8                	.2byte	0xcc8
-20020cd6:	2002                	.2byte	0x2002
-20020cd8:	0cd0                	.2byte	0xcd0
-20020cda:	2002                	.2byte	0x2002
-20020cdc:	0cd0                	.2byte	0xcd0
-20020cde:	2002                	.2byte	0x2002
-20020ce0:	0cd8                	.2byte	0xcd8
-20020ce2:	2002                	.2byte	0x2002
-20020ce4:	0cd8                	.2byte	0xcd8
-20020ce6:	2002                	.2byte	0x2002
-20020ce8:	0ce0                	.2byte	0xce0
-20020cea:	2002                	.2byte	0x2002
-20020cec:	0ce0                	.2byte	0xce0
-20020cee:	2002                	.2byte	0x2002
-20020cf0:	0ce8                	.2byte	0xce8
-20020cf2:	2002                	.2byte	0x2002
-20020cf4:	0ce8                	.2byte	0xce8
-20020cf6:	2002                	.2byte	0x2002
-20020cf8:	0cf0                	.2byte	0xcf0
-20020cfa:	2002                	.2byte	0x2002
-20020cfc:	0cf0                	.2byte	0xcf0
-20020cfe:	2002                	.2byte	0x2002
-20020d00:	0cf8                	.2byte	0xcf8
-20020d02:	2002                	.2byte	0x2002
-20020d04:	0cf8                	.2byte	0xcf8
-20020d06:	2002                	.2byte	0x2002
-20020d08:	0d00                	.2byte	0xd00
-20020d0a:	2002                	.2byte	0x2002
-20020d0c:	0d00                	.2byte	0xd00
-20020d0e:	2002                	.2byte	0x2002
-20020d10:	0d08                	.2byte	0xd08
-20020d12:	2002                	.2byte	0x2002
-20020d14:	0d08                	.2byte	0xd08
-20020d16:	2002                	.2byte	0x2002
-20020d18:	0d10                	.2byte	0xd10
-20020d1a:	2002                	.2byte	0x2002
-20020d1c:	0d10                	.2byte	0xd10
-20020d1e:	2002                	.2byte	0x2002
-20020d20:	0d18                	.2byte	0xd18
-20020d22:	2002                	.2byte	0x2002
-20020d24:	0d18                	.2byte	0xd18
-20020d26:	2002                	.2byte	0x2002
-20020d28:	0d20                	.2byte	0xd20
-20020d2a:	2002                	.2byte	0x2002
-20020d2c:	0d20                	.2byte	0xd20
-20020d2e:	2002                	.2byte	0x2002
-20020d30:	0d28                	.2byte	0xd28
-20020d32:	2002                	.2byte	0x2002
-20020d34:	0d28                	.2byte	0xd28
-20020d36:	2002                	.2byte	0x2002
-20020d38:	0d30                	.2byte	0xd30
-20020d3a:	2002                	.2byte	0x2002
-20020d3c:	0d30                	.2byte	0xd30
-20020d3e:	2002                	.2byte	0x2002
-20020d40:	0d38                	.2byte	0xd38
-20020d42:	2002                	.2byte	0x2002
-20020d44:	0d38                	.2byte	0xd38
-20020d46:	2002                	.2byte	0x2002
-20020d48:	0d40                	.2byte	0xd40
-20020d4a:	2002                	.2byte	0x2002
-20020d4c:	0d40                	.2byte	0xd40
-20020d4e:	2002                	.2byte	0x2002
-20020d50:	0d48                	.2byte	0xd48
-20020d52:	2002                	.2byte	0x2002
-20020d54:	0d48                	.2byte	0xd48
-20020d56:	2002                	.2byte	0x2002
-20020d58:	0d50                	.2byte	0xd50
-20020d5a:	2002                	.2byte	0x2002
-20020d5c:	0d50                	.2byte	0xd50
-20020d5e:	2002                	.2byte	0x2002
-20020d60:	0d58                	.2byte	0xd58
-20020d62:	2002                	.2byte	0x2002
-20020d64:	0d58                	.2byte	0xd58
-20020d66:	2002                	.2byte	0x2002
-20020d68:	0d60                	.2byte	0xd60
-20020d6a:	2002                	.2byte	0x2002
-20020d6c:	0d60                	.2byte	0xd60
-20020d6e:	2002                	.2byte	0x2002
-20020d70:	0d68                	.2byte	0xd68
-20020d72:	2002                	.2byte	0x2002
-20020d74:	0d68                	.2byte	0xd68
-20020d76:	2002                	.2byte	0x2002
-20020d78:	0d70                	.2byte	0xd70
-20020d7a:	2002                	.2byte	0x2002
-20020d7c:	0d70                	.2byte	0xd70
-20020d7e:	2002                	.2byte	0x2002
-20020d80:	0d78                	.2byte	0xd78
-20020d82:	2002                	.2byte	0x2002
-20020d84:	0d78                	.2byte	0xd78
-20020d86:	2002                	.2byte	0x2002
-20020d88:	0d80                	.2byte	0xd80
-20020d8a:	2002                	.2byte	0x2002
-20020d8c:	0d80                	.2byte	0xd80
-20020d8e:	2002                	.2byte	0x2002
-20020d90:	0d88                	.2byte	0xd88
-20020d92:	2002                	.2byte	0x2002
-20020d94:	0d88                	.2byte	0xd88
-20020d96:	2002                	.2byte	0x2002
-20020d98:	0d90                	.2byte	0xd90
-20020d9a:	2002                	.2byte	0x2002
-20020d9c:	0d90                	.2byte	0xd90
-20020d9e:	2002                	.2byte	0x2002
-20020da0:	0d98                	.2byte	0xd98
-20020da2:	2002                	.2byte	0x2002
-20020da4:	0d98                	.2byte	0xd98
-20020da6:	2002                	.2byte	0x2002
-20020da8:	0da0                	.2byte	0xda0
-20020daa:	2002                	.2byte	0x2002
-20020dac:	0da0                	.2byte	0xda0
-20020dae:	2002                	.2byte	0x2002
-20020db0:	0da8                	.2byte	0xda8
-20020db2:	2002                	.2byte	0x2002
-20020db4:	0da8                	.2byte	0xda8
-20020db6:	2002                	.2byte	0x2002
-20020db8:	0db0                	.2byte	0xdb0
-20020dba:	2002                	.2byte	0x2002
-20020dbc:	0db0                	.2byte	0xdb0
-20020dbe:	2002                	.2byte	0x2002
-20020dc0:	0db8                	.2byte	0xdb8
-20020dc2:	2002                	.2byte	0x2002
-20020dc4:	0db8                	.2byte	0xdb8
-20020dc6:	2002                	.2byte	0x2002
-20020dc8:	0dc0                	.2byte	0xdc0
-20020dca:	2002                	.2byte	0x2002
-20020dcc:	0dc0                	.2byte	0xdc0
-20020dce:	2002                	.2byte	0x2002
-20020dd0:	0dc8                	.2byte	0xdc8
-20020dd2:	2002                	.2byte	0x2002
-20020dd4:	0dc8                	.2byte	0xdc8
-20020dd6:	2002                	.2byte	0x2002
-20020dd8:	0dd0                	.2byte	0xdd0
-20020dda:	2002                	.2byte	0x2002
-20020ddc:	0dd0                	.2byte	0xdd0
-20020dde:	2002                	.2byte	0x2002
-20020de0:	0dd8                	.2byte	0xdd8
-20020de2:	2002                	.2byte	0x2002
-20020de4:	0dd8                	.2byte	0xdd8
-20020de6:	2002                	.2byte	0x2002
-20020de8:	0de0                	.2byte	0xde0
-20020dea:	2002                	.2byte	0x2002
-20020dec:	0de0                	.2byte	0xde0
-20020dee:	2002                	.2byte	0x2002
-20020df0:	0de8                	.2byte	0xde8
-20020df2:	2002                	.2byte	0x2002
-20020df4:	0de8                	.2byte	0xde8
-20020df6:	2002                	.2byte	0x2002
-20020df8:	0df0                	.2byte	0xdf0
-20020dfa:	2002                	.2byte	0x2002
-20020dfc:	0df0                	.2byte	0xdf0
-20020dfe:	2002                	.2byte	0x2002
-20020e00:	0df8                	.2byte	0xdf8
-20020e02:	2002                	.2byte	0x2002
-20020e04:	0df8                	.2byte	0xdf8
-20020e06:	2002                	.2byte	0x2002
-20020e08:	0e00                	.2byte	0xe00
-20020e0a:	2002                	.2byte	0x2002
-20020e0c:	0e00                	.2byte	0xe00
-20020e0e:	2002                	.2byte	0x2002
-20020e10:	0e08                	.2byte	0xe08
-20020e12:	2002                	.2byte	0x2002
-20020e14:	0e08                	.2byte	0xe08
-20020e16:	2002                	.2byte	0x2002
-20020e18:	0e10                	.2byte	0xe10
-20020e1a:	2002                	.2byte	0x2002
-20020e1c:	0e10                	.2byte	0xe10
-20020e1e:	2002                	.2byte	0x2002
-20020e20:	0e18                	.2byte	0xe18
-20020e22:	2002                	.2byte	0x2002
-20020e24:	0e18                	.2byte	0xe18
-20020e26:	2002                	.2byte	0x2002
-20020e28:	0e20                	.2byte	0xe20
-20020e2a:	2002                	.2byte	0x2002
-20020e2c:	0e20                	.2byte	0xe20
-20020e2e:	2002                	.2byte	0x2002
-20020e30:	0e28                	.2byte	0xe28
-20020e32:	2002                	.2byte	0x2002
-20020e34:	0e28                	.2byte	0xe28
-20020e36:	2002                	.2byte	0x2002
-20020e38:	0e30                	.2byte	0xe30
-20020e3a:	2002                	.2byte	0x2002
-20020e3c:	0e30                	.2byte	0xe30
-20020e3e:	2002                	.2byte	0x2002
-20020e40:	0e38                	.2byte	0xe38
-20020e42:	2002                	.2byte	0x2002
-20020e44:	0e38                	.2byte	0xe38
-20020e46:	2002                	.2byte	0x2002
-20020e48:	0e40                	.2byte	0xe40
-20020e4a:	2002                	.2byte	0x2002
-20020e4c:	0e40                	.2byte	0xe40
-20020e4e:	2002                	.2byte	0x2002
-20020e50:	0e48                	.2byte	0xe48
-20020e52:	2002                	.2byte	0x2002
-20020e54:	0e48                	.2byte	0xe48
-20020e56:	2002                	.2byte	0x2002
-20020e58:	0e50                	.2byte	0xe50
-20020e5a:	2002                	.2byte	0x2002
-20020e5c:	0e50                	.2byte	0xe50
-20020e5e:	2002                	.2byte	0x2002
-20020e60:	0e58                	.2byte	0xe58
-20020e62:	2002                	.2byte	0x2002
-20020e64:	0e58                	.2byte	0xe58
-20020e66:	2002                	.2byte	0x2002
-20020e68:	0e60                	.2byte	0xe60
-20020e6a:	2002                	.2byte	0x2002
-20020e6c:	0e60                	.2byte	0xe60
-20020e6e:	2002                	.2byte	0x2002
-20020e70:	0e68                	.2byte	0xe68
-20020e72:	2002                	.2byte	0x2002
-20020e74:	0e68                	.2byte	0xe68
-20020e76:	2002                	.2byte	0x2002
-20020e78:	0e70                	.2byte	0xe70
-20020e7a:	2002                	.2byte	0x2002
-20020e7c:	0e70                	.2byte	0xe70
-20020e7e:	2002                	.2byte	0x2002
-20020e80:	0e78                	.2byte	0xe78
-20020e82:	2002                	.2byte	0x2002
-20020e84:	0e78                	.2byte	0xe78
-20020e86:	2002                	.2byte	0x2002
-20020e88:	0e80                	.2byte	0xe80
-20020e8a:	2002                	.2byte	0x2002
-20020e8c:	0e80                	.2byte	0xe80
-20020e8e:	2002                	.2byte	0x2002
-20020e90:	0e88                	.2byte	0xe88
-20020e92:	2002                	.2byte	0x2002
-20020e94:	0e88                	.2byte	0xe88
-20020e96:	2002                	.2byte	0x2002
-20020e98:	0e90                	.2byte	0xe90
-20020e9a:	2002                	.2byte	0x2002
-20020e9c:	0e90                	.2byte	0xe90
-20020e9e:	2002                	.2byte	0x2002
-20020ea0:	0e98                	.2byte	0xe98
-20020ea2:	2002                	.2byte	0x2002
-20020ea4:	0e98                	.2byte	0xe98
-20020ea6:	2002                	.2byte	0x2002
+20009120:	9118                	.2byte	0x9118
+20009122:	2000                	.2byte	0x2000
+20009124:	9118                	.2byte	0x9118
+20009126:	2000                	.2byte	0x2000
+20009128:	9120                	.2byte	0x9120
+2000912a:	2000                	.2byte	0x2000
+2000912c:	9120                	.2byte	0x9120
+2000912e:	2000                	.2byte	0x2000
+20009130:	9128                	.2byte	0x9128
+20009132:	2000                	.2byte	0x2000
+20009134:	9128                	.2byte	0x9128
+20009136:	2000                	.2byte	0x2000
+20009138:	9130                	.2byte	0x9130
+2000913a:	2000                	.2byte	0x2000
+2000913c:	9130                	.2byte	0x9130
+2000913e:	2000                	.2byte	0x2000
+20009140:	9138                	.2byte	0x9138
+20009142:	2000                	.2byte	0x2000
+20009144:	9138                	.2byte	0x9138
+20009146:	2000                	.2byte	0x2000
+20009148:	9140                	.2byte	0x9140
+2000914a:	2000                	.2byte	0x2000
+2000914c:	9140                	.2byte	0x9140
+2000914e:	2000                	.2byte	0x2000
+20009150:	9148                	.2byte	0x9148
+20009152:	2000                	.2byte	0x2000
+20009154:	9148                	.2byte	0x9148
+20009156:	2000                	.2byte	0x2000
+20009158:	9150                	.2byte	0x9150
+2000915a:	2000                	.2byte	0x2000
+2000915c:	9150                	.2byte	0x9150
+2000915e:	2000                	.2byte	0x2000
+20009160:	9158                	.2byte	0x9158
+20009162:	2000                	.2byte	0x2000
+20009164:	9158                	.2byte	0x9158
+20009166:	2000                	.2byte	0x2000
+20009168:	9160                	.2byte	0x9160
+2000916a:	2000                	.2byte	0x2000
+2000916c:	9160                	.2byte	0x9160
+2000916e:	2000                	.2byte	0x2000
+20009170:	9168                	.2byte	0x9168
+20009172:	2000                	.2byte	0x2000
+20009174:	9168                	.2byte	0x9168
+20009176:	2000                	.2byte	0x2000
+20009178:	9170                	.2byte	0x9170
+2000917a:	2000                	.2byte	0x2000
+2000917c:	9170                	.2byte	0x9170
+2000917e:	2000                	.2byte	0x2000
+20009180:	9178                	.2byte	0x9178
+20009182:	2000                	.2byte	0x2000
+20009184:	9178                	.2byte	0x9178
+20009186:	2000                	.2byte	0x2000
+20009188:	9180                	.2byte	0x9180
+2000918a:	2000                	.2byte	0x2000
+2000918c:	9180                	.2byte	0x9180
+2000918e:	2000                	.2byte	0x2000
+20009190:	9188                	.2byte	0x9188
+20009192:	2000                	.2byte	0x2000
+20009194:	9188                	.2byte	0x9188
+20009196:	2000                	.2byte	0x2000
+20009198:	9190                	.2byte	0x9190
+2000919a:	2000                	.2byte	0x2000
+2000919c:	9190                	.2byte	0x9190
+2000919e:	2000                	.2byte	0x2000
+200091a0:	9198                	.2byte	0x9198
+200091a2:	2000                	.2byte	0x2000
+200091a4:	9198                	.2byte	0x9198
+200091a6:	2000                	.2byte	0x2000
+200091a8:	91a0                	.2byte	0x91a0
+200091aa:	2000                	.2byte	0x2000
+200091ac:	91a0                	.2byte	0x91a0
+200091ae:	2000                	.2byte	0x2000
+200091b0:	91a8                	.2byte	0x91a8
+200091b2:	2000                	.2byte	0x2000
+200091b4:	91a8                	.2byte	0x91a8
+200091b6:	2000                	.2byte	0x2000
+200091b8:	91b0                	.2byte	0x91b0
+200091ba:	2000                	.2byte	0x2000
+200091bc:	91b0                	.2byte	0x91b0
+200091be:	2000                	.2byte	0x2000
+200091c0:	91b8                	.2byte	0x91b8
+200091c2:	2000                	.2byte	0x2000
+200091c4:	91b8                	.2byte	0x91b8
+200091c6:	2000                	.2byte	0x2000
+200091c8:	91c0                	.2byte	0x91c0
+200091ca:	2000                	.2byte	0x2000
+200091cc:	91c0                	.2byte	0x91c0
+200091ce:	2000                	.2byte	0x2000
+200091d0:	91c8                	.2byte	0x91c8
+200091d2:	2000                	.2byte	0x2000
+200091d4:	91c8                	.2byte	0x91c8
+200091d6:	2000                	.2byte	0x2000
+200091d8:	91d0                	.2byte	0x91d0
+200091da:	2000                	.2byte	0x2000
+200091dc:	91d0                	.2byte	0x91d0
+200091de:	2000                	.2byte	0x2000
+200091e0:	91d8                	.2byte	0x91d8
+200091e2:	2000                	.2byte	0x2000
+200091e4:	91d8                	.2byte	0x91d8
+200091e6:	2000                	.2byte	0x2000
+200091e8:	91e0                	.2byte	0x91e0
+200091ea:	2000                	.2byte	0x2000
+200091ec:	91e0                	.2byte	0x91e0
+200091ee:	2000                	.2byte	0x2000
+200091f0:	91e8                	.2byte	0x91e8
+200091f2:	2000                	.2byte	0x2000
+200091f4:	91e8                	.2byte	0x91e8
+200091f6:	2000                	.2byte	0x2000
+200091f8:	91f0                	.2byte	0x91f0
+200091fa:	2000                	.2byte	0x2000
+200091fc:	91f0                	.2byte	0x91f0
+200091fe:	2000                	.2byte	0x2000
+20009200:	91f8                	.2byte	0x91f8
+20009202:	2000                	.2byte	0x2000
+20009204:	91f8                	.2byte	0x91f8
+20009206:	2000                	.2byte	0x2000
+20009208:	9200                	.2byte	0x9200
+2000920a:	2000                	.2byte	0x2000
+2000920c:	9200                	.2byte	0x9200
+2000920e:	2000                	.2byte	0x2000
+20009210:	9208                	.2byte	0x9208
+20009212:	2000                	.2byte	0x2000
+20009214:	9208                	.2byte	0x9208
+20009216:	2000                	.2byte	0x2000
+20009218:	9210                	.2byte	0x9210
+2000921a:	2000                	.2byte	0x2000
+2000921c:	9210                	.2byte	0x9210
+2000921e:	2000                	.2byte	0x2000
+20009220:	9218                	.2byte	0x9218
+20009222:	2000                	.2byte	0x2000
+20009224:	9218                	.2byte	0x9218
+20009226:	2000                	.2byte	0x2000
+20009228:	9220                	.2byte	0x9220
+2000922a:	2000                	.2byte	0x2000
+2000922c:	9220                	.2byte	0x9220
+2000922e:	2000                	.2byte	0x2000
+20009230:	9228                	.2byte	0x9228
+20009232:	2000                	.2byte	0x2000
+20009234:	9228                	.2byte	0x9228
+20009236:	2000                	.2byte	0x2000
+20009238:	9230                	.2byte	0x9230
+2000923a:	2000                	.2byte	0x2000
+2000923c:	9230                	.2byte	0x9230
+2000923e:	2000                	.2byte	0x2000
+20009240:	9238                	.2byte	0x9238
+20009242:	2000                	.2byte	0x2000
+20009244:	9238                	.2byte	0x9238
+20009246:	2000                	.2byte	0x2000
+20009248:	9240                	.2byte	0x9240
+2000924a:	2000                	.2byte	0x2000
+2000924c:	9240                	.2byte	0x9240
+2000924e:	2000                	.2byte	0x2000
+20009250:	9248                	.2byte	0x9248
+20009252:	2000                	.2byte	0x2000
+20009254:	9248                	.2byte	0x9248
+20009256:	2000                	.2byte	0x2000
+20009258:	9250                	.2byte	0x9250
+2000925a:	2000                	.2byte	0x2000
+2000925c:	9250                	.2byte	0x9250
+2000925e:	2000                	.2byte	0x2000
+20009260:	9258                	.2byte	0x9258
+20009262:	2000                	.2byte	0x2000
+20009264:	9258                	.2byte	0x9258
+20009266:	2000                	.2byte	0x2000
+20009268:	9260                	.2byte	0x9260
+2000926a:	2000                	.2byte	0x2000
+2000926c:	9260                	.2byte	0x9260
+2000926e:	2000                	.2byte	0x2000
+20009270:	9268                	.2byte	0x9268
+20009272:	2000                	.2byte	0x2000
+20009274:	9268                	.2byte	0x9268
+20009276:	2000                	.2byte	0x2000
+20009278:	9270                	.2byte	0x9270
+2000927a:	2000                	.2byte	0x2000
+2000927c:	9270                	.2byte	0x9270
+2000927e:	2000                	.2byte	0x2000
+20009280:	9278                	.2byte	0x9278
+20009282:	2000                	.2byte	0x2000
+20009284:	9278                	.2byte	0x9278
+20009286:	2000                	.2byte	0x2000
+20009288:	9280                	.2byte	0x9280
+2000928a:	2000                	.2byte	0x2000
+2000928c:	9280                	.2byte	0x9280
+2000928e:	2000                	.2byte	0x2000
+20009290:	9288                	.2byte	0x9288
+20009292:	2000                	.2byte	0x2000
+20009294:	9288                	.2byte	0x9288
+20009296:	2000                	.2byte	0x2000
+20009298:	9290                	.2byte	0x9290
+2000929a:	2000                	.2byte	0x2000
+2000929c:	9290                	.2byte	0x9290
+2000929e:	2000                	.2byte	0x2000
+200092a0:	9298                	.2byte	0x9298
+200092a2:	2000                	.2byte	0x2000
+200092a4:	9298                	.2byte	0x9298
+200092a6:	2000                	.2byte	0x2000
+200092a8:	92a0                	.2byte	0x92a0
+200092aa:	2000                	.2byte	0x2000
+200092ac:	92a0                	.2byte	0x92a0
+200092ae:	2000                	.2byte	0x2000
+200092b0:	92a8                	.2byte	0x92a8
+200092b2:	2000                	.2byte	0x2000
+200092b4:	92a8                	.2byte	0x92a8
+200092b6:	2000                	.2byte	0x2000
+200092b8:	92b0                	.2byte	0x92b0
+200092ba:	2000                	.2byte	0x2000
+200092bc:	92b0                	.2byte	0x92b0
+200092be:	2000                	.2byte	0x2000
+200092c0:	92b8                	.2byte	0x92b8
+200092c2:	2000                	.2byte	0x2000
+200092c4:	92b8                	.2byte	0x92b8
+200092c6:	2000                	.2byte	0x2000
+200092c8:	92c0                	.2byte	0x92c0
+200092ca:	2000                	.2byte	0x2000
+200092cc:	92c0                	.2byte	0x92c0
+200092ce:	2000                	.2byte	0x2000
+200092d0:	92c8                	.2byte	0x92c8
+200092d2:	2000                	.2byte	0x2000
+200092d4:	92c8                	.2byte	0x92c8
+200092d6:	2000                	.2byte	0x2000
+200092d8:	92d0                	.2byte	0x92d0
+200092da:	2000                	.2byte	0x2000
+200092dc:	92d0                	.2byte	0x92d0
+200092de:	2000                	.2byte	0x2000
+200092e0:	92d8                	.2byte	0x92d8
+200092e2:	2000                	.2byte	0x2000
+200092e4:	92d8                	.2byte	0x92d8
+200092e6:	2000                	.2byte	0x2000
+200092e8:	92e0                	.2byte	0x92e0
+200092ea:	2000                	.2byte	0x2000
+200092ec:	92e0                	.2byte	0x92e0
+200092ee:	2000                	.2byte	0x2000
+200092f0:	92e8                	.2byte	0x92e8
+200092f2:	2000                	.2byte	0x2000
+200092f4:	92e8                	.2byte	0x92e8
+200092f6:	2000                	.2byte	0x2000
+200092f8:	92f0                	.2byte	0x92f0
+200092fa:	2000                	.2byte	0x2000
+200092fc:	92f0                	.2byte	0x92f0
+200092fe:	2000                	.2byte	0x2000
+20009300:	92f8                	.2byte	0x92f8
+20009302:	2000                	.2byte	0x2000
+20009304:	92f8                	.2byte	0x92f8
+20009306:	2000                	.2byte	0x2000
+20009308:	9300                	.2byte	0x9300
+2000930a:	2000                	.2byte	0x2000
+2000930c:	9300                	.2byte	0x9300
+2000930e:	2000                	.2byte	0x2000
+20009310:	9308                	.2byte	0x9308
+20009312:	2000                	.2byte	0x2000
+20009314:	9308                	.2byte	0x9308
+20009316:	2000                	.2byte	0x2000
+20009318:	9310                	.2byte	0x9310
+2000931a:	2000                	.2byte	0x2000
+2000931c:	9310                	.2byte	0x9310
+2000931e:	2000                	.2byte	0x2000
+20009320:	9318                	.2byte	0x9318
+20009322:	2000                	.2byte	0x2000
+20009324:	9318                	.2byte	0x9318
+20009326:	2000                	.2byte	0x2000
+20009328:	9320                	.2byte	0x9320
+2000932a:	2000                	.2byte	0x2000
+2000932c:	9320                	.2byte	0x9320
+2000932e:	2000                	.2byte	0x2000
+20009330:	9328                	.2byte	0x9328
+20009332:	2000                	.2byte	0x2000
+20009334:	9328                	.2byte	0x9328
+20009336:	2000                	.2byte	0x2000
+20009338:	9330                	.2byte	0x9330
+2000933a:	2000                	.2byte	0x2000
+2000933c:	9330                	.2byte	0x9330
+2000933e:	2000                	.2byte	0x2000
+20009340:	9338                	.2byte	0x9338
+20009342:	2000                	.2byte	0x2000
+20009344:	9338                	.2byte	0x9338
+20009346:	2000                	.2byte	0x2000
+20009348:	9340                	.2byte	0x9340
+2000934a:	2000                	.2byte	0x2000
+2000934c:	9340                	.2byte	0x9340
+2000934e:	2000                	.2byte	0x2000
+20009350:	9348                	.2byte	0x9348
+20009352:	2000                	.2byte	0x2000
+20009354:	9348                	.2byte	0x9348
+20009356:	2000                	.2byte	0x2000
+20009358:	9350                	.2byte	0x9350
+2000935a:	2000                	.2byte	0x2000
+2000935c:	9350                	.2byte	0x9350
+2000935e:	2000                	.2byte	0x2000
+20009360:	9358                	.2byte	0x9358
+20009362:	2000                	.2byte	0x2000
+20009364:	9358                	.2byte	0x9358
+20009366:	2000                	.2byte	0x2000
+20009368:	9360                	.2byte	0x9360
+2000936a:	2000                	.2byte	0x2000
+2000936c:	9360                	.2byte	0x9360
+2000936e:	2000                	.2byte	0x2000
+20009370:	9368                	.2byte	0x9368
+20009372:	2000                	.2byte	0x2000
+20009374:	9368                	.2byte	0x9368
+20009376:	2000                	.2byte	0x2000
+20009378:	9370                	.2byte	0x9370
+2000937a:	2000                	.2byte	0x2000
+2000937c:	9370                	.2byte	0x9370
+2000937e:	2000                	.2byte	0x2000
+20009380:	9378                	.2byte	0x9378
+20009382:	2000                	.2byte	0x2000
+20009384:	9378                	.2byte	0x9378
+20009386:	2000                	.2byte	0x2000
+20009388:	9380                	.2byte	0x9380
+2000938a:	2000                	.2byte	0x2000
+2000938c:	9380                	.2byte	0x9380
+2000938e:	2000                	.2byte	0x2000
+20009390:	9388                	.2byte	0x9388
+20009392:	2000                	.2byte	0x2000
+20009394:	9388                	.2byte	0x9388
+20009396:	2000                	.2byte	0x2000
+20009398:	9390                	.2byte	0x9390
+2000939a:	2000                	.2byte	0x2000
+2000939c:	9390                	.2byte	0x9390
+2000939e:	2000                	.2byte	0x2000
+200093a0:	9398                	.2byte	0x9398
+200093a2:	2000                	.2byte	0x2000
+200093a4:	9398                	.2byte	0x9398
+200093a6:	2000                	.2byte	0x2000
+200093a8:	93a0                	.2byte	0x93a0
+200093aa:	2000                	.2byte	0x2000
+200093ac:	93a0                	.2byte	0x93a0
+200093ae:	2000                	.2byte	0x2000
+200093b0:	93a8                	.2byte	0x93a8
+200093b2:	2000                	.2byte	0x2000
+200093b4:	93a8                	.2byte	0x93a8
+200093b6:	2000                	.2byte	0x2000
+200093b8:	93b0                	.2byte	0x93b0
+200093ba:	2000                	.2byte	0x2000
+200093bc:	93b0                	.2byte	0x93b0
+200093be:	2000                	.2byte	0x2000
+200093c0:	93b8                	.2byte	0x93b8
+200093c2:	2000                	.2byte	0x2000
+200093c4:	93b8                	.2byte	0x93b8
+200093c6:	2000                	.2byte	0x2000
+200093c8:	93c0                	.2byte	0x93c0
+200093ca:	2000                	.2byte	0x2000
+200093cc:	93c0                	.2byte	0x93c0
+200093ce:	2000                	.2byte	0x2000
+200093d0:	93c8                	.2byte	0x93c8
+200093d2:	2000                	.2byte	0x2000
+200093d4:	93c8                	.2byte	0x93c8
+200093d6:	2000                	.2byte	0x2000
+200093d8:	93d0                	.2byte	0x93d0
+200093da:	2000                	.2byte	0x2000
+200093dc:	93d0                	.2byte	0x93d0
+200093de:	2000                	.2byte	0x2000
+200093e0:	93d8                	.2byte	0x93d8
+200093e2:	2000                	.2byte	0x2000
+200093e4:	93d8                	.2byte	0x93d8
+200093e6:	2000                	.2byte	0x2000
+200093e8:	93e0                	.2byte	0x93e0
+200093ea:	2000                	.2byte	0x2000
+200093ec:	93e0                	.2byte	0x93e0
+200093ee:	2000                	.2byte	0x2000
+200093f0:	93e8                	.2byte	0x93e8
+200093f2:	2000                	.2byte	0x2000
+200093f4:	93e8                	.2byte	0x93e8
+200093f6:	2000                	.2byte	0x2000
+200093f8:	93f0                	.2byte	0x93f0
+200093fa:	2000                	.2byte	0x2000
+200093fc:	93f0                	.2byte	0x93f0
+200093fe:	2000                	.2byte	0x2000
+20009400:	93f8                	.2byte	0x93f8
+20009402:	2000                	.2byte	0x2000
+20009404:	93f8                	.2byte	0x93f8
+20009406:	2000                	.2byte	0x2000
+20009408:	9400                	.2byte	0x9400
+2000940a:	2000                	.2byte	0x2000
+2000940c:	9400                	.2byte	0x9400
+2000940e:	2000                	.2byte	0x2000
+20009410:	9408                	.2byte	0x9408
+20009412:	2000                	.2byte	0x2000
+20009414:	9408                	.2byte	0x9408
+20009416:	2000                	.2byte	0x2000
+20009418:	9410                	.2byte	0x9410
+2000941a:	2000                	.2byte	0x2000
+2000941c:	9410                	.2byte	0x9410
+2000941e:	2000                	.2byte	0x2000
+20009420:	9418                	.2byte	0x9418
+20009422:	2000                	.2byte	0x2000
+20009424:	9418                	.2byte	0x9418
+20009426:	2000                	.2byte	0x2000
+20009428:	9420                	.2byte	0x9420
+2000942a:	2000                	.2byte	0x2000
+2000942c:	9420                	.2byte	0x9420
+2000942e:	2000                	.2byte	0x2000
+20009430:	9428                	.2byte	0x9428
+20009432:	2000                	.2byte	0x2000
+20009434:	9428                	.2byte	0x9428
+20009436:	2000                	.2byte	0x2000
+20009438:	9430                	.2byte	0x9430
+2000943a:	2000                	.2byte	0x2000
+2000943c:	9430                	.2byte	0x9430
+2000943e:	2000                	.2byte	0x2000
+20009440:	9438                	.2byte	0x9438
+20009442:	2000                	.2byte	0x2000
+20009444:	9438                	.2byte	0x9438
+20009446:	2000                	.2byte	0x2000
+20009448:	9440                	.2byte	0x9440
+2000944a:	2000                	.2byte	0x2000
+2000944c:	9440                	.2byte	0x9440
+2000944e:	2000                	.2byte	0x2000
+20009450:	9448                	.2byte	0x9448
+20009452:	2000                	.2byte	0x2000
+20009454:	9448                	.2byte	0x9448
+20009456:	2000                	.2byte	0x2000
+20009458:	9450                	.2byte	0x9450
+2000945a:	2000                	.2byte	0x2000
+2000945c:	9450                	.2byte	0x9450
+2000945e:	2000                	.2byte	0x2000
+20009460:	9458                	.2byte	0x9458
+20009462:	2000                	.2byte	0x2000
+20009464:	9458                	.2byte	0x9458
+20009466:	2000                	.2byte	0x2000
+20009468:	9460                	.2byte	0x9460
+2000946a:	2000                	.2byte	0x2000
+2000946c:	9460                	.2byte	0x9460
+2000946e:	2000                	.2byte	0x2000
+20009470:	9468                	.2byte	0x9468
+20009472:	2000                	.2byte	0x2000
+20009474:	9468                	.2byte	0x9468
+20009476:	2000                	.2byte	0x2000
+20009478:	9470                	.2byte	0x9470
+2000947a:	2000                	.2byte	0x2000
+2000947c:	9470                	.2byte	0x9470
+2000947e:	2000                	.2byte	0x2000
+20009480:	9478                	.2byte	0x9478
+20009482:	2000                	.2byte	0x2000
+20009484:	9478                	.2byte	0x9478
+20009486:	2000                	.2byte	0x2000
+20009488:	9480                	.2byte	0x9480
+2000948a:	2000                	.2byte	0x2000
+2000948c:	9480                	.2byte	0x9480
+2000948e:	2000                	.2byte	0x2000
+20009490:	9488                	.2byte	0x9488
+20009492:	2000                	.2byte	0x2000
+20009494:	9488                	.2byte	0x9488
+20009496:	2000                	.2byte	0x2000
+20009498:	9490                	.2byte	0x9490
+2000949a:	2000                	.2byte	0x2000
+2000949c:	9490                	.2byte	0x9490
+2000949e:	2000                	.2byte	0x2000
+200094a0:	9498                	.2byte	0x9498
+200094a2:	2000                	.2byte	0x2000
+200094a4:	9498                	.2byte	0x9498
+200094a6:	2000                	.2byte	0x2000
+200094a8:	94a0                	.2byte	0x94a0
+200094aa:	2000                	.2byte	0x2000
+200094ac:	94a0                	.2byte	0x94a0
+200094ae:	2000                	.2byte	0x2000
+200094b0:	94a8                	.2byte	0x94a8
+200094b2:	2000                	.2byte	0x2000
+200094b4:	94a8                	.2byte	0x94a8
+200094b6:	2000                	.2byte	0x2000
+200094b8:	94b0                	.2byte	0x94b0
+200094ba:	2000                	.2byte	0x2000
+200094bc:	94b0                	.2byte	0x94b0
+200094be:	2000                	.2byte	0x2000
+200094c0:	94b8                	.2byte	0x94b8
+200094c2:	2000                	.2byte	0x2000
+200094c4:	94b8                	.2byte	0x94b8
+200094c6:	2000                	.2byte	0x2000
+200094c8:	94c0                	.2byte	0x94c0
+200094ca:	2000                	.2byte	0x2000
+200094cc:	94c0                	.2byte	0x94c0
+200094ce:	2000                	.2byte	0x2000
+200094d0:	94c8                	.2byte	0x94c8
+200094d2:	2000                	.2byte	0x2000
+200094d4:	94c8                	.2byte	0x94c8
+200094d6:	2000                	.2byte	0x2000
+200094d8:	94d0                	.2byte	0x94d0
+200094da:	2000                	.2byte	0x2000
+200094dc:	94d0                	.2byte	0x94d0
+200094de:	2000                	.2byte	0x2000
+200094e0:	94d8                	.2byte	0x94d8
+200094e2:	2000                	.2byte	0x2000
+200094e4:	94d8                	.2byte	0x94d8
+200094e6:	2000                	.2byte	0x2000
+200094e8:	94e0                	.2byte	0x94e0
+200094ea:	2000                	.2byte	0x2000
+200094ec:	94e0                	.2byte	0x94e0
+200094ee:	2000                	.2byte	0x2000
+200094f0:	94e8                	.2byte	0x94e8
+200094f2:	2000                	.2byte	0x2000
+200094f4:	94e8                	.2byte	0x94e8
+200094f6:	2000                	.2byte	0x2000
+200094f8:	94f0                	.2byte	0x94f0
+200094fa:	2000                	.2byte	0x2000
+200094fc:	94f0                	.2byte	0x94f0
+200094fe:	2000                	.2byte	0x2000
+20009500:	94f8                	.2byte	0x94f8
+20009502:	2000                	.2byte	0x2000
+20009504:	94f8                	.2byte	0x94f8
+20009506:	2000                	.2byte	0x2000
+20009508:	9500                	.2byte	0x9500
+2000950a:	2000                	.2byte	0x2000
+2000950c:	9500                	.2byte	0x9500
+2000950e:	2000                	.2byte	0x2000
+20009510:	9508                	.2byte	0x9508
+20009512:	2000                	.2byte	0x2000
+20009514:	9508                	.2byte	0x9508
+20009516:	2000                	.2byte	0x2000
+20009518:	9510                	.2byte	0x9510
+2000951a:	2000                	.2byte	0x2000
+2000951c:	9510                	.2byte	0x9510
+2000951e:	2000                	.2byte	0x2000
 
 Disassembly of section .got:
 
-20020ea8 <_GLOBAL_OFFSET_TABLE_>:
-20020ea8:	0000                	.2byte	0x0
-20020eaa:	0000                	.2byte	0x0
-20020eac:	1700                	.2byte	0x1700
-20020eae:	2002                	.2byte	0x2002
-20020eb0:	0f20                	.2byte	0xf20
-20020eb2:	2002                	.2byte	0x2002
-20020eb4:	0464                	.2byte	0x464
-20020eb6:	2002                	.2byte	0x2002
-20020eb8:	0664                	.2byte	0x664
-20020eba:	2002                	.2byte	0x2002
-20020ebc:	0460                	.2byte	0x460
-20020ebe:	2002                	.2byte	0x2002
-20020ec0:	0564                	.2byte	0x564
-20020ec2:	2002                	.2byte	0x2002
-20020ec4:	4d2c                	.2byte	0x4d2c
-20020ec6:	2000                	.2byte	0x2000
-20020ec8:	045c                	.2byte	0x45c
-20020eca:	2002                	.2byte	0x2002
-20020ecc:	0400                	.2byte	0x400
-20020ece:	0000                	.2byte	0x0
-20020ed0:	0668                	.2byte	0x668
-20020ed2:	2002                	.2byte	0x2002
-20020ed4:	0f10                	.2byte	0xf10
-20020ed6:	2002                	.2byte	0x2002
-20020ed8:	0458                	.2byte	0x458
-20020eda:	2002                	.2byte	0x2002
-20020edc:	4d00                	.2byte	0x4d00
-20020ede:	2000                	.2byte	0x2000
-20020ee0:	0450                	.2byte	0x450
-20020ee2:	2002                	.2byte	0x2002
-20020ee4:	0580                	.2byte	0x580
-20020ee6:	2000                	.2byte	0x2000
-20020ee8:	1a28                	.2byte	0x1a28
-20020eea:	2002                	.2byte	0x2002
-20020eec:	1120                	.2byte	0x1120
-20020eee:	2002                	.2byte	0x2002
-20020ef0:	0000                	.2byte	0x0
-20020ef2:	2002                	.2byte	0x2002
-20020ef4:	1328                	.2byte	0x1328
-20020ef6:	2002                	.2byte	0x2002
+20009520 <_GLOBAL_OFFSET_TABLE_>:
+20009520:	0000                	.2byte	0x0
+20009522:	0000                	.2byte	0x0
+20009524:	9d80                	.2byte	0x9d80
+20009526:	2000                	.2byte	0x2000
+20009528:	9598                	.2byte	0x9598
+2000952a:	2000                	.2byte	0x2000
+2000952c:	8adc                	.2byte	0x8adc
+2000952e:	2000                	.2byte	0x2000
+20009530:	8cdc                	.2byte	0x8cdc
+20009532:	2000                	.2byte	0x2000
+20009534:	8ad8                	.2byte	0x8ad8
+20009536:	2000                	.2byte	0x2000
+20009538:	8bdc                	.2byte	0x8bdc
+2000953a:	2000                	.2byte	0x2000
+2000953c:	4d2c                	.2byte	0x4d2c
+2000953e:	2000                	.2byte	0x2000
+20009540:	8ad4                	.2byte	0x8ad4
+20009542:	2000                	.2byte	0x2000
+20009544:	0400                	.2byte	0x400
+20009546:	0000                	.2byte	0x0
+20009548:	8ce0                	.2byte	0x8ce0
+2000954a:	2000                	.2byte	0x2000
+2000954c:	9588                	.2byte	0x9588
+2000954e:	2000                	.2byte	0x2000
+20009550:	8ad0                	.2byte	0x8ad0
+20009552:	2000                	.2byte	0x2000
+20009554:	4d00                	.2byte	0x4d00
+20009556:	2000                	.2byte	0x2000
+20009558:	8ac8                	.2byte	0x8ac8
+2000955a:	2000                	.2byte	0x2000
+2000955c:	0580                	.2byte	0x580
+2000955e:	2000                	.2byte	0x2000
+20009560:	a0a0                	.2byte	0xa0a0
+20009562:	2000                	.2byte	0x2000
+20009564:	9798                	.2byte	0x9798
+20009566:	2000                	.2byte	0x2000
+20009568:	8678                	.2byte	0x8678
+2000956a:	2000                	.2byte	0x2000
+2000956c:	99a0                	.2byte	0x99a0
+2000956e:	2000                	.2byte	0x2000
 
 Disassembly of section .got.plt:
 
-20020ef8 <.got.plt>:
-20020ef8:	ffff                	.2byte	0xffff
-20020efa:	ffff                	.2byte	0xffff
-20020efc:	0000                	.2byte	0x0
+20009570 <.got.plt>:
+20009570:	ffff                	.2byte	0xffff
+20009572:	ffff                	.2byte	0xffff
+20009574:	0000                	.2byte	0x0
 	...
 
 Disassembly of section .sdata:
 
-20020f00 <_impure_ptr>:
-20020f00:	0678                	.2byte	0x678
-20020f02:	2002                	.2byte	0x2002
+20009578 <_impure_ptr>:
+20009578:	8cf0                	.2byte	0x8cf0
+2000957a:	2000                	.2byte	0x2000
 
-20020f04 <__malloc_sbrk_base>:
-20020f04:	ffff                	.2byte	0xffff
-20020f06:	ffff                	.2byte	0xffff
+2000957c <__malloc_sbrk_base>:
+2000957c:	ffff                	.2byte	0xffff
+2000957e:	ffff                	.2byte	0xffff
 
-20020f08 <__malloc_trim_threshold>:
-20020f08:	0000                	.2byte	0x0
-20020f0a:	0002                	.2byte	0x2
+20009580 <__malloc_trim_threshold>:
+20009580:	0000                	.2byte	0x0
+20009582:	0002                	.2byte	0x2
 
-20020f0c <_global_impure_ptr>:
-20020f0c:	0678                	.2byte	0x678
-20020f0e:	2002                	.2byte	0x2002
+20009584 <_global_impure_ptr>:
+20009584:	8cf0                	.2byte	0x8cf0
+20009586:	2000                	.2byte	0x2000
 
 Disassembly of section .sbss:
 
-20020f10 <__malloc_max_total_mem>:
-20020f10:	0000                	.2byte	0x0
+20009588 <__malloc_max_total_mem>:
+20009588:	0000                	.2byte	0x0
 	...
 
-20020f14 <__malloc_max_sbrked_mem>:
-20020f14:	0000                	.2byte	0x0
+2000958c <__malloc_max_sbrked_mem>:
+2000958c:	0000                	.2byte	0x0
 	...
 
-20020f18 <__malloc_top_pad>:
-20020f18:	0000                	.2byte	0x0
+20009590 <__malloc_top_pad>:
+20009590:	0000                	.2byte	0x0
 	...
 
-20020f1c <errno>:
-20020f1c:	0000                	.2byte	0x0
+20009594 <errno>:
+20009594:	0000                	.2byte	0x0
 	...
 
 Disassembly of section .bss:
 
-20020f20 <keymapprev>:
+20009598 <keymapprev>:
 	...
 
-20021120 <keymap>:
+20009798 <keymap>:
 	...
 
-20021320 <_ZZ13ParseCommandsvE8lastaddr>:
-20021320:	0000                	.2byte	0x0
+20009998 <_ZZ13ParseCommandsvE8lastaddr>:
+20009998:	0000                	.2byte	0x0
 	...
 
-20021324 <_ZZ16ProcessKeyEventsvE9uppercase>:
-20021324:	0000                	.2byte	0x0
+2000999c <_ZZ16ProcessKeyEventsvE9uppercase>:
+2000999c:	0000                	.2byte	0x0
 	...
 
-20021328 <Fs>:
+200099a0 <Fs>:
 	...
 
-20021560 <_ZL6cmdlen>:
-20021560:	0000                	.2byte	0x0
+20009bd8 <_ZL6cmdlen>:
+20009bd8:	0000                	.2byte	0x0
 	...
 
-20021564 <_ZL8filename>:
+20009bdc <_ZL8filename>:
 	...
 
-200215e4 <_ZL11commandline>:
+20009c5c <_ZL11commandline>:
 	...
 
-200217e4 <_ZL13m_writeOffset>:
-200217e4:	0000                	.2byte	0x0
+20009e5c <_ZL13m_writeOffset>:
+20009e5c:	0000                	.2byte	0x0
 	...
 
-200217e8 <_ZL12m_readOffset>:
-200217e8:	0000                	.2byte	0x0
+20009e60 <_ZL12m_readOffset>:
+20009e60:	0000                	.2byte	0x0
 	...
 
-200217ec <_ZL12m_ringBuffer>:
-200217ec:	0000                	.2byte	0x0
+20009e64 <_ZL12m_ringBuffer>:
+20009e64:	0000                	.2byte	0x0
 	...
 
-200217f0 <_ZL6LfnBuf>:
+20009e68 <_ZL6LfnBuf>:
 	...
 
-200219f0 <_ZL7CurrVol>:
+2000a068 <_ZL7CurrVol>:
 	...
 
-200219f2 <_ZL4Fsid>:
+2000a06a <_ZL4Fsid>:
 	...
 
-200219f4 <_ZL5FatFs>:
+2000a06c <_ZL5FatFs>:
 	...
 
-20021a00 <__malloc_current_mallinfo>:
+2000a078 <__malloc_current_mallinfo>:
 	...
 
 Disassembly of section .comment:

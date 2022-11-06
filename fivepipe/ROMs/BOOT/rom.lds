@@ -6,13 +6,7 @@ OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 GROUP( -lc -lgloss -lgcc )
 
 MEMORY{
-   ROM (xr) : ORIGIN = 0x20000000, LENGTH = 0x20000
-   RAM (rw) : ORIGIN = 0x20020000, LENGTH = 0x20000
-}
-
-PHDRS{
-  ROM PT_LOAD;
-  RAM PT_LOAD;
+   ROMRAM (xwr) : ORIGIN = 0x20000000, LENGTH = 0x3F000
 }
 
 ENTRY(_start)
@@ -34,7 +28,7 @@ SECTIONS
      . = 0x00000000;
      *(.boot)
      _boot = .;
-  } > ROM : ROM
+  }
 
   /* Begining of code and text segment */
   /* . = 0x00010000; */
@@ -127,7 +121,7 @@ SECTIONS
     *(.data)
     *(.data.*)
     *(.gnu.linkonce.d.*)
-  } > RAM : RAM
+  }
 
   /* End of initialized data segment */
   PROVIDE( edata = . );
