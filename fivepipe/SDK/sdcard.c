@@ -398,6 +398,7 @@ void SDCardControl(int onOff)
       *IO_SPICTL = 0x1; // Power up
       SPIBlank();
       SPIBlank();
+      E32Sleep(1); // Wait 1ms
       *IO_SPICTL = 0x3; // CS + power
       SPIBlank();
       SPIBlank();
@@ -407,6 +408,7 @@ void SDCardControl(int onOff)
       *IO_SPICTL = 0x0;
       SPIBlank();
       SPIBlank();
+      E32Sleep(1); // Wait 1ms
    }
 }
 
