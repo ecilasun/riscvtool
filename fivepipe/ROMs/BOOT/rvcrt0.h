@@ -4,7 +4,7 @@
 
 // This unit has more than one HART
 // Defined this to allow for auto-setup of per-HART stacks
-#define MULTIHART
+#define MULTIHART_SUPPORT
 
 extern "C"
 {
@@ -22,20 +22,20 @@ extern "C"
          "la gp, __global_pointer$;"
          ".option pop;"
 
-#if defined(MULTIHART)
-         "csrr	s1, mhartid;"        // get hart id
-         "li sp, 0x1FFFFF00;"       // End of memory minus 256 bytes
+#if defined(MULTIHART_SUPPORT)
+         "li sp, 0x1FFFFFF0;"       // End of memory
          "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
-         "mul s1, s1, s0;"          // Step back by hartid times stack size
-         "sub s2, s2, s1;"          // New stack top is at base - hartid*__stack_size
-         "mv sp, s2;"               // Set new hart stack pointer
+         "csrr	s1, mhartid;"        // Grab hart id
+         "addi s1, s1, 1;"          // Hart id + 1
+         "mul s1, s1, s0;"          // stepback = (hartid + 1) * __stack_size;
+         "sub sp, sp, s1;"          // stacktop = base - stepback;
          "mv s0, sp;"               // Set frame pointer to current stack pointer
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x1FFFFF00;"       // End of memory minus 256 bytes
-         "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
-         "sub sp, sp, s0;"          // Top of stack
+         "li sp, 0x1FFFFFF0;"       // End of memory
+         "la s0, __stack_size$;"    // stepback = __stack_size$;
+         "sub sp, sp, s0;"          // stacktop = base - stepback;
          "mv s0, sp;"               // Set frame pointer to current stack pointer
 #endif
          // Clear BSS
@@ -68,14 +68,14 @@ extern "C"
          // Stop at breakpoint / no return / _exit is useless
          "ebreak;"
 
-#if defined(MULTIHART)
-         "workerhartstart:"
+#if defined(MULTIHART_SUPPORT)
+         "workerhartstart:"   // Entry point for extra harts (hartid!=0)
 
          "lw a0,0(sp);"
          "addi	a1,sp,4;"
          "li a2,0;"
 
-         "j _Z10workermainv;" // All HARTs with id!=0 fall here
+         "j _Z10workermainv;"
 
          // Stop at breakpoint / no return / _exit is useless
          "ebreak;"
@@ -87,11 +87,11 @@ extern "C"
    {
       /*asm (
          // This will invoke an ECALL to halt the HART
-         "li a1,0;"
-         "li a2,0;"
-         "li a3,0;"
-         "li a4,0;"
-         "li a5,0;"
+         "li a1,0x1;"
+         "li a2,0x2;"
+         "li a3,0x3;"
+         "li a4,0x4;"
+         "li a5,0x5;"
          "li a7,93;"
          "ecall;"
          "j _exit;"

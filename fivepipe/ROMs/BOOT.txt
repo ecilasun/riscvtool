@@ -269,14 +269,14 @@ Disassembly of section .boot:
 20000000 <_start>:
 20000000:	00009197          	auipc	gp,0x9
 20000004:	5241a183          	lw	gp,1316(gp) # 20009524 <_GLOBAL_OFFSET_TABLE_+0x4>
-20000008:	f14024f3          	csrr	s1,mhartid
-2000000c:	20000137          	lui	sp,0x20000
-20000010:	f0010113          	addi	sp,sp,-256 # 1fffff00 <__stack_size+0x1ffffb00>
-20000014:	00009417          	auipc	s0,0x9
-20000018:	53042403          	lw	s0,1328(s0) # 20009544 <_GLOBAL_OFFSET_TABLE_+0x24>
-2000001c:	028484b3          	mul	s1,s1,s0
-20000020:	40990933          	sub	s2,s2,s1
-20000024:	00090113          	mv	sp,s2
+20000008:	20000137          	lui	sp,0x20000
+2000000c:	ff010113          	addi	sp,sp,-16 # 1ffffff0 <__stack_size+0x1ffffbf0>
+20000010:	00009417          	auipc	s0,0x9
+20000014:	53442403          	lw	s0,1332(s0) # 20009544 <_GLOBAL_OFFSET_TABLE_+0x24>
+20000018:	f14024f3          	csrr	s1,mhartid
+2000001c:	00148493          	addi	s1,s1,1
+20000020:	028484b3          	mul	s1,s1,s0
+20000024:	40910133          	sub	sp,sp,s1
 20000028:	00010413          	mv	s0,sp
 2000002c:	04049a63          	bnez	s1,20000080 <workerhartstart>
 20000030:	00009517          	auipc	a0,0x9
