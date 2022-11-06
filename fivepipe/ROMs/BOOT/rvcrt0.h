@@ -26,9 +26,9 @@ extern "C"
          "li sp, 0x1FFFFFF0;"       // End of memory
          "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
          "csrr	s1, mhartid;"        // Grab hart id
-         "addi s1, s1, 1;"          // Hart id + 1
-         "mul s1, s1, s0;"          // stepback = (hartid + 1) * __stack_size;
-         "sub sp, sp, s1;"          // stacktop = base - stepback;
+         "addi s2, s1, 1;"          // Hart id + 1
+         "mul s2, s2, s0;"          // stepback = (hartid + 1) * __stack_size;
+         "sub sp, sp, s2;"          // stacktop = base - stepback;
          "mv s0, sp;"               // Set frame pointer to current stack pointer
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
