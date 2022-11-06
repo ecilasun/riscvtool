@@ -151,18 +151,17 @@ void ParseCommands()
 {
 	// Grab first token, if any
 	const char *command = strtok(commandline, " ");
-	static uint32_t lastaddr = 0;
 
 	if (!strcmp(command, "help")) // Help text
 	{
 		UARTWrite("\033[34m\033[47m\033[7mdir\033[0m: show list of files in working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
+		UARTWrite("\033[34m\033[47m\033[7minit\033[0m: initialize DDR3 memory\n");
 		UARTWrite("\033[34m\033[47m\033[7msdtest\033[0m: turn sdcard off and on rapidly for test\n");
 		UARTWrite("\033[34m\033[47m\033[7mtemp\033[0m: show curent temperature\n");
 		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
 		UARTWrite("\033[34m\033[47m\033[7mload\033[0m: load given ELF without starting it\n");
-		UARTWrite("\033[34m\033[47m\033[7mdump\033[0m: dump memory\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -178,22 +177,38 @@ void ParseCommands()
 		UARTWrite(currentdir);
 		UARTWrite("\n");
 	}
-	else if (!strcmp(command, "pwd"))
+	else if (!strcmp(command, "temp"))
 	{
 		uint32_t tempsample = *XADCTEMP;
-		uint32_t temperature_centigrates = (tempsample*504) / 4096 - 273;
+		int temperature_centigrates = (tempsample*504) / 4096 - 273;
 		UARTWrite("Approximate temperature: ");
 		UARTWriteDecimal(temperature_centigrates);
 		UARTWrite(" C\n");
 	}
+	else if (!strcmp(command, "init"))
+	{
+		UARTWrite("Initializing DDR3: ");
+		uint32_t *ddr3mem = (uint32_t*)0;
+		const uint32_t numwords = 0x1FFFF000 / 4;
+		for (uint32_t i=0;i<numwords;++i)
+		{
+			if ((i%0x40000) == 0)
+				UARTWrite("█");
+			ddr3mem[i] = 0xCDCDCDCD;
+		}
+		UARTWrite(" Done\n");
+	}
 	else if (!strcmp(command, "sdtest"))
 	{
+		UARTWrite("Disconnecting SDCard...\n");
 		f_mount(nullptr, "sd:", 1);
 		SDCardControl(0x0);
 		SDCardControl(0x3);
 		FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 		if (mountattempt!=FR_OK)
 			UARTWrite(FRtoString[mountattempt]);
+		else
+			UARTWrite("Reconnected SDCard\n");
 	}
 	else if(!strcmp(command, "cls"))
 	{
@@ -215,33 +230,6 @@ void ParseCommands()
 		else
 			strcpy(execname, "unknown");
 		LoadExecutable(execname, false);
-	}
-	else if (!strcmp(command, "dump"))
-	{
-		// Use first parameter to set current directory
-		char *param = strtok(nullptr, " ");
-		if (param != nullptr)
-		{
-			uint32_t addr = atoi(param); // TODO: Hex aware
-			uint32_t *ptr = (uint32_t*)addr;
-			for (uint32_t a = addr; a<addr+64;++a)
-			{
-				UARTWriteHex(ptr[a]);
-				UARTWrite(" ");
-			}
-			lastaddr = addr + 64;
-		}
-		else
-		{
-			uint32_t addr = lastaddr;
-			uint32_t *ptr = (uint32_t*)addr;
-			for (uint32_t a = addr; a<addr+64;++a)
-			{
-				UARTWriteHex(ptr[a]);
-				UARTWrite(" ");
-			}
-			lastaddr += 64;
-		}
 	}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
@@ -276,13 +264,6 @@ int main()
 
 	UARTWrite("Powering SDCard device\n");
 	SDCardControl(0x3); // Chip select enable/ Power on
-
-	UARTWrite("Initializing upper half of DDR3...\n");
-	uint32_t *ddr3mem = (uint32_t*)0;
-	const uint32_t numwords = 0x10000000 / 4;
-	for (uint32_t i=0;i<numwords;++i)
-		ddr3mem[i] = 0xCDCDCDCD;
-	UARTWrite("Done\n");
 
 	// File system test
 	UARTWrite("Mounting filesystem\n");

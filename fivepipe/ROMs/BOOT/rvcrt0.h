@@ -85,6 +85,9 @@ extern "C"
 
    void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
    {
+      asm volatile(
+         "j _start;" // Let's see if this works...
+      );
       /*asm (
          // This will invoke an ECALL to halt the HART
          "li a1,0x1;"

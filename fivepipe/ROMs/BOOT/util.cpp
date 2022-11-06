@@ -87,14 +87,14 @@ void LoadExecutable(const char *filename, const bool run)
 			UARTWrite("\n");
 
 			asm volatile(
-				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-				"fence.i;"          // Invalidate I$
+				".word 0xFC000073;" // Invalidate & write Back D$ (CFLUSH.D.L1)
+				"fence.i;"          // Invalidate I$ (FENCE.I)
 				"lw s0, %0;"        // Target branch address
 				"jalr s0;"          // Branch to the entry point
 				: "=m" (branchaddress) : : 
 			);
 
-			// TODO: Executables don't come back yet, deal with this then
+			// TODO: Executables can not return here, fix it!
 			UARTWrite("Powering SDCard device\n");
 			SDCardControl(0x3);
 			// f_mount(&Fs, "sd:", 1);
@@ -104,6 +104,12 @@ void LoadExecutable(const char *filename, const bool run)
 			UARTWrite("Loaded. Entry point @0x");
 			UARTWriteHex(branchaddress);
 			UARTWrite("\n");
+			uint32_t *ptr = (uint32_t*)branchaddress;
+			for (uint32_t a = 0; a<128; ++a)
+			{
+				UARTWriteHex(ptr[a]);
+				UARTWrite(" ");
+			}
 		}
 	}
 	else

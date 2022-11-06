@@ -140,7 +140,7 @@ int main()
 	}
 
 	// Set aside space for the decompressed image
-	image = (uint8_t*)malloc(320*208*3*sizeof(uint8_t));
+	image = (uint8_t*)malloc(320*240*3*sizeof(uint8_t));
 
 	DecodeJPEG("sd:test.jpg");
 

@@ -26,26 +26,25 @@ int main( int argc, char **argv )
         if (x==320)
         {
             // Clear screen to white
-            for (uint32_t i=0;i<80*240;++x)
-                VRAM[i] = 0x0F;
+            for (uint32_t i=0;i<80*240;++i)
+                VRAM[i] = 0x0F0F0F0F;
 
             // Show voltage value
-            for (uint32_t i=0;i<320;++x)
+            for (uint32_t i=0;i<320;++i)
             {
                 uint32_t y = (voltagebuffer[i]/17)%240;
                 VRAMBYTES[i + y*320] = 0x00; // Black
             }
 
             // Show temperature value
-            for (uint32_t i=0;i<320;++x)
+            for (uint32_t i=0;i<320;++i)
             {
                 uint32_t y = (temperaturebuffer[i]/17)%240;
                 VRAMBYTES[i + y*320] = 0x0A; // Green
             }
 
-            asm volatile( ".word 0xFC000073;");
-
             x = 0;
+            asm volatile( ".word 0xFC000073;");
         }
     }
 
