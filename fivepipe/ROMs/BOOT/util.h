@@ -1,3 +1,3 @@
 #pragma once
 
-void RunExecutable(const char *filename, const bool reportError);
+void LoadExecutable(const char *filename, const bool run);

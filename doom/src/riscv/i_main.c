@@ -48,10 +48,15 @@ const char *FRtoString[]={
 #include "core.h"
 #include "uart.h"
 #include "fat32/ff.h"
+#include "sdcard.h"
 
 int main(void)
 {
 	FATFS Fs;
+
+	UARTWrite("Powering SDCard device\n");
+	SDCardControl(0x3); // Chip select enable/ Power on
+
 	UARTWrite("Mounting SDCard\n");
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 
@@ -62,6 +67,9 @@ int main(void)
 		UARTWrite("Starting DOOM\n");
 		D_DoomMain();
 	}
+
+	UARTWrite("Turning off SDCard device\n");
+	SDCardControl(0x0);
 
 	return 0;
 }

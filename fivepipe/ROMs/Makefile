@@ -17,6 +17,8 @@ folders = \
 
 # Rules
 
+#override CFLAGS += -Xlinker --defsym=__stack_size=0x800
+
 RISCV_PREFIX ?= riscv64-unknown-elf-
 RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump

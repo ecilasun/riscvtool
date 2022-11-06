@@ -5,6 +5,7 @@
 #include "fat32/ff.h"
 #include "uart.h"
 #include "elf.h"
+#include "sdcard.h"
 
 void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
 {
@@ -33,7 +34,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 	f_lseek(fp, stringtablesection.m_Offset);
 	f_read(fp, names, stringtablesection.m_Size, &bytesread);
 
-	// Load all loadable sections
+	// Load all resident sections
 	for(unsigned short i=0; i<fheader->m_SHNum; ++i)
 	{
 		// Seek-load section headers as needed
@@ -42,8 +43,14 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 		f_read(fp, &sheader, sizeof(SElfSectionHeader32), &bytesread);
 
 		// If this is a section worth loading...
-		if (sheader.m_Flags & 0x00000007 && sheader.m_Size!=0)
+		if ((sheader.m_Flags & 0x00000007) && sheader.m_Size != 0)
 		{
+			UARTWrite("@0x");
+			UARTWriteHex(sheader.m_Addr);
+			UARTWrite("[0x");
+			UARTWriteHex(sheader.m_Size);
+			UARTWrite("]\n");
+
 			// ...place it in memory
 			uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
 			f_lseek(fp, sheader.m_Offset);
@@ -54,7 +61,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 	free(names);
 }
 
-void RunExecutable(const char *filename, const bool reportError)
+void LoadExecutable(const char *filename, const bool run)
 {
 	FIL fp;
 	FRESULT fr = f_open(&fp, filename, FA_READ);
@@ -67,30 +74,42 @@ void RunExecutable(const char *filename, const bool reportError)
 		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
 		f_close(&fp);
 
-		// Unmount volume so the next application can mount it again
-		f_mount(nullptr, "sd:", 1);
+		if (run)
+		{
+			// Unmount volume so the next application can mount it again
+			f_mount(nullptr, "sd:", 1);
 
-        asm volatile(
-            ".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-            "fence.i;"          // Invalidate I$
-            "lw s0, %0;"        // Target branch address
-            "jalr s0;"          // Branch to the entry point
-            : "=m" (branchaddress) : : 
-        );
+			UARTWrite("Turning off SDCard device\n");
+			SDCardControl(0x0);
 
-		UARTWrite("Return from .elf, will hang\n");
-		while (1) { asm volatile( "nop;"); };
+			UARTWrite("Branching to 0x");
+			UARTWriteHex(branchaddress);
+			UARTWrite("\n");
 
-		// TODO: Executables don't come back yet, deal with this then
-		// f_mount(&Fs, "sd:", 1);
+			asm volatile(
+				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+				"fence.i;"          // Invalidate I$
+				"lw s0, %0;"        // Target branch address
+				"jalr s0;"          // Branch to the entry point
+				: "=m" (branchaddress) : : 
+			);
+
+			// TODO: Executables don't come back yet, deal with this then
+			UARTWrite("Powering SDCard device\n");
+			SDCardControl(0x3);
+			// f_mount(&Fs, "sd:", 1);
+		}
+		else
+		{
+			UARTWrite("Loaded. Entry point @0x");
+			UARTWriteHex(branchaddress);
+			UARTWrite("\n");
+		}
 	}
 	else
 	{
-		if (reportError)
-		{
-			UARTWrite("Executable '");
-			UARTWrite(filename);
-			UARTWrite("' not found.\n");
-		}
+		UARTWrite("Executable '");
+		UARTWrite(filename);
+		UARTWrite("' not found.\n");
 	}
 }

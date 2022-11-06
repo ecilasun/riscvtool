@@ -24,16 +24,19 @@ extern "C"
 
 #if defined(MULTIHART)
          "csrr	s1, mhartid;"        // get hart id
-         "slli	s1, s1, 8;"          // hartid*256 (256b (2^8) default stack)
-         "li s2, 0x1FFF0000;"       // stack top of last HART in BMEM
-         "sub s2, s2, s1;"          // base - hartid*256
-         "mv sp, s2;"               // set new hart stack pointer
-         "mv s0, sp;"               // set frame pointer
+         "li sp, 0x1FFFFF00;"       // End of memory minus 256 bytes
+         "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
+         "mul s1, s1, s0;"          // Step back by hartid times stack size
+         "sub s2, s2, s1;"          // New stack top is at base - hartid*__stack_size
+         "mv sp, s2;"               // Set new hart stack pointer
+         "mv s0, sp;"               // Set frame pointer to current stack pointer
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x1FFF0000;"        // single hart, hardcoded stack at end of BMEM (512 bytes)
-         "mv s0, sp;"                // set frame pointer
+         "li sp, 0x1FFFFF00;"       // End of memory minus 256 bytes
+         "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
+         "sub sp, sp, s0;"          // Top of stack
+         "mv s0, sp;"               // Set frame pointer to current stack pointer
 #endif
          // Clear BSS
          "la a0, __malloc_max_total_mem;"

@@ -34,21 +34,21 @@ DSTATUS disk_status (
 	case DEV_RAM :
 		stat = STA_NOINIT;//RAM_disk_status();
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return stat;
 
 	case DEV_MMC :
 		stat = 0x0;// OK MMC_disk_status();
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return stat;
 
 	case DEV_USB :
 		stat = STA_NOINIT;//USB_disk_status();
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return stat;
 	}
@@ -70,7 +70,7 @@ DSTATUS disk_initialize (
 	switch (pdrv) {
 	case DEV_RAM :
 		stat = STA_NOINIT;//RAM_disk_initialize();
-		// translate the reslut code here
+		// translate the result code here
 
 		return stat;
 
@@ -82,14 +82,14 @@ DSTATUS disk_initialize (
 #endif
 			stat = STA_NOINIT;
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return stat;
 
 	case DEV_USB :
 		stat = STA_NOINIT;//USB_disk_initialize();
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return stat;
 	}
@@ -117,7 +117,7 @@ DRESULT disk_read (
 
 		res = RES_NOTRDY;//RAM_disk_read(buff, sector, count);
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return res;
 
@@ -131,7 +131,7 @@ DRESULT disk_read (
 #endif
 			res = RES_ERROR;
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return res;
 
@@ -140,7 +140,7 @@ DRESULT disk_read (
 
 		res = RES_NOTRDY;//USB_disk_read(buff, sector, count);
 
-		// translate the reslut code here
+		// translate the result code here
 
 		return res;
 	}

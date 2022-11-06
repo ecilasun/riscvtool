@@ -20,11 +20,13 @@
 #include "xadc.h"
 #include "gpu.h"
 #include "ps2.h"
+#include "sdcard.h"
 
 #include "isr.h"
 #include "util.h"
 
 static char currentdir[512] = "sd:";
+static char execname[512] = "unknown";
 static char commandline[512] = "";
 static char filename[128] = "";
 static int cmdlen = 0;
@@ -149,6 +151,7 @@ void ParseCommands()
 {
 	// Grab first token, if any
 	const char *command = strtok(commandline, " ");
+	static uint32_t lastaddr = 0;
 
 	if (!strcmp(command, "help")) // Help text
 	{
@@ -156,6 +159,8 @@ void ParseCommands()
 		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
 		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
+		UARTWrite("\033[34m\033[47m\033[7mload\033[0m: load given ELF without starting it\n");
+		UARTWrite("\033[34m\033[47m\033[7mdump\033[0m: dump memory\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -182,13 +187,50 @@ void ParseCommands()
 		UARTWrite("\n");
 		ListFiles(currentdir);
 	}
+	else if (!strcmp(command, "load"))
+	{
+		// Use first parameter to set current directory
+		char *param = strtok(nullptr, " ");
+		if (param != nullptr)
+			strcpy(execname, param);
+		else
+			strcpy(execname, "unknown");
+		LoadExecutable(execname, false);
+	}
+	else if (!strcmp(command, "dump"))
+	{
+		// Use first parameter to set current directory
+		char *param = strtok(nullptr, " ");
+		if (param != nullptr)
+		{
+			uint32_t addr = atoi(param); // TODO: Hex aware
+			uint32_t *ptr = (uint32_t*)addr;
+			for (uint32_t a = addr; a<addr+64;++a)
+			{
+				UARTWriteHex(ptr[a]);
+				UARTWrite(" ");
+			}
+			lastaddr = addr + 64;
+		}
+		else
+		{
+			uint32_t addr = lastaddr;
+			uint32_t *ptr = (uint32_t*)addr;
+			for (uint32_t a = addr; a<addr+64;++a)
+			{
+				UARTWriteHex(ptr[a]);
+				UARTWrite(" ");
+			}
+			lastaddr += 64;
+		}
+	}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
 		// Build a file name from the input string
 		strcpy(filename, currentdir);
 		strcat(filename, command);
 		strcat(filename, ".elf");
-		RunExecutable(filename, true);
+		LoadExecutable(filename, true);
 	}
 
 	cmdlen = 0;
@@ -212,6 +254,9 @@ int main()
 {
 	LEDSetState(0);
 	PS2InitRingBuffer();
+
+	UARTWrite("Powering SDCard device\n");
+	SDCardControl(0x3); // Chip select enable/ Power on
 
 	// File system test
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);

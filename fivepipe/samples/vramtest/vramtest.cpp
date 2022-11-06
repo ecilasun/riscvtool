@@ -10,7 +10,7 @@ int main( int argc, char **argv )
 
 	printf("Video scanout test\n");
 
-	uint32_t *framebuffer = (uint32_t*)malloc(320*240*2);
+	uint32_t *framebuffer = (uint32_t*)malloc(320*240*sizeof(uint32_t)*2);
 
 	do {
 		// Video scan-out page

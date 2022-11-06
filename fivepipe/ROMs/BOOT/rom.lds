@@ -6,13 +6,22 @@ OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 GROUP( -lc -lgloss -lgcc )
 
 MEMORY{
-   RAM (xrw) : ORIGIN = 0x20000000, LENGTH = 0x3F000
+   ROM (xr) : ORIGIN = 0x20000000, LENGTH = 0x20000
+   RAM (rw) : ORIGIN = 0x20020000, LENGTH = 0x20000
+}
+
+PHDRS{
+  ROM PT_LOAD;
+  RAM PT_LOAD;
 }
 
 ENTRY(_start)
 
 SECTIONS
 {
+  /* Default stack size is 256 bytes unless overriden by linker by defining __stack_size, see Makefile */
+  __stack_size = DEFINED(__stack_size) ? __stack_size : 0x400;
+  PROVIDE(__stack_size$ = __stack_size);
 
   /*--------------------------------------------------------------------*/
   /* Code and read-only segment                                         */
@@ -25,7 +34,7 @@ SECTIONS
      . = 0x00000000;
      *(.boot)
      _boot = .;
-  }
+  } > ROM : ROM
 
   /* Begining of code and text segment */
   /* . = 0x00010000; */
@@ -118,7 +127,7 @@ SECTIONS
     *(.data)
     *(.data.*)
     *(.gnu.linkonce.d.*)
-  }
+  } > RAM : RAM
 
   /* End of initialized data segment */
   PROVIDE( edata = . );

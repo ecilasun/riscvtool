@@ -10,6 +10,29 @@
 
 #include "nanojpeg/nanojpeg.h"
 
+const char *FRtoString[]={
+	"Succeeded\n",
+	"A hard error occurred in the low level disk I/O layer\n",
+	"Assertion failed\n",
+	"The physical drive cannot work\n",
+	"Could not find the file\n",
+	"Could not find the path\n",
+	"The path name format is invalid\n",
+	"Access denied due to prohibited access or directory full\n",
+	"Access denied due to prohibited access\n",
+	"The file/directory object is invalid\n",
+	"The physical drive is write protected\n",
+	"The logical drive number is invalid\n",
+	"The volume has no work area\n",
+	"There is no valid FAT volume\n",
+	"The f_mkfs() aborted due to any problem\n",
+	"Could not get a grant to access the volume within defined period\n",
+	"The operation is rejected according to the file sharing policy\n",
+	"LFN working buffer could not be allocated\n",
+	"Number of open files > FF_FS_LOCK\n",
+	"Given parameter is invalid\n"
+};
+
 FATFS Fs;
 uint32_t hardwareswitchstates, oldhardwareswitchstates;
 uint32_t vramPage = 0;
@@ -118,14 +141,23 @@ int main( int argc, char **argv )
 {
 	Setup();
 
+	printf("Powering SDCard device\n");
+	SDCardControl(0x3);
+
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
+	{
+		printf("ERROR: %s", FRtoString[mountattempt]);
 		return -1;
+	}
 
 	// Set aside space for the decompressed image
 	image = (uint8_t*)malloc(320*208*3*sizeof(uint8_t));
 
 	DecodeJPEG("sd:test.jpg");
+
+	printf("Turning off SDCard device\n");
+	SDCardControl(0x0);
 
 	return 0;
 }
