@@ -10,13 +10,11 @@ int main( int argc, char **argv )
 
 	printf("Video scanout test\n");
 
-	uint32_t *framebuffer = (uint32_t*)malloc(320*240*sizeof(uint32_t)*2);
-
 	do {
 		// Video scan-out page
-		uint32_t *readpage = (uint32_t *)((uint32_t)framebuffer + (cycle^1) ? 320*240 : 0);
+		uint32_t *readpage = (uint32_t *)((uint32_t)VRAM + (cycle^1) ? 320*240 : 0);
 		// Video write page
-		uint32_t *writepage = (uint32_t *)((uint32_t)framebuffer + (cycle^1) ? 0 : 320*240);
+		uint32_t *writepage = (uint32_t *)((uint32_t)VRAM + (cycle^1) ? 0 : 320*240);
 		// Same, as byte access
 		uint8_t *writepagebyte = (uint8_t*)writepage;
 

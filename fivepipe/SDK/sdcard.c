@@ -390,9 +390,24 @@ int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t
    return cursor;
 }
 
-void SDCardControl(uint8_t controlBits)
+void SDCardControl(int onOff)
 {
-   *IO_SPICTL = controlBits; // {30'd0, chipselect, poweron}
+   if (onOff != 0) // Turning on
+   {
+      SPIBlank();
+      *IO_SPICTL = 0x1; // Power up
+      SPIBlank();
+      SPIBlank();
+      *IO_SPICTL = 0x3; // CS + power
+      SPIBlank();
+      SPIBlank();
+   }
+   else // Turning off
+   {
+      *IO_SPICTL = 0x0;
+      SPIBlank();
+      SPIBlank();
+   }
 }
 
 int SDCardStartup()
