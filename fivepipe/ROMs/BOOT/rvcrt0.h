@@ -23,7 +23,7 @@ extern "C"
          ".option pop;"
 
 #if defined(MULTIHART_SUPPORT)
-         "li sp, 0x1FFFFFF0;"       // End of memory
+         "li sp, 0x1FFFF000;"       // End of memory
          "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
          "csrr	s1, mhartid;"        // Grab hart id
          "addi s2, s1, 1;"          // Hart id + 1
@@ -33,7 +33,7 @@ extern "C"
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x1FFFFFF0;"       // End of memory
+         "li sp, 0x1FFFF000;"       // End of memory
          "la s0, __stack_size$;"    // stepback = __stack_size$;
          "sub sp, sp, s0;"          // stacktop = base - stepback;
          "mv s0, sp;"               // Set frame pointer to current stack pointer
@@ -85,9 +85,6 @@ extern "C"
 
    void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
    {
-      asm volatile(
-         "j _start;" // Let's see if this works...
-      );
       /*asm (
          // This will invoke an ECALL to halt the HART
          "li a1,0x1;"
