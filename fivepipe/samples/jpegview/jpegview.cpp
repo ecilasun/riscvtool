@@ -130,8 +130,6 @@ int main()
 {
 	Setup();
 
-	SDCardControl(0x3);
-
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 	{
@@ -143,8 +141,6 @@ int main()
 	image = (uint8_t*)malloc(320*240*3*sizeof(uint8_t));
 
 	DecodeJPEG("sd:test.jpg");
-
-	SDCardControl(0x0);
 
 	return 0;
 }

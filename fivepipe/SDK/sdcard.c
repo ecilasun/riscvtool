@@ -76,12 +76,6 @@ uint8_t SPITxRx(const uint8_t outbyte)
    return incoming;
 }
 
-void SPIBlank()
-{
-   for (uint32_t i=0;i<8;++i)
-      SPITxRx(0xFF);
-}
-
 uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
 {
    uint8_t buf[8];
@@ -138,7 +132,11 @@ uint8_t SDResponse7(uint32_t *data)
 // Enter idle state
 uint8_t SDIdle()
 {
-   SPIBlank();
+   // At least 74 cycles with CS low to go to SPI mode
+   *IO_SPICTL = 0x1; // CS high power low
+   for (int i=0; i<80; ++i)
+      SPITxRx(0xFF);
+   *IO_SPICTL = 0x3; // CS + power low (these signals are inverted)
 
    SDCmd(CMD0_GO_IDLE_STATE, 0);
    uint8_t response = SDResponse1(); // Expected: 0x01
@@ -150,15 +148,11 @@ uint8_t SDIdle()
       UARTWrite("\n");
    }
 
-   SPIBlank();
-
    return response;
 }
 
 uint8_t SDCheckVoltageRange()
 {
-   SPIBlank();
-
    SDCmd(CMD8_SEND_IF_COND, 0x000001AA);
 
    // Read the response and 00 00 01 AA sequence back from the SD CARD
@@ -179,15 +173,11 @@ uint8_t SDCheckVoltageRange()
       UARTWrite("\n");
    }
 
-   SPIBlank();
-
    return response;
 }
 
 uint8_t SDCardInit()
 {
-   SPIBlank();
-
    // Set high capacity mode on
    int timeout = 0;
    uint8_t rA = 0xFF, rB = 0xFF;
@@ -230,28 +220,20 @@ uint8_t SDCardInit()
          break;
    } while(1); // Expected: 0x00*/
 
-   SPIBlank();
-
    return rB;
 }
 
 uint8_t SDSetBlockSize512()
 {
-   SPIBlank();
-
    // Set block length
    SDCmd(CMD16_SET_BLOCKLEN, 0x00000200);
    uint8_t response = SDResponse1();
-
-   SPIBlank();
 
    return response;
 }
 
 uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
 {
-   SPIBlank();
-
    // Read single block
    // NOTE: sector<<9 for non SDHC cards
    SDCmd(CMD17_READ_SINGLE_BLOCK, sector);
@@ -275,8 +257,6 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
          checksum[1] = SPITxRx(0xFF);
       }
    }
-
-   SPIBlank();
 
    // Error
    if (!(response&0xF0))
@@ -302,8 +282,6 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
 
 uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
 {
-   SPIBlank();
-
    // TODO: CMD24_WRITE_BLOCK
    SDCmd(CMD17_READ_SINGLE_BLOCK, blockaddress);
 
@@ -333,8 +311,6 @@ uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t ch
 		}
    }
 
-   SPIBlank();
-
    return response;
 }
 
@@ -342,8 +318,6 @@ int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blocka
 {
    if (numblocks == 0)
       return -1;
-
-   SPIBlank();
 
    uint32_t cursor = 0;
 
@@ -359,8 +333,6 @@ int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blocka
       cursor += 512;
    }
 
-   SPIBlank();
-
    return cursor;
 }
 
@@ -368,8 +340,6 @@ int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t
 {
    if (numblocks == 0)
       return -1;
-
-   SPIBlank();
 
    uint32_t cursor = 0;
 
@@ -385,38 +355,17 @@ int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t
       cursor += 512;
    }
 
-   SPIBlank();
-
    return cursor;
 }
 
-void SDCardControl(int onOff)
+void SDCardControl(int power_cs_n)
 {
-   if (onOff != 0) // Turning on
-   {
-      SPIBlank();
-      *IO_SPICTL = 0x1; // Power up
-      SPIBlank();
-      SPIBlank();
-      E32Sleep(1); // Wait 1ms
-      *IO_SPICTL = 0x3; // CS + power
-      SPIBlank();
-      SPIBlank();
-   }
-   else // Turning off
-   {
-      *IO_SPICTL = 0x0;
-      SPIBlank();
-      SPIBlank();
-      E32Sleep(1); // Wait 1ms
-   }
+   *IO_SPICTL = power_cs_n;
 }
 
 int SDCardStartup()
 {
    uint8_t response[3];
-
-   SPIBlank();
 
    response[0] = SDIdle();
    if (response[0] != 0x01)
@@ -429,8 +378,6 @@ int SDCardStartup()
    response[2] = SDCardInit();
    if (response[2] == 0x00) // OK
       return 0;
-
-   SPIBlank();
 
    return -1;
 

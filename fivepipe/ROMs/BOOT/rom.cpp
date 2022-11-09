@@ -200,15 +200,17 @@ void ParseCommands()
 	}
 	else if (!strcmp(command, "sdtest"))
 	{
-		UARTWrite("Disconnecting SDCard...\n");
+		UARTWrite("Disconnecting and powering down SDCard...\n");
 		f_mount(nullptr, "sd:", 1);
 		SDCardControl(0x0);
+
+		UARTWrite("Powering up and connecting SDCard...\n");
 		SDCardControl(0x3);
 		FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 		if (mountattempt!=FR_OK)
 			UARTWrite(FRtoString[mountattempt]);
 		else
-			UARTWrite("Reconnected SDCard\n");
+			UARTWrite("Success\n");
 	}
 	else if(!strcmp(command, "cls"))
 	{
@@ -261,9 +263,6 @@ int main()
 {
 	LEDSetState(0);
 	PS2InitRingBuffer();
-
-	UARTWrite("Powering SDCard device\n");
-	SDCardControl(0x3); // Chip select enable/ Power on
 
 	// File system test
 	UARTWrite("Mounting filesystem\n");

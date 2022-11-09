@@ -23,7 +23,7 @@ extern "C"
          ".option pop;"
 
 #if defined(MULTIHART_SUPPORT)
-         "li sp, 0x1FFFF000;"       // End of memory
+         "li sp, 0x2003FFF0;"       // End of memory (BRAM)
          "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
          "csrr	s1, mhartid;"        // Grab hart id
          "addi s2, s1, 1;"          // Hart id + 1
@@ -33,7 +33,7 @@ extern "C"
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x1FFFF000;"       // End of memory
+         "li sp, 0x2003FFF0;"       // End of memory (BRAM)
          "la s0, __stack_size$;"    // stepback = __stack_size$;
          "sub sp, sp, s0;"          // stacktop = base - stepback;
          "mv s0, sp;"               // Set frame pointer to current stack pointer

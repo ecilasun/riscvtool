@@ -79,24 +79,19 @@ void LoadExecutable(const char *filename, const bool run)
 			// Unmount volume so the next application can mount it again
 			f_mount(nullptr, "sd:", 1);
 
-			UARTWrite("Turning off SDCard device\n");
-			SDCardControl(0x0);
-
 			UARTWrite("Branching to 0x");
 			UARTWriteHex(branchaddress);
 			UARTWrite("\n");
 
 			asm volatile(
 				".word 0xFC000073;" // Invalidate & write Back D$ (CFLUSH.D.L1)
-				"fence.i;"          // Invalidate I$ (FENCE.I)
+				"fence.i;"          // Invalidate I$ & wait for all D$ operations to be visible (FENCE.I)
 				"lw s0, %0;"        // Target branch address
 				"jalr s0;"          // Branch to the entry point
 				: "=m" (branchaddress) : : 
 			);
 
 			// TODO: Executables can not return here, fix it!
-			UARTWrite("Powering SDCard device\n");
-			SDCardControl(0x3);
 			// f_mount(&Fs, "sd:", 1);
 		}
 		else
