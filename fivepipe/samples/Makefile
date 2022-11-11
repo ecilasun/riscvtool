@@ -19,6 +19,7 @@ folders = \
 	mandelbrot \
 	memtest \
 	joystick \
+	tinyraytracer \
 
 # Rules
 
