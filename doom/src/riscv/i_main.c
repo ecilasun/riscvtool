@@ -21,6 +21,7 @@
 
 #include "../doomdef.h"
 #include "../d_main.h"
+#include <stdlib.h>
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -52,10 +53,10 @@ const char *FRtoString[]={
 
 int main(void)
 {
-	FATFS Fs;
+	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
 
 	UARTWrite("Mounting SDCard\n");
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);

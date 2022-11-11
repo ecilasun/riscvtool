@@ -34,13 +34,6 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
-FATFS Fs;
-uint32_t hardwareswitchstates, oldhardwareswitchstates;
-uint32_t vramPage = 0;
-int selectedjpegfile = 0;
-int numjpegfiles = 0;
-char *jpegfiles[64];
-
 uint8_t *image;
 
 #define min(_x_,_y_) (_x_) < (_y_) ? (_x_) : (_y_)
@@ -130,7 +123,8 @@ int main()
 {
 	Setup();
 
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 	{
 		UARTWrite(FRtoString[mountattempt]);

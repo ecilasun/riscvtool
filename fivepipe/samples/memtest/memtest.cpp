@@ -13,20 +13,18 @@ int main()
     UARTWrite("\nTesting DDR3 on AXI4 bus\n");
 
     UARTWrite("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
-    //int i=0;
+
     uint64_t startclock = E32ReadTime();
     for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
     {
         *((volatile uint32_t*)m) = 0x00000000;
-        /*if ((m!=0) && ((m%0x100000) == 0))
+        if ((m!=0) && ((m%0x100000) == 0))
         {
-            ++i;
-            UARTWriteDecimal(i);
-            UARTWrite(" Mbytes cleared @");
-            UARTWriteHex((unsigned int)m);
-            UARTWrite("\n");
-        }*/
+			if ((m%0x40000) == 0)
+				UARTWrite("█");
+        }
     }
+    UARTWrite("\n");
 
     uint64_t endclock = E32ReadTime();
     uint32_t deltams = ClockToMs(endclock-startclock);

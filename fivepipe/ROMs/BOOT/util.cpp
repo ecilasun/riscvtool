@@ -100,7 +100,7 @@ void LoadExecutable(const char *filename, const bool run)
 			UARTWriteHex(branchaddress);
 			UARTWrite("\n");
 			uint32_t *ptr = (uint32_t*)branchaddress;
-			for (uint32_t a = 0; a<128; ++a)
+			for (uint32_t a = 0; a<4096; ++a)
 			{
 				UARTWriteHex(ptr[a]);
 				UARTWrite(" ");

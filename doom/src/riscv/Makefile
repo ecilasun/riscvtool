@@ -8,7 +8,7 @@ UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
 # --specs=nano.specs -std=c++14 -> need to use g++
-CFLAGS=-mcmodel=medany -lgcc -lm -Wall -O2 -static -march=rv32im -mabi=ilp32 -flto -fomit-frame-pointer --param l1-cache-line-size=64 --param l1-cache-size=32 -Wl,--gc-section --specs=nano.specs -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -33,13 +33,7 @@ SOURCES_doom_arch := \
 	../../../3rdparty/fat32/diskio.c \
 	../../../3rdparty/fat32/ffsystem.c \
 	../../../3rdparty/fat32/ffunicode.c \
-	../../../fivepipe/SDK/core.c \
-	../../../fivepipe/SDK/sdcard.c \
-	../../../fivepipe/SDK/uart.c \
-	../../../fivepipe/SDK/spi.c \
-	../../../fivepipe/SDK/gpu.c \
-	../../../fivepipe/SDK/leds.c \
-	../../../fivepipe/SDK/ps2.c \
+	../../../fivepipe/SDK/*.c \
 	$(NULL)
 
 # start.S
