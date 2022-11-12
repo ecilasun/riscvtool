@@ -139,7 +139,7 @@ int ProcessKeyEvents()
 						cmdlen = 511;
 					commandline[cmdlen] = 0;
 				}
-				UARTPutChar(PS2ScanToASCII(val, uppercase));
+				*IO_UARTTX = (uint32_t)PS2ScanToASCII(val, uppercase);
 			}
 		}
 	}

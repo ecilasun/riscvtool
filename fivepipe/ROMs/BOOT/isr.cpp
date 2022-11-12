@@ -34,7 +34,7 @@ void HandleUART()
 	// Echo back all data in the FIFO
 	while (UARTHasData())
 	{
-		UARTPutChar(UARTRead());
+		*IO_UARTTX = (uint32_t)UARTRead();
 	}
 }
 
