@@ -20,6 +20,7 @@ folders = \
 	memtest \
 	joystick \
 	tinyraytracer \
+	buserr \
 
 # Rules
 

@@ -29,6 +29,15 @@ void HandleMainTimer()
 	//E32SetTimeCompare(future);
 }
 
+void HandleUART()
+{
+	// Echo back all data in the FIFO
+	while (UARTHasData())
+	{
+		UARTPutChar(UARTRead());
+	}
+}
+
 void HandleKeyboard()
 {
 	// Consume all key state changes from FIFO and update the key map
@@ -69,6 +78,16 @@ void HandleMainTrap(const uint32_t cause, const uint32_t a7, const uint32_t valu
 		case CAUSE_BREAKPOINT:
 		{
 			// TODO: Setup and connect to debugger
+
+			UARTWrite("\033[0m\n\n");
+			UARTWrite("\033[31m\033[40m");
+			UARTWrite("┌───────────────────────────────────────────────────┐\n");
+			UARTWrite("│ Debugger not implemented. Program halted.         │\n");
+			UARTWrite("└───────────────────────────────────────────────────┘\n");
+			UARTWrite("\033[0m\n");
+
+			// Put core to endless sleep
+			while(1) { asm volatile("wfi;"); }
 		}
 		break;
 
@@ -87,12 +106,20 @@ void HandleMainTrap(const uint32_t cause, const uint32_t a7, const uint32_t valu
 			// 117 sys_ptrace -> 
 
 			// TODO: implement system calls
+			switch (a7)
+			{
+				case 96: UARTWrite("sys_exit();\n"); break;
+				case 64: UARTWrite("sys_write();\n"); break;
+				case 116: UARTWrite("sys_syslog();\n"); break;
+				case 117: UARTWrite("sys_ptrace();\n"); break;
+				default: UARTWrite("unknown();\n"); break;
+			}
 
+			UARTWrite("\033[0m\n\n");
 			UARTWrite("\033[31m\033[40m");
 
 			UARTWrite("┌───────────────────────────────────────────────────┐\n");
-			UARTWrite("│ Unimplemented U/S/H/M ECALL. Program will resume  │\n");
-			UARTWrite("│ execution, though it will most likely crash.      │\n");
+			UARTWrite("│ Unimplemented M-ECALL. Program halted.            │\n");
 			UARTWrite("│ #");
 			UARTWriteHex((uint32_t)a7); // A7 containts Syscall ID
 			UARTWrite(" @");
@@ -100,19 +127,60 @@ void HandleMainTrap(const uint32_t cause, const uint32_t a7, const uint32_t valu
 			UARTWrite("                               │\n");
 			UARTWrite("└───────────────────────────────────────────────────┘\n");
 			UARTWrite("\033[0m\n");
+
+			while(1) { asm volatile("wfi;"); } // Put core to endless sleep
 		}
 		break;
 
 		//case CAUSE_MISALIGNED_FETCH:
 		//case CAUSE_FETCH_ACCESS:
-		//case CAUSE_ILLEGAL_INSTRUCTION:
+
+		case CAUSE_ILLEGAL_INSTRUCTION:
+		{
+
+		}
+		break;
+
 		//case CAUSE_MISALIGNED_LOAD:
-		//case CAUSE_LOAD_ACCESS:
+
+		case CAUSE_LOAD_ACCESS:
+		{
+			UARTWrite("\033[0m\n\n");
+			UARTWrite("\033[31m\033[40m");
+			UARTWrite("┌───────────────────────────────────────────────────┐\n");
+			UARTWrite("│ Bus error: LOAD                                   │\n");
+			UARTWrite("│ @");
+			UARTWriteHex((uint32_t)PC); // PC
+			UARTWrite("                                         │\n");
+			UARTWrite("└───────────────────────────────────────────────────┘\n");
+			UARTWrite("\033[0m\n");
+
+			while(1) { asm volatile("wfi;"); } // Put core to endless sleep
+		}
+		break;
+
 		//case CAUSE_MISALIGNED_STORE:
-		//case CAUSE_STORE_ACCESS:
+
+		case CAUSE_STORE_ACCESS:
+		{
+			UARTWrite("\033[0m\n\n");
+			UARTWrite("\033[31m\033[40m");
+			UARTWrite("┌───────────────────────────────────────────────────┐\n");
+			UARTWrite("│ Bus error: STORE                                  │\n");
+			UARTWrite("│ @");
+			UARTWriteHex((uint32_t)PC); // PC
+			UARTWrite("                                         │\n");
+			UARTWrite("└───────────────────────────────────────────────────┘\n");
+			UARTWrite("\033[0m\n");
+
+			while(1) { asm volatile("wfi;"); } // Put core to endless sleep
+		}
+		break;
+
 		//case CAUSE_FETCH_PAGE_FAULT:
 		//case CAUSE_LOAD_PAGE_FAULT:
 		//case CAUSE_STORE_PAGE_FAULT:
+
 		default:
 		{
 			UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
@@ -134,10 +202,7 @@ void HandleMainTrap(const uint32_t cause, const uint32_t a7, const uint32_t valu
 			UARTWrite("└───────────────────────────────────────────────────┘\n");
 			UARTWrite("\033[0m\n");
 
-			// Put core to endless sleep
-			while(1) {
-				asm volatile("wfi;");
-			}
+			while(1) { asm volatile("wfi;"); } // Put core to endless sleep
 		}
 		break; // Doesn't make sense but to make compiler happy...
 	}
@@ -158,7 +223,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) main_ISR
 		if (code == 0xB) // Machine External Interrupt (hardware)
 		{
 			// Route based on hardware type
-			//if (value & 0x00000001) HandleUART();
+			if (value & 0x00000001) HandleUART();
 			//if (value & 0x00000002) HandleButtons();
 			if (value & 0x00000004) HandleKeyboard();
 		}
