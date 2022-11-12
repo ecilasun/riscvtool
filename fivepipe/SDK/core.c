@@ -272,7 +272,7 @@ extern "C" {
          const char *eptr = cptr + len;
          while (cptr != eptr)
          {
-            UARTPutChar(*cptr);
+            *IO_UARTTX = (uint32_t)*cptr;
             ++cptr;
          }
          UARTFlush();

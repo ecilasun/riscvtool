@@ -36,7 +36,7 @@ void UARTWrite(const char *_message)
     // Emit all characters from the input string
     int i = 0;
     while (_message[i]!=0)
-        UARTPutChar(_message[i++]);
+        *IO_UARTTX = (uint32_t)_message[i++];
 }
 
 void UARTWriteHexByte(const uint8_t i)

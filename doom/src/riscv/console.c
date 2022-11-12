@@ -30,7 +30,7 @@ console_init(void)
 void
 console_putchar(char c)
 {
-	UARTPutChar(c);
+	*IO_UARTTX = (uint32_t)c;
 }
 
 char
