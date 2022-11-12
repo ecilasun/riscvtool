@@ -10,75 +10,61 @@
 
 int main()
 {
-    UARTWrite("\nTesting DDR3 on AXI4 bus\n");
+    printf("\nTesting DDR3 on AXI4 bus\n");
 
-    UARTWrite("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
-
+    printf("Clearing extended memory...\n"); // 0x00000000 - 0x0FFFFFFF
     uint64_t startclock = E32ReadTime();
     for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
     {
         *((volatile uint32_t*)m) = 0x00000000;
-        if ((m!=0) && ((m%0x100000) == 0))
+        /*if ((m!=0) && ((m%0x100000) == 0))
         {
 			if ((m%0x40000) == 0)
-				UARTWrite("█");
-        }
+				printf("█");
+        }*/
     }
-    UARTWrite("\n");
+    //printf("\n");
 
     uint64_t endclock = E32ReadTime();
     uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("Clearing 32Mbytes took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms\n");
+    printf("Clearing 32Mbytes took %d ms\n", (unsigned int)deltams);
 
     int rate = (1024*32*1024) / deltams;
-    UARTWrite("Zero-write rate is ");
-    UARTWriteDecimal(rate);
-    UARTWrite(" Kbytes/sec\n");
+    printf("Zero-write rate is %d Kbytes/sec\n", rate);
 
-    UARTWrite("\n-------------MemTest--------------\n");
-    UARTWrite("Copyright (c) 2000 by Michael Barr\n");
-    UARTWrite("----------------------------------\n");
+    printf("\n-------------MemTest--------------\n");
+    printf("Copyright (c) 2000 by Michael Barr\n");
+    printf("----------------------------------\n");
 
-    UARTWrite("Data bus test (0x0A000000-0x0A03FFFF)...");
+    printf("Data bus test (0x0A000000-0x0A13FFFF)...\n");
     int failed = 0;
-    for (uint32_t i=0x0A000000; i<0x0A03FFFF; i+=4)
-    {
+    for (uint32_t i=0x0A000000; i<0x0A13FFFF; i+=4)
         failed += memTestDataBus((volatile datum*)i);
-    }
-    UARTWrite(failed == 0 ? "passed (" : "failed (");
-    UARTWriteDecimal(failed);
-    UARTWrite(" failures)\n");
 
-    UARTWrite("Address bus test (0x0B000000-0x0B03FFFF)...");
+    printf("%s (%d failures)\n", failed == 0 ? "passed" : "failed", failed);
+
+    printf("Address bus test (0x0B000000-0x0B13FFFF)...\n");
     int errortype = 0;
-    datum* res = memTestAddressBus((volatile datum*)0x0B000000, 262144, &errortype);
-    UARTWrite(res == NULL ? "passed\n" : "failed\n");
+    datum* res = memTestAddressBus((volatile datum*)0x0B000000, 1310720, &errortype);
+    printf(res == NULL ? "passed\n" : "failed\n");
     if (res != NULL)
     {
         if (errortype == 0)
-            UARTWrite("Reason: Address bit stuck high at 0x");
+            printf("Reason: Address bit stuck high at 0x%8X\n", (unsigned int)res);
         if (errortype == 1)
-            UARTWrite("Reason: Address bit stuck low at 0x");
+            printf("Reason: Address bit stuck low at 0x%8X\n", (unsigned int)res);
         if (errortype == 2)
-            UARTWrite("Reason: Address bit shorted at 0x");
-        UARTWriteHex((unsigned int)res);
-        UARTWrite("\n");
+            printf("Reason: Address bit shorted at 0x%8X\n", (unsigned int)res);
     }
 
-    UARTWrite("Memory device test (0x0C000000-0x0C03FFFF)...");
-    datum* res2 = memTestDevice((volatile datum *)0x0C000000, 262144);
-    UARTWrite(res2 == NULL ? "passed\n" : "failed\n");
+    printf("Memory device test (0x0C000000-0x0C13FFFF)...");
+    datum* res2 = memTestDevice((volatile datum *)0x0C000000, 1310720);
+    printf(res2 == NULL ? "passed\n" : "failed\n");
     if (res2 != NULL)
-    {
-        UARTWrite("Reason: incorrect value read at 0x");
-        UARTWriteHex((unsigned int)res2);
-        UARTWrite("\n");
-    }
+        printf("Reason: incorrect value read at 0x%.8X\n", (unsigned int)res2);
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
-      UARTWrite("Memory device does not appear to be working correctly.\n");
+      printf("Memory device does not appear to be working correctly.\n");
 
     return 0;
 }

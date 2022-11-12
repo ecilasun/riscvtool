@@ -53,16 +53,15 @@ const char *FRtoString[]={
 
 int main(void)
 {
+	printf("Mounting SDCard\n");
+
 	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
-
-	UARTWrite("Mounting SDCard\n");
 	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
-
 	if (mountattempt!=FR_OK)
-		UARTWrite(FRtoString[mountattempt]);
+		printf(FRtoString[mountattempt]);
 	else
 	{
-		UARTWrite("Starting DOOM\n");
+		printf("Starting DOOM\n");
 		D_DoomMain();
 	}
 

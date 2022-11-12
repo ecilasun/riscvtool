@@ -78,7 +78,7 @@ int main()
    float X = -0.235125f;
    float Y = 0.827215f;
 
-   UARTWrite("mandelbrot\n");
+   printf("Mandelbrot test\n");
 
    while(1)
    {

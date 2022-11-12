@@ -100,8 +100,8 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
 // Place the heap into DDR3 memory
 //#undef errno
 //int nerrno;
-static uint8_t *heap_start  = (uint8_t*)0x04000000;
-static uint8_t *heap_end    = (uint8_t*)0x1FFE0000; // stack space end (starts at 0x1FFFF000)
+static uint8_t *heap_start  = (uint8_t*)0x04000000; // 64 Mbytes from top of memory
+static uint8_t *heap_end    = (uint8_t*)0x1FFFFF00;
 
 #ifdef __cplusplus
 extern "C" {

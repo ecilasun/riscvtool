@@ -89,7 +89,6 @@ const static uint32_t c_sizeMask = c_cbBufferSize - 1;
 
 // These need to persist in same memory location betwen ROM and loaded ELF
 // so that we don't read from wrong space (or not read at all)
-// NOTE: Ring buffer is normally placed at 0x80000200 in the mailbox
 static uint8_t *m_ringBuffer;
 volatile static uint32_t *m_readOffset;
 volatile static uint32_t *m_writeOffset;
@@ -97,12 +96,12 @@ volatile static uint32_t *m_writeOffset;
 void PS2InitRingBuffer()
 {
     // Might be missing initialization based on platform, so we use code to initialize
-    m_ringBuffer  = (uint8_t *)0x1FFFF000;
-    m_readOffset  = (volatile uint32_t *)0x1FFFF410;
-    m_writeOffset = (volatile uint32_t *)0x1FFFF420;
+    m_ringBuffer  = (uint8_t *)0x00000100;
+    m_readOffset  = (uint32_t *)0x00000008;
+    m_writeOffset = (uint32_t *)0x00000010;
 
-    *m_readOffset = 0;
-    *m_writeOffset = 0;
+    memset((void*)m_readOffset, 0, sizeof(uint32_t));
+    memset((void*)m_writeOffset, 0, sizeof(uint32_t));
 }
 
 uint32_t __attribute__ ((noinline)) PS2RingBufferRead(void* pvDest, const uint32_t cbDest)

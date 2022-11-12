@@ -122,11 +122,6 @@ I_GetEvent(void)
 			event.data1 = val&0x100 ?1:0;
 		}*/
 
-		// Debug
-		/*UARTWrite(event.type == ev_joystick ? "btn" : (event.type == ev_keyup ? "up":"down"));
-		UARTWriteHex(event.data1);
-		UARTWrite("\n");*/
-
 		D_PostEvent(&event);
 	}
 }
