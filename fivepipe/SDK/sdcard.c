@@ -132,6 +132,8 @@ uint8_t SDResponse7(uint32_t *data)
 // Enter idle state
 uint8_t SDIdle()
 {
+   E32Sleep(1); // Wait for at least 1ms after power-on
+
    // At least 74 cycles with CS low to go to SPI mode
    *IO_SPICTL = 0x1; // CS high power low
    for (int i=0; i<80; ++i)
@@ -141,7 +143,7 @@ uint8_t SDIdle()
    SDCmd(CMD0_GO_IDLE_STATE, 0);
    uint8_t response = SDResponse1(); // Expected: 0x01
 
-   if (response != 0x01)
+   if (response != 0x01) // SPI mode
    {
       UARTWrite("SDIdle expected 0x01, got 0x");
       UARTWriteHex(response);

@@ -51,10 +51,8 @@ const char *FRtoString[]={
 #include "fat32/ff.h"
 #include "sdcard.h"
 
-int main(void)
+int main()
 {
-	printf("Mounting SDCard\n");
-
 	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
 	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)

@@ -29,9 +29,9 @@ int main()
 				if (x==y) writepagebyte[x+y*320] = cycle;
 
 		// Inverted copy of lower 32 rows to upper 32 rows of the screen
-		for (int y=0;y<32;++y)
-			for (int x=0;x<80;++x)
-				writepage[x+y*80] = writepage[x+(y+208)*80] ^ 0xFFFFFFFF;
+		// for (int y=0;y<32;++y)
+		// 	for (int x=0;x<80;++x)
+		// 		writepage[x+y*80] = writepage[x+(y+208)*80] ^ 0xFFFFFFFF;
 
 		// Flush data cache at last pixel so we can see a coherent image
 		asm volatile( ".word 0xFC000073;");
