@@ -15,12 +15,12 @@ extern "C"
          // This is the entry point of CORE#0 (0x10000020 if above code is enabled)
          //".cfi_startproc;"
          //".cfi_undefined ra;"
-         ".option push;"
-         ".option norelax;"
+         //".option push;"
+         //".option norelax;"
 
          // Set up global pointer
-         "la gp, __global_pointer$;"
-         ".option pop;"
+         //"la gp, __global_pointer$;"
+         //".option pop;"
 
 #if defined(MULTIHART_SUPPORT)
          "li sp, 0x2003FFF0;"       // End of memory (BRAM)

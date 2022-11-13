@@ -128,9 +128,9 @@ SECTIONS
   _edata = .;
 
   /* Have _gp point to middle of sdata/sbss to maximize displacement range */
-  . = ALIGN(16);
+  /*. = ALIGN(16);
   _gp = . + 0x800;
-  PROVIDE (__global_pointer$ = _gp);
+  PROVIDE (__global_pointer$ = _gp);*/
 
   /* Writable small data segment */
   .sdata : 
