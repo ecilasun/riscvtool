@@ -33,6 +33,9 @@ void
 I_InitGraphics(void)
 {
 	usegamma = 1;
+
+	uint32_t addrs = (uint32_t)(screens[0]);
+	GPUSetVPage(addrs);
 }
 
 void
@@ -65,8 +68,7 @@ void
 I_FinishUpdate (void)
 {
 	//uint32_t *VID = (uint32_t *)screens[0];
-	uint32_t addrs = (uint32_t)(screens[0]);
-	GPUSetVPage(addrs);
+	//GPUSetVPage(VID);
 }
 
 

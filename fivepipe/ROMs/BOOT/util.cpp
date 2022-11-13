@@ -42,19 +42,30 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 		f_lseek(fp, fheader->m_SHOff+fheader->m_SHEntSize*i);
 		f_read(fp, &sheader, sizeof(SElfSectionHeader32), &bytesread);
 
-		// If this is a section worth loading...
+		// If this is a section worth loading or allocating...
 		if ((sheader.m_Flags & 0x00000007) && sheader.m_Size != 0)
 		{
-			UARTWrite("@0x");
-			UARTWriteHex(sheader.m_Addr);
-			UARTWrite("[0x");
-			UARTWriteHex(sheader.m_Size);
-			UARTWrite("]\n");
-
-			// ...place it in memory
 			uint8_t *elfsectionpointer = (uint8_t *)sheader.m_Addr;
-			f_lseek(fp, sheader.m_Offset);
-			f_read(fp, elfsectionpointer, sheader.m_Size, &bytesread);
+
+			UARTWrite("addr: 0x");
+			UARTWriteHex(sheader.m_Addr);
+			UARTWrite(", size: 0x");
+			UARTWriteHex(sheader.m_Size);
+			UARTWrite(", type: 0x");
+			UARTWriteHex(sheader.m_Type);
+			UARTWrite("\n");
+
+			if (sheader.m_Type == 0x00000008) // .bss/.tbss has only SHT_NOBITS set
+			{
+				// ...zero initialize memory.
+				__builtin_memset(elfsectionpointer, 0x0, sheader.m_Size);
+			}
+			else
+			{
+				// ...load in place.
+				f_lseek(fp, sheader.m_Offset);
+				f_read(fp, elfsectionpointer, sheader.m_Size, &bytesread);
+			}
 		}
 	}
 

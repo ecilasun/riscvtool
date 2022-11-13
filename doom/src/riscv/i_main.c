@@ -133,9 +133,6 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) main_ISR
 
 void InstallMainISR()
 {
-	// Disable all interrupts
-	swap_csr(mie, 0);
-
 	// Set machine trap vector
 	swap_csr(mtvec, main_ISR);
 
@@ -150,6 +147,9 @@ void InstallMainISR()
 
 int main()
 {
+	// Disable all interrupts, reset some memory
+	swap_csr(mie, 0);
+
 	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
 	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)

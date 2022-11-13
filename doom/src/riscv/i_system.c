@@ -76,9 +76,9 @@ I_GetEvent(void)
 	// Any pending keyboard events to handle?
 	// NOTE: OS feeds keyboard input to us from an ISR
 	uint32_t val;
-	swap_csr(mie, MIP_MSIP | MIP_MTIP);
+	//swap_csr(mie, MIP_MSIP | MIP_MTIP);
 	int R = PS2RingBufferRead((uint8_t*)&val, 4);
-	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+	//swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
 		uint32_t key = val&0xFF;
