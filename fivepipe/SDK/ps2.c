@@ -97,8 +97,8 @@ void PS2InitRingBuffer()
 {
     // Might be missing initialization based on platform, so we use code to initialize
     m_ringBuffer  = (uint8_t *)0x00000100;
-    m_readOffset  = (uint32_t *)0x00000008;
-    m_writeOffset = (uint32_t *)0x00000010;
+    m_readOffset  = (uint32_t *)0x00000010;
+    m_writeOffset = (uint32_t *)0x00000020;
 
     memset((void*)m_readOffset, 0, sizeof(uint32_t));
     memset((void*)m_writeOffset, 0, sizeof(uint32_t));
@@ -114,7 +114,7 @@ uint32_t __attribute__ ((noinline)) PS2RingBufferRead(void* pvDest, const uint32
         return 0;
 
     //EReadWriteBarrier(0);
-    asm volatile ("nop;"); // Stop compiler reordering
+    asm volatile("": : :"memory"); // Stop compiler reordering
 
     uint8_t* pbDest = (uint8_t *)pvDest;
     const uint32_t actualReadOffset = readOffset & c_sizeMask;
@@ -152,7 +152,7 @@ uint32_t __attribute__ ((noinline)) PS2RingBufferWrite(const void* pvSrc, const 
     //EAssert(bytesLeft == 0, "Item not an exact multiple of ring buffer, this will cause multiple memcpy() calls during Write()");
 
     //EReadWriteBarrier(0);
-    asm volatile ("nop;"); // Stop compiler reordering
+    asm volatile("": : :"memory"); // Stop compiler reordering
 
     writeOffset += cbSrc;
     *m_writeOffset = writeOffset;
