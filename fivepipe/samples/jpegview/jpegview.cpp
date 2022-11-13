@@ -70,7 +70,7 @@ void DecodeJPEG(const char *fname)
 			int H = njGetHeight();
 
 			int iW = W>320 ? 320 : W;
-			int iH = H>208 ? 208 : H;
+			int iH = H>239 ? 239 : H;
 			uint8_t *img = njGetImage();
 			if (njIsColor())
 			{
