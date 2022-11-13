@@ -26,20 +26,6 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 		f_lseek(fp, fheader->m_PHOff + fheader->m_PHEntSize*i);
 		f_read(fp, &pheader, sizeof(SElfProgramHeader32), &bytesread);
 
-		UARTWrite("o: 0x");
-		UARTWriteHex(pheader.m_Offset);
-		UARTWrite(" pa: 0x");
-		UARTWriteHex(pheader.m_PAddr);
-		UARTWrite(" fs:0x");
-		UARTWriteHex(pheader.m_FileSz);
-		UARTWrite(" ms:0x");
-		UARTWriteHex(pheader.m_MemSz);
-		UARTWrite(" f:0x");
-		UARTWriteHex(pheader.m_Flags);
-		UARTWrite(" t:0x");
-		UARTWriteHex(pheader.m_Type);
-		UARTWrite("\n");
-
 		// Something here
 		if (pheader.m_MemSz != 0)
 		{
@@ -72,10 +58,6 @@ void LoadExecutable(const char *filename, const bool run)
 			// Unmount volume so the next application can mount it again
 			f_mount(nullptr, "sd:", 1);
 
-			UARTWrite("Branching to 0x");
-			UARTWriteHex(branchaddress);
-			UARTWrite("\n");
-
 			asm volatile(
 				".word 0xFC000073;" // Invalidate & write Back D$ (CFLUSH.D.L1)
 				"fence.i;"          // Invalidate I$ & wait for all D$ operations to be visible (FENCE.I)
@@ -83,9 +65,6 @@ void LoadExecutable(const char *filename, const bool run)
 				"jalr s0;"          // Branch to the entry point
 				: "=m" (branchaddress) : : 
 			);
-
-			// TODO: Executables can not return here, fix it!
-			// f_mount(&Fs, "sd:", 1);
 		}
 		else
 		{

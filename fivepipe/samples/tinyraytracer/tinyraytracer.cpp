@@ -7,6 +7,10 @@
 #include "uart.h"
 #include "gpu.h"
 
+#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
+
+uint8_t *framebuffer;
+
 /*******************************************************************/
 
 typedef int BOOL;
@@ -43,7 +47,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
 	B = BOFF/64;
 	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
-	VRAMBYTES[x+y*320] = RGB;
+	framebuffer[x+y*320] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -356,6 +360,12 @@ int main()
       for (int g=0;g<8;++g)
         for (int r=0;r<8;++r)
             GPUSetPal(target++, MAKECOLORRGB24(r*32, g*32, b*64));
+
+    // Set up frame buffer
+    // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
+    framebuffer = (uint8_t*)malloc(320*240*3 + 64);
+    framebuffer = (uint8_t*)EAlignUp((uint32_t)framebuffer, 64);
+    GPUSetVPage((uint32_t)framebuffer);
  
     UARTWrite("initializing scene\n");
     init_scene();

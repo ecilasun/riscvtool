@@ -11,6 +11,8 @@
 
 #include "nanojpeg/nanojpeg.h"
 
+#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
+
 const char *FRtoString[]={
 	"Succeeded\n",
 	"A hard error occurred in the low level disk I/O layer\n",
@@ -132,7 +134,9 @@ int main()
 	}
 
 	// Set aside space for the decompressed image
-	image = (uint8_t*)malloc(320*240*3*sizeof(uint8_t));
+    // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
+	image = (uint8_t*)malloc(320*240*3*sizeof(uint8_t) + 64);
+	image = (uint8_t*)EAlignUp((uint32_t)image, 64);
 
 	DecodeJPEG("sd:test.jpg");
 

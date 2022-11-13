@@ -9,6 +9,10 @@
 #include "uart.h"
 #include "gpu.h"
 
+#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
+
+uint8_t *framebuffer;
+
 int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
    int iteration = 0;
@@ -51,7 +55,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
             c = int(1.f*ratio*255);
          }
 
-         VRAMBYTES[col + (row*320)] = c;
+         framebuffer[col + (row*320)] = c;
       }
    }
 
@@ -73,6 +77,12 @@ int main()
       int j=255-i;
       GPUSetPal(i, MAKECOLORRGB24(j, j, j));
    }
+
+    // Set up frame buffer
+    // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
+   framebuffer = (uint8_t*)malloc(320*240*3 + 64);
+   framebuffer = (uint8_t*)EAlignUp((uint32_t)framebuffer, 64);
+   GPUSetVPage((uint32_t)framebuffer);
 
    float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
    float X = -0.235125f;

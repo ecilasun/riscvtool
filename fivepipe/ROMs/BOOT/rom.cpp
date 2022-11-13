@@ -26,7 +26,6 @@
 #include "util.h"
 
 static char currentdir[512] = "sd:";
-static char execname[512] = "unknown";
 static char commandline[512] = "";
 static char filename[128] = "";
 static int cmdlen = 0;
@@ -161,7 +160,6 @@ void ParseCommands()
 		UARTWrite("\033[34m\033[47m\033[7msdtest\033[0m: turn sdcard off and on rapidly for test\n");
 		UARTWrite("\033[34m\033[47m\033[7mtemp\033[0m: show curent temperature\n");
 		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
-		UARTWrite("\033[34m\033[47m\033[7mload\033[0m: load given ELF without starting it\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -223,16 +221,6 @@ void ParseCommands()
 		UARTWrite("\n");
 		ListFiles(currentdir);
 	}
-	else if (!strcmp(command, "load"))
-	{
-		// Use first parameter to set current directory
-		char *param = strtok(nullptr, " ");
-		if (param != nullptr)
-			strcpy(execname, param);
-		else
-			strcpy(execname, "unknown");
-		LoadExecutable(execname, false);
-	}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
 		// Build a file name from the input string
@@ -240,6 +228,10 @@ void ParseCommands()
 		strcat(filename, command);
 		strcat(filename, ".elf");
 		LoadExecutable(filename, true);
+		// Re-mount the file system after we return
+		FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+		if (mountattempt!=FR_OK)
+			UARTWrite(FRtoString[mountattempt]);
 	}
 
 	cmdlen = 0;

@@ -14,7 +14,7 @@ void HandleMainTimer()
 {
 	// Splash screen
 	UARTWrite("┌─────────────────────────┐\n");
-	UARTWrite("│ NON-OS v0.001           │\n");
+	UARTWrite("│ NON-OS v0.0012          │\n");
 	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
 	UARTWrite("└─────────────────────────┘\n\n");
 
