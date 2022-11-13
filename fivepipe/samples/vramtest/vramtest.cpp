@@ -14,6 +14,9 @@ int main()
 	framebufferA = (uint8_t*)EAlignUp((uint32_t)framebufferA, 64);
 	framebufferB = (uint8_t*)EAlignUp((uint32_t)framebufferB, 64);
 
+	GPUSetVPage((uint32_t)framebufferA);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+
 	uint32_t cycle = 0;
 	do {
 		// Video scan-out page

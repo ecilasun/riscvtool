@@ -83,6 +83,7 @@ int main()
    framebuffer = (uint8_t*)malloc(320*240*3 + 64);
    framebuffer = (uint8_t*)EAlignUp((uint32_t)framebuffer, 64);
    GPUSetVPage((uint32_t)framebuffer);
+   GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
    float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
    float X = -0.235125f;

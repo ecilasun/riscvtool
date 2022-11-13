@@ -366,7 +366,9 @@ int main()
     framebuffer = (uint8_t*)malloc(320*240*3 + 64);
     framebuffer = (uint8_t*)EAlignUp((uint32_t)framebuffer, 64);
     GPUSetVPage((uint32_t)framebuffer);
- 
+
+    GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+
     UARTWrite("initializing scene\n");
     init_scene();
 

@@ -109,6 +109,7 @@ void DecodeJPEG(const char *fname)
 
     asm volatile( ".word 0xFC000073;");
 	GPUSetVPage((uint32_t)image);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 }
 
 void Setup()

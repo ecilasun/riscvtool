@@ -36,6 +36,8 @@ I_InitGraphics(void)
 
 	uint32_t addrs = (uint32_t)(screens[0]);
 	GPUSetVPage(addrs);
+
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 }
 
 void
