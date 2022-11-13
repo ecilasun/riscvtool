@@ -44,6 +44,7 @@ void
 I_ShutdownGraphics(void)
 {
 	// TODO: Wait for GPU idle perhaps?
+	GPUSetVMode(MAKEVMODEINFO(0, 0)); // Video off
 }
 
 void
