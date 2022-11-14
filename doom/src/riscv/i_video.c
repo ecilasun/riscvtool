@@ -70,6 +70,8 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
+	// This is where we're supposed to flip to the next video page
+
 	//uint32_t *VID = (uint32_t *)screens[0];
 	//GPUSetVPage(VID);
 }
@@ -78,8 +80,12 @@ I_FinishUpdate (void)
 void
 I_WaitVBL(int count)
 {
-	//GPUWaitForVsync(); <= This is to make GPU wait for vblank, not the CPU
-	// Correct approach is to wait for the gpustate write from GPU side at end of frame (GPU label write to mark frame complete)
+	// Wait for vsync by triggering a write at vsync from GPU side
+	// which the CPU can read and compare to an expected value.
+
+	/*GPUWriteWord(frameIndexAddress, nextFrameIndex, GPU_AT_VSYNC); // GPU_AT_VSYNC or GPU_IMMEDIATE
+	while (frameIndexAddress != nextFrameIndex) { };
+	++nextFrameIndex;*/
 }
 
 
