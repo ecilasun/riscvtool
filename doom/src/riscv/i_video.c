@@ -99,8 +99,9 @@ I_FinishUpdate (void)
 	// Video write page
 	uint8_t *writepage = (cycle%2) ? framebufferB : framebufferA;
 
-	// Copy current screen to write page
-	memcpy(writepage, screens[0], SCREENWIDTH*SCREENHEIGHT);
+	// Point to new write page (forcing double buffering here)
+	screens[0] = writepage;
+	asm volatile( ".word 0xFC000073;" ); // Invalidate & write Back D$ (CFLUSH.D.L1)
 
 	// Show the read page while we're writing to the write page
 	// TODO: If double buffering, it would be better to flip pages in vsync handler

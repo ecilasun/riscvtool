@@ -78,6 +78,11 @@ void E32Sleep(uint64_t ms)
    while (E32ReadCycles() < tend) { asm volatile("nop;"); }
 }
 
+uint32_t ClockToSec(uint64_t clk)
+{
+   return (uint32_t)(clk / ONE_SECOND_IN_TICKS);
+}
+
 uint32_t ClockToMs(uint64_t clk)
 {
    return (uint32_t)(clk / ONE_MILLISECOND_IN_TICKS);
@@ -297,6 +302,8 @@ extern "C" {
       return 0;
    }
 
+   #define E32AlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
+
    void *_sbrk(intptr_t incr)
    {
       uint8_t *old_heapstart = heap_start;
@@ -304,6 +311,8 @@ extern "C" {
       if (heap_start == heap_end) {
          return NULL;
       }
+
+      //intptr_t alignedincr = E32AlignUp(incr, 64); // Always cache-align
 
       if ((heap_start += incr) < heap_end) {
          heap_start += incr;

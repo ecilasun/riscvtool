@@ -11,7 +11,7 @@ UPLOADER = ../../../build/release/riscvtool
 # CFLAGS=-mcmodel=medany -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 #CFLAGS=-Wall -lgcc -lm -Ofast -march=rv32im -mabi=ilp32 -static -ffreestanding -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 #CFLAGS=-mcmodel=medany -std=gnu99 -fPIC -static -ffreestanding -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I../../../fivepipe/SDK/ -I../../../3rdparty/
-CFLAGS=-mcmodel=medany -std=gnu99 -fPIC -static -ffreestanding -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I../../../fivepipe/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -std=gnu99 -fPIC -static -ffreestanding -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 CFLAGS += \
 	-DNORMALUNIX \

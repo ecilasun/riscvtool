@@ -60,11 +60,15 @@ I_ZoneBase(int *size)
 int
 I_GetTime(void)
 {
-	static int basetime = 0;
+    int                 newtics;
+    static int          basetime=0;
+
 	if (!basetime)
-		basetime = E32ReadTime();
-	int ticks = TICRATE*ClockToUs(E32ReadTime()-basetime)/1000000;
-	return ticks;
+		basetime = ClockToSec(E32ReadTime());
+
+	uint64_t longtime = E32ReadTime();
+	newtics = (ClockToSec(longtime)-basetime)*TICRATE + ClockToUs(longtime)*TICRATE/1000000;
+	return newtics;
 }
 
 
