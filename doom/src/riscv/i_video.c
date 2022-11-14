@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "../doomdef.h"
 
@@ -29,15 +30,28 @@
 #include "core.h"
 #include "gpu.h"
 
+#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
+static uint32_t cycle = 0;
+uint8_t *framebufferA;
+uint8_t *framebufferB;
+
 void
 I_InitGraphics(void)
 {
 	usegamma = 1;
 
-	uint32_t addrs = (uint32_t)(screens[0]);
-	GPUSetVPage(addrs);
+	framebufferA = (uint8_t*)malloc(320*240*3 + 64);
+	framebufferB = (uint8_t*)malloc(320*240*3 + 64);
+	framebufferA = (uint8_t*)EAlignUp((uint32_t)framebufferA, 64);
+	framebufferB = (uint8_t*)EAlignUp((uint32_t)framebufferB, 64);
 
+	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+
+	// Use the direct output (flickery, of course)
+	/*uint32_t addrs = (uint32_t)(screens[0]);
+	GPUSetVPage(addrs);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on*/
 }
 
 void
@@ -74,6 +88,25 @@ I_FinishUpdate (void)
 
 	//uint32_t *VID = (uint32_t *)screens[0];
 	//GPUSetVPage(VID);
+
+	// TODO: This can either be:
+	// a) two screen[] to use instead of one for double buffering
+	// b) the copy could be offloaded to a DMA device
+
+	// Video scan-out page
+	uint8_t *readpage = (cycle%2) ? framebufferA : framebufferB;
+
+	// Video write page
+	uint8_t *writepage = (cycle%2) ? framebufferB : framebufferA;
+
+	// Copy current screen to write page
+	memcpy(writepage, screens[0], SCREENWIDTH*SCREENHEIGHT);
+
+	// Show the read page while we're writing to the write page
+	// TODO: If double buffering, it would be better to flip pages in vsync handler
+	GPUSetVPage((uint32_t)readpage);
+
+	++cycle;
 }
 
 
