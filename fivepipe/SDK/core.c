@@ -312,7 +312,7 @@ extern "C" {
          return NULL;
       }
 
-      intptr_t alignedincr = E32AlignUp(incr, 64); // Always cache-align
+      intptr_t alignedincr = E32AlignUp(incr, 4); // Always 4-byte align
 
       if ((heap_start += alignedincr) < heap_end) {
          heap_start += alignedincr;
