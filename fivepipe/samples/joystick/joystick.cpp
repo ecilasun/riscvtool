@@ -6,8 +6,6 @@
 #include "gpu.h"
 #include "xadc.h"
 
-#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
-
 int main( int argc, char **argv )
 {
 	uint32_t x = 0;
@@ -20,8 +18,8 @@ int main( int argc, char **argv )
 
 	uint8_t *framebufferA = (uint8_t*)malloc(320*240*3 + 64);
 	uint8_t *framebufferB = (uint8_t*)malloc(320*240*3 + 64);
-	framebufferA = (uint8_t*)EAlignUp((uint32_t)framebufferA, 64);
-	framebufferB = (uint8_t*)EAlignUp((uint32_t)framebufferB, 64);
+	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
+	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
 
 	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on

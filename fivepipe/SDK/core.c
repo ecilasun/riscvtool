@@ -105,7 +105,7 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
 // Place the heap into DDR3 memory
 //#undef errno
 //int nerrno;
-static uint8_t *heap_start  = (uint8_t*)0x04000000; // 64 Mbytes from top of memory
+static uint8_t *heap_start  = (uint8_t*)0x03000000; // 48 Mbytes from top of memory
 static uint8_t *heap_end    = (uint8_t*)0x1FFFFF00;
 
 #ifdef __cplusplus
@@ -312,10 +312,10 @@ extern "C" {
          return NULL;
       }
 
-      //intptr_t alignedincr = E32AlignUp(incr, 64); // Always cache-align
+      intptr_t alignedincr = E32AlignUp(incr, 64); // Always cache-align
 
-      if ((heap_start += incr) < heap_end) {
-         heap_start += incr;
+      if ((heap_start += alignedincr) < heap_end) {
+         heap_start += alignedincr;
       } else {
          heap_start = heap_end;
       }

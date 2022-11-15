@@ -5,19 +5,12 @@
 
 #include <encoding.h>
 
-#define REQ_CheckAlive			0x00000000
-#define REQ_InstallTISR			0x00000001
-#define REQ_StartExecutable		0x00000002
-
 // 'five' has a 25MHz wall clock
 #define ONE_SECOND_IN_TICKS				25000000
 #define HUNDRED_MILLISECONDS_IN_TICKS	2500000
 #define TEN_MILLISECONDS_IN_TICKS		250000
 #define ONE_MILLISECOND_IN_TICKS		25000
 #define ONE_MICROSECOND_IN_TICKS		25
-
-// For E32E architecture, HART count is 8
-#define NUM_HARTS 8
 
 uint64_t E32ReadTime();
 uint64_t E32ReadCycles();
@@ -31,14 +24,4 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
 
 void E32Sleep(uint64_t ms);
 
-extern volatile uint32_t *HARTMAILBOX;
-extern volatile uint8_t *HARTIRQ;
-
-// User defined timer interrupt service routine signature, set HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] to nonzero to stay alive
-typedef void (*t_timerISR)(const uint32_t hartID);
-void InstallTimerISR(const uint32_t hartID, t_timerISR tisr, const uint32_t interval);
-
-// Number of parameters per hart, stored at offset NUM_HARTS
-// To access a parameter N, use: NUM_HARTS+hartid*HARTPARAMCOUNT+N where N<HARTPARAMCOUNT
-#define HARTPARAMCOUNT 4
-#define NUMHARTWORDS 512
+#define E32AlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))

@@ -1,17 +1,15 @@
 CROSS ?= riscv64-unknown-elf-
 
 CC = $(CROSS)gcc
-OBJCOPY = $(CROSS)objcopy
 OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
-UPLOADER = ../../../build/release/riscvtool
 
 # -ffunction-sections -fdata-sections -Wl,-gc-sections,-strip-debug 
 # --specs=nano.specs -std=c++14 -> need to use g++
 # CFLAGS=-mcmodel=medany -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 #CFLAGS=-Wall -lgcc -lm -Ofast -march=rv32im -mabi=ilp32 -static -ffreestanding -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 #CFLAGS=-mcmodel=medany -std=gnu99 -fPIC -static -ffreestanding -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I../../../fivepipe/SDK/ -I../../../3rdparty/
-CFLAGS=-mcmodel=medany -std=gnu99 -fPIC -static -ffreestanding -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I../../../fivepipe/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -std=gnu99 -fPIC -static -ffreestanding -Wall -O2 -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -specs=nosys.specs -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -24,6 +22,8 @@ include ../sources.mk
 SOURCES_doom := $(filter-out d_main.c,$(SOURCES_doom))
 
 SOURCES_doom_arch := \
+	../../../fivepipe/SDK/*.c \
+	../../../3rdparty/fat32/*.c \
 	d_main.c \
 	i_main.c \
 	i_net.c \
@@ -32,11 +32,7 @@ SOURCES_doom_arch := \
 	i_video.c \
 	console.c  \
 	mini-printf.c \
-	../../../3rdparty/fat32/*.c \
-	../../../fivepipe/SDK/*.c \
 	$(NULL)
-
-# start.S
 
 all: doom.elf doom.txt
 
@@ -49,11 +45,5 @@ clean:
 
 %.txt: %.elf
 	$(OBJDUMP) -x -D -S $< >> $@
-
-%.bin: %.elf
-	$(OBJCOPY) -O binary $< $@
-
-upload: doom.elf
-	$(UPLOADER) $< -sendelf 0x10000 /dev/ttyUSB1
 
 .PHONY: all clean upload

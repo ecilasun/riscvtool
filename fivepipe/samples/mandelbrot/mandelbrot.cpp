@@ -9,8 +9,6 @@
 #include "uart.h"
 #include "gpu.h"
 
-#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
-
 uint8_t *framebuffer;
 
 int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
@@ -81,7 +79,7 @@ int main()
     // Set up frame buffer
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
    framebuffer = (uint8_t*)malloc(320*240*3 + 64);
-   framebuffer = (uint8_t*)EAlignUp((uint32_t)framebuffer, 64);
+   framebuffer = (uint8_t*)E32AlignUp((uint32_t)framebuffer, 64);
    GPUSetVPage((uint32_t)framebuffer);
    GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 

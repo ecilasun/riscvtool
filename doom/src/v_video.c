@@ -39,9 +39,8 @@ rcsid[] = "$Id: v_video.c,v 1.5 1997/02/03 22:45:13 b1 Exp $";
 
 #include "v_video.h"
 
+#include "core.h"
 #include "gpu.h"
-
-#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
 
 // Each screen is [SCREENWIDTH*SCREENHEIGHT];
 byte*                           screens[5];
@@ -490,7 +489,7 @@ void V_Init (void)
     // stick these in low dos memory on PCs
 
     base = I_AllocLow (SCREENWIDTH*SCREENHEIGHT*4 + 256);
-    base = (uint8_t*)EAlignUp((uint32_t)base, 64);
+    base = (uint8_t*)E32AlignUp((uint32_t)base, 64);
 
     for (i=0 ; i<4 ; i++)
         screens[i] = base + i*SCREENWIDTH*SCREENHEIGHT;

@@ -30,7 +30,6 @@
 #include "core.h"
 #include "gpu.h"
 
-#define EAlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
 static uint32_t cycle = 0;
 uint8_t *framebufferA;
 uint8_t *framebufferB;
@@ -42,16 +41,14 @@ I_InitGraphics(void)
 
 	framebufferA = (uint8_t*)malloc(320*240*3 + 64);
 	framebufferB = (uint8_t*)malloc(320*240*3 + 64);
-	framebufferA = (uint8_t*)EAlignUp((uint32_t)framebufferA, 64);
-	framebufferB = (uint8_t*)EAlignUp((uint32_t)framebufferB, 64);
+	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
+	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
+
+	memset(framebufferA, 0x0, 320*240*3);
+	memset(framebufferB, 0x0, 320*240*3);
 
 	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
-
-	// Use the direct output (flickery, of course)
-	/*uint32_t addrs = (uint32_t)(screens[0]);
-	GPUSetVPage(addrs);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on*/
 }
 
 void
@@ -84,15 +81,6 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// This is where we're supposed to flip to the next video page
-
-	//uint32_t *VID = (uint32_t *)screens[0];
-	//GPUSetVPage(VID);
-
-	// TODO: This can either be:
-	// a) two screen[] to use instead of one for double buffering
-	// b) the copy could be offloaded to a DMA device
-
 	// Video scan-out page
 	uint8_t *readpage = (cycle%2) ? framebufferA : framebufferB;
 
@@ -101,12 +89,14 @@ I_FinishUpdate (void)
 
 	// Point to new write page (forcing double buffering here)
 	screens[0] = writepage;
-	asm volatile( ".word 0xFC000073;" ); // Invalidate & write Back D$ (CFLUSH.D.L1)
+
+	// Invalidate & write back D$ (CFLUSH.D.L1)
+	asm volatile( ".word 0xFC000073;" );
 
 	// Show the read page while we're writing to the write page
-	// TODO: If double buffering, it would be better to flip pages in vsync handler
 	GPUSetVPage((uint32_t)readpage);
 
+	// TODO: Might want to move the actual buffer flip to I_WaitVBL()
 	++cycle;
 }
 
