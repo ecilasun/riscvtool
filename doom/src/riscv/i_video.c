@@ -33,6 +33,8 @@
 static uint32_t cycle = 0;
 uint8_t *framebufferA;
 uint8_t *framebufferB;
+uint8_t *readpage;
+uint8_t *writepage;
 
 void
 I_InitGraphics(void)
@@ -82,10 +84,10 @@ void
 I_FinishUpdate (void)
 {
 	// Video scan-out page
-	uint8_t *readpage = (cycle%2) ? framebufferA : framebufferB;
+	readpage = (cycle%2) ? framebufferA : framebufferB;
 
 	// Video write page
-	uint8_t *writepage = (cycle%2) ? framebufferB : framebufferA;
+	writepage = (cycle%2) ? framebufferB : framebufferA;
 
 	// Point to new write page (forcing double buffering here)
 	screens[0] = writepage;
@@ -116,18 +118,6 @@ I_WaitVBL(int count)
 void
 I_ReadScreen(byte* scr)
 {
-	memcpy (scr, screens[0], SCREENWIDTH*SCREENHEIGHT);
+	// Copy what's on screen
+	memcpy (scr, readpage, SCREENWIDTH*SCREENHEIGHT);
 }
-
-
-#if 0
-void
-I_BeginRead(void)
-{
-}
-
-void
-I_EndRead(void)
-{
-}
-#endif

@@ -63,7 +63,9 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
 
 // A single SPI transaction is a write from master followed by a read from slave's output
 //volatile uint8_t *SPISINK = (volatile uint8_t* ) 0x8000000F;
-uint8_t SPITxRx(const uint8_t outbyte)
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+__noinline uint8_t SPITxRx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
    //*SPISINK = 0xFF;
@@ -75,8 +77,9 @@ uint8_t SPITxRx(const uint8_t outbyte)
    //UARTWrite(":");
    return incoming;
 }
+#pragma GCC pop_options
 
-uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
+__noinline uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
 {
    uint8_t buf[8];
 
@@ -98,7 +101,7 @@ uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
    return incoming;
 }
 
-uint8_t SDResponse1()
+__noinline uint8_t SDResponse1()
 {
    uint8_t res1 = 0xFF;
 
@@ -112,7 +115,7 @@ uint8_t SDResponse1()
    return res1;
 }
 
-uint8_t SDResponse7(uint32_t *data)
+__noinline uint8_t SDResponse7(uint32_t *data)
 {
    *data = 0x00000000;
    uint8_t res1 = SDResponse1();

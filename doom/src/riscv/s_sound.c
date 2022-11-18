@@ -1,5 +1,5 @@
 /*
- * i_sound.c
+ * s_sound.c
  *
  * Dummy sound code
  *
@@ -17,70 +17,57 @@
  * GNU General Public License for more details.
  */
 
-#include "i_sound.h"
+#include "s_sound.h"
 
 
 /* Sound */
 /* ----- */
 
 void
-I_InitSound()
+S_Init
+( int sfxVolume,
+  int musicVolume )
+{
+}
+
+void S_Start(void)
 {
 }
 
 void
-I_UpdateSound(void)
+S_StartSound
+( void* origin,
+  int   sound_id )
 {
 }
 
 void
-I_SubmitSound(void)
+S_StartSoundAtVolume
+( void* origin,
+  int   sound_id,
+  int   volume )
 {
 }
 
 void
-I_ShutdownSound(void)
+S_StopSound(void* origin)
 {
 }
 
-void I_SetChannels(void)
-{
-}
 
-int
-I_GetSfxLumpNum(sfxinfo_t* sfxinfo)
+void
+S_PauseSound(void)
 {
-	return 0;
-}
-
-int
-I_StartSound
-( int id,
-  int vol,
-  int sep,
-  int pitch,
-  int priority )
-{
-	return 0;
 }
 
 void
-I_StopSound(int handle)
+S_ResumeSound(void)
 {
 }
 
-int
-I_SoundIsPlaying(int handle)
-{
-	return 0;
-}
 
 void
-I_UpdateSoundParams
-( int handle,
-  int vol,
-  int sep,
-  int pitch )
+S_UpdateSounds(void* listener)
 {
 }
 
@@ -89,49 +76,37 @@ I_UpdateSoundParams
 /* ----- */
 
 void
-I_InitMusic(void)
+S_StartMusic(int music_id)
 {
 }
 
 void
-I_ShutdownMusic(void)
-{
-}
-
-void
-I_SetMusicVolume(int volume)
-{
-}
-
-void
-I_PauseSong(int handle)
-{
-}
-
-void
-I_ResumeSong(int handle)
-{
-}
-
-int
-I_RegisterSong(void *data)
-{
-	return 0;
-}
-
-void
-I_PlaySong
-( int handle,
+S_ChangeMusic
+( int music_id,
   int looping )
 {
 }
 
 void
-I_StopSong(int handle)
+S_StopMusic(void)
+{
+}
+
+
+/* Volumes */
+/* ------- */
+
+	/* Must exist for settings loading code ... */
+int snd_SfxVolume;
+int snd_MusicVolume;
+int numChannels;
+
+void
+S_SetMusicVolume(int volume)
 {
 }
 
 void
-I_UnRegisterSong(int handle)
+S_SetSfxVolume(int volume)
 {
 }
