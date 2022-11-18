@@ -38,7 +38,8 @@ extern "C"
          "sub sp, sp, s0;"          // stacktop = base - stepback;
          "mv s0, sp;"               // Set frame pointer to current stack pointer
 #endif
-         // Clear BSS
+
+         // Clear BSS - NOTE: can skip for hardware debug builds
          "la a0, __malloc_max_total_mem;"
          "la a2, __BSS_END__$;"
          "sub a2, a2, a0;"

@@ -21,6 +21,7 @@ folders = \
 	joystick \
 	tinyraytracer \
 	buserr \
+	ierr \
 
 # Rules
 

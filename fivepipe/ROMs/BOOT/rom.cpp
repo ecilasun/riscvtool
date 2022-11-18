@@ -29,6 +29,7 @@ static char currentdir[512] = "sd:";
 static char commandline[512] = "";
 static char filename[128] = "";
 static int cmdlen = 0;
+static int fsmounted = 0;
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -56,8 +57,26 @@ const char *FRtoString[]={
 // Main file system object
 FATFS Fs;
 
+bool EnsureMounted()
+{
+	if (!fsmounted)
+	{
+		UARTWrite("Mounting filesystem\n");
+		FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+		if (mountattempt!=FR_OK)
+			UARTWrite(FRtoString[mountattempt]);
+		else
+			fsmounted = 1;
+	}
+
+	return fsmounted ? true : false;
+}
+
 void ListFiles(const char *path)
 {
+	if (!EnsureMounted())
+		return;
+
 	DIR dir;
 	FRESULT re = f_opendir(&dir, path);
 	if (re == FR_OK)
@@ -200,14 +219,13 @@ void ParseCommands()
 	{
 		UARTWrite("Disconnecting and powering down SDCard...\n");
 		f_mount(nullptr, "sd:", 1);
+		fsmounted = 0;
 		SDCardControl(0x0);
 
 		UARTWrite("Powering up and connecting SDCard...\n");
 		SDCardControl(0x3);
-		FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-		if (mountattempt!=FR_OK)
-			UARTWrite(FRtoString[mountattempt]);
-		else
+
+		if (EnsureMounted())
 			UARTWrite("Success\n");
 	}
 	else if(!strcmp(command, "cls"))
@@ -223,15 +241,16 @@ void ParseCommands()
 	}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
-		// Build a file name from the input string
-		strcpy(filename, currentdir);
-		strcat(filename, command);
-		strcat(filename, ".elf");
-		LoadExecutable(filename, true);
-		// Re-mount the file system after we return
-		FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-		if (mountattempt!=FR_OK)
-			UARTWrite(FRtoString[mountattempt]);
+		if (EnsureMounted())
+		{
+			// Build a file name from the input string
+			strcpy(filename, currentdir);
+			strcat(filename, command);
+			strcat(filename, ".elf");
+
+			// Load and run the ELF
+			LoadExecutable(filename, true);
+		}
 	}
 
 	cmdlen = 0;
@@ -253,17 +272,7 @@ void workermain()
 // HART[0] entry point
 int main()
 {
-	LEDSetState(0);
-	PS2InitRingBuffer();
-
-	// File system test
-	UARTWrite("Mounting filesystem\n");
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-	if (mountattempt!=FR_OK)
-		UARTWrite(FRtoString[mountattempt]);
-
 	// Only on first core
-	UARTWrite("Installing ISR\n");
 	uint32_t hartid = read_csr(mhartid);
 	if (hartid == 0)
 	{
@@ -271,7 +280,9 @@ int main()
 		InstallMainISR();
 	}
 
-	UARTWrite("Ready\n");
+	LEDSetState(0);
+	PS2InitRingBuffer();
+
 	while(1)
 	{
 		// Main loop will only wake up at hardware interrupt requests

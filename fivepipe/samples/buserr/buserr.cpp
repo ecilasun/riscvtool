@@ -6,8 +6,8 @@
 
 int main()
 {
-    volatile uint32_t *unmappedmemory = (volatile uint32_t*)0x2020BAAD;
-    volatile uint32_t *unmappeddevice = (volatile uint32_t*)0x2020BAAD;
+    uint32_t *unmappedmemory = (uint32_t*)0x2020BAAD;
+    uint32_t *unmappeddevice = (uint32_t*)0x2020BAAD;
 
     printf("Testing memory bus write error...\n");
     unmappedmemory[0] = 0xCDCDCDCD;
