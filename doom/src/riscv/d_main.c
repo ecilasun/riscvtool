@@ -42,45 +42,42 @@ rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 #include <fcntl.h>
 #endif
 
-#include <stdlib.h>
 
-#include "../doomdef.h"
-#include "../doomstat.h"
+#include "doomdef.h"
+#include "doomstat.h"
 
-#include "../dstrings.h"
-#include "../sounds.h"
-
-
-#include "../z_zone.h"
-#include "../w_wad.h"
-#include "../s_sound.h"
-#include "../v_video.h"
-
-#include "../f_finale.h"
-#include "../f_wipe.h"
-
-#include "../m_argv.h"
-#include "../m_misc.h"
-#include "../m_menu.h"
-
-#include "../i_system.h"
-#include "../i_sound.h"
-#include "../i_video.h"
-
-#include "../g_game.h"
-
-#include "../hu_stuff.h"
-#include "../wi_stuff.h"
-#include "../st_stuff.h"
-#include "../am_map.h"
-
-#include "../p_setup.h"
-#include "../r_local.h"
+#include "dstrings.h"
+#include "sounds.h"
 
 
-#include "../d_main.h"
+#include "z_zone.h"
+#include "w_wad.h"
+#include "s_sound.h"
+#include "v_video.h"
 
-#include "fat32/ff.h"
+#include "f_finale.h"
+#include "f_wipe.h"
+
+#include "m_argv.h"
+#include "m_misc.h"
+#include "m_menu.h"
+
+#include "i_system.h"
+#include "i_sound.h"
+#include "i_video.h"
+
+#include "g_game.h"
+
+#include "hu_stuff.h"
+#include "wi_stuff.h"
+#include "st_stuff.h"
+#include "am_map.h"
+
+#include "p_setup.h"
+#include "r_local.h"
+
+
+#include "d_main.h"
 
 //
 // D-DoomLoop()
@@ -374,20 +371,8 @@ void D_DoomLoop (void)
             TryRunTics (); // will run at least one tic
         }
 
-        S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
-
         // Update display, next frame, with current state.
         D_Display ();
-
-#ifndef SNDSERV
-        // Sound mixing for the buffer is snychronous.
-        I_UpdateSound();
-#endif
-        // Synchronous sound output is explicitly called.
-#ifndef SNDINTR
-        // Update sound output.
-        I_SubmitSound();
-#endif
     }
 }
 

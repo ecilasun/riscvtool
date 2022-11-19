@@ -42,7 +42,6 @@ rcsid[] = "$Id: s_sound.c,v 1.6 1997/02/03 22:45:12 b1 Exp $";
 
 #include "doomstat.h"
 
-//#define SAWDEBUG
 
 // Purpose?
 const char snd_prefixen[]
@@ -164,7 +163,7 @@ void S_Init
 {
   int           i;
 
-  printf( "S_Init: default sfx volume %d\n", sfxVolume);
+  fprintf( stderr, "S_Init: default sfx volume %d\n", sfxVolume);
 
   // Whatever these did with DMX, these are rather dummies now.
   I_SetChannels();
@@ -269,7 +268,9 @@ S_StartSoundAtVolume
 
 
   // Debug.
-  //printf( "S_StartSoundAtVolume: playing sound %d (%s)\n", sfx_id, S_sfx[sfx_id].name );
+  /*fprintf( stderr,
+           "S_StartSoundAtVolume: playing sound %d (%s)\n",
+           sfx_id, S_sfx[sfx_id].name );*/
 
   // check for bogus sound #
   if (sfx_id < 1 || sfx_id > NUMSFX)
@@ -366,11 +367,13 @@ S_StartSoundAtVolume
   // cache data if necessary
   if (!sfx->data)
   {
-    printf("S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");
+    fprintf( stderr,
+             "S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");
 
     // DOS remains, 8bit handling
     //sfx->data = (void *) W_CacheLumpNum(sfx->lumpnum, PU_MUSIC);
-    // printf( "S_StartSoundAtVolume: loading %d (lump %d) : 0x%x\n",
+    // fprintf( stderr,
+    //       "S_StartSoundAtVolume: loading %d (lump %d) : 0x%x\n",
     //       sfx_id, sfx->lumpnum, (int)sfx->data );
 
   }
@@ -419,7 +422,7 @@ S_StartSound
     {
         for (i=first_saw;i!=next_saw;i=(i+1)%10)
             if (last_saw_origins[i] != origin)
-                printf("old origin 0x%lx != "
+                fprintf(stderr, "old origin 0x%lx != "
                         "origin 0x%lx for sfx %d\n",
                         last_saw_origins[i],
                         origin,
@@ -445,14 +448,15 @@ S_StartSound
                     || channels[i].sfxinfo == &S_sfx[sfx_sawful]
                     || channels[i].sfxinfo == &S_sfx[sfx_sawhit])
                 {
-                    printf("chn: sfxinfo=0x%lx, origin=0x%lx, "
+                    fprintf(stderr,
+                            "chn: sfxinfo=0x%lx, origin=0x%lx, "
                             "handle=%d\n",
                             channels[i].sfxinfo,
                             channels[i].origin,
                             channels[i].handle);
                 }
             }
-            printf("\n");
+            fprintf(stderr, "\n");
         }
     }
 }
@@ -713,7 +717,7 @@ void S_StopChannel(int cnum)
         {
 #ifdef SAWDEBUG
             if (c->sfxinfo == &S_sfx[sfx_sawful])
-                printf("stopped\n");
+                fprintf(stderr, "stopped\n");
 #endif
             I_StopSound(c->handle);
         }

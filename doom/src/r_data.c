@@ -675,8 +675,7 @@ int R_FlatNumForName (char* name)
     if (i == -1)
     {
         namet[8] = 0;
-        //memcpy (namet, name,8); <- bad practice to read past end of input string
-        strncpy(namet, name, 8);
+        memcpy (namet, name,8);
         I_Error ("R_FlatNumForName: %s not found",namet);
     }
     return i - firstflat;

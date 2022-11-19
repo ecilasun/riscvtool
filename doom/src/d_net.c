@@ -98,21 +98,21 @@ int NetbufferSize (void)
 //
 unsigned NetbufferChecksum (void)
 {
-    //unsigned c;
-    //int         i,l;
+    unsigned            c;
+    int         i,l;
 
-    //c = 0x1234567;
+    c = 0x1234567;
 
     // FIXME -endianess?
-//#ifdef NORMALUNIX
+#ifdef NORMALUNIX
     return 0;                   // byte order problems
-//#endif
+#endif
 
-    /*l = (NetbufferSize () - (int)&(((doomdata_t *)0)->retransmitfrom))/4;
+    l = (NetbufferSize () - (int)&(((doomdata_t *)0)->retransmitfrom))/4;
     for (i=0 ; i<l ; i++)
         c += ((unsigned *)&netbuffer->retransmitfrom)[i] * (i+1);
 
-    return c & NCMD_CHECKSUM;*/
+    return c & NCMD_CHECKSUM;
 }
 
 //
@@ -164,7 +164,7 @@ HSendPacket
     doomcom->remotenode = node;
     doomcom->datalength = NetbufferSize ();
 
-    /*if (debugfile)
+    if (debugfile)
     {
         int             i;
         int             realretrans;
@@ -181,7 +181,7 @@ HSendPacket
             fprintf (debugfile,"%i ",((byte *)netbuffer)[i]);
 
         fprintf (debugfile,"\n");
-    }*/
+    }
 
     I_NetCmd ();
 }
@@ -214,19 +214,19 @@ boolean HGetPacket (void)
 
     if (doomcom->datalength != NetbufferSize ())
     {
-        /*if (debugfile)
-            fprintf (debugfile,"bad packet length %i\n",doomcom->datalength);*/
+        if (debugfile)
+            fprintf (debugfile,"bad packet length %i\n",doomcom->datalength);
         return false;
     }
 
     if (NetbufferChecksum () != (netbuffer->checksum&NCMD_CHECKSUM) )
     {
-        /*if (debugfile)
-            fprintf (debugfile,"bad packet checksum\n");*/
+        if (debugfile)
+            fprintf (debugfile,"bad packet checksum\n");
         return false;
     }
 
-    /*if (debugfile)
+    if (debugfile)
     {
         int             realretrans;
         int     i;
@@ -249,7 +249,7 @@ boolean HGetPacket (void)
                 fprintf (debugfile,"%i ",((byte *)netbuffer)[i]);
             fprintf (debugfile,"\n");
         }
-    }*/
+    }
     return true;
 }
 
@@ -306,8 +306,8 @@ void GetPackets (void)
              && (netbuffer->checksum & NCMD_RETRANSMIT) )
         {
             resendto[netnode] = ExpandTics(netbuffer->retransmitfrom);
-            /*if (debugfile)
-                fprintf (debugfile,"retransmit from %i\n", resendto[netnode]);*/
+            if (debugfile)
+                fprintf (debugfile,"retransmit from %i\n", resendto[netnode]);
             resendcount[netnode] = RESENDCOUNT;
         }
         else
@@ -319,10 +319,10 @@ void GetPackets (void)
 
         if (realend < nettics[netnode])
         {
-            /*if (debugfile)
+            if (debugfile)
                 fprintf (debugfile,
                          "out of order packet (%i + %i)\n" ,
-                         realstart,netbuffer->numtics);*/
+                         realstart,netbuffer->numtics);
             continue;
         }
 
@@ -330,10 +330,10 @@ void GetPackets (void)
         if (realstart > nettics[netnode])
         {
             // stop processing until the other system resends the missed tics
-            /*if (debugfile)
+            if (debugfile)
                 fprintf (debugfile,
                          "missed tics from %i (%i - %i)\n",
-                         netnode, realstart, nettics[netnode]);*/
+                         netnode, realstart, nettics[netnode]);
             remoteresend[netnode] = true;
             continue;
         }
@@ -604,8 +604,8 @@ void D_QuitNetGame (void)
 {
     int             i, j;
 
-    /*if (debugfile)
-        fclose (debugfile);*/
+    if (debugfile)
+        fclose (debugfile);
 
     if (!netgame || !usergame || consoleplayer == -1 || demoplayback)
         return;
@@ -639,7 +639,7 @@ void TryRunTics (void)
     int         i;
     int         lowtic;
     int         entertic;
-    static int  oldentertics = 0;
+    static int  oldentertics;
     int         realtics;
     int         availabletics;
     int         counts;
@@ -677,15 +677,12 @@ void TryRunTics (void)
     if (counts < 1)
         counts = 1;
 
-    // if (counts > 2)
-    //     counts = 2;
-
     frameon++;
 
-    /*if (debugfile)
+    if (debugfile)
         fprintf (debugfile,
                  "=======real: %i  avail: %i  game: %i\n",
-                 realtics, availabletics,counts);*/
+                 realtics, availabletics,counts);
 
     if (!demoplayback)
     {

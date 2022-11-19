@@ -693,10 +693,6 @@ void R_ExecuteSetViewSize (void)
     detailshift = setdetail;
     viewwidth = scaledviewwidth>>detailshift;
 
-    // HANG FIX: these values go way out of range!
-    viewheight = viewheight > SCREENHEIGHT ? SCREENHEIGHT : viewheight;
-    viewwidth = viewwidth > SCREENWIDTH ? SCREENWIDTH : viewwidth;
-
     centery = viewheight/2;
     centerx = viewwidth/2;
     centerxfrac = centerx<<FRACBITS;

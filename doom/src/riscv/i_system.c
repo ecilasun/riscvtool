@@ -24,35 +24,35 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../doomdef.h"
-#include "../doomstat.h"
+#include "doomdef.h"
+#include "doomstat.h"
 
-#include "../d_main.h"
-#include "../g_game.h"
-#include "../m_misc.h"
-#include "../i_sound.h"
-#include "../i_video.h"
+#include "d_main.h"
+#include "g_game.h"
+#include "m_misc.h"
+#include "i_sound.h"
+#include "i_video.h"
 
-#include "../i_system.h"
+#include "i_system.h"
 
-#include <inttypes.h>
 #include "core.h"
 #include "console.h"
-#include "uart.h"
+#include "config.h"
 #include "ps2.h"
+
 
 void
 I_Init(void)
 {
-	I_InitSound();
+	
 }
 
 
 byte *
 I_ZoneBase(int *size)
 {
-	/* Give 24M to DOOM */
-	*size = 24 * 1024 * 1024;
+	/* Give 6M to DOOM */
+	*size = 6 * 1024 * 1024;
 	return (byte *) malloc (*size);
 }
 
@@ -73,7 +73,7 @@ I_GetTime(void)
 
 
 static void
-I_GetEvent(void)
+I_GetRemoteEvent(void)
 {
 	event_t event;
 
@@ -139,7 +139,7 @@ I_StartFrame(void)
 void
 I_StartTic(void)
 {
-	I_GetEvent();
+	I_GetRemoteEvent();
 }
 
 ticcmd_t *
@@ -154,8 +154,6 @@ void
 I_Quit(void)
 {
 	D_QuitNetGame();
-	//I_ShutdownSound();
-	//I_ShutdownMusic();
 	M_SaveDefaults();
 	I_ShutdownGraphics();
 	exit(0); // NOTE: The environment we're going to return to has been destroyed

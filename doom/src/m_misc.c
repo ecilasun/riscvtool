@@ -242,7 +242,7 @@ default_t       defaults[] =
     {"show_messages",&showMessages, 1},
 
 
-//#ifdef NORMALUNIX
+#ifdef NORMALUNIX
     {"key_right",&key_right, KEY_RIGHTARROW},
     {"key_left",&key_left, KEY_LEFTARROW},
     {"key_up",&key_up, KEY_UPARROW},
@@ -261,7 +261,7 @@ default_t       defaults[] =
     {"mb_used", &mb_used, 2},
 #endif
 
-//#endif
+#endif
 
 #ifdef LINUX
     {"mousedev", (int*)&mousedev, (int)"/dev/ttyS0"},
@@ -310,7 +310,7 @@ char*   defaultfile;
 //
 void M_SaveDefaults (void)
 {
-    /*int         i;
+    int         i;
     int         v;
     FILE*       f;
 
@@ -331,7 +331,7 @@ void M_SaveDefaults (void)
         }
     }
 
-    fclose (f);*/
+    fclose (f);
 }
 
 
@@ -343,13 +343,13 @@ extern byte     scantokey[128];
 void M_LoadDefaults (void)
 {
     int         i;
-    //int         len;
-    //FILE*       f;
-    //char        def[80];
-    //char        strparm[100];
-    //char*       newstring;
-    //int         parm;
-    //boolean     isstring;
+    int         len;
+    FILE*       f;
+    char        def[80];
+    char        strparm[100];
+    char*       newstring;
+    int         parm;
+    boolean     isstring;
 
     // set everything to base values
     numdefaults = sizeof(defaults)/sizeof(defaults[0]);
@@ -367,7 +367,7 @@ void M_LoadDefaults (void)
         defaultfile = basedefault;
 
     // read the file in, overriding any set defaults
-    /*f = fopen (defaultfile, "r");
+    f = fopen (defaultfile, "r");
     if (f)
     {
         while (!feof(f))
@@ -402,7 +402,7 @@ void M_LoadDefaults (void)
         }
 
         fclose (f);
-    }*/
+    }
 }
 
 
@@ -411,7 +411,7 @@ void M_LoadDefaults (void)
 //
 
 
-/*typedef struct
+typedef struct
 {
     char                manufacturer;
     char                version;
@@ -435,7 +435,7 @@ void M_LoadDefaults (void)
 
     char                filler[58];
     unsigned char       data;           // unbounded
-} pcx_t;*/
+} pcx_t;
 
 
 //
@@ -449,7 +449,7 @@ WritePCXfile
   int           height,
   byte*         palette )
 {
-    /*int         i;
+    int         i;
     int         length;
     pcx_t*      pcx;
     byte*       pack;
@@ -496,7 +496,7 @@ WritePCXfile
     length = pack - (byte *)pcx;
     M_WriteFile (filename, pcx, length);
 
-    Z_Free (pcx);*/
+    Z_Free (pcx);
 }
 
 
@@ -505,7 +505,7 @@ WritePCXfile
 //
 void M_ScreenShot (void)
 {
-    /*int         i;
+    int         i;
     byte*       linear;
     char        lbmname[12];
     struct stat fs;
@@ -532,7 +532,7 @@ void M_ScreenShot (void)
                   SCREENWIDTH, SCREENHEIGHT,
                   W_CacheLumpName ("PLAYPAL",PU_CACHE));
 
-    players[consoleplayer].message = "screen shot";*/
+    players[consoleplayer].message = "screen shot";
 }
 
 
