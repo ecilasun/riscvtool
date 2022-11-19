@@ -62,6 +62,8 @@ int main( int argc, char **argv )
                 writepage[i + y*320] = 0x0A; // Green
             }
 
+            GPUPrintString(writepage, 0, 16, "Green: temperature Black: voltage");
+
             x = 0;
             asm volatile( ".word 0xFC000073;");
 

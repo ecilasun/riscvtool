@@ -16,3 +16,4 @@ extern volatile uint32_t *GPUFIFO;
 void GPUSetVMode(const uint32_t _vmodeInfo);
 void GPUSetVPage(const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24);
+void GPUPrintString(uint8_t *_vramBase, const int _col, const int _row, const char *_message);
