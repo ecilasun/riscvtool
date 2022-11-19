@@ -4,7 +4,7 @@
 volatile uint32_t *PS2KEYBOARDDATA = (volatile uint32_t* )0x80000050;
 volatile uint32_t *PS2KEYBOARDDATAAVAIL = (volatile uint32_t* )0x80000058;
 
-void PS2ScanKeyboard(uint16_t *_keymap)
+void __attribute__ ((noinline)) PS2ScanKeyboard(uint16_t *_keymap)
 {
     uint32_t ext = 0;
     uint32_t brk = 0;
@@ -74,7 +74,7 @@ char scantoasciitable_uppercase[] = {
     ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' '  // F
 };
 
-char PS2ScanToASCII(const uint8_t _code, const uint8_t _uppercase)
+char __attribute__ ((noinline)) PS2ScanToASCII(const uint8_t _code, const uint8_t _uppercase)
 {
     return _uppercase ? scantoasciitable_uppercase[_code] : scantoasciitable_lowercase[_code];
 }
@@ -93,7 +93,7 @@ static uint8_t *m_ringBuffer;
 volatile static uint32_t *m_readOffset;
 volatile static uint32_t *m_writeOffset;
 
-void PS2InitRingBuffer()
+void __attribute__ ((noinline)) PS2InitRingBuffer()
 {
     // Might be missing initialization based on platform, so we use code to initialize
     m_ringBuffer  = (uint8_t *)0x00000100;

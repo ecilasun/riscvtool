@@ -102,11 +102,14 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
 
 // C stdlib overrides
 
-// Place the heap into DDR3 memory
 //#undef errno
 //int nerrno;
+
+// Place the heap into DDR3 memory
+#if !defined(CUSTOM_SBRK)
 static uint8_t *heap_start  = (uint8_t*)0x03000000; // 48 Mbytes from top of memory
 static uint8_t *heap_end    = (uint8_t*)0x1FFFFF00;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -296,6 +299,7 @@ extern "C" {
    {
    }
 
+#if !defined(CUSTOM_SBRK)
    int _brk(void *addr)
    {
       heap_start = (uint8_t*)addr;
@@ -321,6 +325,7 @@ extern "C" {
       }
       return old_heapstart;
    }
+#endif // CUSTOM_SBRK
 #ifdef __cplusplus
 }
 #endif
