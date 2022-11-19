@@ -104,10 +104,6 @@ void DecodeJPEG(const char *fname)
 	}
 
 	njDone();
-
-    asm volatile( ".word 0xFC000073;");
-	GPUSetVPage((uint32_t)image);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 }
 
 void Setup()
@@ -137,7 +133,17 @@ int main()
 	image = (uint8_t*)malloc(320*240*3*sizeof(uint8_t) + 64);
 	image = (uint8_t*)E32AlignUp((uint32_t)image, 64);
 
+	GPUSetVPage((uint32_t)image);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+
+    GPUPrintString(image, 0, 16, "loading...");
+    asm volatile( ".word 0xFC000073;");
+
 	DecodeJPEG("sd:test.jpg");
+    asm volatile( ".word 0xFC000073;");
+
+	DecodeJPEG("sd:fearless.jpg");
+    asm volatile( ".word 0xFC000073;");
 
 	return 0;
 }

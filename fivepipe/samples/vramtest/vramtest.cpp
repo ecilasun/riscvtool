@@ -46,6 +46,8 @@ int main()
 			for (int x=0;x<80;++x)
 				writepageword[x+y*80] = writepageword[x+(y+208)*80] ^ 0xFFFFFFFF;
 
+    	GPUPrintString(writepage, 8, 8, "vram test");
+
 		// Flush data cache at last pixel so we can see a coherent image
 		asm volatile( ".word 0xFC000073;");
 
