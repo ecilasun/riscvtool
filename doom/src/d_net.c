@@ -164,7 +164,7 @@ HSendPacket
     doomcom->remotenode = node;
     doomcom->datalength = NetbufferSize ();
 
-    if (debugfile)
+    /*if (debugfile)
     {
         int             i;
         int             realretrans;
@@ -181,7 +181,7 @@ HSendPacket
             fprintf (debugfile,"%i ",((byte *)netbuffer)[i]);
 
         fprintf (debugfile,"\n");
-    }
+    }*/
 
     I_NetCmd ();
 }

@@ -19,19 +19,14 @@ int getDebugChar()
     return IO_UARTRX[0];
 }
 
-void exceptionHandler()
-{
-    // NOTE: This will be embedded in the core exception handler
-}
-
 void flush_i_cache()
 {
-    // TODO
+    // TODO:
 }
 
 void exceptionHandler (int exception_number, void *exception_address)
 {
-
+    // TODO:
 }
 
 // void *memset(void *, int, int) also in stdlib
@@ -158,16 +153,16 @@ void byte2architectureorderedstring(const uint8_t val, char *regstring)
 }
 
 // NOTE: This cannot be re-entrant
-void SendDebugPacketRegisters(STaskContext &task)
+void SendDebugPacketRegisters(struct STaskContext *task)
 {
     char packetString[512];
 
     // All registers first
     for(uint32_t i=0;i<32;++i)
-        int2architectureorderedstring(task.regs[i], &packetString[i*8]);
+        int2architectureorderedstring(task->regs[i], &packetString[i*8]);
 
     // PC is sent last
-    int2architectureorderedstring(task.PC, &packetString[32*8]);
+    int2architectureorderedstring(task->PC, &packetString[32*8]);
 
     // Not sure if float registers follow?
 
@@ -220,22 +215,22 @@ uint32_t hex2int(char *hex)
     return val;
 }
 
-void RemoveBreakPoint(STaskContext &task, uint32_t breakaddress)
+void RemoveBreakPoint(struct STaskContext *task, uint32_t breakaddress)
 {
-    for (uint32_t i=0; i<task.num_breakpoints; ++i)
+    for (uint32_t i=0; i<task->num_breakpoints; ++i)
     {
-        if (task.breakpoints[i].address == breakaddress)
+        if (task->breakpoints[i].address == breakaddress)
         {
             // Restore saved instruction
-            *(uint32_t*)(breakaddress) = task.breakpoints[i].originalinstruction;
+            *(uint32_t*)(breakaddress) = task->breakpoints[i].originalinstruction;
             
-            if (task.num_breakpoints-1 != i)
+            if (task->num_breakpoints-1 != i)
             {
-                task.breakpoints[i].originalinstruction = task.breakpoints[task.num_breakpoints-1].originalinstruction;
-                task.breakpoints[i].address = task.breakpoints[task.num_breakpoints-1].address;
+                task->breakpoints[i].originalinstruction = task->breakpoints[task->num_breakpoints-1].originalinstruction;
+                task->breakpoints[i].address = task->breakpoints[task->num_breakpoints-1].address;
             }
 
-            task.num_breakpoints--;
+            task->num_breakpoints--;
             EchoConsole("RMV ");
             EchoConsoleHex(breakaddress);
             EchoConsole("\r\n");
@@ -243,12 +238,12 @@ void RemoveBreakPoint(STaskContext &task, uint32_t breakaddress)
     }
 }
 
-void AddBreakPoint(STaskContext &task, uint32_t breakaddress)
+void AddBreakPoint(struct STaskContext *task, uint32_t breakaddress)
 {
-    task.breakpoints[task.num_breakpoints].address = breakaddress;
+    task->breakpoints[task->num_breakpoints].address = breakaddress;
     // Save instruction
-    task.breakpoints[task.num_breakpoints].originalinstruction = *(uint32_t*)(breakaddress);
-    task.num_breakpoints++;
+    task->breakpoints[task->num_breakpoints].originalinstruction = *(uint32_t*)(breakaddress);
+    task->num_breakpoints++;
 
     // Replace with EBREAK
     *(uint32_t*)(breakaddress) = 0x00100073;
@@ -258,7 +253,7 @@ void AddBreakPoint(STaskContext &task, uint32_t breakaddress)
     EchoConsole("\r\n");
 }
 
-uint32_t gdb_breakpoint(STaskContext tasks[])
+uint32_t gdb_breakpoint(struct STaskContext tasks[])
 {
     if (tasks[dbg_current_thread].breakhit == 0)
     {
@@ -273,7 +268,7 @@ uint32_t gdb_breakpoint(STaskContext tasks[])
     return 0x0;
 }
 
-uint32_t gdb_handler(STaskContext tasks[], const uint32_t num_tasks)
+uint32_t gdb_handler(struct STaskContext tasks[], const uint32_t num_tasks)
 {
     // NOTES:
     // Checksum is computed as the modulo 256 sum of the packet info characters.
@@ -416,7 +411,7 @@ uint32_t gdb_handler(STaskContext tasks[], const uint32_t num_tasks)
             hexbuf[a]=0;
             breakaddress = hex2int(hexbuf);
 
-            RemoveBreakPoint(tasks[dbg_current_thread], breakaddress);
+            RemoveBreakPoint(&tasks[dbg_current_thread], breakaddress);
             SendDebugPacket("OK");
         }
         else if (startswith(packetbuffer, "Z0,", 3)) // insert breakpoint
@@ -430,14 +425,12 @@ uint32_t gdb_handler(STaskContext tasks[], const uint32_t num_tasks)
             hexbuf[a]=0;
             breakaddress = hex2int(hexbuf); // KIND code is probably '4' after this (standard 32bit break)
 
-            AddBreakPoint(tasks[dbg_current_thread], breakaddress);
+            AddBreakPoint(&tasks[dbg_current_thread], breakaddress);
             SendDebugPacket("OK");
         }
         //else if (startswith(packetbuffer, "G", 1)) // Write registers
         else if (startswith(packetbuffer, "g", 1)) // List registers
-        {
-            SendDebugPacketRegisters(tasks[dbg_current_thread]);
-        }
+            SendDebugPacketRegisters(&tasks[dbg_current_thread]);
         //else if (startswith(packetbuffer, "P", 1)) // Write register
         else if (startswith(packetbuffer, "p", 1)) // Print register, p??
         {

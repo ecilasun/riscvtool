@@ -32,11 +32,11 @@ void InitTasks(struct STaskContext *_ctx)
 
 // NOTE: Can only add a task to this core's context
 // HINT: Use MAILBOX and HARTIRQ to send across a task to be added to a remote core
-bool AddTask(struct STaskContext *_ctx, volatile uint32_t *taskcount, taskfunc _task, uint32_t _stacksizeword, uint32_t _interval)
+int AddTask(struct STaskContext *_ctx, volatile uint32_t *taskcount, taskfunc _task, uint32_t _stacksizeword, uint32_t _interval)
 {
 	uint32_t prevcount = (*taskcount);
 	if (prevcount >= MAX_TASKS)
-		return false;
+		return 0;
 
 	uint32_t *stackbase = (uint32_t*)malloc(_stacksizeword*sizeof(uint32_t));
 	uint32_t *stackpointer = stackbase + (_stacksizeword-1);
@@ -56,7 +56,7 @@ bool AddTask(struct STaskContext *_ctx, volatile uint32_t *taskcount, taskfunc _
 	// Resume timer interrupts on this core
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 
-	return true;
+	return 1;
 }
 
 /*

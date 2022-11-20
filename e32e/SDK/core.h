@@ -15,13 +15,14 @@
 #define ONE_MILLISECOND_IN_TICKS		10000
 #define ONE_MICROSECOND_IN_TICKS		10
 
-// For E32E architecture, HART count is 8
-#define NUM_HARTS 8
+// For E32E architecture, HART count is 4
+#define NUM_HARTS 4
 
 uint64_t E32ReadTime();
 uint64_t E32ReadCycles();
 uint64_t E32ReadRetiredInstructions();
 
+uint32_t ClockToSec(uint64_t clk);
 uint32_t ClockToMs(uint64_t clk);
 uint32_t ClockToUs(uint64_t clk);
 void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *seconds);
@@ -38,3 +39,5 @@ void InstallTimerISR(const uint32_t hartID, t_timerISR tisr, const uint32_t inte
 // To access a parameter N, use: NUM_HARTS+hartid*HARTPARAMCOUNT+N where N<HARTPARAMCOUNT
 #define HARTPARAMCOUNT 4
 #define NUMHARTWORDS 512
+
+#define E32AlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))

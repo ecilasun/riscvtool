@@ -82,6 +82,11 @@ uint64_t E32ReadRetiredInstructions()
    return reti;
 }
 
+uint32_t ClockToSec(uint64_t clk)
+{
+   return (uint32_t)(clk / ONE_SECOND_IN_TICKS);
+}
+
 uint32_t ClockToMs(uint64_t clk)
 {
    return (uint32_t)(clk / ONE_MILLISECOND_IN_TICKS);

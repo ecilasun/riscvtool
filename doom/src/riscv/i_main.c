@@ -48,10 +48,12 @@ const char *FRtoString[]={
 
 #include "core.h"
 #include "uart.h"
-#include "ps2.h"
 #include "fat32/ff.h"
 #include "sdcard.h"
 
+#if defined(FIVEPIPE)
+
+#include "ps2.h"
 uint16_t keymap[256];
 uint16_t keymapprev[256];
 
@@ -165,3 +167,22 @@ int main()
 
 	return 0;
 }
+
+#else
+
+int main()
+{
+	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+	if (mountattempt!=FR_OK)
+		printf(FRtoString[mountattempt]);
+	else
+	{
+		printf("Starting DOOM\n");
+		D_DoomMain();
+	}
+
+	return 0;
+}
+
+#endif

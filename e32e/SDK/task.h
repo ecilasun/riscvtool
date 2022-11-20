@@ -30,7 +30,7 @@ struct STaskContext {
 };
 
 void InitTasks(struct STaskContext *_ctx);
-bool AddTask(struct STaskContext *_ctx, volatile uint32_t *taskcount, taskfunc _task, uint32_t _stacksizeword, uint32_t _interval);
+int AddTask(struct STaskContext *_ctx, volatile uint32_t *taskcount, taskfunc _task, uint32_t _stacksizeword, uint32_t _interval);
 
 #define MAX_TASKS 16
 
