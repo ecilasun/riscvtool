@@ -418,6 +418,7 @@ int main()
         uint8_t *writepage = (frame%2) ? framebufferB : framebufferA;
         // Show the read page while we're writing to the write page
         GPUSetVPage((uint32_t)readpage);
+        GPUClearScreen(readpage, 0x0);
 
 		// Draw waveform
 		for (int x=0;x<320;++x)

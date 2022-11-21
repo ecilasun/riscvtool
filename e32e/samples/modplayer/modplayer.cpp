@@ -137,6 +137,7 @@ void DrawWaveform()
 	uint8_t *writepage = (cycle%2) ? framebufferB : framebufferA;
 	// Show the read page while we're writing to the write page
 	GPUSetVPage((uint32_t)readpage);
+	GPUClearScreen(writepage, 0x00);
 
 	int16_t *src = (int16_t *)buffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)

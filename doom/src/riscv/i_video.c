@@ -120,5 +120,5 @@ void
 I_ReadScreen(byte* scr)
 {
 	// Copy what's on screen
-	memcpy (scr, readpage, SCREENWIDTH*SCREENHEIGHT);
+	memcpy (scr, writepage, SCREENWIDTH*SCREENHEIGHT);
 }
