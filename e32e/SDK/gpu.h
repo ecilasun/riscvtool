@@ -1,22 +1,17 @@
 #include <inttypes.h>
 
-// Base addresses of frame buffers
-extern volatile uint8_t *GPUFB;
-extern volatile uint32_t *GPUFBWORD;
-// Base address of color palette, word addressed
-extern volatile uint32_t *GPUPAL_32;
-// GPU control port
-extern volatile uint32_t *GPUCTL;
-
-// Helper macros
-#define MAKERGBPALETTECOLOR(_r, _g, _b) (((_g&0xFF)<<16) | ((_r&0xFF)<<8) | (_b&0xFF))
-
 #define FRAME_WIDTH 320
-#define FRAME_WIDTH_IN_WORDS 80
 #define FRAME_HEIGHT 240
 
-void FrameBufferSelect(uint32_t cpupage, uint32_t displaypage);
-void ClearScreen(uint32_t bgcolor);
-uint32_t DrawText(const int col, const int row, const char *message);
-void DrawTextLen(const int col, const int row, const int length, const char *message);
-uint32_t DrawDecimal(const int col, const int row, const int32_t i);
+#define GPUCMD_SETVPAGE    0x00000000
+#define GPUCMD_SETPAL      0x00000001
+#define GPUCMD_SETVMODE    0x00000002
+
+#define MAKECOLORRGB24(_r, _g, _b) (((_g&0xFF)<<16) | ((_r&0xFF)<<8) | (_b&0xFF))
+#define MAKEVMODEINFO(_mode, _scanEnable) ((_mode&0xF)<<4) | (_scanEnable&0x1)
+
+void GPUSetVMode(const uint32_t _vmodeInfo);
+void GPUSetVPage(const uint32_t _scanOutAddress64ByteAligned);
+void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24);
+void GPUPrintString(uint8_t *_vramBase, const int _col, const int _row, const char *_message, int _length);
+void GPUClearScreen(uint8_t *_vramBase, const uint32_t _colorWord);

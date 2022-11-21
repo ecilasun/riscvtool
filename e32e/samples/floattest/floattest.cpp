@@ -403,9 +403,21 @@ int main()
 	float offset = 0.0f;
 	uint32_t frame = 0;
     uint64_t startclock = E32ReadTime();
+
+	uint8_t* framebufferA = (uint8_t*)malloc(320*240*3 + 64);
+	uint8_t* framebufferB = (uint8_t*)malloc(320*240*3 + 64);
+	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
+	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
+	GPUSetVPage((uint32_t)framebufferA);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 	while(1)
 	{
-		ClearScreen(0x00000000);
+        // Video scan-out page
+        uint8_t *readpage = (frame%2) ? framebufferA : framebufferB;
+        // Video write page
+        uint8_t *writepage = (frame%2) ? framebufferB : framebufferA;
+        // Show the read page while we're writing to the write page
+        GPUSetVPage((uint32_t)readpage);
 
 		// Draw waveform
 		for (int x=0;x<320;++x)
@@ -414,7 +426,7 @@ int main()
 			float V2 = sinf(offset*3.3f + 3.1415927f * float(x)/640.f)*60.f;
 			int K = int(V1+V2)+120;
 			if (K<240 && K>=0)
-				GPUFB[x+K*320] = 0x0C;
+				writepage[x+K*320] = frame;
 		}
 
 		// Phase offset
@@ -424,8 +436,9 @@ int main()
 		offset += float(deltams)*0.002f;
 
 		// Advance and show frame
-		FrameBufferSelect(frame, frame^1);
-		++frame;
+        asm volatile( ".word 0xFC000073;");
+
+    	++frame;
 	}
 
     return 0;

@@ -2,6 +2,7 @@
 #include "gpu.h"
 #include "sdcard.h"
 #include "fat32/ff.h"
+#include "uart.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,12 +11,28 @@
 
 #include "nanojpeg/nanojpeg.h"
 
-FATFS Fs;
-uint32_t hardwareswitchstates, oldhardwareswitchstates;
-uint32_t vramPage = 0;
-int selectedjpegfile = 0;
-int numjpegfiles = 0;
-char *jpegfiles[64];
+const char *FRtoString[]={
+	"Succeeded\n",
+	"A hard error occurred in the low level disk I/O layer\n",
+	"Assertion failed\n",
+	"The physical drive cannot work\n",
+	"Could not find the file\n",
+	"Could not find the path\n",
+	"The path name format is invalid\n",
+	"Access denied due to prohibited access or directory full\n",
+	"Access denied due to prohibited access\n",
+	"The file/directory object is invalid\n",
+	"The physical drive is write protected\n",
+	"The logical drive number is invalid\n",
+	"The volume has no work area\n",
+	"There is no valid FAT volume\n",
+	"The f_mkfs() aborted due to any problem\n",
+	"Could not get a grant to access the volume within defined period\n",
+	"The operation is rejected according to the file sharing policy\n",
+	"LFN working buffer could not be allocated\n",
+	"Number of open files > FF_FS_LOCK\n",
+	"Given parameter is invalid\n"
+};
 
 uint8_t *image;
 
@@ -43,21 +60,15 @@ void DecodeJPEG(const char *fname)
 		f_read(&fp, rawjpeg, fp.obj.objsize, &readlen);
 		f_close(&fp);
 
-		uint64_t begin = E32ReadTime();
 		nj_result_t jres = njDecode(rawjpeg, fp.obj.objsize);
-		uint64_t end = E32ReadTime();
-		uint32_t decodems = ClockToMs(end-begin);
-		printf("decoded in %d ms\n", int(decodems));
 
 		if (jres == NJ_OK)
 		{
-			begin = E32ReadTime();
-
 			int W = njGetWidth();
 			int H = njGetHeight();
-			printf("width:%d height:%d color:%d\n", W, H, njIsColor());
+
 			int iW = W>320 ? 320 : W;
-			int iH = H>208 ? 208 : H;
+			int iH = H>239 ? 239 : H;
 			uint8_t *img = njGetImage();
 			if (njIsColor())
 			{
@@ -89,46 +100,50 @@ void DecodeJPEG(const char *fname)
 					for (int i=0;i<iW;++i)
 						image[i+j*320] = img[i+j*W];
 			}
-
-			end = E32ReadTime();
-			uint32_t ditherms = ClockToMs(end-begin);
-			printf("dithered in %d ms\n", int(ditherms));
 		}
-		else
-			printf("failed to decode image\n");
 	}
 
 	njDone();
-
-	// Write to FB0, show FB0
-	FrameBufferSelect(0, 0);
-
-	for (uint32_t i=0;i<80*240;++i)
-		GPUFBWORD[i] = ((uint32_t*)image)[i];
 }
 
 void Setup()
 {
 	// Make RGB palette
-   int target = 0;
-   for (int b=0;b<4;++b)
-	   for (int g=0;g<8;++g)
-   	for (int r=0;r<8;++r)
-      GPUPAL_32[target++] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
+	int target = 0;
+	for (int b=0;b<4;++b)
+		for (int g=0;g<8;++g)
+			for (int r=0;r<8;++r)
+				GPUSetPal(target++, MAKECOLORRGB24(r*36, g*36, b*85));
 }
 
-int main( int argc, char **argv )
+int main()
 {
 	Setup();
 
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
+	{
+		UARTWrite(FRtoString[mountattempt]);
 		return -1;
+	}
 
 	// Set aside space for the decompressed image
-	image = (uint8_t*)malloc(320*208*3*sizeof(uint8_t));
+    // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
+	image = (uint8_t*)malloc(320*240*3*sizeof(uint8_t) + 64);
+	image = (uint8_t*)E32AlignUp((uint32_t)image, 64);
+
+	GPUSetVPage((uint32_t)image);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+
+    GPUPrintString(image, 0, 16, "loading...", 0x7FFFFFFF);
+    asm volatile( ".word 0xFC000073;");
 
 	DecodeJPEG("sd:test.jpg");
+    asm volatile( ".word 0xFC000073;");
+
+	DecodeJPEG("sd:fearless.jpg");
+    asm volatile( ".word 0xFC000073;");
 
 	return 0;
 }

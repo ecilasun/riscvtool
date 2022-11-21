@@ -9,6 +9,8 @@
 #include "uart.h"
 #include "gpu.h"
 
+uint8_t *framebuffer;
+
 int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
    int iteration = 0;
@@ -51,7 +53,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
             c = int(1.f*ratio*255);
          }
 
-         GPUFB[col + (row*320)] = c;
+         framebuffer[col + (row*320)] = c;
       }
    }
 
@@ -65,48 +67,40 @@ int mandelbrotFloat(float ox, float oy, float sx)
    //if( di>0.5 ) d=0.0;
 }
 
-int main(int argc, char ** argv)
+int main()
 {
-	for (uint32_t i=0;i<256;++i) // Set up color palette
-	{
-		int j=255-i;
-		GPUPAL_32[i] = MAKERGBPALETTECOLOR(j, j, j);
-	}
+   // Grayscale palette
+   for (uint32_t i=0;i<256;++i)
+   {
+      int j=255-i;
+      GPUSetPal(i, MAKECOLORRGB24(j, j, j));
+   }
 
-    float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
-    float X = -0.235125f;
-    float Y = 0.827215f;
+    // Set up frame buffer
+    // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
+   framebuffer = (uint8_t*)malloc(320*240*3 + 64);
+   framebuffer = (uint8_t*)E32AlignUp((uint32_t)framebuffer, 64);
+   GPUSetVPage((uint32_t)framebuffer);
+   GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
-    uint64_t prevreti = E32ReadRetiredInstructions();
-    uint32_t prevms = ClockToMs(E32ReadTime());
-    uint32_t ips = 0;
-	FrameBufferSelect(0, 0);
-    while(1)
-    {
-        // Generate one line of mandelbrot into offscreen buffer
-        // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
-        mandelbrotFloat(X,Y,R);
+   float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
+   float X = -0.235125f;
+   float Y = 0.827215f;
 
-        uint32_t ms = ClockToMs(E32ReadTime());
+   printf("Mandelbrot test\n");
 
-		if ((row%128) == 0) // Update every 128th row
-		{
-			DrawText(0, 0, "IPS:");
-			DrawDecimal(0, 8, ips);
-		}
+   while(1)
+   {
+      // Generate one line of mandelbrot into offscreen buffer
+      // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
+      mandelbrotFloat(X,Y,R);
 
-		if (row == 239)
-            R += 0.001f; // Zoom
+      // Flush data cache after each row so we can see a coherent image
+      asm volatile( ".word 0xFC000073;");
 
-        if (ms-prevms > 1000)
-        {
-            prevms += 1000; // So that we have the leftover time carried over
+      if (row == 239)
+         R += 0.001f; // Zoom
+   }
 
-            uint64_t reti = E32ReadRetiredInstructions();
-            ips = (reti-prevreti);
-            prevreti = reti;
-        }
-    }
-
-    return 0;
+   return 0;
 }

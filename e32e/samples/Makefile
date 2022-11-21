@@ -25,7 +25,6 @@ folders = \
 	floattest \
 	bvh \
 	interrupt \
-	miniterm \
 	led \
 
 # Rules

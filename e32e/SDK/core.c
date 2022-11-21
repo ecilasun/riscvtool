@@ -330,6 +330,10 @@ extern "C" {
       } else {
          heap_start = heap_end;
       }
+
+      // Always align to 4 bytes as we can't access unaligned memory
+      heap_start = (uint8_t*)E32AlignUp((uint32_t)heap_start, 4);
+
       return old_heapstart;
    }
 #ifdef __cplusplus

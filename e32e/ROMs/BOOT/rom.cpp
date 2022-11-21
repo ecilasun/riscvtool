@@ -123,12 +123,12 @@ void HandleTimer()
 	UARTWrite("│ ████████   ▒   ████████ │\n");
 	UARTWrite("│ ██████████   ██████████ │\n");
 	UARTWrite("│                         │\n");
-	UARTWrite("│ E32OS v0.170            │\n");
+	UARTWrite("│ E32OS v0.172            │\n");
 	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
 	UARTWrite("│                         │\n");
-	UARTWrite("│ HARTS: ");
+	UARTWrite("│ HARTS found: ");// Expecting single digit HART count here
 	UARTWriteDecimal(numdetectedharts);
-	UARTWrite("                │\n");
+	UARTWrite("          │\n");
 	UARTWrite("└─────────────────────────┘\n\n");
 
 	// Stop further timer interrupts by setting timecmp to furthest value available.
@@ -758,6 +758,9 @@ int main()
 
 	// Start with all LEDs off
 	SetLEDState(0x0);
+
+	// Keep display off
+	GPUSetVMode(0);
 
 	// Attempt to mount file system on micro-SD card
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);

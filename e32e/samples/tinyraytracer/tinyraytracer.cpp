@@ -9,6 +9,7 @@
 
 /*******************************************************************/
 
+static uint8_t *framebuffer = 0;
 typedef int BOOL;
 
 static inline float max(float x, float y) { return x>y?x:y; }
@@ -43,7 +44,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
 	B = BOFF/64;
 	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
-	GPUFB[x+y*320] = RGB;
+	framebuffer[x+y*320] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -345,35 +346,35 @@ void init_scene() {
 
 int main()
 {
-    UARTWrite("tinyraytracer\n");
+  UARTWrite("tinyraytracer\n");
 
-    UARTWrite("setting up palette\n");
-    // Set RGB palette
-    int target = 0;
-    for (int b=0;b<4;++b)
+  UARTWrite("setting up palette\n");
+  // Set RGB palette
+  int target = 0;
+  for (int b=0;b<4;++b)
     for (int g=0;g<8;++g)
-    for (int r=0;r<8;++r)
-    {
-        GPUPAL_32[target] = MAKERGBPALETTECOLOR(r*32, g*32, b*64);
-        ++target;
-    }
- 
-    UARTWrite("initializing scene\n");
-    init_scene();
+      for (int r=0;r<8;++r)
+          GPUSetPal(target++, MAKECOLORRGB24(r*32, g*32, b*64));
 
-    UARTWrite("starting scene generation\n");
+  UARTWrite("initializing scene\n");
+  init_scene();
 
-	FrameBufferSelect(0, 0);
+  UARTWrite("starting scene generation\n");
 
-    uint64_t startclock = E32ReadTime();
+  framebuffer = (uint8_t*)malloc(320*240*3 + 64);
+  framebuffer = (uint8_t*)E32AlignUp((uint32_t)framebuffer, 64);
+  GPUSetVPage((uint32_t)framebuffer);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
-    render(spheres, nb_spheres, lights, nb_lights);
+  uint64_t startclock = E32ReadTime();
 
-    uint64_t endclock = E32ReadTime();
-    uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("tinyraytracer took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms at 320x240 resolution\n");
+  render(spheres, nb_spheres, lights, nb_lights);
 
-    return 0;
+  uint64_t endclock = E32ReadTime();
+  uint32_t deltams = ClockToMs(endclock-startclock);
+  UARTWrite("tinyraytracer took ");
+  UARTWriteDecimal((unsigned int)deltams);
+  UARTWrite(" ms at 320x240 resolution\n");
+
+  return 0;
 }

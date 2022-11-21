@@ -13,6 +13,10 @@
 
 #include "micromod/micromod.h"
 
+uint8_t *framebufferA = (uint8_t*)malloc(320*240*3 + 64);
+uint8_t *framebufferB = (uint8_t*)malloc(320*240*3 + 64);
+static uint32_t cycle = 0;
+
 #define MULTICORE
 
 FATFS Fs;
@@ -127,7 +131,12 @@ static long read_module_length( const char *filename ) {
 
 void DrawWaveform()
 {
-	ClearScreen(0x0F0F0F0F); // White
+	// Video scan-out page
+	uint8_t *readpage = (cycle%2) ? framebufferA : framebufferB;
+	// Video write page
+	uint8_t *writepage = (cycle%2) ? framebufferB : framebufferA;
+	// Show the read page while we're writing to the write page
+	GPUSetVPage((uint32_t)readpage);
 
 	int16_t *src = (int16_t *)buffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
@@ -140,9 +149,13 @@ void DrawWaveform()
 		R = R/64;
 		R = R < -110 ? -110 : R;
 		R = R > 110 ? 110 : R;
-		GPUFBWORD[x + (L+110)*FRAME_WIDTH_IN_WORDS] = 0x01010101; // Blue
-		GPUFBWORD[x + (R+110)*FRAME_WIDTH_IN_WORDS] = 0x04040404; // Red
+		writepage[x + (L+110)*320] = 0x01; // Blue
+		writepage[x + (R+110)*320] = 0x04; // Red
 	}
+
+    asm volatile( ".word 0xFC000073;");
+
+	++cycle;
 }
 
 static long play_module( signed char *module )
@@ -246,13 +259,6 @@ void vumeterTISR(const uint32_t hartID)
 
 		SetLEDState(0x1); // Busy
 
-		//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
-
-		// Force cache invalidation by loading something one full cache away
-		uint32_t *src32 = (uint32_t *)((uint32_t)buffer+32768);
-		for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
-			GPUFBWORD[i+19000] = src32[i];
-
 		DrawWaveform();
 
 		SetLEDState(0x0); // Not busy
@@ -265,8 +271,12 @@ void vumeterTISR(const uint32_t hartID)
 
 int main()
 {
-	FrameBufferSelect(0, 0);
-	SetLEDState(0x00);
+	framebufferA = (uint8_t*)malloc(320*240*3 + 64);
+	framebufferB = (uint8_t*)malloc(320*240*3 + 64);
+	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
+	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
+	GPUSetVPage((uint32_t)framebufferA);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)

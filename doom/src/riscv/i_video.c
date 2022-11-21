@@ -32,19 +32,16 @@
 
 static uint32_t cycle = 0;
 
-#if defined(FIVEPIPE)
 uint8_t *framebufferA;
 uint8_t *framebufferB;
 uint8_t *readpage;
 uint8_t *writepage;
-#endif
 
 void
 I_InitGraphics(void)
 {
 	usegamma = 1;
 
-#if defined(FIVEPIPE)
 	framebufferA = (uint8_t*)malloc(320*240*3 + 64);
 	framebufferB = (uint8_t*)malloc(320*240*3 + 64);
 	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
@@ -55,20 +52,13 @@ I_InitGraphics(void)
 
 	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
-#else
-
-#endif
 }
 
 void
 I_ShutdownGraphics(void)
 {
-#if defined(FIVEPIPE)
 	// TODO: Wait for GPU idle perhaps?
 	GPUSetVMode(MAKEVMODEINFO(0, 0)); // Video off
-#else
-
-#endif
 }
 
 void
@@ -80,11 +70,7 @@ I_SetPalette(byte* palette)
 		r = gammatable[usegamma][*palette++];
 		g = gammatable[usegamma][*palette++];
 		b = gammatable[usegamma][*palette++];
-#if defined(FIVEPIPE)
 		GPUSetPal(i, MAKECOLORRGB24(r, g, b));
-#else
-		GPUPAL_32[i] = MAKERGBPALETTECOLOR(r, g, b);
-#endif
 	}
 }
 
@@ -98,7 +84,6 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-#if defined(FIVEPIPE)
 	// Video scan-out page
 	readpage = (cycle%2) ? framebufferA : framebufferB;
 
@@ -113,14 +98,6 @@ I_FinishUpdate (void)
 
 	// Show the read page while we're writing to the write page
 	GPUSetVPage((uint32_t)readpage);
-
-#else
-	uint32_t readpage = cycle%2;
-	uint32_t writepage = (cycle+1)%2;
-	FrameBufferSelect(readpage, writepage);
-
-	screens[0] = (byte*)GPUFB;//writepage == 0 ? (byte*)GPUFB : (byte*)((uint32_t)GPUFB + 320*200*3);
-#endif
 
 	// TODO: Might want to move the actual buffer flip to I_WaitVBL()
 	++cycle;
@@ -142,10 +119,6 @@ I_WaitVBL(int count)
 void
 I_ReadScreen(byte* scr)
 {
-#if defined(FIVEPIPE)
 	// Copy what's on screen
 	memcpy (scr, readpage, SCREENWIDTH*SCREENHEIGHT);
-#else
-
-#endif
 }
