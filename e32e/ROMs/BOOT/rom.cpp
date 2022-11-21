@@ -20,9 +20,11 @@
 #include "gpu.h"
 //#include "debugger.h"
 
-//asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1 (writeback D$)
-//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1 (invalidate D$)
-//asm volatile("fence.i;"); // FENCE.I (invalidate I$)
+#define ROMREVISION "v0.173"
+
+uint8_t *framebufferA;
+uint8_t *framebufferB;
+static uint32_t uiframe = 0;
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -123,7 +125,7 @@ void HandleTimer()
 	UARTWrite("│ ████████   ▒   ████████ │\n");
 	UARTWrite("│ ██████████   ██████████ │\n");
 	UARTWrite("│                         │\n");
-	UARTWrite("│ E32OS v0.172            │\n");
+	UARTWrite("│ E32OS " ROMREVISION "            │\n");
 	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
 	UARTWrite("│                         │\n");
 	UARTWrite("│ HARTS found: ");// Expecting single digit HART count here
@@ -738,23 +740,39 @@ void workermain()
 	}
 }
 
+void SetupFramebuffers()
+{
+	framebufferA = GPUAllocateBuffer(320*240*3);
+	framebufferB = GPUAllocateBuffer(320*240*3);
+	GPUSetVPage((uint32_t)framebufferA);
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+}
+
+void DrawUI()
+{
+	// Video scan-out page
+	uint8_t *readpage = (uiframe%2) ? framebufferA : framebufferB;
+	// Video write page
+	uint8_t *writepage = (uiframe%2) ? framebufferB : framebufferA;
+	// Show the read page while we're writing to the write page
+	GPUSetVPage((uint32_t)readpage);
+
+	GPUClearScreen(writepage, 0x67676767);
+
+	// TODO: Draw a proper UI
+	// NOTE: Can imgui run here?
+	GPUPrintString(writepage, 0, 0, "E32E " ROMREVISION, 0x7FFFFFFF);
+
+	// Advance and show frame
+	asm volatile( ".word 0xFC000073;");
+
+   	++uiframe;
+}
+
 int main()
 {
-	/*uint32_t *somewhere = (uint32_t*)0x1A000000;
-	*somewhere = 0xCAFEBABE;
-	asm volatile(
-		".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-	);
-	HARTMAILBOX[1] = 0xFFFFFFFF;
-
-	while (HARTMAILBOX[1] != 0x0) { }
-	asm volatile(
-		".word 0xFC200073;" // CDISCARD.D.L1
-	);
-	UARTWriteHex(*somewhere);
-
-	while(1){ }
-	return 0;*/
+	// Allocate frame buffer memory
+	SetupFramebuffers();
 
 	// Start with all LEDs off
 	SetLEDState(0x0);
@@ -804,6 +822,9 @@ int main()
 		// after which it will wake up to service it and then go back to
 		// sleep, unless we asked it to crash.
 		asm volatile("wfi;");
+
+		// Only update and swap UI view when we get an interrupt
+		DrawUI();
 
 		// Process any keyboard events produced by the ISR and
 		// parse the command generated in the command line on Enter.

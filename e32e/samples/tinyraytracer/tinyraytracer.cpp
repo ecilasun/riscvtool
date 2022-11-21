@@ -361,8 +361,7 @@ int main()
 
   UARTWrite("starting scene generation\n");
 
-  framebuffer = (uint8_t*)malloc(320*240*3 + 64);
-  framebuffer = (uint8_t*)E32AlignUp((uint32_t)framebuffer, 64);
+  framebuffer = GPUAllocateBuffer(320*240*3);
   GPUSetVPage((uint32_t)framebuffer);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
@@ -375,6 +374,9 @@ int main()
   UARTWrite("tinyraytracer took ");
   UARTWriteDecimal((unsigned int)deltams);
   UARTWrite(" ms at 320x240 resolution\n");
+
+  // Flush out leftover bytes that didn't end up in framebuffer memory
+  asm volatile( ".word 0xFC000073;");
 
   return 0;
 }

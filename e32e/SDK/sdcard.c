@@ -4,6 +4,10 @@
 #include "uart.h"
 #include <stdio.h>
 
+// No optimizations - gcc seems to entirely kill volatile access
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+
 typedef enum {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */
     CMD0_GO_IDLE_STATE = 0,             /**< Resets the SD Memory Card */
@@ -62,8 +66,7 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
 }
 
 // A single SPI transaction is a write from master followed by a read from slave's output
-//volatile uint8_t *SPISINK = (volatile uint8_t* ) 0x8000000F;
-uint8_t SPITxRx(const uint8_t outbyte)
+uint8_t __attribute__ ((noinline)) SPITxRx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
    //*SPISINK = 0xFF;
@@ -76,7 +79,7 @@ uint8_t SPITxRx(const uint8_t outbyte)
    return incoming;
 }
 
-uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
+uint8_t __attribute__ ((noinline)) SDCmd(const SDCardCommand cmd, uint32_t args)
 {
    uint8_t buf[8];
 
@@ -98,7 +101,7 @@ uint8_t SDCmd(const SDCardCommand cmd, uint32_t args)
    return incoming;
 }
 
-uint8_t SDResponse1()
+uint8_t __attribute__ ((noinline)) SDResponse1()
 {
    uint8_t res1 = 0xFF;
 
@@ -112,7 +115,7 @@ uint8_t SDResponse1()
    return res1;
 }
 
-uint8_t SDResponse7(uint32_t *data)
+uint8_t __attribute__ ((noinline)) SDResponse7(uint32_t *data)
 {
    *data = 0x00000000;
    uint8_t res1 = SDResponse1();
@@ -130,12 +133,20 @@ uint8_t SDResponse7(uint32_t *data)
 }
 
 // Enter idle state
-uint8_t SDIdle()
+uint8_t __attribute__ ((noinline)) SDIdle()
 {
+   E32Sleep(1); // Wait for at least 1ms after power-on
+
+   // At least 74 cycles with CS low to go to SPI mode
+   *IO_SPIRXTX = 0x1; // CS high power low
+   for (int i=0; i<80; ++i)
+      SPITxRx(0xFF);
+   *IO_SPIRXTX = 0x3; // CS + power low (these signals are inverted)
+
    SDCmd(CMD0_GO_IDLE_STATE, 0);
    uint8_t response = SDResponse1(); // Expected: 0x01
 
-   if (response != 0x01)
+   if (response != 0x01) // SPI mode
    {
       UARTWrite("SDIdle expected 0x01, got 0x");
       UARTWriteHex(response);
@@ -145,7 +156,7 @@ uint8_t SDIdle()
    return response;
 }
 
-uint8_t SDCheckVoltageRange()
+uint8_t __attribute__ ((noinline)) SDCheckVoltageRange()
 {
    SDCmd(CMD8_SEND_IF_COND, 0x000001AA);
 
@@ -170,7 +181,7 @@ uint8_t SDCheckVoltageRange()
    return response;
 }
 
-uint8_t SDCardInit()
+uint8_t __attribute__ ((noinline)) SDCardInit()
 {
    // Set high capacity mode on
    int timeout = 0;
@@ -217,15 +228,16 @@ uint8_t SDCardInit()
    return rB;
 }
 
-uint8_t SDSetBlockSize512()
+uint8_t __attribute__ ((noinline)) SDSetBlockSize512()
 {
    // Set block length
    SDCmd(CMD16_SET_BLOCKLEN, 0x00000200);
    uint8_t response = SDResponse1();
+
    return response;
 }
 
-uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
+uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
 {
    // Read single block
    // NOTE: sector<<9 for non SDHC cards
@@ -273,7 +285,7 @@ uint8_t SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[
    return response;
 }
 
-uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
+uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
 {
    // TODO: CMD24_WRITE_BLOCK
    SDCmd(CMD17_READ_SINGLE_BLOCK, blockaddress);
@@ -307,7 +319,7 @@ uint8_t SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t ch
    return response;
 }
 
-int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
+int __attribute__ ((noinline)) SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
    if (numblocks == 0)
       return -1;
@@ -329,7 +341,7 @@ int SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blocka
    return cursor;
 }
 
-int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
+int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
    if (numblocks == 0)
       return -1;
@@ -351,14 +363,14 @@ int SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t
    return cursor;
 }
 
-int SDCardStartup()
+void __attribute__ ((noinline)) SDCardControl(int power_cs_n)
+{
+   *IO_SPIRXTX = power_cs_n;
+}
+
+int __attribute__ ((noinline)) SDCardStartup()
 {
    uint8_t response[3];
-
-   // At least 75 bits worth of idling around before we start
-   // Here we send 8x10=80 bits worth of dummy bytes
-   for (uint32_t i=0;i<10;++i)
-      SPITxRx(0xFF);
 
    response[0] = SDIdle();
    if (response[0] != 0x01)
@@ -371,7 +383,7 @@ int SDCardStartup()
    response[2] = SDCardInit();
    if (response[2] == 0x00) // OK
       return 0;
-   
+
    return -1;
 
    // NOTE: Block size is already set to 512 for high speed and can't be changed
@@ -379,3 +391,5 @@ int SDCardStartup()
    //response[3] = SDSetBlockSize512();
    //EchoUART("SDSetBlockSize512()");
 }
+
+#pragma GCC pop_options

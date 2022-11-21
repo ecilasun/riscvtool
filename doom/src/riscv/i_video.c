@@ -42,10 +42,8 @@ I_InitGraphics(void)
 {
 	usegamma = 1;
 
-	framebufferA = (uint8_t*)malloc(320*240*3 + 64);
-	framebufferB = (uint8_t*)malloc(320*240*3 + 64);
-	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
-	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
+	framebufferA = GPUAllocateBuffer(320*240*3);
+	framebufferB = GPUAllocateBuffer(320*240*3);
 
 	memset(framebufferA, 0x0, 320*240*3);
 	memset(framebufferB, 0x0, 320*240*3);
@@ -120,5 +118,5 @@ void
 I_ReadScreen(byte* scr)
 {
 	// Copy what's on screen
-	memcpy (scr, writepage, SCREENWIDTH*SCREENHEIGHT);
+	memcpy (scr, screens[0], SCREENWIDTH*SCREENHEIGHT);
 }

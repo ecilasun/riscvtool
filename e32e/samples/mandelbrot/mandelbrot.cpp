@@ -78,8 +78,7 @@ int main()
 
     // Set up frame buffer
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
-   framebuffer = (uint8_t*)malloc(320*240*3 + 64);
-   framebuffer = (uint8_t*)E32AlignUp((uint32_t)framebuffer, 64);
+   framebuffer = GPUAllocateBuffer(320*240*3);
    GPUSetVPage((uint32_t)framebuffer);
    GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 

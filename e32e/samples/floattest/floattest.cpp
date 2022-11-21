@@ -336,78 +336,76 @@ int main()
     printf("Single precision\n\n");
 
     r = test_div();
-    printf("fdiv: %f / %f = %f\n", a, b, r);
+    printf("fdiv: %f / %f = %f (excepted: 0.002046)\n", a, b, r);
 
     r = test_mul();
-    printf("fmul: %f * %f = %f\n", a, b, r);
+    printf("fmul: %f * %f = %f (excepted: 626.834595)\n", a, b, r);
 
     r = test_add();
-    printf("fadd: %f + %f = %f\n", a, b, r);
+    printf("fadd: %f + %f = %f (excepted: 554.670532)\n", a, b, r);
 
     r = test_sub();
-    printf("fsub: %f - %f = %f\n", a, b, r);
+    printf("fsub: %f - %f = %f (excepted: -552.405762)\n", a, b, r);
 
     r = test_min();
-    printf("fmin: min(%f,%f) = %f\n", a, b, r);
+    printf("fmin: min(%f,%f) = %f (excepted: 1.132414)\n", a, b, r);
 
     r = test_max();
-    printf("fmax: max(%f,%f) = %f\n", a, b, r);
+    printf("fmax: max(%f,%f) = %f (excepted: 553.538147)\n", a, b, r);
 
     r = test_sqrt();
-    printf("fsqrt: sqrt(%f) = %f\n", b, r);
+    printf("fsqrt: sqrt(%f) = %f (excepted: 660.618958)\n", b, r);
 
     r = test_madd();
-    printf("fmadd: %f*%f+%f = %f\n", a, b, c, r);
+    printf("fmadd: %f*%f+%f = %f (excepted: 593.050232)\n", a, b, c, r);
 
     r = test_msub();
-    printf("fmsub: %f*%f-%f = %f\n", a, b, c, r);
+    printf("fmsub: %f*%f-%f = %f (excepted: -593.050232)\n", a, b, c, r);
 
     r = test_nmsub();
-    printf("fnmsub: -%f*%f+%f = %f\n", a, b, c, r);
+    printf("fnmsub: -%f*%f+%f = %f (excepted: -660.618958)\n", a, b, c, r);
 
     r = test_nmadd();
-    printf("fnmadd: -%f*%f-%f = %f\n", a, b, c, r);
+    printf("fnmadd: -%f*%f-%f = %f (excepted: 554)\n", a, b, c, r);
 
     ri = test_fcvtws();
-    printf("fcvt.w.s: %f = %d\n", b, ri);
+    printf("fcvt.w.s: %f = %d (excepted: 554.000000)\n", b, ri);
 
     r = test_fcvtsw();
-    printf("fcvt.s.w: %d = %f\n", t, r);
+    printf("fcvt.s.w: %d = %f (excepted: 111.555496)\n", t, r);
 
     r = test_fsgnj();
-    printf("fsgnj.s: sgnj(%f,%f) = %f\n", d, b, r);
+    printf("fsgnj.s: sgnj(%f,%f) = %f (excepted: -111.555496)\n", d, b, r);
 
     r = test_fsgnjn();
-    printf("fsgnjn.s: sgnj(%f,%f) = %f\n", d, b, r);
+    printf("fsgnjn.s: sgnj(%f,%f) = %f (excepted: -111.555496)\n", d, b, r);
 
     r = test_fsgnjx();
-    printf("fsgnjx.s: sgnj(%f,%f) = %f\n", d, b, r);
+    printf("fsgnjx.s: sgnj(%f,%f) = %f (excepted:)\n", d, b, r);
 
     ri = test_flt();
-    printf("flt.s: %f < %f ? = %d\n", d, b, ri);
+    printf("flt.s: %f < %f ? = %d (excepted: 1)\n", d, b, ri);
 
     ri = test_fle();
-    printf("fle.s: %f <= %f ? = %d\n", d, b, ri);
+    printf("fle.s: %f <= %f ? = %d (excepted: 1)\n", d, b, ri);
 
     ri = test_feq();
-    printf("feq.s: %f == %f ? = %d\n", d, b, ri);
+    printf("feq.s: %f == %f ? = %d (excepted: 0)\n", d, b, ri);
 
     ri = test_fmvxw();
-    printf("fmv.x.w: %f -> %.8X\n", b, ri);
+    printf("fmv.x.w: %f -> %.8X (excepted: 440A6271)\n", b, ri);
 
     r = test_fmvwx();
-    printf("fmv.w.x: %.8X -> %f\n", s, r);
+    printf("fmv.w.x: %.8X -> %f (excepted: 553.538147)\n", s, r);
 
-    printf("All tests done\n");
+    printf("All tests done, visual output test for sin/cos\n");
 
 	float offset = 0.0f;
 	uint32_t frame = 0;
     uint64_t startclock = E32ReadTime();
 
-	uint8_t* framebufferA = (uint8_t*)malloc(320*240*3 + 64);
-	uint8_t* framebufferB = (uint8_t*)malloc(320*240*3 + 64);
-	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
-	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
+	uint8_t *framebufferA = GPUAllocateBuffer(320*240*3);
+	uint8_t *framebufferB = GPUAllocateBuffer(320*240*3);
 	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 	while(1)
@@ -418,8 +416,8 @@ int main()
         uint8_t *writepage = (frame%2) ? framebufferB : framebufferA;
         // Show the read page while we're writing to the write page
         GPUSetVPage((uint32_t)readpage);
-        GPUClearScreen(readpage, 0x0);
 
+        GPUClearScreen(writepage, 0x67676767);
 		// Draw waveform
 		for (int x=0;x<320;++x)
 		{

@@ -130,8 +130,7 @@ int main()
 
 	// Set aside space for the decompressed image
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
-	image = (uint8_t*)malloc(320*240*3*sizeof(uint8_t) + 64);
-	image = (uint8_t*)E32AlignUp((uint32_t)image, 64);
+	image = GPUAllocateBuffer(320*240*3);
 
 	GPUSetVPage((uint32_t)image);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on

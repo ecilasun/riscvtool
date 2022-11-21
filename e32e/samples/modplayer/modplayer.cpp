@@ -137,8 +137,8 @@ void DrawWaveform()
 	uint8_t *writepage = (cycle%2) ? framebufferB : framebufferA;
 	// Show the read page while we're writing to the write page
 	GPUSetVPage((uint32_t)readpage);
-	GPUClearScreen(writepage, 0x00);
 
+	GPUClearScreen(writepage, 0x0F0F0F0F); // White
 	int16_t *src = (int16_t *)buffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
 	{
@@ -272,10 +272,8 @@ void vumeterTISR(const uint32_t hartID)
 
 int main()
 {
-	framebufferA = (uint8_t*)malloc(320*240*3 + 64);
-	framebufferB = (uint8_t*)malloc(320*240*3 + 64);
-	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
-	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
+	framebufferA = GPUAllocateBuffer(320*240*3);
+	framebufferB = GPUAllocateBuffer(320*240*3);
 	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 

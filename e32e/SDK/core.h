@@ -28,6 +28,8 @@ uint32_t ClockToUs(uint64_t clk);
 void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *seconds);
 void E32SetTimeCompare(const uint64_t future);
 
+void E32Sleep(uint64_t ms);
+
 extern volatile uint32_t *HARTMAILBOX;
 extern volatile uint8_t *HARTIRQ;
 
