@@ -10,7 +10,7 @@ void EchoConsole(const char *echostring);
 void EchoConsoleDecimal(const int32_t i);
 void EchoConsoleHex(const int32_t i);
 void EchoConsoleHexByte(const int32_t i);
-void DrawConsole();
+void DrawConsole(uint8_t *_vramBase);
 void GetConsoleCursor(int *x, int *y);
 void ClearConsoleRow();
 void ConsoleCursorStepBack();

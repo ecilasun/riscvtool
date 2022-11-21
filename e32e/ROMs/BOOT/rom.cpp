@@ -8,6 +8,7 @@
 
 #include "rvcrt0.h"
 
+#include "console.h"
 #include "core.h"
 #include "leds.h"
 #include "buttons.h"
@@ -21,10 +22,6 @@
 //#include "debugger.h"
 
 #define ROMREVISION "v0.173"
-
-uint8_t *framebufferA;
-uint8_t *framebufferB;
-static uint32_t uiframe = 0;
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -49,20 +46,23 @@ const char *FRtoString[]={
 	"Given parameter is invalid\n"
 };
 
-static char currentdir[512] = "sd:";
+static char currentdir[512] = "sd:\\";
 static char commandline[512] = "";
 static char filename[128] = "";
 static int cmdlen = 0;
 static int havedrive = 0;
 static uint32_t numdetectedharts = 0;
 static int defaultHardID = 0;
-static int mainloopdone = 0;
+static uint32_t uiframe = 0;
 
 // Space for per-hart data
 static uint32_t *OSScratchMem = (uint32_t*)0x1FFF0000;
 
 // Main file system object
-FATFS Fs;
+FATFS *Fs;
+
+uint8_t *framebufferA;
+uint8_t *framebufferB;
 
 // Keyboard event ring buffer (1024 bytes)
 uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
@@ -70,6 +70,36 @@ uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox me
 uint16_t keymap[256];
 // Previous key map to be able to track deltas (512 bytes)
 uint16_t keymapprev[256];
+
+void MountDrive()
+{
+	if (havedrive)
+		return;
+
+	// Attempt to mount file system on micro-SD card
+	Fs = (FATFS*)malloc(sizeof(FATFS));
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+	if (mountattempt!=FR_OK)
+	{
+		havedrive = 0;
+		UARTWrite(FRtoString[mountattempt]);
+	}
+	else
+	{
+		strcpy(currentdir, "sd:\\");
+		havedrive = 1;
+	}
+}
+
+void UnmountDrive()
+{
+	if (havedrive)
+	{
+		f_mount(nullptr, "sd:", 1);
+		free(Fs);
+		havedrive = 0;
+	}
+}
 
 void HandleUART()
 {
@@ -533,43 +563,20 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 
 		UARTWrite("Starting...\n");
 
-		//if (hartID == 0)
-		{
-			// Unmount filesystem and reset to root directory before passing control
-			f_mount(nullptr, "sd:", 1);
-			strcpy(currentdir, "sd:");
-			havedrive = 0;
-		}
+		// Unmount filesystem and reset to root directory before passing control
+		UnmountDrive();
 
-		// Run the executable on HART#0
-		//if (hartID == 0)
-		{
-			asm volatile(
-				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-				"fence.i;"          // Invalidate I$
-				"lw s0, %0;"        // Target branch address
-				"jalr s0;"          // Branch to the entry point
-				: "=m" (branchaddress) : : 
-			);
-		}
-		//else
-		//{
-		//	asm volatile(
-		//		".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-		//	);
+		// Run the executable
+		asm volatile(
+			".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+			"fence.i;"          // Invalidate I$
+			"lw s0, %0;"        // Target branch address
+			"jalr s0;"          // Branch to the entry point
+			: "=m" (branchaddress) : : 
+		);
 
-			// Use a REQ# to get another core to boot the executable
-		//	HARTMAILBOX[hartID] = REQ_StartExecutable;
-		//	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = branchaddress; // Executable is at this address
-		//	HARTIRQ[hartID] = 1;
-		//}
-
-		//if (hartID == 0)
-		{
-			// Re-mount filesystem before re-gaining control
-			f_mount(&Fs, "sd:", 1);
-			havedrive = 1;
-		}
+		// Re-mount filesystem before re-gaining control
+		MountDrive();
 	}
 	else
 	{
@@ -589,21 +596,22 @@ void ParseCommands()
 
 	if (!strcmp(command, "help")) // Help text
 	{
-		UARTWrite("\033[34m\033[47m\033[7mdir\033[0m: show list of files in working directory\n");
-		UARTWrite("\033[34m\033[47m\033[7mcwd\033[0m: change working directory\n");
-		UARTWrite("\033[34m\033[47m\033[7mpwd\033[0m: show working directory\n");
-		UARTWrite("\033[34m\033[47m\033[7mcls\033[0m: clear visible portion of terminal\n");
-		//UARTWrite("\033[34m\033[47m\033[7mhart\033[0m: set hart to run loaded executable on\n");
-		UARTWrite("\033[34m\033[47m\033[7mstop\033[0m: exit main OS loop\n");
+		EchoConsole("dir: list files\n");
+		EchoConsole(" cd: change directory\n");
+		EchoConsole(" pd: show directory\n");
+		EchoConsole("cls: clear screen\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
 		// Use first parameter to set current directory
 		char *param = strtok(nullptr, " ");
 		if (param != nullptr)
+		{
 			strcpy(currentdir, param);
+			strcat(currentdir, "\\");
+		}
 		else
-			strcpy(currentdir, "sd:");
+			strcpy(currentdir, "sd:\\");
 	}
 	else if (!strcmp(command, "pwd"))
 	{
@@ -613,17 +621,17 @@ void ParseCommands()
 	else if (!strcmp(command, "dir")) // List directory
 	{
 		UARTWrite("\n");
-		UARTWrite(currentdir);
-		UARTWrite("\n");
-		ListFiles(currentdir);
+		MountDrive();
+		if (havedrive)
+		{
+			UARTWrite(currentdir);
+			UARTWrite("\n");
+			ListFiles(currentdir);
+		}
 	}
 	else if (!strcmp(command, "cls")) // Clear terminal screen
 	{
-		ClearTerminal();
-	}
-	else if (!strcmp(command, "stop")) // Halt the system by returning from main function
-	{
-		mainloopdone = 1;
+		ClearConsole();
 	}
 	//else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
 	//{
@@ -635,11 +643,15 @@ void ParseCommands()
 	//}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
-		// Build a file name from the input string
-		strcpy(filename, currentdir);
-		strcat(filename, command);
-		strcat(filename, ".elf");
-		RunExecutable(defaultHardID, filename, true);
+		MountDrive();
+		if (havedrive)
+		{
+			// Build a file name from the input string
+			strcpy(filename, currentdir);
+			strcat(filename, command);
+			strcat(filename, ".elf");
+			RunExecutable(defaultHardID, filename, true);
+		}
 	}
 
 	cmdlen = 0;
@@ -759,9 +771,8 @@ void DrawUI()
 
 	GPUClearScreen(writepage, 0x67676767);
 
-	// TODO: Draw a proper UI
-	// NOTE: Can imgui run here?
-	GPUPrintString(writepage, 0, 0, "E32E " ROMREVISION, 0x7FFFFFFF);
+	// NOTE: Can imgui run here instead?
+	DrawConsole(writepage);
 
 	// Advance and show frame
 	asm volatile( ".word 0xFC000073;");
@@ -777,26 +788,8 @@ int main()
 	// Start with all LEDs off
 	SetLEDState(0x0);
 
-	// Keep display off
-	GPUSetVMode(0);
-
-	// Attempt to mount file system on micro-SD card
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-	if (mountattempt!=FR_OK)
-	{
-		havedrive = 0;
-		UARTWrite(FRtoString[mountattempt]);
-	}
-	else
-		havedrive = 1;
-
-	// Clear all attributes, clear screen, print boot message
-	ClearTerminal();
-
-	// If there's an autoexec.elf on the SDCard, start it
-	// Note that this code does not need to return here
-	if (havedrive)
-		RunExecutable(0, "autoexec.elf", false); // Boots on HART#0 if found
+	// Also clear the console
+	ClearConsole();
 
 	// Clear per-HART scratch memory in DDR3 memory (8Kbytes per HART)
 	for (uint32_t i=0; i<NUM_HARTS*NUMHARTWORDS; i++)
@@ -815,7 +808,7 @@ int main()
 	}
 
 	// Main loop, sleeps most of the time until an interrupt occurs
-	while(!mainloopdone)
+	while(1)
 	{
 		// Interrupt handler will do all the real work.
 		// Therefore we can put the core to sleep until an interrupt occurs,
