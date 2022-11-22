@@ -18,7 +18,7 @@
 #include "ps2.h"
 #include "ringbuffer.h"
 
-#define ROMREVISION "v0.174"
+#define ROMREVISION "v0.175"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -48,6 +48,11 @@ static char commandline[512] = "";
 static char filename[128] = "";
 static int cmdlen = 0;
 static int havedrive = 0;
+static uint32_t numdetectedharts = 0;
+static int defaultHardID = 0;
+
+// Space for per-hart data lives after stack space
+static uint32_t *OSScratchMem = (uint32_t*)0x1FFF0000;
 
 // Main file system object
 FATFS *Fs;
@@ -89,24 +94,20 @@ void UnmountDrive()
 	}
 }
 
-void EchoUART()
+void HandleUART()
 {
 	// *IO_UARTRXTX = 0x13; // XOFF
-	//UARTFlush();
 
 	// Echo back incoming bytes
-	while ((*IO_UARTStatus)&0x00000001)
+	while (UARTHasData())
 	{
 		// Consume incoming character
 		uint8_t incoming = *IO_UARTRX;
-		// TODO: Handle debugger / file server etc
 		// Echo back
 		*IO_UARTTX = incoming;
 	}
-	UARTFlush();
 
 	// *IO_UARTRXTX = 0x11; // XON
-	//UARTFlush();
 }
 
 void HandleButtons()
@@ -123,8 +124,12 @@ void HandleButtons()
 
 void HandleTimer()
 {
+	// Report live HART count
+	for (uint32_t i=1; i<NUM_HARTS; ++i)
+		if (HARTMAILBOX[i] == 0xE32EBABE) // This is an E32E core, consider alive
+			numdetectedharts++;
+
 	// Show boot message
-	UARTWrite("\033[H\033[0m\033[2J");
 	UARTWrite("┌─────────────────────────┐\n");
 	UARTWrite("│          ▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
 	UARTWrite("│ ████████   ▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
@@ -139,6 +144,10 @@ void HandleTimer()
 	UARTWrite("│                         │\n");
 	UARTWrite("│ E32OS " ROMREVISION "            │\n");
 	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
+	UARTWrite("│                         │\n");
+	UARTWrite("│ HARTS found: ");// Expecting single digit HART count here
+	UARTWriteDecimal(numdetectedharts);
+	UARTWrite("          │\n");
 	UARTWrite("└─────────────────────────┘\n\n");
 
 	// Stop further timer interrupts by setting timecmp to furthest value available.
@@ -155,7 +164,7 @@ void HandleKeyboard()
 	// If there's a difference between the previous keymap and current one, generate events for each change
 	for (uint32_t i=0; i<256; ++i)
 	{
-		// Skip keyboard OK signal (occurs when first plugged in)
+		// Skip keyboard OK (when plugged in)
 		if (i==0xAA)
 			continue;
 
@@ -273,7 +282,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 		if (code == 0xB) // Machine External Interrupt (hardware)
 		{
 			// Route based on hardware type
-			if (value & 0x00000001) EchoUART();
+			if (value & 0x00000001) HandleUART();
 			if (value & 0x00000002) HandleButtons();
 			if (value & 0x00000004) HandleKeyboard();
 			//if (value & 0x00000010) HandleHARTIRQ(hartid); // HART#0 doesn't use this
@@ -299,6 +308,148 @@ void InstallISR()
 	uint64_t now = E32ReadTime();
 	uint64_t future = now + ONE_SECOND_IN_TICKS; // Two seconds into the future (based on 10MHz wall clock)
 	E32SetTimeCompare(future);
+
+	// Enable machine software interrupts (breakpoint/illegal instruction)
+	// Enable machine hardware interrupts
+	// Enable machine timer interrupts
+	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+
+	// Allow all machine interrupts to trigger
+	swap_csr(mstatus, MSTATUS_MIE);
+}
+
+void HandleHARTIRQ(uint32_t hartid)
+{
+	// Answer different service IDs when woken up
+	// by another HART via HARTIRQ + request code in HARTMAILBOX
+
+	uint32_t REQ = HARTMAILBOX[hartid];
+	switch (REQ)
+	{
+		// REQ#0 : Alive check
+		case REQ_CheckAlive:
+		{
+			HARTMAILBOX[hartid] = 0xE32EBABE; // Signal alive into our mail slot
+		}
+		break;
+
+		// REQ#1 : Install user timer interrupt handler (TISR) and set its interval
+		case REQ_InstallTISR:
+		{
+			// TISR address, parameter #0
+			uint32_t TISR = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+
+			// TISR interval, parameter #1
+			uint32_t TISR_Interval = HARTMAILBOX[hartid*HARTPARAMCOUNT+1+NUM_HARTS];
+
+			// Store for later retreival
+			OSScratchMem[hartid*NUMHARTWORDS+0] = TISR;
+			OSScratchMem[hartid*NUMHARTWORDS+1] = TISR_Interval;
+
+			// Will start after interval
+			uint64_t now = E32ReadTime();
+			uint64_t future = now + TISR_Interval;
+			E32SetTimeCompare(future);
+
+			HARTMAILBOX[hartid] = 0x00000000; // Done
+		}
+		break;
+
+		// REQ#2 : Start executable on main thread of this HART
+		case REQ_StartExecutable:
+		{
+			// Let the main thread know that we're supposed to start an executable at the given address
+			//uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+			//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1
+			//OSScratchMem[hartid*NUMHARTWORDS+2] = progaddress;
+			//OSScratchMem[hartid*NUMHARTWORDS+3] = 0x1;
+		}
+		break;
+
+		// NOOP
+		default:
+		{
+			HARTMAILBOX[hartid] = 0x00000000; // Done
+		}
+		break;
+	}
+
+	// Request handled, clear interrupt
+	HARTIRQ[hartid] = 0;
+}
+
+void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_interrupt_service_routine()
+{
+	uint32_t a7;
+	asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
+
+	uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
+	uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
+	//uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
+	uint32_t code = cause & 0x7FFFFFFF;
+	uint32_t hartid = read_csr(mhartid);
+
+	if (cause & 0x80000000) // Interrupt
+	{
+		if (code == 0xB) // Machine External Interrupt (hardware)
+		{
+			// HARTs 1..7 don't use these yet (see service request handler below to add support)
+			//if (value & 0x00000001) HandleUART();
+			//if (value & 0x00000002) HandleButtons();
+			//if (value & 0x00000004) HandleKeyboard();
+
+			// Service request handler
+			if (value & 0x00000010) HandleHARTIRQ(hartid);
+		}
+
+		if (code == 0x7) // Machine Timer Interrupt (timer)
+		{
+			uint32_t keepAlive = 0;
+			// Chain into the TISR if there is one installed
+			uint32_t TISR = OSScratchMem[hartid*NUMHARTWORDS+0];
+
+			// If there's an installed routine, call it
+			if (TISR)
+			{
+				((t_timerISR)TISR)(hartid);
+				keepAlive = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
+			}
+
+			if (keepAlive) // TISR wishes to stay alive for next time
+			{
+				// Re-set the timer interval to wake up again
+				uint32_t TISR_Interval = OSScratchMem[hartid*NUMHARTWORDS+1];
+				uint64_t now = E32ReadTime();
+				uint64_t future = now + TISR_Interval;
+				E32SetTimeCompare(future);
+			}
+			else // TISR wishes to be terminated
+			{
+				// Uninstall the routine
+				OSScratchMem[hartid*NUMHARTWORDS+0] = 0x0;
+				OSScratchMem[hartid*NUMHARTWORDS+1] = 0x0;
+
+				// Set timecmp to a distant future
+				swap_csr(0x801, 0xFFFFFFFF);
+				swap_csr(0x800, 0xFFFFFFFF);
+			}
+		}
+	}
+	else // Machine Software Exception (trap)
+	{
+		//HandleTrap(cause, a7, value, PC);
+	}
+}
+
+void InstallWorkerISR()
+{
+	// Set machine trap vector
+	swap_csr(mtvec, worker_interrupt_service_routine);
+
+	// Set up timer interrupt for this HART
+	//uint64_t now = E32ReadTime();
+	//uint64_t future = now + 512; // Set to happen very soon, around similar points in time for all HARTs except #0
+	//E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
 	// Enable machine hardware interrupts
@@ -346,6 +497,11 @@ void ListFiles(const char *path)
 		UARTWrite(FRtoString[re]);
 }
 
+void ClearTerminal()
+{
+	UARTWrite("\033[H\033[0m\033[2J");
+}
+
 void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
 {
 	if (fheader->m_Magic != 0x464C457F)
@@ -378,7 +534,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 	}
 }
 
-void RunExecutable(const char *filename, const bool reportError)
+void RunExecutable(const int hartID, const char *filename, const bool reportError)
 {
 	FIL fp;
 	FRESULT fr = f_open(&fp, filename, FA_READ);
@@ -459,6 +615,14 @@ void ParseCommands()
 			ListFiles(currentdir);
 		}
 	}
+	//else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
+	//{
+	//	char *param = strtok(nullptr, " ");
+	//	if (param != nullptr)
+	//		defaultHardID = atoi(param);
+	//	else
+	//		defaultHardID = 0;
+	//}
 	else if (command!=nullptr) // None, assume this is a program name at the working directory of the SDCard
 	{
 		MountDrive();
@@ -468,7 +632,7 @@ void ParseCommands()
 			strcpy(filename, currentdir);
 			strcat(filename, command);
 			strcat(filename, ".elf");
-			RunExecutable(filename, true);
+			RunExecutable(defaultHardID, filename, true);
 		}
 	}
 
@@ -532,29 +696,85 @@ int ProcessKeyEvents()
 // Worker CPU entry point
 void workermain()
 {
+	InstallWorkerISR(); // In a very short while, this will trigger a timer interrupt to test 'alive'
+
 	//uint32_t hartid = read_csr(mhartid);
 
 	while (1)
 	{
+		/*if ((hartid==1) && (HARTMAILBOX[1] != 0))
+		{
+			asm volatile(
+				".word 0xFC200073;" // CDISCARD.D.L1
+			);
+			uint32_t *somewhere = (uint32_t*)0x1A000000;
+			*somewhere = *somewhere ^ 0xBABECAFE;
+			asm volatile(
+				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+			);
+			HARTMAILBOX[1] = 0x0;
+		}*/
+
+		// Halt on wakeup
 		asm volatile("wfi;");
+
+		// We're signalled to run something
+		/*if (OSScratchMem[hartid*NUMHARTWORDS+3] != 0x0)
+		{
+			OSScratchMem[hartid*NUMHARTWORDS+3] = 0;
+
+			uint32_t progaddress = OSScratchMem[hartid*NUMHARTWORDS+2];
+			asm volatile(
+				"fence.i;"          // Invalidate I$
+				"lw s0, %0;"        // Target branch address
+				"jalr s0;"          // Branch to the entry point
+				: "=m" (progaddress) : : 
+			);
+		}*/
 	}
 }
 
 int main()
 {
-	LEDSetState(0x0);
+	// Diagnosis stage 0
+	LEDSetState(0xFF);
+
+	// Clear per-HART scratch memory in DDR3 memory (8Kbytes per HART)
+	for (uint32_t i=0; i<NUM_HARTS*NUMHARTWORDS; i++)
+		OSScratchMem[i] = 0x00000000;
+
+	// Diagnosis stage 1
+	LEDSetState(0xF0);
 
 	// Install interrupt service routines
+	// NOTE: Only after this point on timers / hw interrupts / illegal instruction exceptions start functioning
 	InstallISR();
+
+	// Diagnosis stage 2
+	LEDSetState(0xAA);
+
+	// Kick HART detection by sending a 'wake up' REQ to all HARTs except HART#0
+	numdetectedharts = 1; // Self
+	for (uint32_t i=1; i<NUM_HARTS; ++i)
+	{
+		HARTMAILBOX[i] = REQ_CheckAlive;
+		HARTIRQ[i] = 1;
+	}
+
+	// Diagnosis stage 3
+	LEDSetState(0x00);
 
 	// Main loop, sleeps most of the time until an interrupt occurs
 	while(1)
 	{
 		// Interrupt handler will do all the real work.
-		// Therefore we can put the core to sleep until an interrupt occurs.
+		// Therefore we can put the core to sleep until an interrupt occurs,
+		// after which it will wake up to service it and then go back to
+		// sleep, unless we asked it to crash.
 		asm volatile("wfi;");
 
-		// Wake up to process keyboard events.
+		// Process any keyboard events produced by the ISR and
+		// parse the command generated in the command line on Enter.
 		if (ProcessKeyEvents())
 			ParseCommands();
 	}
