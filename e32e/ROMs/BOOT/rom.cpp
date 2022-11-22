@@ -8,7 +8,6 @@
 
 #include "rvcrt0.h"
 
-#include "console.h"
 #include "core.h"
 #include "leds.h"
 #include "buttons.h"
@@ -18,10 +17,9 @@
 #include "fat32/ff.h"
 #include "ps2.h"
 #include "ringbuffer.h"
-#include "gpu.h"
 //#include "debugger.h"
 
-#define ROMREVISION "v0.173"
+#define ROMREVISION "v0.174"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -53,16 +51,12 @@ static int cmdlen = 0;
 static int havedrive = 0;
 static uint32_t numdetectedharts = 0;
 static int defaultHardID = 0;
-static uint32_t uiframe = 0;
 
-// Space for per-hart data
+// Space for per-hart data lives after stack space
 static uint32_t *OSScratchMem = (uint32_t*)0x1FFF0000;
 
 // Main file system object
 FATFS *Fs;
-
-uint8_t *framebufferA;
-uint8_t *framebufferB;
 
 // Keyboard event ring buffer (1024 bytes)
 uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
@@ -596,10 +590,9 @@ void ParseCommands()
 
 	if (!strcmp(command, "help")) // Help text
 	{
-		EchoConsole("dir: list files\n");
-		EchoConsole(" cd: change directory\n");
-		EchoConsole(" pd: show directory\n");
-		EchoConsole("cls: clear screen\n");
+		UARTWrite("dir: list files\n");
+		UARTWrite("cd: change directory\n");
+		UARTWrite("pd: show directory\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -628,10 +621,6 @@ void ParseCommands()
 			UARTWrite("\n");
 			ListFiles(currentdir);
 		}
-	}
-	else if (!strcmp(command, "cls")) // Clear terminal screen
-	{
-		ClearConsole();
 	}
 	//else if (!strcmp(command, "hart")) // Set hart to run the loaded executable
 	//{
@@ -752,52 +741,24 @@ void workermain()
 	}
 }
 
-void SetupFramebuffers()
-{
-	framebufferA = GPUAllocateBuffer(320*240*3);
-	framebufferB = GPUAllocateBuffer(320*240*3);
-	GPUSetVPage((uint32_t)framebufferA);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
-}
-
-void DrawUI()
-{
-	// Video scan-out page
-	uint8_t *readpage = (uiframe%2) ? framebufferA : framebufferB;
-	// Video write page
-	uint8_t *writepage = (uiframe%2) ? framebufferB : framebufferA;
-	// Show the read page while we're writing to the write page
-	GPUSetVPage((uint32_t)readpage);
-
-	GPUClearScreen(writepage, 0x67676767);
-
-	// NOTE: Can imgui run here instead?
-	DrawConsole(writepage);
-
-	// Advance and show frame
-	asm volatile( ".word 0xFC000073;");
-
-   	++uiframe;
-}
-
 int main()
 {
-	// Allocate frame buffer memory
-	SetupFramebuffers();
-
-	// Start with all LEDs off
-	SetLEDState(0x0);
-
-	// Also clear the console
-	ClearConsole();
+	// Diagnosis stage 0
+	LEDSetState(0xFF);
 
 	// Clear per-HART scratch memory in DDR3 memory (8Kbytes per HART)
 	for (uint32_t i=0; i<NUM_HARTS*NUMHARTWORDS; i++)
 		OSScratchMem[i] = 0x00000000;
 
+	// Diagnosis stage 1
+	LEDSetState(0xF0);
+
 	// Install interrupt service routines
 	// NOTE: Only after this point on timers / hw interrupts / illegal instruction exceptions start functioning
 	InstallISR();
+
+	// Diagnosis stage 2
+	LEDSetState(0xAA);
 
 	// Kick HART detection by sending a 'wake up' REQ to all HARTs except HART#0
 	numdetectedharts = 1; // Self
@@ -807,6 +768,9 @@ int main()
 		HARTIRQ[i] = 1;
 	}
 
+	// Diagnosis stage 3
+	LEDSetState(0x00);
+
 	// Main loop, sleeps most of the time until an interrupt occurs
 	while(1)
 	{
@@ -815,9 +779,6 @@ int main()
 		// after which it will wake up to service it and then go back to
 		// sleep, unless we asked it to crash.
 		asm volatile("wfi;");
-
-		// Only update and swap UI view when we get an interrupt
-		DrawUI();
 
 		// Process any keyboard events produced by the ISR and
 		// parse the command generated in the command line on Enter.

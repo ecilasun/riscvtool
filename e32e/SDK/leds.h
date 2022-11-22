@@ -10,5 +10,5 @@ extern volatile uint32_t *LEDSTATE;
 #define BUTTONMASK_RIGHT 0x00000008
 #define BUTTONMASK_UP 0x00000010
 
-uint32_t GetLEDState();
-void SetLEDState(const uint32_t state);
+uint32_t LEDGetState();
+void LEDSetState(const uint32_t state);

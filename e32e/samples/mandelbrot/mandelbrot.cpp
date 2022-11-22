@@ -11,12 +11,12 @@
 
 uint8_t *framebuffer;
 
-int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
+inline int evalMandel(const int maxiter, int col, int row, float ox, float oy, float sx)
 {
    int iteration = 0;
 
-   float c_re = (float(col) - 160.f) / 200.f * sx + ox; // Divide by shortest side of display for correct aspect ratio
-   float c_im = (float(row) - 100.f) / 200.f * sx + oy;
+   float c_re = (float(col) - 160.f) / 240.f * sx + ox; // Divide by shortest side of display for correct aspect ratio
+   float c_im = (float(row) - 120.f) / 240.f * sx + oy;
    float x = 0.f, y = 0.f;
    float x2 = 0.f, y2 = 0.f;
    while (x2+y2 < 4.f && iteration < maxiter)
@@ -94,11 +94,12 @@ int main()
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
       mandelbrotFloat(X,Y,R);
 
-      // Flush data cache after each row so we can see a coherent image
-      asm volatile( ".word 0xFC000073;");
-
       if (row == 239)
+      {
+         // Flush leftover writes
+         asm volatile( ".word 0xFC000073;");
          R += 0.001f; // Zoom
+      }
    }
 
    return 0;

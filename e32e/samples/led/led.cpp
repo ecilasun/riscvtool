@@ -7,10 +7,10 @@
 
 int main()
 {
-	// Turn on all of the LEDs
-	SetLEDState(0xFF);
-
-	do{	} while (1);
+	uint32_t state = 0;
+	do{
+		SetLEDState(state++);
+	} while (1);
 
 	return 0;
 }
