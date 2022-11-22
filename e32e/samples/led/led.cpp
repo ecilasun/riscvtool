@@ -9,7 +9,7 @@ int main()
 {
 	uint32_t state = 0;
 	do{
-		SetLEDState(state++);
+		LEDSetState(state++);
 	} while (1);
 
 	return 0;

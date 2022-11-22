@@ -258,11 +258,9 @@ void vumeterTISR(const uint32_t hartID)
 	{
 		HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0x0;
 
-		SetLEDState(0x1); // Busy
-
+		LEDSetState(0x1); // Busy
 		DrawWaveform();
-
-		SetLEDState(0x0); // Not busy
+		LEDSetState(0x0); // Not busy
 	}
 
 	// Keep alive (zero to terminate)
