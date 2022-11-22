@@ -4,10 +4,6 @@
 #include "uart.h"
 #include <stdio.h>
 
-// No optimizations - gcc seems to entirely kill volatile access
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-
 typedef enum {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */
     CMD0_GO_IDLE_STATE = 0,             /**< Resets the SD Memory Card */
@@ -69,14 +65,7 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
 uint8_t __attribute__ ((noinline)) SPITxRx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
-   //*SPISINK = 0xFF;
-   //UARTWriteHexByte(outbyte);
-   //UARTWrite("->");
-   uint8_t incoming = *IO_SPIRXTX;
-   //*SPISINK = 0xFF;
-   //UARTWriteHexByte(incoming);
-   //UARTWrite(":");
-   return incoming;
+   return *IO_SPIRXTX;
 }
 
 uint8_t __attribute__ ((noinline)) SDCmd(const SDCardCommand cmd, uint32_t args)
@@ -90,13 +79,12 @@ uint8_t __attribute__ ((noinline)) SDCmd(const SDCardCommand cmd, uint32_t args)
    buf[4] = (uint8_t)(args&0x000000FF);
    buf[5] = CRC7(buf, 5);
 
-   SPITxRx(0xFF); // Dummy
-
    uint8_t incoming;
+
+   SPITxRx(0xFF); // Dummy byte
+
    for (uint32_t i=0;i<6;++i)
       incoming = SPITxRx(buf[i]);
-
-   SPITxRx(0xFF); // Dummy
 
    return incoming;
 }
@@ -138,10 +126,10 @@ uint8_t __attribute__ ((noinline)) SDIdle()
    E32Sleep(1); // Wait for at least 1ms after power-on
 
    // At least 74 cycles with CS low to go to SPI mode
-   *IO_SPIRXTX = 0x1; // CS high power low
+   //*IO_SPICTL = 0x1; // CS high power low
    for (int i=0; i<80; ++i)
       SPITxRx(0xFF);
-   *IO_SPIRXTX = 0x3; // CS + power low (these signals are inverted)
+   //*IO_SPICTL = 0x3; // CS + power low (these signals are inverted)
 
    SDCmd(CMD0_GO_IDLE_STATE, 0);
    uint8_t response = SDResponse1(); // Expected: 0x01
@@ -363,10 +351,10 @@ int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, u
    return cursor;
 }
 
-void __attribute__ ((noinline)) SDCardControl(int power_cs_n)
+/*void __attribute__ ((noinline)) SDCardControl(int power_cs_n)
 {
-   *IO_SPIRXTX = power_cs_n;
-}
+   *IO_SPICTL = power_cs_n;
+}*/
 
 int __attribute__ ((noinline)) SDCardStartup()
 {
@@ -391,5 +379,3 @@ int __attribute__ ((noinline)) SDCardStartup()
    //response[3] = SDSetBlockSize512();
    //EchoUART("SDSetBlockSize512()");
 }
-
-#pragma GCC pop_options

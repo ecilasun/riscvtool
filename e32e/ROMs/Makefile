@@ -35,11 +35,11 @@ define compile_ROM
 $(1).elf: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
 	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) $(wildcard $(corelib_dir)/*.c) $(wildcard $(thirdparty_libs)/**/*.c) -Wl,-T$(1)/rom.lds
 
-$(1).coe: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
-	$$(RISCVTOOL) $(src_dir)/$(1).elf -makerom $$(ROMWORDSIZE) 0 >> $(src_dir)/$(1).coe
-
 $(1).txt: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
 	$$(RISCV_OBJDUMP) $(src_dir)/$(1).elf -x -D -S >>  $(src_dir)/$(1).txt
+
+$(1).coe: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
+	$$(RISCVTOOL) $(src_dir)/$(1).elf -makerom $$(ROMWORDSIZE) 0 >> $(src_dir)/$(1).coe
 endef
 
 $(foreach folder,$(folders),$(eval $(call compile_ROM,$(folder))))
@@ -47,18 +47,18 @@ $(foreach folder,$(folders),$(eval $(call compile_ROM,$(folder))))
 # Build
 
 folders_riscv_bin  = $(addsuffix .elf,  $(folders))
-folders_riscv_coe = $(addsuffix .coe, $(folders))
 folders_riscv_disasm = $(addsuffix .txt, $(folders))
+folders_riscv_coe = $(addsuffix .coe, $(folders))
 
 executables: $(folders_riscv_bin)
-romimages: $(folders_riscv_coe)
 disassembly: $(folders_riscv_disasm)
+romimages: $(folders_riscv_coe)
 
-junk += $(folders_riscv_bin) $(folders_riscv_coe) $(folders_riscv_disasm)
+junk += $(folders_riscv_bin) $(folders_riscv_disasm) $(folders_riscv_coe)
 
 # Default
 
-all: executables romimages disassembly
+all: executables disassembly romimages
 
 # Clean
 

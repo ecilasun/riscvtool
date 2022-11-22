@@ -217,27 +217,42 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
         return;
     }
 
-    // Allocate space to work in and clear to all zeros
-    uint32_t *workblock = new uint32_t[_filebytesize/4 + 16];
-    memset(workblock, 0x0, _filebytesize+64);
+    // Gather a block large enough to fit everything
+    uint32_t workblocksize = 0;
+    for (uint32_t ph=0; ph<fheader->m_PHNum; ++ph)
+    {
+        SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinary+fheader->m_PHOff+fheader->m_PHEntSize*ph);
+        workblocksize += pheader->m_MemSz;
+    }
+    if (workblocksize == 0)
+    {
+        printf("Error: estimated output binary size is zero\n");
+        return;
+    }
+
+    uint32_t *workblock = new uint32_t[workblocksize/4 + 16];
 
     printf("memory_initialization_radix=16;\nmemory_initialization_vector=\n");
 
-    // Send all binary sections to their correct addresses
     int totalout = 0;
-    for(int sec=0; sec<fheader->m_SHNum; ++sec)
+    for (uint32_t ph=0; ph<fheader->m_PHNum; ++ph)
     {
-        SElfSectionHeader32 *sheader = (SElfSectionHeader32 *)(_elfbinary+fheader->m_SHOff+fheader->m_SHEntSize*sec);
+		SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(_elfbinary+fheader->m_PHOff+fheader->m_PHEntSize*ph);
 
-        if (sheader->m_Flags & 0x00000007 && sheader->m_Size!=0) // writeable/alloc/exec and non-zero
+        totalout += pheader->m_MemSz/4;
+		if (pheader->m_MemSz != 0)
         {
-            totalout += sheader->m_Size/4;
-            int woffset = (sheader->m_Addr-fheader->m_Entry)/4;
+            int woffset = (pheader->m_PAddr-fheader->m_Entry)/4;
 
+            unsigned int *litteendian = (unsigned int *)(_elfbinary+pheader->m_Offset);
+
+            // Reset blank space
+            memset(workblock, 0x0, sizeof(uint32_t)*pheader->m_MemSz/4);
+
+            // Fill rest with data from file
             if (groupsize == 4) // 32bit groups (4 bytes)
             {
-                unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-                for (unsigned int i=0; i<sheader->m_Size; ++i)
+                for (unsigned int i=0; i<pheader->m_FileSz; ++i)
                 {
                     workblock[(woffset&0xFFFFFFFC) + (woffset%4)] = litteendian[i];
                     woffset++;
@@ -245,8 +260,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
             }
             else if (groupsize == 16) // 128bit groups (16 bytes)
             {
-                unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-                for (unsigned int i=0; i<sheader->m_Size/4; ++i)
+                for (unsigned int i=0; i<pheader->m_FileSz/4; ++i)
                 {
                     workblock[(woffset&0xFFFFFFFC) + (3-(woffset%4))] = litteendian[i];
                     woffset++;
@@ -254,8 +268,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
             }
             else if (groupsize == 32) // 256bit groups (32 bytes)
             {
-                unsigned int *litteendian = (unsigned int *)(_elfbinary+sheader->m_Offset);
-                for (unsigned int i=0; i<sheader->m_Size/4; ++i)
+                for (unsigned int i=0; i<pheader->m_FileSz/4; ++i)
                 {
                     workblock[(woffset&0xFFFFFFF8) + (7-(woffset%8))] = litteendian[i];
                     woffset++;

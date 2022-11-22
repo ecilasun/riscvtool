@@ -24,9 +24,9 @@ extern "C"
 
 #if defined(MULTIHART)
          "csrr	s1, mhartid;"         // get hart id
-         "slli	s1, s1, 12;"          // hartid*4096 (4K (2^12) default stack)
-         "li s2, 0x1FFF0000;"        // stack top of last HART in DDR3 memory (near end of 512MBytes minus 16 bytes), leave 64K at the end for OS tables
-         "sub s2, s2, s1;"           // base - hartid*4096
+         "slli	s1, s1, 9;"           // hartid*512 (512bytes (2^9) default stack)
+         "li s2, 0x1FFF0000;"        // stack top of last HART in DDR3 memory (near end of 512MBytes minus a 64K block at the end)
+         "sub s2, s2, s1;"           // base - hartid*512
          "mv sp, s2;"                // set new hart stack pointer
          "mv s0, sp;"                // set frame pointer
 

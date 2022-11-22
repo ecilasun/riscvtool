@@ -3,7 +3,7 @@
 volatile uint32_t *PS2KEYBOARDDATA = (volatile uint32_t* )0x80001020;
 volatile uint32_t *PS2KEYBOARDDATAAVAIL = (volatile uint32_t* )0x80001028;
 
-void ScanKeyboard(uint16_t *_keymap)
+void PS2ScanKeyboard(uint16_t *_keymap)
 {
     uint32_t ext = 0;
     uint32_t brk = 0;
@@ -73,7 +73,7 @@ char scantoasciitable_uppercase[] = {
     ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' '  // F
 };
 
-char ScanToASCII(const uint8_t _code, const uint8_t _uppercase)
+char PS2ScanToASCII(const uint8_t _code, const uint8_t _uppercase)
 {
     return _uppercase ? scantoasciitable_uppercase[_code] : scantoasciitable_lowercase[_code];
 }
