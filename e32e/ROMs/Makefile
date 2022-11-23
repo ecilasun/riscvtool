@@ -14,7 +14,6 @@ thirdparty_libs = ../../3rdparty
 
 folders = \
 	BOOT \
-	E32OS \
 
 # Rules
 

@@ -10,7 +10,6 @@
 
 #include "core.h"
 #include "leds.h"
-#include "buttons.h"
 #include "uart.h"
 #include "elf.h"
 #include "sdcard.h"
@@ -58,7 +57,7 @@ static uint32_t *OSScratchMem = (uint32_t*)0x1FFF0000;
 FATFS *Fs;
 
 // Keyboard event ring buffer (1024 bytes)
-uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
+uint8_t *keyboardringbuffer = (uint8_t*)RINGBUFFER_ADDRESS; // 512 bytes into mailbox memory
 // Keyboard map is at top of S-RAM (512 bytes)
 uint16_t keymap[256];
 // Previous key map to be able to track deltas (512 bytes)
@@ -108,18 +107,6 @@ void HandleUART()
 	}
 
 	// *IO_UARTRXTX = 0x11; // XON
-}
-
-void HandleButtons()
-{
-	while (*BUTTONCHANGEAVAIL)
-	{
-		uint32_t change = *BUTTONCHANGE;
-
-		UARTWrite("Button state change: ");
-		UARTWriteHex(change);
-		UARTWrite("\n");
-	}
 }
 
 void HandleTimer()
@@ -192,7 +179,7 @@ void HandleTrap(const uint32_t cause, const uint32_t a7, const uint32_t value, c
 	{
 		case CAUSE_BREAKPOINT:
 		{
-			// TODO: Debugger related
+			// TODO: We will get stuck here every time as long as the debugger does not replace this instruction
 		}
 		break;
 
@@ -283,8 +270,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 		{
 			// Route based on hardware type
 			if (value & 0x00000001) HandleUART();
-			if (value & 0x00000002) HandleButtons();
-			if (value & 0x00000004) HandleKeyboard();
+			if (value & 0x00000002) HandleKeyboard();
 			//if (value & 0x00000010) HandleHARTIRQ(hartid); // HART#0 doesn't use this
 		}
 
@@ -395,8 +381,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) worker_i
 		{
 			// HARTs 1..7 don't use these yet (see service request handler below to add support)
 			//if (value & 0x00000001) HandleUART();
-			//if (value & 0x00000002) HandleButtons();
-			//if (value & 0x00000004) HandleKeyboard();
+			//if (value & 0x00000002) HandleKeyboard();
 
 			// Service request handler
 			if (value & 0x00000010) HandleHARTIRQ(hartid);
