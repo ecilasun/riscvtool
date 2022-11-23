@@ -23,7 +23,6 @@ folders = \
 	mandelbrot \
 	jpegview \
 	floattest \
-	bvh \
 	interrupt \
 	led \
 

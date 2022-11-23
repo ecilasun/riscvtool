@@ -433,6 +433,7 @@ int main()
 	    uint32_t deltams = ClockToMs(endclock-startclock);
 		startclock = endclock;
 		offset += float(deltams)*0.002f;
+        offset = fmodf(offset, 3.14159265358979323846f);
 
 		// Advance and show frame
         asm volatile( ".word 0xFC000073;");
