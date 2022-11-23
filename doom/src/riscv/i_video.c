@@ -79,7 +79,7 @@ I_FinishUpdate (void)
 {
 	// TODO: Replace with GPU async DMA instead
 	// (also won't need cache flush in that case as we don't go through caches)
-	memcpy(framebuffer, screens[0], 320*200*3);
+	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT*3);
 
 	// Complete framebuffer writes by invalidating & writing back D$
 	asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1
