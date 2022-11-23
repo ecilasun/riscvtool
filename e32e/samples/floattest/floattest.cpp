@@ -354,34 +354,34 @@ int main()
     printf("fmax: max(%f,%f) = %f (excepted: 553.538147)\n", a, b, r);
 
     r = test_sqrt();
-    printf("fsqrt: sqrt(%f) = %f (excepted: 660.618958)\n", b, r);
+    printf("fsqrt: sqrt(%f) = %f (excepted: 23.527391)\n", b, r);
 
     r = test_madd();
-    printf("fmadd: %f*%f+%f = %f (excepted: 593.050232)\n", a, b, c, r);
+    printf("fmadd: %f*%f+%f = %f (excepted: 660.618958)\n", a, b, c, r);
 
     r = test_msub();
-    printf("fmsub: %f*%f-%f = %f (excepted: -593.050232)\n", a, b, c, r);
+    printf("fmsub: %f*%f-%f = %f (excepted: 593.050232)\n", a, b, c, r);
 
     r = test_nmsub();
-    printf("fnmsub: -%f*%f+%f = %f (excepted: -660.618958)\n", a, b, c, r);
+    printf("fnmsub: -%f*%f+%f = %f (excepted: -593.050232)\n", a, b, c, r);
 
     r = test_nmadd();
-    printf("fnmadd: -%f*%f-%f = %f (excepted: 554)\n", a, b, c, r);
+    printf("fnmadd: -%f*%f-%f = %f (excepted: -660.618958)\n", a, b, c, r);
 
     ri = test_fcvtws();
-    printf("fcvt.w.s: %f = %d (excepted: 554.000000)\n", b, ri);
+    printf("fcvt.w.s: %f = %d (excepted: 554)\n", b, ri);
 
     r = test_fcvtsw();
-    printf("fcvt.s.w: %d = %f (excepted: 111.555496)\n", t, r);
+    printf("fcvt.s.w: %d = %f (excepted: 554.000000)\n", t, r);
 
     r = test_fsgnj();
-    printf("fsgnj.s: sgnj(%f,%f) = %f (excepted: -111.555496)\n", d, b, r);
+    printf("fsgnj.s: sgnj(%f,%f) = %f (excepted: 111.555496)\n", d, b, r);
 
     r = test_fsgnjn();
     printf("fsgnjn.s: sgnj(%f,%f) = %f (excepted: -111.555496)\n", d, b, r);
 
     r = test_fsgnjx();
-    printf("fsgnjx.s: sgnj(%f,%f) = %f (excepted:)\n", d, b, r);
+    printf("fsgnjx.s: sgnj(%f,%f) = %f (excepted: -111.555496)\n", d, b, r);
 
     ri = test_flt();
     printf("flt.s: %f < %f ? = %d (excepted: 1)\n", d, b, ri);
