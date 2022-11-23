@@ -279,10 +279,14 @@ int main()
 	if (mountattempt != FR_OK)
 		return -1;
 
+	printf("Installing ISR\n");
+
 #if defined(MULTICORE)
 	InstallTimerISR(1, vumeterTISR, TEN_MILLISECONDS_IN_TICKS);
 	while(HARTMAILBOX[1] != 0x0) asm volatile("nop;");
 #endif
+
+	printf("Loading module\n");
 
 	PlayMODFile("sd:test.mod");
 
