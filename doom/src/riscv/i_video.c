@@ -30,12 +30,7 @@
 #include "core.h"
 #include "gpu.h"
 
-static uint32_t cycle = 0;
-
-uint8_t *framebufferA;
-uint8_t *framebufferB;
-uint8_t *readpage;
-uint8_t *writepage;
+uint8_t *framebuffer;
 uint32_t prevvblankcount;
 
 void
@@ -43,14 +38,10 @@ I_InitGraphics(void)
 {
 	usegamma = 1;
 
-	framebufferA = GPUAllocateBuffer(320*240*3);
-	framebufferB = GPUAllocateBuffer(320*240*3);
+	framebuffer = GPUAllocateBuffer(320*240*3);
+	memset(framebuffer, 0x0, 320*240*3);
 
-	memset(framebufferA, 0x0, 320*240*3);
-	memset(framebufferB, 0x0, 320*240*3);
-
-	screens[0] = framebufferA;
-	GPUSetVPage((uint32_t)framebufferA);
+	GPUSetVPage((uint32_t)framebuffer);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
 	prevvblankcount = GPUReadVBlankCounter();
@@ -86,12 +77,9 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// Swap video scan-out page with video write page
-	readpage = (cycle%2) ? framebufferA : framebufferB;
-	writepage = (cycle%2) ? framebufferB : framebufferA;
-	screens[0] = writepage;
-	GPUSetVPage((uint32_t)readpage);
-	++cycle;
+	// TODO: Replace with GPU async DMA instead
+	// (also won't need cache flush in that case as we don't go through caches)
+	memcpy(framebuffer, screens[0], 320*200*3);
 
 	// Complete framebuffer writes by invalidating & writing back D$
 	asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1
