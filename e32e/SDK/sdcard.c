@@ -4,6 +4,10 @@
 #include "uart.h"
 #include <stdio.h>
 
+// No optimizations - gcc seems to entirely kill volatile access
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+
 typedef enum {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */
     CMD0_GO_IDLE_STATE = 0,             /**< Resets the SD Memory Card */
@@ -379,3 +383,5 @@ int __attribute__ ((noinline)) SDCardStartup()
    //response[3] = SDSetBlockSize512();
    //EchoUART("SDSetBlockSize512()");
 }
+
+#pragma GCC pop_options

@@ -5,7 +5,7 @@ OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
 
 # use this for E32E
-CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O2 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
 
 # use this for FIVEPIPE
 #CFLAGS=-Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -nostartfiles -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/

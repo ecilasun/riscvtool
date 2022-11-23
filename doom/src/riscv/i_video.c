@@ -36,6 +36,7 @@ uint8_t *framebufferA;
 uint8_t *framebufferB;
 uint8_t *readpage;
 uint8_t *writepage;
+uint32_t prevvblankcount;
 
 void
 I_InitGraphics(void)
@@ -48,8 +49,11 @@ I_InitGraphics(void)
 	memset(framebufferA, 0x0, 320*240*3);
 	memset(framebufferB, 0x0, 320*240*3);
 
+	screens[0] = framebufferA;
 	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+
+	prevvblankcount = GPUReadVBlankCounter();
 }
 
 void
@@ -82,37 +86,25 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// Video scan-out page
+	// Swap video scan-out page with video write page
 	readpage = (cycle%2) ? framebufferA : framebufferB;
-
-	// Video write page
 	writepage = (cycle%2) ? framebufferB : framebufferA;
-
-	// Point to new write page (forcing double buffering here)
 	screens[0] = writepage;
-
-	// Invalidate & write back D$ (CFLUSH.D.L1)
-	asm volatile( ".word 0xFC000073;" );
-
-	// Show the read page while we're writing to the write page
 	GPUSetVPage((uint32_t)readpage);
-
-	// TODO: Might want to move the actual buffer flip to I_WaitVBL()
 	++cycle;
+
+	// Complete framebuffer writes by invalidating & writing back D$
+	asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1
 }
 
 
 void
 I_WaitVBL(int count)
 {
-	// Wait for vsync by triggering a write at vsync from GPU side
-	// which the CPU can read and compare to an expected value.
-
-	/*GPUWriteWord(frameIndexAddress, nextFrameIndex, GPU_AT_VSYNC); // GPU_AT_VSYNC or GPU_IMMEDIATE
-	while (frameIndexAddress != nextFrameIndex) { };
-	++nextFrameIndex;*/
+	// Wait until we exit current frame's vbcounter and enter the next one
+	while (prevvblankcount == GPUReadVBlankCounter()) { asm volatile ("nop;"); }
+	prevvblankcount = GPUReadVBlankCounter();
 }
-
 
 void
 I_ReadScreen(byte* scr)

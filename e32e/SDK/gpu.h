@@ -16,3 +16,4 @@ void GPUSetVPage(const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24);
 void GPUPrintString(uint8_t *_vramBase, const int _col, const int _row, const char *_message, int _length);
 void GPUClearScreen(uint8_t *_vramBase, const uint32_t _colorWord);
+uint32_t GPUReadVBlankCounter();

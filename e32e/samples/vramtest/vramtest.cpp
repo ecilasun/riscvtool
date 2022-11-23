@@ -16,6 +16,7 @@ int main()
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
 	uint32_t cycle = 0;
+	uint32_t prevvblankcount = GPUReadVBlankCounter();
 	do {
 		// Video scan-out page
 		uint8_t *readpage = (cycle%2) ? framebufferA : framebufferB;
@@ -25,6 +26,10 @@ int main()
 
 		// Write page as words for faster block copy
 		uint32_t *writepageword = (uint32_t*)writepage;
+
+		// Wait for vsync before we flip pages
+		while (prevvblankcount == GPUReadVBlankCounter()) { asm volatile ("nop;"); }
+		prevvblankcount = GPUReadVBlankCounter();
 
 		// Show the read page while we're writing to the write page
 		GPUSetVPage((uint32_t)readpage);

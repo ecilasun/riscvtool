@@ -39,10 +39,7 @@
 #include "console.h"
 #include "config.h"
 #include "ps2.h"
-
-#if !defined(FIVEPIPE)
 #include "ringbuffer.h"
-#endif
 
 void
 I_Init(void)
@@ -78,9 +75,7 @@ I_GetTime(void)
 static void
 I_GetRemoteEvent(void)
 {
-#if !defined(FIVEPIPE)
 	uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
-#endif
 
 	event_t event;
 
@@ -88,11 +83,7 @@ I_GetRemoteEvent(void)
 	// NOTE: OS feeds keyboard input to us from an ISR
 	uint32_t val;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
-#if defined(FIVEPIPE)
-	int R = PS2RingBufferRead((uint8_t*)&val, 4);
-#else
 	int R = RingBufferRead(keyboardringbuffer, (uint8_t*)&val, 4);
-#endif
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
@@ -128,11 +119,7 @@ I_GetRemoteEvent(void)
 			case 0x14: event.data1 = KEY_RCTRL; break;
 			//case 0x11: event.data1 = KEY_RALT; break; // 0xE0+0x11
 			case 0x11: event.data1 = KEY_LALT; break;
-#if defined(FIVEPIPE)
 			default: event.data1 = PS2ScanToASCII(key, false); break; // Always lowercase
-#else
-			default: event.data1 = ScanToASCII(key, false); break; // Always lowercase
-#endif
 		}
 
 		D_PostEvent(&event);
