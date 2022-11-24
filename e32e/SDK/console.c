@@ -145,10 +145,10 @@ void EchoConsoleHexByte(const int32_t i)
     EchoConsole(msg);
 }
 
-void DrawConsole(uint8_t *_vramBase)
+void DrawConsole(uint8_t *_vramBase, const uint32_t _stride)
 {
     for (int cy=0;cy<CONSOLE_ROWS;++cy)
-        GPUPrintString(_vramBase, 0, cy*8, &consoleText[cy*CONSOLE_COLUMNS], CONSOLE_COLUMNS);
+        GPUPrintString(_vramBase, _stride, 0, cy*8, &consoleText[cy*CONSOLE_COLUMNS], CONSOLE_COLUMNS);
 }
 
 void ConsoleStringAtRow(char *target)

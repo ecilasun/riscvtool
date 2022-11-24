@@ -60,7 +60,7 @@ void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24)
     *GPUIO = (_paletteIndex<<24) | (_rgba24&0x00FFFFFFFF);
 }
 
-void GPUPrintString(uint8_t *_vramBase, const int _col, const int _row, const char *_message, int _length)
+void GPUPrintString(uint8_t *_vramBase, const uint32_t _stride, const int _col, const int _row, const char *_message, int _length)
 {
    int i=0;
    while (_message[i] != 0 && i<_length)
@@ -77,7 +77,7 @@ void GPUPrintString(uint8_t *_vramBase, const int _col, const int _row, const ch
 
       for (int y=0; y<8; ++y)
         for (int x=0; x<8; ++x)
-            _vramBase[(_col+i)*8 + x + (_row+y)*FRAME_WIDTH] = residentfont[charcol+x+((charrow+y)*256)] & 0x0F;
+            _vramBase[(_col+i)*8 + x + (_row+y)*_stride] = residentfont[charcol+x+((charrow+y)*256)] & 0x0F;
 
       ++i;
    }

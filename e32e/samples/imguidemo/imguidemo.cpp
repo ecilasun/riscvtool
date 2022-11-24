@@ -19,8 +19,8 @@ int main()
 
 	// Set up frame buffers
 	// NOTE: Video scanout buffers have to be aligned at 64 byte boundary
-	uint8_t *framebufferA = (uint8_t*)malloc(640*480*3 + 64);
-	uint8_t *framebufferB = (uint8_t*)malloc(640*480*3 + 64);
+	uint8_t *framebufferA = (uint8_t*)malloc(640*480*4 + 64);
+	uint8_t *framebufferB = (uint8_t*)malloc(640*480*4 + 64);
 	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
 	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
 

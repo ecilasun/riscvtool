@@ -44,7 +44,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
 	B = BOFF/64;
 	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
-	framebuffer[x+y*320] = RGB;
+	framebuffer[x+y*640] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -301,13 +301,13 @@ vec3 cast_ray(
 void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 {
 	const float fov  = M_PI/3.f;
-	float dir_z = -FRAME_HEIGHT/(2.*tan(fov/2.f));
-	for (int j = 0; j<FRAME_HEIGHT; j++)// actual rendering loop
+	float dir_z = -FRAME_HEIGHT_MODE1/(2.*tan(fov/2.f));
+	for (int j = 0; j<FRAME_HEIGHT_MODE1; j++)// actual rendering loop
 	{
-		float dir_y = -(j + 0.5f) + FRAME_HEIGHT/2.f; // this flips the image.
-		for (int i = 0; i<FRAME_WIDTH; i++)
+		float dir_y = -(j + 0.5f) + FRAME_HEIGHT_MODE1/2.f; // this flips the image.
+		for (int i = 0; i<FRAME_WIDTH_MODE1; i++)
 		{
-			float dir_x =  (i + 0.5f) - FRAME_WIDTH/2.f;
+			float dir_x =  (i + 0.5f) - FRAME_WIDTH_MODE1/2.f;
 			vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
 			graphics_set_pixel(i,j,C.x,C.y,C.z);
 		}
@@ -354,17 +354,18 @@ int main()
   for (int b=0;b<4;++b)
     for (int g=0;g<8;++g)
       for (int r=0;r<8;++r)
-          GPUSetPal(target++, MAKECOLORRGB24(r*32, g*32, b*64));
+          GPUSetPal(target++, MAKECOLORRGB24(r*36, g*36, b*85));
 
   UARTWrite("initializing scene\n");
   init_scene();
 
   UARTWrite("starting scene generation\n");
 
-  framebuffer = GPUAllocateBuffer(320*240*3);
+  framebuffer = GPUAllocateBuffer(640*480);
   GPUSetVPage((uint32_t)framebuffer);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
-
+  GPUSetVPage((uint32_t)framebuffer);
+  GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_640PALETTED, VIDEOOUT_ENABLED)); // Mode 1, video on
   uint64_t startclock = E32ReadTime();
 
   render(spheres, nb_spheres, lights, nb_lights);
@@ -373,7 +374,7 @@ int main()
   uint32_t deltams = ClockToMs(endclock-startclock);
   UARTWrite("tinyraytracer took ");
   UARTWriteDecimal((unsigned int)deltams);
-  UARTWrite(" ms at 320x240 resolution\n");
+  UARTWrite(" ms at 640x480 resolution\n");
 
   // Flush out leftover bytes that didn't end up in framebuffer memory
   asm volatile( ".word 0xFC000073;");

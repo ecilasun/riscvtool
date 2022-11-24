@@ -1,7 +1,9 @@
 #include <inttypes.h>
 
-#define FRAME_WIDTH 320
-#define FRAME_HEIGHT 240
+#define FRAME_WIDTH_MODE0 320
+#define FRAME_HEIGHT_MODE0 240
+#define FRAME_WIDTH_MODE1 640
+#define FRAME_HEIGHT_MODE1 480
 
 #define GPUCMD_SETVPAGE    0x00000000
 #define GPUCMD_SETPAL      0x00000001
@@ -22,6 +24,6 @@ uint8_t *GPUAllocateBuffer(const uint32_t _size);
 void GPUSetVMode(const uint32_t _vmodeInfo);
 void GPUSetVPage(const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24);
-void GPUPrintString(uint8_t *_vramBase, const int _col, const int _row, const char *_message, int _length);
+void GPUPrintString(uint8_t *_vramBase, const uint32_t _stride, const int _col, const int _row, const char *_message, int _length);
 void GPUClearScreen(uint8_t *_vramBase, const uint8_t _mode, const uint32_t _colorWord);
 uint32_t GPUReadVBlankCounter();
