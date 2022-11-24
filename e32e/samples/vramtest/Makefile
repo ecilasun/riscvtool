@@ -15,7 +15,7 @@ RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 -Wall -Ofast -march=rv32imf -mabi=i
 
 incs  += -I$(src_dir) -I$(corelib_dir)/ 
 libs += $(wildcard $(corelib_dir)/*.c) 
-objs  :=
+objs  := vramtest.elf
 
 $(foreach folder,$(folders),$(eval $(call compile_template,$(folder))))
 

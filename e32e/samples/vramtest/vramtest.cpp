@@ -7,13 +7,13 @@ int main()
 {
 	// Set up frame buffers
 	// NOTE: Video scanout buffers have to be aligned at 64 byte boundary
-	uint8_t *framebufferA = (uint8_t*)malloc(320*240*3 + 64);
-	uint8_t *framebufferB = (uint8_t*)malloc(320*240*3 + 64);
+	uint8_t *framebufferA = (uint8_t*)malloc(320*240 + 64);
+	uint8_t *framebufferB = (uint8_t*)malloc(320*240 + 64);
 	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
 	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
 
 	GPUSetVPage((uint32_t)framebufferA);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_320PALETTED, VIDEOOUT_ENABLED)); // Mode 0, video on
 
 	uint32_t cycle = 0;
 	uint32_t prevvblankcount = GPUReadVBlankCounter();

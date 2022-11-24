@@ -16,7 +16,7 @@ RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 -Wall -Ofast -march=rv32imf -mabi=i
 
 incs  += -I$(src_dir) -I$(corelib_dir)/ -I$(thirdparty_libs)/ -I$(src_dir)/.
 libs += $(wildcard $(corelib_dir)/*.c) $(wildcard $(thirdparty_libs)/**/*.c) $(wildcard $(thirdparty_libs)/**/*.cpp)
-objs  :=
+objs  := imguidemo.elf
 
 $(foreach folder,$(folders),$(eval $(call compile_template,$(folder))))
 

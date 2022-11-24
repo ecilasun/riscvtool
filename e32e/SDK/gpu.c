@@ -83,10 +83,11 @@ void GPUPrintString(uint8_t *_vramBase, const int _col, const int _row, const ch
    }
 }
 
-void GPUClearScreen(uint8_t *_vramBase, const uint32_t _colorWord)
+void GPUClearScreen(uint8_t *_vramBase, const uint8_t _mode, const uint32_t _colorWord)
 {
     uint32_t *vramBaseAsWord = (uint32_t*)_vramBase;
-    for (uint32_t i=0;i<240*80;++i)
+    uint32_t W = _mode == VIDEOMODE_640PALETTED ? (480*160) : (240*80);
+    for (uint32_t i=0; i<W; ++i)
         vramBaseAsWord[i] = _colorWord;
 }
 

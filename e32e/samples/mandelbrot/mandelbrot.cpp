@@ -15,8 +15,8 @@ inline int evalMandel(const int maxiter, int col, int row, float ox, float oy, f
 {
    int iteration = 0;
 
-   float c_re = (float(col) - 160.f) / 240.f * sx + ox; // Divide by shortest side of display for correct aspect ratio
-   float c_im = (float(row) - 120.f) / 240.f * sx + oy;
+   float c_re = (float(col) - 320.f) / 480.f * sx + ox; // Divide by shortest side of display for correct aspect ratio
+   float c_im = (float(row) - 240.f) / 480.f * sx + oy;
    float x = 0.f, y = 0.f;
    float x2 = 0.f, y2 = 0.f;
    while (x2+y2 < 4.f && iteration < maxiter)
@@ -37,9 +37,9 @@ int mandelbrotFloat(float ox, float oy, float sx)
 {
    int R = int(27.71f-5.156f*logf(sx));
 
-   //for (int row = 0; row < 240; ++row)
+   //for (int row = 0; row < 480; ++row)
    {
-      for (int col = 0; col < 320; ++col)
+      for (int col = 0; col < 640; ++col)
       {
          int M = evalMandel(R, col, row, ox, oy, sx);
          int c;
@@ -53,11 +53,11 @@ int mandelbrotFloat(float ox, float oy, float sx)
             c = int(1.f*ratio*255);
          }
 
-         framebuffer[col + (row*320)] = c;
+         framebuffer[col + (row*640)] = c;
       }
    }
 
-   row = (row+1)%240;
+   row = (row+1)%480;
 
    return 1;
 
@@ -78,9 +78,9 @@ int main()
 
     // Set up frame buffer
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
-   framebuffer = GPUAllocateBuffer(320*240*3);
+   framebuffer = GPUAllocateBuffer(640*480);
    GPUSetVPage((uint32_t)framebuffer);
-   GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+   GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_640PALETTED, VIDEOOUT_ENABLED)); // Mode 1, video on
 
    float R = 4.0E-5f + 0.01f; // Step once to see some detail due to adaptive code
    float X = -0.235125f;
@@ -94,7 +94,7 @@ int main()
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
       mandelbrotFloat(X,Y,R);
 
-      if (row == 239)
+      if (row == 479)
       {
          // Flush leftover writes
          asm volatile( ".word 0xFC000073;");

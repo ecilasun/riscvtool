@@ -19,13 +19,13 @@ int main()
 
 	// Set up frame buffers
 	// NOTE: Video scanout buffers have to be aligned at 64 byte boundary
-	uint8_t *framebufferA = (uint8_t*)malloc(320*240*3 + 64);
-	uint8_t *framebufferB = (uint8_t*)malloc(320*240*3 + 64);
+	uint8_t *framebufferA = (uint8_t*)malloc(640*480*3 + 64);
+	uint8_t *framebufferB = (uint8_t*)malloc(640*480*3 + 64);
 	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
 	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
 
 	GPUSetVPage((uint32_t)framebufferA);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_640PALETTED, VIDEOOUT_ENABLED)); // Mode 1 (640x480), video output on
 
 	uint32_t cycle = 0;
 	//uint32_t prevvblankcount = GPUReadVBlankCounter();
@@ -42,10 +42,10 @@ int main()
 		GPUSetVPage((uint32_t)readpage);
 
 		// Clar to white
-		GPUClearScreen(writepage, 0x0F0F0F0F);
+		GPUClearScreen(writepage, VIDEOMODE_640PALETTED, 0x0F0F0F0F);
 
 		// Demo
-        io.DisplaySize = ImVec2(320, 240);
+        io.DisplaySize = ImVec2(640, 480);
         io.DeltaTime = 1.0f / 60.0f;
         ImGui::NewFrame();
 
@@ -58,7 +58,7 @@ int main()
         ImGui::End();
 
         ImGui::Render();
-        imgui_sw::paint_imgui((uint32_t*)writepage,320,240);
+        imgui_sw::paint_imgui((uint32_t*)writepage,640,480);
 
 		// Flush data cache at last pixel so we can see a coherent image
 		asm volatile( ".word 0xFC000073;");
