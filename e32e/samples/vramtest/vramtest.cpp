@@ -7,13 +7,13 @@ int main()
 {
 	// Set up frame buffers
 	// NOTE: Video scanout buffers have to be aligned at 64 byte boundary
-	uint8_t *framebufferA = (uint8_t*)malloc(320*240 + 64);
-	uint8_t *framebufferB = (uint8_t*)malloc(320*240 + 64);
+	uint8_t *framebufferA = (uint8_t*)malloc(640*480 + 64);
+	uint8_t *framebufferB = (uint8_t*)malloc(640*480 + 64);
 	framebufferA = (uint8_t*)E32AlignUp((uint32_t)framebufferA, 64);
 	framebufferB = (uint8_t*)E32AlignUp((uint32_t)framebufferB, 64);
 
 	GPUSetVPage((uint32_t)framebufferA);
-	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_320PALETTED, VIDEOOUT_ENABLED)); // Mode 0, video on
+	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_640PALETTED, VIDEOOUT_ENABLED)); // Mode 0, video on
 
 	uint32_t cycle = 0;
 	uint32_t prevvblankcount = GPUReadVBlankCounter();
@@ -35,23 +35,23 @@ int main()
 		GPUSetVPage((uint32_t)readpage);
 
 		// Pattern
-		for (int y=0;y<240;++y)
-			for (int x=0;x<320;++x)
-				writepage[x+y*320] = ((cycle + x)^y)%255;
+		for (int y=0;y<480;++y)
+			for (int x=0;x<640;++x)
+				writepage[x+y*640] = ((cycle + x)^y)%255;
 
 		// Diagonal
-		for (int y=0;y<240;++y)
-			for (int x=0;x<320;++x)
-				if (x==y) writepage[x+y*320] = cycle;
+		for (int y=0;y<480;++y)
+			for (int x=0;x<640;++x)
+				if (x==y) writepage[x+y*640] = cycle;
 
 		// Inverted copy of lower 32 rows to upper 32 rows of the screen
 		// This is used to test flicker when single buffered and
 		// should not flicker when double buffered (page swap)
 		for (int y=0;y<32;++y)
-			for (int x=0;x<80;++x)
-				writepageword[x+y*80] = writepageword[x+(y+208)*80] ^ 0xFFFFFFFF;
+			for (int x=0;x<160;++x)
+				writepageword[x+y*160] = writepageword[x+(y+447)*160] ^ 0xFFFFFFFF;
 
-    	GPUPrintString(writepage, 8, 8, "vram test", 0x7FFFFFFF);
+    	GPUPrintString(writepage, FRAME_WIDTH_MODE1, 8, 8, "vram test", 0x7FFFFFFF);
 
 		// Flush data cache at last pixel so we can see a coherent image
 		asm volatile( ".word 0xFC000073;");

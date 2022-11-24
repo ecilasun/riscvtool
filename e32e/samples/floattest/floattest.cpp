@@ -404,10 +404,10 @@ int main()
 	uint32_t frame = 0;
     uint64_t startclock = E32ReadTime();
 
-	uint8_t *framebufferA = GPUAllocateBuffer(320*240*3);
-	uint8_t *framebufferB = GPUAllocateBuffer(320*240*3);
+	uint8_t *framebufferA = GPUAllocateBuffer(320*240);
+	uint8_t *framebufferB = GPUAllocateBuffer(320*240);
 	GPUSetVPage((uint32_t)framebufferA);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_320PALETTED, VIDEOOUT_ENABLED)); // Mode 0, video on
     uint32_t prevvblankcount = GPUReadVBlankCounter();
 	while(1)
 	{
@@ -423,7 +423,7 @@ int main()
 		prevvblankcount = GPUReadVBlankCounter();
 
         // Flip
-        GPUClearScreen(writepage, 0x67676767);
+        GPUClearScreen(writepage, VIDEOMODE_320PALETTED, 0x67676767);
 
 		// Draw waveform
 		for (int x=0;x<320;++x)

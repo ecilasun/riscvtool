@@ -135,7 +135,7 @@ int main()
 	GPUSetVPage((uint32_t)image);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
-    GPUPrintString(image, 0, 16, "loading...", 0x7FFFFFFF);
+    GPUPrintString(image, FRAME_WIDTH_MODE0, 0, 16, "loading...", 0x7FFFFFFF);
     asm volatile( ".word 0xFC000073;");
 
 	DecodeJPEG("sd:test.jpg");
