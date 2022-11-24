@@ -408,6 +408,7 @@ int main()
 	uint8_t *framebufferB = GPUAllocateBuffer(320*240*3);
 	GPUSetVPage((uint32_t)framebufferA);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+    uint32_t prevvblankcount = GPUReadVBlankCounter();
 	while(1)
 	{
         // Video scan-out page
@@ -417,7 +418,13 @@ int main()
         // Show the read page while we're writing to the write page
         GPUSetVPage((uint32_t)readpage);
 
+		// Wait for vsync
+		while (prevvblankcount == GPUReadVBlankCounter()) { asm volatile ("nop;"); }
+		prevvblankcount = GPUReadVBlankCounter();
+
+        // Flip
         GPUClearScreen(writepage, 0x67676767);
+
 		// Draw waveform
 		for (int x=0;x<320;++x)
 		{
