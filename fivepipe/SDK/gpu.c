@@ -1,4 +1,6 @@
+#include "core.h"
 #include "gpu.h"
+#include <stdlib.h>
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t residentfont[] __attribute__((aligned(4))) = {
@@ -31,6 +33,12 @@ const uint8_t residentfont[] __attribute__((aligned(4))) = {
 // NOTE: Writes to this FIFO address will set the current video scanout address
 // For the current version, only bits [31:18] of the VRAM address are considered valid
 volatile uint32_t *GPUFIFO = (volatile uint32_t* )0x80000030;
+
+uint8_t *GPUAllocateBuffer(const uint32_t _size)
+{
+   void *buffer = (uint8_t*)malloc(_size + 64);
+   return (uint8_t*)E32AlignUp((uint32_t)buffer, 64);
+}
 
 void GPUSetVMode(const uint32_t _vmodeInfo)
 {

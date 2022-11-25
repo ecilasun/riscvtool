@@ -13,6 +13,7 @@ extern volatile uint32_t *GPUFIFO;
 #define MAKECOLORRGB24(_r, _g, _b) (((_g&0xFF)<<16) | ((_r&0xFF)<<8) | (_b&0xFF))
 #define MAKEVMODEINFO(_mode, _scanEnable) ((_mode&0xF)<<4) | (_scanEnable&0x1)
 
+uint8_t *GPUAllocateBuffer(const uint32_t _size);
 void GPUSetVMode(const uint32_t _vmodeInfo);
 void GPUSetVPage(const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24);
