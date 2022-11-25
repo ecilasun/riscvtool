@@ -39,12 +39,16 @@
 #include "console.h"
 #include "config.h"
 #include "ps2.h"
+#if !defined(FIVEPIPE)
 #include "ringbuffer.h"
+#endif
 
 void
 I_Init(void)
 {
-	
+#if defined(FIVEPIPE)
+	PS2InitRingBuffer();
+#endif
 }
 
 
@@ -75,7 +79,9 @@ I_GetTime(void)
 static void
 I_GetRemoteEvent(void)
 {
+#if !defined(FIVEPIPE)
 	uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
+#endif
 
 	event_t event;
 
@@ -83,7 +89,11 @@ I_GetRemoteEvent(void)
 	// NOTE: OS feeds keyboard input to us from an ISR
 	uint32_t val;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
+#if !defined(FIVEPIPE)
 	int R = RingBufferRead(keyboardringbuffer, (uint8_t*)&val, 4);
+#else
+	int R = PS2RingBufferRead(&val, 4);
+#endif
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{

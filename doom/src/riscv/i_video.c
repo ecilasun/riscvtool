@@ -31,7 +31,9 @@
 #include "gpu.h"
 
 uint8_t *framebuffer;
+#if !defined(FIVEPIPE)
 uint32_t prevvblankcount;
+#endif
 
 void
 I_InitGraphics(void)
@@ -44,7 +46,9 @@ I_InitGraphics(void)
 	GPUSetVPage((uint32_t)framebuffer);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
+#if !defined(FIVEPIPE)
 	prevvblankcount = GPUReadVBlankCounter();
+#endif
 }
 
 void
@@ -90,8 +94,10 @@ void
 I_WaitVBL(int count)
 {
 	// Wait until we exit current frame's vbcounter and enter the next one
+#if !defined(FIVEPIPE)
 	while (prevvblankcount == GPUReadVBlankCounter()) { asm volatile ("nop;"); }
 	prevvblankcount = GPUReadVBlankCounter();
+#endif
 }
 
 void
