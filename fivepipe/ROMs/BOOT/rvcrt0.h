@@ -12,18 +12,16 @@ extern "C"
    {
       asm volatile (
 
-         // This is the entry point of CORE#0 (0x10000020 if above code is enabled)
-         //".cfi_startproc;"
-         //".cfi_undefined ra;"
-         //".option push;"
-         //".option norelax;"
-
-         // Set up global pointer
+         // Set up global pointer - NOTE: ROM does not use GP
          //"la gp, __global_pointer$;"
          //".option pop;"
 
+         "li sp, 0x2004FFF0;"       // Stack is at end of BRAM (easier to simulate as DDR3 model might return X on reads)
+
 #if defined(MULTIHART_SUPPORT)
-         "li sp, 0x1FFFFFF0;"       // End of memory (SDRAM)
+         // Set up stack spaces automatically when supporting
+         // more than one hardware thread
+         // Note that this version leaves one stack space worth of gap at the end
          "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
          "csrr	s1, mhartid;"        // Grab hart id
          "addi s2, s1, 1;"          // Hart id + 1
@@ -33,9 +31,7 @@ extern "C"
 
          "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x1FFFFFF0;"       // End of memory (SDRAM)
-         "la s0, __stack_size$;"    // stepback = __stack_size$;
-         "sub sp, sp, s0;"          // stacktop = base - stepback;
+         // Single hardware thread simply needs to use the setup address
          "mv s0, sp;"               // Set frame pointer to current stack pointer
 #endif
 
@@ -86,16 +82,10 @@ extern "C"
 
    void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
    {
-      /*asm (
-         // This will invoke an ECALL to halt the HART
-         "li a1,0x1;"
-         "li a2,0x2;"
-         "li a3,0x3;"
-         "li a4,0x4;"
-         "li a5,0x5;"
-         "li a7,93;"
-         "ecall;"
-         "j _exit;"
-      );*/
+      // Halt if we ever attempt to exit ROM
+      asm (
+         "_romfreeze: "
+         "j _romfreeze;"
+      );
    }
 };

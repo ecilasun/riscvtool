@@ -13,7 +13,7 @@ Program Header:
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .boot         0000008c  20000000  20000000  00001000  2**2
+  0 .boot         00000090  20000000  20000000  00001000  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
   1 .text         00006024  20000090  20000090  00001090  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
@@ -54,6 +54,7 @@ SYMBOL TABLE:
 20000894 l     F .text	0000016c _Z9ListFilesPKc.part.0
 20000078 l       .boot	00000000 workerhartstart
 20000060 l       .boot	00000000 noatexitfound
+2000008c l       .boot	00000000 _romfreeze
 20008e58 l     O .bss	00000004 _ZL9fsmounted
 20008c1c l     O .bss	00000004 _ZZ16ProcessKeyEventsvE9uppercase
 20008e5c l     O .bss	00000004 _ZL6cmdlen
@@ -146,7 +147,7 @@ SYMBOL TABLE:
 20008164 g     O .data	00000004 IO_UARTRX
 200050a8 g     F .text	000000f0 ff_wtoupper
 20008374 g     O .data	00000004 PS2KEYBOARDDATAAVAIL
-2000008c g       .boot	00000000 _boot
+20000090 g       .boot	00000000 _boot
 200053e8 g     F .text	000001a4 memcpy
 2000164c g     F .text	00000090 _Z17PS2RingBufferReadPvm
 200051a4 g     F .text	00000030 disk_initialize
@@ -172,7 +173,7 @@ SYMBOL TABLE:
 2000558c g     F .text	00000088 strcat
 20001aec g     F .text	000000cc _Z6SDIdlev
 2000469c g     F .text	0000003c f_close
-2000008c g       .boot	00000000 _ftext
+20000090 g       .boot	00000000 _ftext
 20000000 g     F .boot	0000008c _start
 20005c20 g     F .text	00000288 strstr
 2000139c g     F .text	000000dc _Z16UARTWriteDecimall
@@ -226,7 +227,7 @@ SYMBOL TABLE:
 20001238 g     F .text	00000038 _Z8UARTReadv
 20000438 g     F .text	0000030c _Z14HandleMainTrapmmmm
 2000815c g     O .data	00000004 IO_UARTStatus
-2000008c g     F .boot	00000000 _exit
+2000008c g     F .boot	00000004 _exit
 20001478 g     F .text	00000014 _Z11E32ReadTimev
 20008a1c g     O .bss	00000200 keymap
 20005ff0 g     F .text	0000008c strlen
@@ -244,8 +245,8 @@ SYMBOL TABLE:
 Disassembly of section .boot:
 
 20000000 <_start>:
-20000000:	20000137          	lui	sp,0x20000
-20000004:	ff010113          	addi	sp,sp,-16 # 1ffffff0 <__stack_size+0x1ffffbf0>
+20000000:	20050137          	lui	sp,0x20050
+20000004:	ff010113          	addi	sp,sp,-16 # 2004fff0 <_end+0x46cf0>
 20000008:	00008417          	auipc	s0,0x8
 2000000c:	7cc42403          	lw	s0,1996(s0) # 200087d4 <_GLOBAL_OFFSET_TABLE_+0x24>
 20000010:	f14024f3          	csrr	s1,mhartid
@@ -260,7 +261,7 @@ Disassembly of section .boot:
 20000034:	7c462603          	lw	a2,1988(a2) # 200087f4 <_GLOBAL_OFFSET_TABLE_+0x44>
 20000038:	40a60633          	sub	a2,a2,a0
 2000003c:	00000593          	li	a1,0
-20000040:	050000ef          	jal	ra,20000090 <memset>
+20000040:	050000ef          	jal	ra,20000090 <_boot>
 20000044:	00008517          	auipc	a0,0x8
 20000048:	7a052503          	lw	a0,1952(a0) # 200087e4 <_GLOBAL_OFFSET_TABLE_+0x34>
 2000004c:	00050a63          	beqz	a0,20000060 <noatexitfound>
@@ -283,6 +284,9 @@ Disassembly of section .boot:
 20000080:	00000613          	li	a2,0
 20000084:	6d10006f          	j	20000f54 <_Z10workermainv>
 20000088:	00100073          	ebreak
+
+2000008c <_exit>:
+2000008c:	0000006f          	j	2000008c <_exit>
 
 Disassembly of section .text:
 
@@ -8752,7 +8756,10 @@ Disassembly of section .eh_frame:
 2000739e:	0000                	.2byte	0x0
 200073a0:	8cec                	.2byte	0x8cec
 200073a2:	ffff                	.2byte	0xffff
-	...
+200073a4:	0004                	.2byte	0x4
+200073a6:	0000                	.2byte	0x0
+200073a8:	0000                	.2byte	0x0
+200073aa:	0000                	.2byte	0x0
 200073ac:	0024                	.2byte	0x24
 200073ae:	0000                	.2byte	0x0
 200073b0:	01b4                	.2byte	0x1b4
