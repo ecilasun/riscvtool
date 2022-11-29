@@ -16,7 +16,7 @@ extern "C"
          //"la gp, __global_pointer$;"
          //".option pop;"
 
-         "li sp, 0x2004FFF0;"       // Stack is at end of BRAM (easier to simulate as DDR3 model might return X on reads)
+         "li sp, 0x1FFFF000;"       // Stack is at near end of SDRAM (space at end for hardware devices)
 
 #if defined(MULTIHART_SUPPORT)
          // Set up stack spaces automatically when supporting
@@ -24,12 +24,11 @@ extern "C"
          // Note that this version leaves one stack space worth of gap at the end
          "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
          "csrr	s1, mhartid;"        // Grab hart id
-         "addi s2, s1, 1;"          // Hart id + 1
-         "mul s2, s2, s0;"          // stepback = (hartid + 1) * __stack_size;
+         "mul s2, s1, s0;"          // stepback = hartid * __stack_size;
          "sub sp, sp, s2;"          // stacktop = base - stepback;
          "mv s0, sp;"               // Set frame pointer to current stack pointer
 
-         "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
+         "bnez s1, gotoworkermain;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
          // Single hardware thread simply needs to use the setup address
          "mv s0, sp;"               // Set frame pointer to current stack pointer
@@ -66,16 +65,17 @@ extern "C"
          "ebreak;"
 
 #if defined(MULTIHART_SUPPORT)
-         "workerhartstart:"   // Entry point for extra harts (hartid!=0)
-
+         // Set up and branch to worker hardware thread entry point
+         "gotoworkermain:"
          "lw a0,0(sp);"
          "addi	a1,sp,4;"
          "li a2,0;"
-
          "j _Z10workermainv;"
 
-         // Stop at breakpoint / no return / _exit is useless
-         "ebreak;"
+         // Put worker hardware thread to sleep if its workermain() exits
+         "_workerfreeze: "
+         "wfi;"
+         "j _workerfreeze;"
 #endif
       );
    }

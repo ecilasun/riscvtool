@@ -6,15 +6,15 @@ OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 GROUP( -lc -lgloss -lgcc )
 
 MEMORY{
-   ROMRAM (xwr) : ORIGIN = 0x20000000, LENGTH = 0x3FBF0
+   ROMRAM (xwr) : ORIGIN = 0x20000000, LENGTH = 0x40000
 }
 
 ENTRY(_start)
 
 SECTIONS
 {
-  /* Default stack size is 256 bytes unless overriden by linker by defining __stack_size, see Makefile */
-  __stack_size = DEFINED(__stack_size) ? __stack_size : 0x400;
+  /* Default stack size is 512 bytes unless overriden by linker by defining __stack_size, see Makefile */
+  __stack_size = DEFINED(__stack_size) ? __stack_size : 0x200;
   PROVIDE(__stack_size$ = __stack_size);
 
   /*--------------------------------------------------------------------*/

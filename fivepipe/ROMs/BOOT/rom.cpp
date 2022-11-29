@@ -260,32 +260,21 @@ void ParseCommands()
 // HART[1..N-1] entry point
 void workermain()
 {
-	//uint32_t hartid = read_csr(mhartid);
-
-	while(1)
-	{
-		// TODO: Wake up to process hardware interrupt requests
-		asm volatile("wfi;");
-	}
+	// NOTE: Default implementation, upon return from this function, will sit in an infinite WFI loop.
 }
 
 // HART[0] entry point
 int main()
 {
-	// Only on first core
-	uint32_t hartid = read_csr(mhartid);
-	if (hartid == 0)
-	{
-		// Ready to handle hardware & software interrupts
-		InstallMainISR();
-	}
+	// Ready to handle hardware & software interrupts
+	InstallMainISR();
 
 	LEDSetState(0);
 	PS2InitRingBuffer();
 
 	while(1)
 	{
-		// Main loop will only wake up at hardware interrupt requests
+		// Hardware will wake this core up when interrupts occur
 		asm volatile("wfi;");
 
 		// Handle input

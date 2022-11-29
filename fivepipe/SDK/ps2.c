@@ -96,12 +96,12 @@ volatile static uint32_t *m_writeOffset;
 void __attribute__ ((noinline)) PS2InitRingBuffer()
 {
     // Might be missing initialization based on platform, so we use code to initialize
-    m_ringBuffer  = (uint8_t *)0x00000100;
-    m_readOffset  = (uint32_t *)0x00000010;
-    m_writeOffset = (uint32_t *)0x00000020;
+    m_readOffset  = (uint32_t *)0x1FFFF000;
+    m_writeOffset = (uint32_t *)0x1FFFF004;
+    m_ringBuffer  = (uint8_t *)0x1FFFF008;
 
-    memset((void*)m_readOffset, 0, sizeof(uint32_t));
-    memset((void*)m_writeOffset, 0, sizeof(uint32_t));
+    *m_readOffset = 0x0;
+    *m_writeOffset = 0x0;
 }
 
 uint32_t __attribute__ ((noinline)) PS2RingBufferRead(void* pvDest, const uint32_t cbDest)
