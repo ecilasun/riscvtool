@@ -8,7 +8,7 @@ default: all
 
 src_dir = .
 corelib_dir = ../SDK
-#thirdparty_libs = ../../3rdparty
+thirdparty_libs = ../../3rdparty
 
 # Executable folders
 
@@ -17,23 +17,31 @@ folders = \
 
 # Rules
 
+#override CFLAGS += -Xlinker --defsym=__stack_size=0x800
+
 RISCV_PREFIX ?= riscv64-unknown-elf-
 RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 RISCVTOOL ?= ../../build/release/riscvtool
-RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 --param l1-cache-line-size=64 --param l1-cache-size=32 -Wall -Os -ffreestanding -march=rv32i -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug --specs=nano.specs -fPIC -nostartfiles
+# No filesystem in this ROM if -DDISABLE_FILESYSTEM is used
+FILESYSTEM ?= -DDISABLE_FILESYSTEM
+# The COE file will be using 16 byte (128bit) output width to match the ROM layout (x4 16byte reads from cache controller)
+ROMWORDSIZE ?= 4
+# 512 bit cache lines makes 64 bytes per line
+# 256 cache lines makes total cache size 16 Kbytes
+RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 --param l1-cache-line-size=64 --param l1-cache-size=16 -Wall -Os -static -ffreestanding -march=rv32i -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug -fPIC -nostartfiles
 
 incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
 objs  :=
 
 define compile_ROM
 $(1).elf: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
-	$$(RISCV_GCC) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) -DDISABLE_FILESYSTEM $(wildcard $(corelib_dir)/*.c) $(wildcard $(thirdparty_libs)/**/*.c) -Wl,-T$(1)/rom.lds
+	$$(RISCV_GCC) $$(FILESYSTEM) $$(incs) $$(RISCV_GCC_OPTS) -o $$@ $(wildcard $(src_dir)/$(1)/*.cpp) $(wildcard $(corelib_dir)/*.c) $(wildcard $(thirdparty_libs)/**/*.c) -Wl,-T$(1)/rom.lds
 
-$(1).coe: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
-	$$(RISCVTOOL) $(src_dir)/$(1).elf -makerom 4 0 >> $(src_dir)/$(1).coe
+$(1).coe: $(wildcard $(src_dir)/$(1).elf)
+	$$(RISCVTOOL) $(src_dir)/$(1).elf -makerom $$(ROMWORDSIZE) 0 >> $(src_dir)/$(1).coe
 
-$(1).txt: $(wildcard $(src_dir)/$(1)/*) $(wildcard $(src_dir)/*)
+$(1).txt: $(wildcard $(src_dir)/$(1).elf)
 	$$(RISCV_OBJDUMP) $(src_dir)/$(1).elf -x -D -S >>  $(src_dir)/$(1).txt
 endef
 

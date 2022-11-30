@@ -4,7 +4,7 @@
 
 // This unit has more than one HART
 // Defined this to allow for auto-setup of per-HART stacks
-//#define MULTIHART
+//#define MULTIHART_SUPPORT
 
 extern "C"
 {
@@ -12,30 +12,29 @@ extern "C"
    {
       asm volatile (
 
-         // This is the entry point of CORE#0 (0x10000020 if above code is enabled)
-         //".cfi_startproc;"
-         //".cfi_undefined ra;"
-         ".option push;"
-         ".option norelax;"
+         // Set up global pointer - NOTE: ROM does not use GP
+         //"la gp, __global_pointer$;"
+         //".option pop;"
 
-         // Set up global pointer
-         "la gp, __global_pointer$;"
-         ".option pop;"
+         "li sp, 0x00003FF0;"       // Stack is at near end of SDRAM (space at end for hardware devices)
 
-#if defined(MULTIHART)
-         "csrr	s1, mhartid;"        // get hart id
-         "slli	s1, s1, 12;"         // hartid*4096 (4K (2^12) default stack)
-         "li s2, 0x1FFF0000;"        // stack top of last HART in DDR3 memory (near end of 512MBytes minus 16 bytes), leave 64K at the end for OS tables
-         "sub s2, s2, s1;"           // base - hartid*4096
-         "mv sp, s2;"                // set new hart stack pointer
-         "mv s0, sp;"                // set frame pointer
+#if defined(MULTIHART_SUPPORT)
+         // Set up stack spaces automatically when supporting
+         // more than one hardware thread
+         // Note that this version leaves one stack space worth of gap at the end
+         "la s0, __stack_size$;"    // Grab per-hart stack size from linker script
+         "csrr	s1, mhartid;"        // Grab hart id
+         "mul s2, s1, s0;"          // stepback = hartid * __stack_size;
+         "sub sp, sp, s2;"          // stacktop = base - stepback;
+         "mv s0, sp;"               // Set frame pointer to current stack pointer
 
-         "bnez s1, workerhartstart;" // Shortcut directly to worker hart entry point (mhartid != 0)
+         "bnez s1, gotoworkermain;" // Shortcut directly to worker hart entry point (mhartid != 0)
 #else
-         "li sp, 0x00003FF0;"        // single hart, hardcoded stack at end of BRAM, 16 byte aligned
-         "mv s0, sp;"                // set frame pointer
+         // Single hardware thread simply needs to use the setup address
+         "mv s0, sp;"               // Set frame pointer to current stack pointer
 #endif
-         // Clear BSS
+
+         // Clear BSS - NOTE: can skip for hardware debug builds
          "la a0, __malloc_max_total_mem;"
          "la a2, __BSS_END__$;"
          "sub a2, a2, a0;"
@@ -65,33 +64,28 @@ extern "C"
          // Stop at breakpoint / no return / _exit is useless
          "ebreak;"
 
-#if defined(MULTIHART)
-         "workerhartstart:"
-
+#if defined(MULTIHART_SUPPORT)
+         // Set up and branch to worker hardware thread entry point
+         "gotoworkermain:"
          "lw a0,0(sp);"
          "addi	a1,sp,4;"
          "li a2,0;"
+         "j _Z10workermainv;"
 
-         "j _Z10workermainv;" // All HARTs with id!=0 fall here
-
-         // Stop at breakpoint / no return / _exit is useless
-         "ebreak;"
+         // Put worker hardware thread to sleep if its workermain() exits
+         "_workerfreeze: "
+         "wfi;"
+         "j _workerfreeze;"
 #endif
       );
    }
 
    void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
    {
-      /*asm (
-         // This will invoke an ECALL to halt the HART
-         "li a1,0;"
-         "li a2,0;"
-         "li a3,0;"
-         "li a4,0;"
-         "li a5,0;"
-         "li a7,93;"
-         "ecall;"
-         "j _exit;"
-      );*/
+      // Halt if we ever attempt to exit ROM
+      asm (
+         "_romfreeze: "
+         "j _romfreeze;"
+      );
    }
 };

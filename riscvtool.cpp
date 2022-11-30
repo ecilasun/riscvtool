@@ -252,7 +252,7 @@ void parseelfheader(unsigned char *_elfbinary, unsigned int _filebytesize, unsig
             // Fill rest with data from file
             if (groupsize == 4) // 32bit groups (4 bytes)
             {
-                for (unsigned int i=0; i<pheader->m_FileSz; ++i)
+                for (unsigned int i=0; i<pheader->m_FileSz/4; ++i)
                 {
                     workblock[(woffset&0xFFFFFFFC) + (woffset%4)] = litteendian[i];
                     woffset++;
