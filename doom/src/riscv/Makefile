@@ -8,7 +8,7 @@ SIZE = $(CROSS)size
 #CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
 
 # use this for FIVEPIPE
-CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O2 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 # add -DFIVEPIPE to make this run on fivepipe, for e32e leave as-is
 CFLAGS += \
