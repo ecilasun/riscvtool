@@ -40,8 +40,8 @@ I_InitGraphics(void)
 {
 	usegamma = 1;
 
-	framebuffer = GPUAllocateBuffer(320*240*3);
-	memset(framebuffer, 0x0, 320*240*3);
+	framebuffer = GPUAllocateBuffer(SCREENWIDTH*SCREENHEIGHT);
+	memset(framebuffer, 0x0, SCREENWIDTH*SCREENHEIGHT);
 
 	GPUSetVPage((uint32_t)framebuffer);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
@@ -83,7 +83,7 @@ I_FinishUpdate (void)
 {
 	// TODO: Replace with GPU async DMA instead
 	// (also won't need cache flush in that case as we don't go through caches)
-	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT*3);
+	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
 
 	// Complete framebuffer writes by invalidating & writing back D$
 	asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1

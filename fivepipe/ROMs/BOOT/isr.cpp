@@ -273,3 +273,11 @@ void InstallMainISR()
 	// Allow all machine interrupts to trigger
 	swap_csr(mstatus, MSTATUS_MIE);
 }
+
+void InitSystem()
+{
+	memset(keymap, 0, 256*sizeof(uint16_t));
+	memset(keymapprev, 0, 256*sizeof(uint16_t));
+
+	InstallMainISR();
+}

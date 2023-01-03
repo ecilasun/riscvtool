@@ -266,8 +266,7 @@ void workermain()
 // HART[0] entry point
 int main()
 {
-	// Ready to handle hardware & software interrupts
-	InstallMainISR();
+	InitSystem();
 
 	LEDSetState(0);
 	PS2InitRingBuffer();
