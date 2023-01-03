@@ -13,10 +13,25 @@ uint16_t keymapprev[256];
 void HandleMainTimer()
 {
 	// Splash screen
-	UARTWrite("┌─────────────────────────┐\n");
-	UARTWrite("│ NON-OS v0.0012          │\n");
-	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
-	UARTWrite("└─────────────────────────┘\n\n");
+	UARTWrite("┌───────────────────────────────────────────┐\n");
+	UARTWrite("│ non-OS v0.0014                            │\n");
+	UARTWrite("│ (c)2022 Engin Cilasun                     │\n");
+	UARTWrite("│                                           │\n");
+	UARTWrite("│ Devices:                                  │\n");
+	UARTWrite("│ DDR3: 0x00000000 - 0x1FFFFFFF (512Mbytes) │\n");
+	UARTWrite("│ BMEM: 0x20000000 - 0x2003FFFF (256Kbytes) │\n");
+	UARTWrite("│ UART: 0x80000000 - 0x8000000F : R/W       │\n");
+	UARTWrite("│ LEDS: 0x80000010 - 0x8000001F : R/W       │\n");
+	UARTWrite("│ XADC: 0x80000020 - 0x8000002F : R         │\n");
+	UARTWrite("│ GPUC: 0x80000030 - 0x8000003F : W         │\n");
+	UARTWrite("│ SPIC: 0x80000040 - 0x8000004F : R/W       │\n");
+	UARTWrite("│ PS2C: 0x80000050 - 0x8000005F : R/W       │\n");
+	UARTWrite("│                                           │\n");
+	UARTWrite("│ Buffers/other:                            │\n");
+	UARTWrite("│ PS2 ringbuffer: 0x2003FB00                │\n");
+	UARTWrite("│ Stack top:      0x1FFFF000                │\n");
+	UARTWrite("│ Heap:           0x04000000-0x1FFEFFFF     │\n");
+	UARTWrite("└───────────────────────────────────────────┘\n\n");
 
 	// This is currently a do-notthing timer handler ticking at 100ms
 	// It will eventually become a task scheduler
@@ -34,7 +49,9 @@ void HandleUART()
 	// Echo back all data in the FIFO
 	while (UARTHasData())
 	{
-		*IO_UARTTX = (uint32_t)UARTRead();
+		uint8_t accu = UARTRead();
+		// TODO: Stash as part of keyboard input
+		*IO_UARTTX = accu;
 	}
 }
 

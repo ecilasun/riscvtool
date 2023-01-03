@@ -58,10 +58,7 @@ int main()
 	if (mountattempt!=FR_OK)
 		printf(FRtoString[mountattempt]);
 	else
-	{
-		printf("Starting DOOM\n");
 		D_DoomMain();
-	}
 
 	return 0;
 }

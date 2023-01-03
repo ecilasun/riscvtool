@@ -87,7 +87,7 @@ I_GetRemoteEvent(void)
 
 	// Any pending keyboard events to handle?
 	// NOTE: OS feeds keyboard input to us from an ISR
-	uint32_t val;
+	uint32_t val = 0;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
 #if !defined(FIVEPIPE)
 	int R = RingBufferRead(keyboardringbuffer, (uint8_t*)&val, 4);

@@ -8,7 +8,7 @@ SIZE = $(CROSS)size
 #CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
 
 # use this for FIVEPIPE
-CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O2 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 # add -DFIVEPIPE to make this run on fivepipe, for e32e leave as-is
 CFLAGS += \
@@ -47,7 +47,7 @@ doom.elf: $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
 	$(SIZE) $@
 
 clean:
-	rm -f *.bin *.hex *.elf *.o *.gen.h doom.txt
+	rm -f *.elf *.o *.gen.h doom.txt
 
 %.txt: %.elf
 	$(OBJDUMP) -x -D -S $< >> $@
