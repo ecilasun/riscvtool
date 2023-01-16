@@ -69,13 +69,7 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
 uint8_t __attribute__ ((noinline)) SPITxRx(const uint8_t outbyte)
 {
    *IO_SPIRXTX = outbyte;
-   //*SPISINK = 0xFF;
-   //UARTWriteHexByte(outbyte);
-   //UARTWrite("->");
    uint8_t incoming = *IO_SPIRXTX;
-   //*SPISINK = 0xFF;
-   //UARTWriteHexByte(incoming);
-   //UARTWrite(":");
    return incoming;
 }
 

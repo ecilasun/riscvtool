@@ -131,9 +131,11 @@ extern "C" {
 
    int _chdir(const char *path)
    {
+#ifndef DISABLE_FILESYSTEM
       /*if (FR_OK == f_chdir(path))
          return 0;
       else*/
+#endif
       {
          errno = ENOSYS;
          return -1;
@@ -142,9 +144,11 @@ extern "C" {
 
    char *_getcwd(char *buf, size_t size)
    {
+#ifndef DISABLE_FILESYSTEM
       /*if (FR_OK == f_getcwd(buf, size))
          return buf;
       else*/
+#endif
       {
          errno = -ENOSYS;
          return NULL;
@@ -233,7 +237,7 @@ extern "C" {
    {
 #ifndef DISABLE_FILESYSTEM
       int currenthandle = s_numhandles;
-      if (FR_OK == f_open(&s_filehandles[currenthandle], name, FA_READ)) //mode))
+      if (FR_OK == f_open(&s_filehandles[currenthandle], name, FA_READ)) // TODO: use mode))
       {
          ++s_numhandles;
          return currenthandle;
@@ -306,8 +310,6 @@ extern "C" {
       return 0;
    }
 
-   #define E32AlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
-
    void *_sbrk(intptr_t incr)
    {
       uint8_t *old_heapstart = heap_start;
@@ -316,10 +318,8 @@ extern "C" {
          return NULL;
       }
 
-      intptr_t alignedincr = E32AlignUp(incr, 4); // Always 4-byte align
-
-      if ((heap_start += alignedincr) < heap_end) {
-         heap_start += alignedincr;
+      if ((heap_start += incr) < heap_end) {
+         heap_start += incr;
       } else {
          heap_start = heap_end;
       }

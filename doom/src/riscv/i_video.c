@@ -40,11 +40,12 @@ I_InitGraphics(void)
 {
 	usegamma = 1;
 
-	framebuffer = GPUAllocateBuffer(SCREENWIDTH*SCREENHEIGHT);
-	memset(framebuffer, 0x0, SCREENWIDTH*SCREENHEIGHT);
+	// Allocate 40 pixel more since out video output is 240 vs the default 200 pixels here
+	framebuffer = GPUAllocateBuffer(SCREENWIDTH*(SCREENHEIGHT+40));
+	memset(framebuffer, 0x0, SCREENWIDTH*(SCREENHEIGHT+40));
 
 	GPUSetVPage((uint32_t)framebuffer);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0 (320x240x8bitpalette), video output on
 
 #if !defined(FIVEPIPE)
 	prevvblankcount = GPUReadVBlankCounter();
