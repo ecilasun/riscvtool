@@ -13,7 +13,7 @@ int main()
     UARTWrite("\nHello, world!\n");
 
 	// Show on the connected display
-	GPUClearScreen(framebuffer, 0x00000000);
+	GPUClearScreen(framebuffer, VIDEOMODE_320PALETTED, 0x00000000);
 	GPUPrintString(framebuffer, FRAME_WIDTH_MODE0, 0, 0, "Hello, world", 0x7FFFFFFF);
 	// Complete framebuffer writes by invalidating & writing back D$
 	asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1

@@ -5,15 +5,14 @@ OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
 
 # use this for E32E
-#CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
+CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../e32e/SDK/ -I../../../3rdparty/
 
 # use this for FIVEPIPE
-CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
+#CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../fivepipe/SDK/ -I../../../3rdparty/
 
 # add -DFIVEPIPE to make this run on fivepipe, for e32e leave as-is
 CFLAGS += \
 	-DNORMALUNIX \
-	-DFIVEPIPE \
 	$(NULL)
 
 
@@ -27,7 +26,7 @@ SOURCES_doom := $(filter-out s_sound.c,$(SOURCES_doom))
 
 # Use fivepipe/SDK for FIVEPIPE, ../../../e32e/SDK/*.c  for E32E
 SOURCES_doom_arch := \
-	../../../fivepipe/SDK/*.c \
+	../../../e32e/SDK/*.c \
 	../../../3rdparty/fat32/*.c \
 	d_main.c \
 	i_main.c \
