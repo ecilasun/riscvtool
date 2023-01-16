@@ -7,30 +7,30 @@ void PS2ScanKeyboard(uint16_t *_keymap)
 {
     uint32_t ext = 0;
     uint32_t brk = 0;
-    uint32_t code = 0x00;
+    uint32_t code = 0;
 
-    // Read first code
+    // Read first code (make, break, or extended)
     if (*PS2KEYBOARDDATAAVAIL)
         code = (*PS2KEYBOARDDATA)&0xFF;
 
     if (code == 0xE0) // Extended code
     {
-        ext = 2;
+        ext = PS2KEYMASK_EXTCODE;
         // Wait for next in sequence
         while (*PS2KEYBOARDDATAAVAIL == 00) { }
         code = (*PS2KEYBOARDDATA)&0xFF;
     }
 
-    if (code == 0xF0) // Break code
+    if (code == 0xF0) // Break code (otherwise make code, single byte)
     {
-        brk = 1;
+        brk = PS2KEYMASK_BREAKCODE;
         // Wait for next in sequence
         while (*PS2KEYBOARDDATAAVAIL == 00) { }
         code = (*PS2KEYBOARDDATA)&0xFF;
     }
 
-    // Merge state and key code
-    _keymap[code] = (ext<<9) | (brk<<8) | (code);
+    // Merge state and form key code with embedded event bits
+    _keymap[code] = ext | brk | code;
 }
 
 char scantoasciitable_lowercase[] = {

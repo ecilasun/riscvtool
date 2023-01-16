@@ -80,7 +80,7 @@ static void
 I_GetRemoteEvent(void)
 {
 #if !defined(FIVEPIPE)
-	uint8_t *keyboardringbuffer = (uint8_t*)0x80000200; // 512 bytes into mailbox memory
+	uint8_t *keyboardringbuffer = (uint8_t*)RINGBUFFER_ADDRESS; // 512 bytes into mailbox memory
 #endif
 
 	event_t event;
@@ -90,7 +90,7 @@ I_GetRemoteEvent(void)
 	uint32_t val = 0;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
 #if !defined(FIVEPIPE)
-	int R = RingBufferRead(keyboardringbuffer, (uint8_t*)&val, 4);
+	uint32_t R = RingBufferRead(keyboardringbuffer, (void*)&val, 4);
 #else
 	int R = PS2RingBufferRead(&val, 4);
 #endif
@@ -99,7 +99,8 @@ I_GetRemoteEvent(void)
 	{
 		uint32_t key = val&0xFF;
 
-		event.type = val&0x100 ? ev_keyup : ev_keydown;
+		// Check break/make bit
+		event.type = (val & PS2KEYMASK_BREAKCODE) ? ev_keyup : ev_keydown;
 		switch(key)
 		{
 			case 0x74: event.data1 = KEY_RIGHTARROW; break;
