@@ -65,7 +65,7 @@ int main( int argc, char **argv )
             GPUPrintString(writepage, 0, 16, "green: TEMP, black: AUX0");
 
             x = 0;
-            asm volatile( ".word 0xFC000073;");
+            CFLUSH_D_L1;
 
             ++cycle;
         }

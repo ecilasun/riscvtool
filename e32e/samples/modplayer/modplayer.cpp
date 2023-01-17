@@ -154,7 +154,7 @@ void DrawWaveform()
 		writepage[x + (R+110)*320] = 0x04; // Red
 	}
 
-    asm volatile( ".word 0xFC000073;");
+    CFLUSH_D_L1;
 
 	++cycle;
 }
@@ -216,7 +216,7 @@ static long play_module( signed char *module )
 
 #if defined(MULTICORE)
 			const int hartID = 1;
-			asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1 (writeback D$)
+			CFLUSH_D_L1;
 			HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0xFFFFFFFF;
 #else
 			DrawWaveform();

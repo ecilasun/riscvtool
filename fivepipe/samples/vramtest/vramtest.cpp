@@ -49,7 +49,7 @@ int main()
     	GPUPrintString(writepage, 8, 8, "vram test");
 
 		// Flush data cache at last pixel so we can see a coherent image
-		asm volatile( ".word 0xFC000073;");
+		CFLUSH_D_L1;
 
 		// Flip to next page
 		++cycle;

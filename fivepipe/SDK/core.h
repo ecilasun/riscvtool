@@ -25,3 +25,10 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
 void E32Sleep(uint64_t ms);
 
 #define E32AlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
+
+// Flush data cache to memory
+#define CFLUSH_D_L1 asm volatile( ".word 0xFC000073;" )
+// Discard data cache contents
+#define CDISCARD_D_L1 asm volatile( ".word 0xFC200073;" )
+// Invalidate instruction cache
+#define FENCE_I asm volatile( "fence.i" )

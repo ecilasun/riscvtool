@@ -61,7 +61,7 @@ int main()
         imgui_sw::paint_imgui((uint32_t*)writepage,640,480);
 
 		// Flush data cache at last pixel so we can see a coherent image
-		asm volatile( ".word 0xFC000073;");
+		CFLUSH_D_L1;
 
 		// Flip to next page
 		++cycle;

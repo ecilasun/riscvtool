@@ -313,7 +313,7 @@ void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 			graphics_set_pixel(i,j,C.x,C.y,C.z);
 		}
     // Flush data cache after each row so we can see a coherent image
-    asm volatile( ".word 0xFC000073;");
+    CFLUSH_D_L1;
 	}
 }
 

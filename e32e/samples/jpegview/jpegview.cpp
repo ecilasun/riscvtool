@@ -136,13 +136,13 @@ int main()
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
 
     GPUPrintString(image, FRAME_WIDTH_MODE0, 0, 16, "loading...", 0x7FFFFFFF);
-    asm volatile( ".word 0xFC000073;");
+    CFLUSH_D_L1;
 
 	DecodeJPEG("sd:test.jpg");
-    asm volatile( ".word 0xFC000073;");
+    CFLUSH_D_L1;
 
 	DecodeJPEG("sd:fearless.jpg");
-    asm volatile( ".word 0xFC000073;");
+    CFLUSH_D_L1;
 
 	return 0;
 }

@@ -377,7 +377,7 @@ int main()
   UARTWrite(" ms at 640x480 resolution\n");
 
   // Flush out leftover bytes that didn't end up in framebuffer memory
-  asm volatile( ".word 0xFC000073;");
+  CFLUSH_D_L1;
 
   return 0;
 }

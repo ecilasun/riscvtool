@@ -345,7 +345,7 @@ void HandleHARTIRQ(uint32_t hartid)
 		{
 			// Let the main thread know that we're supposed to start an executable at the given address
 			//uint32_t progaddress = HARTMAILBOX[hartid*HARTPARAMCOUNT+0+NUM_HARTS];
-			//asm volatile( ".word 0xFC200073;" ); // CDISCARD.D.L1
+			//CDISCARD_D_L1;
 			//OSScratchMem[hartid*NUMHARTWORDS+2] = progaddress;
 			//OSScratchMem[hartid*NUMHARTWORDS+3] = 0x1;
 		}

@@ -96,7 +96,7 @@ int main()
       mandelbrotFloat(X,Y,R);
 
       // Flush data cache after each row so we can see a coherent image
-      asm volatile( ".word 0xFC000073;");
+      CFLUSH_D_L1;
 
       if (row == 239)
          R += 0.001f; // Zoom

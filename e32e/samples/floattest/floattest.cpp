@@ -443,7 +443,7 @@ int main()
         offset = fmodf(offset, 3.14159265358979323846f);
 
 		// Advance and show frame
-        asm volatile( ".word 0xFC000073;");
+        CFLUSH_D_L1;
 
     	++frame;
 	}

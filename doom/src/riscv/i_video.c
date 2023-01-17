@@ -87,7 +87,7 @@ I_FinishUpdate (void)
 	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
 
 	// Complete framebuffer writes by invalidating & writing back D$
-	asm volatile( ".word 0xFC000073;" ); // CFLUSH.D.L1
+	CFLUSH_D_L1;
 }
 
 

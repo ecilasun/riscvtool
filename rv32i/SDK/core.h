@@ -36,3 +36,10 @@ void InstallTimerISR(const uint32_t hartID, t_timerISR tisr, const uint32_t inte
 // To access a parameter N, use: NUM_HARTS+hartid*HARTPARAMCOUNT+N where N<HARTPARAMCOUNT
 #define HARTPARAMCOUNT 4
 #define NUMHARTWORDS 512
+
+// Flush data cache to memory
+#define CFLUSH_D_L1 asm volatile( ".word 0xFC000073;" )
+// Discard data cache contents
+#define CDISCARD_D_L1 asm volatile( ".word 0xFC200073;" )
+// Invalidate instruction cache
+#define FENCE_I asm volatile( "fence.i" )
