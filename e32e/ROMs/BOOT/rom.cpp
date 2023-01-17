@@ -145,8 +145,7 @@ void HandleTimer()
 void HandleKeyboard()
 {
 	// Consume all key state changes from FIFO and update the key map
-	while (*PS2KEYBOARDDATAAVAIL)
-		PS2ScanKeyboard(keymap);
+	PS2ScanKeyboard(keymap);
 
 	// If there's a difference between the previous keymap and current one, generate events for each change
 	for (uint32_t i=0; i<256; ++i)
