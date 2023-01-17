@@ -5,7 +5,7 @@
 
 int main()
 {
-	UARTWrite("Experimental boot ROM\nCurrent test: raw keyboard input\n");
+	UARTWrite("Experimental boot image\nCurrent test: raw keyboard input\n");
 
 	while(1)
 	{
