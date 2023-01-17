@@ -57,7 +57,7 @@ int mandelbrotFloat(float ox, float oy, float sx)
       }
    }
 
-   row = (row+1)%480;
+   row = (row+1)%240;
 
    return 1;
 
@@ -70,15 +70,15 @@ int mandelbrotFloat(float ox, float oy, float sx)
 int main()
 {
    // Grayscale palette
-   for (uint32_t i=0;i<256;++i)
+   for (uint32_t i=0; i<256; ++i)
    {
-      int j=255-i;
+      int j = 255-i;
       GPUSetPal(i, MAKECOLORRGB24(j, j, j));
    }
 
     // Set up frame buffer
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
-   framebuffer = GPUAllocateBuffer(640*480);
+   framebuffer = GPUAllocateBuffer(320*240);
    GPUSetVPage((uint32_t)framebuffer);
    GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_320PALETTED, VIDEOOUT_ENABLED)); // Mode 1, video on
 
@@ -94,7 +94,7 @@ int main()
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
       mandelbrotFloat(X,Y,R);
 
-      if (row == 479)
+      if (row == 239)
       {
          // Flush leftover writes
          CFLUSH_D_L1;
