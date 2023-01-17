@@ -17,7 +17,7 @@
 #include "ps2.h"
 #include "ringbuffer.h"
 
-#define ROMREVISION "v0.175"
+#define ROMREVISION "v0.180"
 
 const char *FRtoString[]={
 	"Succeeded\n",
@@ -118,17 +118,6 @@ void HandleTimer()
 
 	// Show boot message
 	UARTWrite("┌─────────────────────────┐\n");
-	UARTWrite("│          ▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
-	UARTWrite("│ ████████   ▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
-	UARTWrite("│ █████████  ▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
-	UARTWrite("│ ████████   ▒▒▒▒▒▒▒▒▒▒▒  │\n");
-	UARTWrite("│ █        ▒▒▒▒▒▒▒▒▒▒▒    │\n");
-	UARTWrite("│ ██   ▒▒▒▒▒▒▒▒▒▒▒▒▒   ██ │\n");
-	UARTWrite("│ ████   ▒▒▒▒▒▒▒▒▒   ████ │\n");
-	UARTWrite("│ ██████   ▒▒▒▒▒   ██████ │\n");
-	UARTWrite("│ ████████   ▒   ████████ │\n");
-	UARTWrite("│ ██████████   ██████████ │\n");
-	UARTWrite("│                         │\n");
 	UARTWrite("│ E32OS " ROMREVISION "            │\n");
 	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
 	UARTWrite("│                         │\n");
@@ -524,15 +513,12 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 	FRESULT fr = f_open(&fp, filename, FA_READ);
 	if (fr == FR_OK)
 	{
-		UARTWrite("Loading...\n");
 		SElfFileHeader32 fheader;
 		UINT readsize;
 		f_read(&fp, &fheader, sizeof(fheader), &readsize);
 		uint32_t branchaddress;
 		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
 		f_close(&fp);
-
-		UARTWrite("Starting...\n");
 
 		// Unmount filesystem and reset to root directory before passing control
 		UnmountDrive();
@@ -546,7 +532,7 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 			: "=m" (branchaddress) : : 
 		);
 
-		// Re-mount filesystem before re-gaining control
+		// Re-mount filesystem before re-gaining control, if execution falls back here
 		MountDrive();
 	}
 	else
@@ -720,6 +706,14 @@ void workermain()
 
 int main()
 {
+	// Before anything else happens, see if we have a "boot.elf" that we can transfer control to.
+	{
+		MountDrive();
+		RunExecutable(0, "sd:boot.elf", false);
+	}
+
+	// No boot image found, fall back into a dummy OS
+
 	// Diagnosis stage 0
 	LEDSetState(0xFF);
 
