@@ -63,6 +63,7 @@ int main()
     UARTWrite("SD Card test\n\n");
 
 	// Init file system
+	UARTWrite("Attempting to mount sd:\n");
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 		UARTWrite(FRtoString[mountattempt]);
@@ -72,6 +73,8 @@ int main()
 		// List ELF files on the mounted volume
 		ListELF("sd:");
 	}
+
+	UARTWrite("Test complete\n");
 
     return 0;
 }

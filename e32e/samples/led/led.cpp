@@ -2,14 +2,13 @@
 #include "core.h"
 
 #include "leds.h"
-#include "uart.h"
-#include "gpu.h"
 
 int main()
 {
 	uint32_t state = 0;
 	do{
 		LEDSetState(state++);
+		E32Sleep(100);
 	} while (1);
 
 	return 0;

@@ -348,8 +348,8 @@ int main()
 {
   UARTWrite("tinyraytracer\n");
 
+  // Set up a low bit depth RGB palette
   UARTWrite("setting up palette\n");
-  // Set RGB palette
   int target = 0;
   for (int b=0;b<4;++b)
     for (int g=0;g<8;++g)
@@ -359,25 +359,27 @@ int main()
   UARTWrite("initializing scene\n");
   init_scene();
 
-  UARTWrite("starting scene generation\n");
-
+  // This one won't double buffer; we're writing to the same page the video scanout is reading from
+  // It will have a tiny impact if reads clash with writes but it's a great test of the bus arbiter.
+  UARTWrite("allocating frame buffer (640x480 8bpp)\n");
   framebuffer = GPUAllocateBuffer(640*480);
   GPUSetVPage((uint32_t)framebuffer);
 	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
   GPUSetVPage((uint32_t)framebuffer);
   GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_640PALETTED, VIDEOOUT_ENABLED)); // Mode 1, video on
-  uint64_t startclock = E32ReadTime();
 
+  UARTWrite("starting scene generation\n");
+  uint64_t startclock = E32ReadTime();
   render(spheres, nb_spheres, lights, nb_lights);
+
+ // Flush out leftover bytes that didn't end up in framebuffer memory
+  CFLUSH_D_L1;
 
   uint64_t endclock = E32ReadTime();
   uint32_t deltams = ClockToMs(endclock-startclock);
-  UARTWrite("tinyraytracer took ");
+  UARTWrite("elapsed render time: ");
   UARTWriteDecimal((unsigned int)deltams);
-  UARTWrite(" ms at 640x480 resolution\n");
+  UARTWrite(" ms\n");
 
-  // Flush out leftover bytes that didn't end up in framebuffer memory
-  CFLUSH_D_L1;
-
-  return 0;
+   return 0;
 }
