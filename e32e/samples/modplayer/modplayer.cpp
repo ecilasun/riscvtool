@@ -159,6 +159,23 @@ void DrawWaveform()
 	++cycle;
 }
 
+#if defined(MULTICORE)
+void vumeterTISR(const uint32_t hartID)
+{
+	if (HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] != 0x0)
+	{
+		HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0x0;
+
+		LEDSetState(0x1); // Busy
+		DrawWaveform();
+		LEDSetState(0x0); // Not busy
+	}
+
+	// Keep alive (zero to terminate)
+	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = 1;
+}
+#endif
+
 static long play_module( signed char *module )
 {
 	long result;
@@ -170,6 +187,12 @@ static long play_module( signed char *module )
 		samples_remaining = micromod_calculate_song_duration();
 		printf( "Song Duration: %li seconds.\n", samples_remaining / ( SAMPLING_FREQ * OVERSAMPLE ) );
 		fflush( NULL );
+
+#if defined(MULTICORE)
+		printf("Installing vumeter ISR\n");
+		InstallTimerISR(1, vumeterTISR, TEN_MILLISECONDS_IN_TICKS);
+		while(HARTMAILBOX[1] != 0x0) asm volatile("nop;");
+#endif
 
 		int playing = 1;
 		while( playing )
@@ -251,23 +274,6 @@ void PlayMODFile(const char *fname)
 	}
 }
 
-#if defined(MULTICORE)
-void vumeterTISR(const uint32_t hartID)
-{
-	if (HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] != 0x0)
-	{
-		HARTMAILBOX[NUM_HARTS+hartID*HARTPARAMCOUNT+0] = 0x0;
-
-		LEDSetState(0x1); // Busy
-		DrawWaveform();
-		LEDSetState(0x0); // Not busy
-	}
-
-	// Keep alive (zero to terminate)
-	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = 1;
-}
-#endif
-
 int main()
 {
 	framebufferA = GPUAllocateBuffer(320*240*3);
@@ -278,13 +284,6 @@ int main()
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 		return -1;
-
-	printf("Installing ISR\n");
-
-#if defined(MULTICORE)
-	InstallTimerISR(1, vumeterTISR, TEN_MILLISECONDS_IN_TICKS);
-	while(HARTMAILBOX[1] != 0x0) asm volatile("nop;");
-#endif
 
 	printf("Loading module\n");
 
