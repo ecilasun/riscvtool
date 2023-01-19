@@ -26,10 +26,15 @@ int main()
 		bufferA[i] = i;
 
 	// Kick a DMA copy to move buffer A contents onto buffer B
-	UARTWrite("Initiating copy\n");
 	const uint32_t blockCountInMultiplesOf16bytes = (W*H)/16;
-	DMACopyBlocks((uint32_t)bufferB, (uint32_t)bufferA, blockCountInMultiplesOf16bytes);
+	UARTWrite("Initiating copy of ");
+	UARTWriteDecimal(blockCountInMultiplesOf16bytes);
+	UARTWrite(" blocks\n");
+	DMACopyBlocks((uint32_t)bufferA, (uint32_t)bufferB, blockCountInMultiplesOf16bytes);
 
-	UARTWrite("Copy is now done or is in flight\n");
+	while (DMAPending())
+		UARTWrite(".");
+
+	UARTWrite("\nCopy is now done\n");
 	return 0;
 }

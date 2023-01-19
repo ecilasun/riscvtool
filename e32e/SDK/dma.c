@@ -16,3 +16,8 @@ void DMACopyBlocks(const uint32_t _sourceAddress16ByteAligned, const uint32_t _t
     *DMAIO = _blockCountInMultiplesOf16bytes;
     *DMAIO = DMACMD_ENQUEUE;
 }
+
+uint32_t DMAPending()
+{
+    return *DMAIO;
+}

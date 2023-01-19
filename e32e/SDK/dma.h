@@ -6,3 +6,4 @@
 #define DMACMD_ENQUEUE      0x00000003
 
 void DMACopyBlocks(const uint32_t _sourceAddress16ByteAligned, const uint32_t _targetAddress16ByteAligned, const uint32_t _blockCountInMultiplesOf16bytes);
+uint32_t DMAPending();
