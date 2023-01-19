@@ -87,11 +87,17 @@ I_FinishUpdate (void)
 	// Complete framebuffer writes by invalidating & writing back D$
 	CFLUSH_D_L1;
 #else
+
+	// CPU handles the copy operation
+	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
+	// Complete framebuffer writes by invalidating & writing back D$
+	CFLUSH_D_L1;
+
 	// GPU handles the DMA operation in 128bit bursts
 	// No need for D$ invalidate as writes go directly to memory
 	// without polluting the data cache
-	uint32_t lengthInWords = SCREENWIDTH*SCREENHEIGHT / 4;
-	GPUStartDMA((uint32_t)framebuffer, (uint32_t)screens[0], lengthInWords);
+	//uint32_t lengthInWords = SCREENWIDTH*SCREENHEIGHT / 4;
+	//GPUStartDMA((uint32_t)framebuffer, (uint32_t)screens[0], lengthInWords);
 	// TODO: Might want a GPUWaitDMA() and a way to tag DMA transfers
 #endif
 }
