@@ -45,7 +45,7 @@ I_InitGraphics(void)
 	memset(framebuffer, 0x0, SCREENWIDTH*(SCREENHEIGHT+40));
 
 	GPUSetVPage((uint32_t)framebuffer);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0 (320x240x8bitpalette), video output on
+	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_320PALETTED, VIDEOOUT_ENABLED)); // Mode 0 (320x240x8bitpalette), video output on
 
 #if !defined(FIVEPIPE)
 	prevvblankcount = GPUReadVBlankCounter();
@@ -55,8 +55,7 @@ I_InitGraphics(void)
 void
 I_ShutdownGraphics(void)
 {
-	// TODO: Wait for GPU idle perhaps?
-	GPUSetVMode(MAKEVMODEINFO(0, 0)); // Video off
+	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_320PALETTED, VIDEOOUT_DISABLED)); // Video scanout off
 }
 
 void
@@ -82,12 +81,19 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// TODO: Replace with GPU async DMA instead
-	// (also won't need cache flush in that case as we don't go through caches)
+#if defined(FIVEPIPE)
+	// CPU handles the copy operation
 	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
-
 	// Complete framebuffer writes by invalidating & writing back D$
 	CFLUSH_D_L1;
+#else
+	// GPU handles the DMA operation in 128bit bursts
+	// No need for D$ invalidate as writes go directly to memory
+	// without polluting the data cache
+	uint32_t lengthInWords = SCREENWIDTH*SCREENHEIGHT / 4;
+	GPUStartDMA((uint32_t)framebuffer, (uint32_t)screens[0], lengthInWords);
+	// TODO: Might want a GPUWaitDMA() and a way to tag DMA transfers
+#endif
 }
 
 

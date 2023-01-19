@@ -8,6 +8,7 @@
 #define GPUCMD_SETVPAGE    0x00000000
 #define GPUCMD_SETPAL      0x00000001
 #define GPUCMD_SETVMODE    0x00000002
+#define GPUCMD_STARTDMA    0x00000003
 
 #define VIDEOMODE_320PALETTED 0x0
 #define VIDEOMODE_640PALETTED 0x1
@@ -20,10 +21,16 @@
 // Mode is 2 bits, scanenable is 1 bit
 #define MAKEVMODEINFO(_mode, _scanEnable) ((_mode&0x3)<<1) | (_scanEnable&0x1)
 
+// Utilities
 uint8_t *GPUAllocateBuffer(const uint32_t _size);
+
+// GPU side
 void GPUSetVMode(const uint32_t _vmodeInfo);
 void GPUSetVPage(const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24);
+void GPUStartDMA(const uint32_t _sourceAddress64ByteAligned, const uint32_t _targetAddress64ByteAligned, const uint32_t _sizeInWords);
+uint32_t GPUReadVBlankCounter();
+
+// Software emulated
 void GPUPrintString(uint8_t *_vramBase, const uint32_t _stride, const int _col, const int _row, const char *_message, int _length);
 void GPUClearScreen(uint8_t *_vramBase, const uint8_t _mode, const uint32_t _colorWord);
-uint32_t GPUReadVBlankCounter();

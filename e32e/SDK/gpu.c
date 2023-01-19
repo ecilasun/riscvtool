@@ -60,6 +60,14 @@ void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _rgba24)
     *GPUIO = (_paletteIndex<<24) | (_rgba24&0x00FFFFFFFF);
 }
 
+void GPUStartDMA(const uint32_t _sourceAddress64ByteAligned, const uint32_t _targetAddress64ByteAligned, const uint32_t _sizeInWords)
+{
+    *GPUIO = GPUCMD_STARTDMA;
+    *GPUIO = _sourceAddress64ByteAligned;
+    *GPUIO = _targetAddress64ByteAligned;
+    *GPUIO = _sizeInWords;
+}
+
 void GPUPrintString(uint8_t *_vramBase, const uint32_t _stride, const int _col, const int _row, const char *_message, int _length)
 {
    int i=0;
