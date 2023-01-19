@@ -32,6 +32,7 @@
 
 uint8_t *framebuffer;
 #if !defined(FIVEPIPE)
+#include "dma.h"
 uint32_t prevvblankcount;
 #endif
 
@@ -88,17 +89,14 @@ I_FinishUpdate (void)
 	CFLUSH_D_L1;
 #else
 
-	// CPU handles the copy operation
-	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
-	// Complete framebuffer writes by invalidating & writing back D$
+	// Make sure writes to screen[0] made it to RAM before we kick the DMA
 	CFLUSH_D_L1;
 
 	// GPU handles the DMA operation in 128bit bursts
-	// No need for D$ invalidate as writes go directly to memory
-	// without polluting the data cache
-	//uint32_t lengthInWords = SCREENWIDTH*SCREENHEIGHT / 4;
-	//GPUStartDMA((uint32_t)framebuffer, (uint32_t)screens[0], lengthInWords);
-	// TODO: Might want a GPUWaitDMA() and a way to tag DMA transfers
+	// Writes go directly to memory without polluting the data cache
+	// but RAM contents have to be recent
+	uint32_t blockCount = SCREENWIDTH*SCREENHEIGHT / 16;
+	DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);
 #endif
 }
 
@@ -106,8 +104,13 @@ I_FinishUpdate (void)
 void
 I_WaitVBL(int count)
 {
-	// Wait until we exit current frame's vbcounter and enter the next one
 #if !defined(FIVEPIPE)
+
+	// NOTE: Might also want a DMAPending() check here, though it is not really necessary
+	// since DMA won't pull next job before current one completes.
+	//while (DMAPending()) { asm volatile("nop;"); }
+
+	// Wait until we exit current frame's vbcounter and enter the next one
 	while (prevvblankcount == GPUReadVBlankCounter()) { asm volatile ("nop;"); }
 	prevvblankcount = GPUReadVBlankCounter();
 #endif
