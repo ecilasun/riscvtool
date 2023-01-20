@@ -39,8 +39,12 @@ int main()
 
 	int32_t offset = 0;
 	int32_t dir = 1;
+	int32_t averagetime = 0;
+	int32_t outstats = 0;
 	while (1)
 	{
+		uint64_t starttime = E32ReadTime();
+
 		// Copy at different lines to make the output appear to scroll
 		DMACopyBlocks((uint32_t)(bufferA+offset*W), (uint32_t)bufferB, blockCountInMultiplesOf16bytes);
 
@@ -50,6 +54,17 @@ int main()
 
 		// This is not necessary, but used here as a way to avoid flicker
 		while (DMAPending()) { asm volatile("nop;"); }
+
+		uint64_t endtime = E32ReadTime();
+
+		if (outstats % 512 == 0)
+		{
+			averagetime = (averagetime + (uint32_t)(endtime-starttime))/2;
+			UARTWrite("DMA average over 512 frames: ");
+			UARTWriteDecimal(averagetime);
+			UARTWrite("\n");
+		}
+		++outstats;
 	}
 	return 0;
 }
