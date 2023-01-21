@@ -92,10 +92,13 @@ I_FinishUpdate (void)
 	// Make sure writes to screen[0] made it to RAM before we kick the DMA
 	CFLUSH_D_L1;
 
-	// GPU handles the DMA operation in 128bit bursts
+	// Wait for prior DMA to avoid lock-up
+	while (DMAPending()) { asm volatile("nop;"); }
+
+	// DMA controller handles the DMA operation in 128bit (16 byte) blocks.
 	// Writes go directly to memory without polluting the data cache
-	// but RAM contents have to be recent
-	uint32_t blockCount = SCREENWIDTH*SCREENHEIGHT / 16;
+	// but RAM contents have to be recent, hence the flush above.
+	uint32_t blockCount = SCREENWIDTH * SCREENHEIGHT / DMA_BLOCK_SIZE;
 	DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);
 #endif
 }
@@ -105,11 +108,6 @@ void
 I_WaitVBL(int count)
 {
 #if !defined(FIVEPIPE)
-
-	// NOTE: Might also want a DMAPending() check here, though it is not really necessary
-	// since DMA won't pull next job before current one completes.
-	//while (DMAPending()) { asm volatile("nop;"); }
-
 	// Wait until we exit current frame's vbcounter and enter the next one
 	while (prevvblankcount == GPUReadVBlankCounter()) { asm volatile ("nop;"); }
 	prevvblankcount = GPUReadVBlankCounter();

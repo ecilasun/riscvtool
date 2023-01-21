@@ -62,16 +62,16 @@ I_ZoneBase(int *size)
 
 // returns time in 1/TICRATEth second tics
 int
-I_GetTime(void)
+I_GetTime (void)
 {
     int                 newtics;
     static int          basetime=0;
 
+	uint64_t currtime = E32ReadTime();
 	if (!basetime)
-		basetime = ClockToSec(E32ReadTime());
+		basetime = ClockToSec(currtime);
 
-	uint64_t longtime = E32ReadTime();
-	newtics = (ClockToSec(longtime)-basetime)*TICRATE + ClockToUs(longtime)*TICRATE/1000000;
+	newtics = (ClockToSec(currtime) - basetime)*TICRATE + ClockToUs(currtime)*TICRATE/1000000;
 	return newtics;
 }
 
