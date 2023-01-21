@@ -124,6 +124,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 task.c
 00000000 l    df *ABS*	00000000 console.c
 00000000 l    df *ABS*	00000000 gpu.c
+00000000 l    df *ABS*	00000000 dma.c
 00000000 l    df *ABS*	00000000 debugger.c
 00000000 l    df *ABS*	00000000 spi.c
 00000000 l    df *ABS*	00000000 impure.c
@@ -151,14 +152,14 @@ SYMBOL TABLE:
 200095dc g     O .bss	00000200 keymapprev
 2000037c g     F .text	00000048 _Z12UnmountDrivev
 20006660 g     F .text	00000098 __strtok_r
-20008b04 g     O .data	00000100 scantoasciitable_uppercase
+20008b00 g     O .data	00000100 scantoasciitable_uppercase
 200014e0 g     F .text	00000014 _Z17E32SetTimeComparey
 200095d4 g     O .sbss	00000004 errno
 20007acc g       .rodata	00000000 _etext
 20009dc0 g       .sdata	00000000 _gp
 20008ae4 g     O .data	00000004 IO_UARTRX
 20005040 g     F .text	000000f0 ff_wtoupper
-20008d04 g     O .data	00000004 PS2KEYBOARDDATAAVAIL
+20008d00 g     O .data	00000004 PS2KEYBOARDDATAAVAIL
 20001254 g     F .text	00000014 _Z11UARTPutCharc
 20000088 g       .boot	00000000 _boot
 20005b28 g     F .text	000001a4 memcpy
@@ -177,16 +178,16 @@ SYMBOL TABLE:
 200095cc g     O .sbss	00000004 __malloc_max_sbrked_mem
 200095c4 g     O .sdata	00000004 _global_impure_ptr
 2000526c g     F .text	0000009c __libc_init_array
-20008afc g     O .data	00000004 m_writeOffset
+20008af8 g     O .data	00000004 m_writeOffset
 20001564 g     F .text	0000003c _sbrk
 20001218 g     F .text	00000018 _Z11UARTHasDatav
-20008c04 g     O .data	00000100 scantoasciitable_lowercase
+20008c00 g     O .data	00000100 scantoasciitable_lowercase
 20006c60 g     F .text	00000038 strnlen
 20009ea4 g       .bss	00000000 _bss_end
 20004fa4 g     F .text	00000064 ff_uni2oem
 20005210 g     F .text	0000005c __libc_fini_array
 200019b4 g     F .text	0000007c _Z11SDResponse1v
-20008af8 g     O .data	00000004 IO_SPIRXTX
+20008d08 g     O .data	00000004 IO_SPIRXTX
 20005d30 g     F .text	00000088 strcat
 20000dac g     F .text	000000b8 _Z13RunExecutableiPKcb
 200068cc g     F .text	00000308 _free_r
@@ -205,7 +206,7 @@ SYMBOL TABLE:
 200014cc g     F .text	00000014 _Z13E32ReadCyclesv
 200014f4 g     F .text	00000070 _Z8E32Sleepy
 2000664c g     F .text	00000014 strtok
-20008d08 g     O .data	00000004 PS2KEYBOARDDATA
+20008d04 g     O .data	00000004 PS2KEYBOARDDATA
 20005ab0 g     F .text	00000078 memcmp
 20009140 g     O .data	00000408 __malloc_av_
 20005ccc g     F .text	00000004 __malloc_lock
@@ -240,7 +241,7 @@ SYMBOL TABLE:
 20009ea4 g       .bss	00000000 __BSS_END__$
 20009548 g       .data	00000000 _edata
 20009ea8 g       .bss	00000000 _end
-20008b00 g     O .data	00000004 m_readOffset
+20008afc g     O .data	00000004 m_readOffset
 200095c0 g     O .sdata	00000004 __malloc_trim_threshold
 20003a6c g     F .text	00000748 f_open
 200051ac g     F .text	00000040 disk_write
@@ -7698,7 +7699,7 @@ Disassembly of section .rodata:
 20006ef6:	4f32                	.2byte	0x4f32
 20006ef8:	30762053          	.4byte	0x30762053
 20006efc:	312e                	.2byte	0x312e
-20006efe:	3038                	.2byte	0x3038
+20006efe:	3138                	.2byte	0x3138
 20006f00:	2020                	.2byte	0x2020
 20006f02:	2020                	.2byte	0x2020
 20006f04:	2020                	.2byte	0x2020
@@ -10780,72 +10781,70 @@ Disassembly of section .data:
 20008af4:	1030                	.2byte	0x1030
 20008af6:	8000                	.2byte	0x8000
 
-20008af8 <IO_SPIRXTX>:
-20008af8:	1010                	.2byte	0x1010
+20008af8 <m_writeOffset>:
+20008af8:	0604                	.2byte	0x604
 20008afa:	8000                	.2byte	0x8000
 
-20008afc <m_writeOffset>:
-20008afc:	0604                	.2byte	0x604
+20008afc <m_readOffset>:
+20008afc:	0600                	.2byte	0x600
 20008afe:	8000                	.2byte	0x8000
 
-20008b00 <m_readOffset>:
-20008b00:	0600                	.2byte	0x600
-20008b02:	8000                	.2byte	0x8000
-
-20008b04 <scantoasciitable_uppercase>:
+20008b00 <scantoasciitable_uppercase>:
+20008b00:	2020                	.2byte	0x2020
+20008b02:	2020                	.2byte	0x2020
 20008b04:	2020                	.2byte	0x2020
 20008b06:	2020                	.2byte	0x2020
 20008b08:	2020                	.2byte	0x2020
 20008b0a:	2020                	.2byte	0x2020
-20008b0c:	2020                	.2byte	0x2020
-20008b0e:	2020                	.2byte	0x2020
-20008b10:	0b20                	.2byte	0xb20
-20008b12:	2060                	.2byte	0x2060
-20008b14:	2020                	.2byte	0x2020
-20008b16:	2020                	.2byte	0x2020
-20008b18:	5120                	.2byte	0x5120
-20008b1a:	2021                	.2byte	0x2021
-20008b1c:	2020                	.2byte	0x2020
-20008b1e:	535a                	.2byte	0x535a
-20008b20:	5741                	.2byte	0x5741
-20008b22:	2040                	.2byte	0x2040
-20008b24:	4320                	.2byte	0x4320
-20008b26:	4458                	.2byte	0x4458
-20008b28:	2445                	.2byte	0x2445
-20008b2a:	20202023          	sw	sp,512(zero) # 200 <_start-0x1ffffe00>
-20008b2e:	4656                	.2byte	0x4656
-20008b30:	5254                	.2byte	0x5254
-20008b32:	2025                	.2byte	0x2025
-20008b34:	4e20                	.2byte	0x4e20
-20008b36:	4842                	.2byte	0x4842
-20008b38:	205e5947          	.4byte	0x205e5947
-20008b3c:	2020                	.2byte	0x2020
-20008b3e:	4a4d                	.2byte	0x4a4d
-20008b40:	3755                	.2byte	0x3755
-20008b42:	202a                	.2byte	0x202a
-20008b44:	3c20                	.2byte	0x3c20
-20008b46:	294f494b          	.4byte	0x294f494b
-20008b4a:	2028                	.2byte	0x2028
-20008b4c:	3e20                	.2byte	0x3e20
-20008b4e:	503a6c3f 2020205f 	.8byte	0x2020205f503a6c3f
-20008b56:	2022                	.2byte	0x2022
-20008b58:	20202b7b          	.4byte	0x20202b7b
-20008b5c:	2020                	.2byte	0x2020
-20008b5e:	7d0d                	.2byte	0x7d0d
-20008b60:	7c20                	.2byte	0x7c20
+20008b0c:	0b20                	.2byte	0xb20
+20008b0e:	2060                	.2byte	0x2060
+20008b10:	2020                	.2byte	0x2020
+20008b12:	2020                	.2byte	0x2020
+20008b14:	5120                	.2byte	0x5120
+20008b16:	2021                	.2byte	0x2021
+20008b18:	2020                	.2byte	0x2020
+20008b1a:	535a                	.2byte	0x535a
+20008b1c:	5741                	.2byte	0x5741
+20008b1e:	2040                	.2byte	0x2040
+20008b20:	4320                	.2byte	0x4320
+20008b22:	4458                	.2byte	0x4458
+20008b24:	2445                	.2byte	0x2445
+20008b26:	20202023          	sw	sp,512(zero) # 200 <_start-0x1ffffe00>
+20008b2a:	4656                	.2byte	0x4656
+20008b2c:	5254                	.2byte	0x5254
+20008b2e:	2025                	.2byte	0x2025
+20008b30:	4e20                	.2byte	0x4e20
+20008b32:	4842                	.2byte	0x4842
+20008b34:	205e5947          	.4byte	0x205e5947
+20008b38:	2020                	.2byte	0x2020
+20008b3a:	4a4d                	.2byte	0x4a4d
+20008b3c:	3755                	.2byte	0x3755
+20008b3e:	202a                	.2byte	0x202a
+20008b40:	3c20                	.2byte	0x3c20
+20008b42:	294f494b          	.4byte	0x294f494b
+20008b46:	2028                	.2byte	0x2028
+20008b48:	3e20                	.2byte	0x3e20
+20008b4a:	503a6c3f 2020205f 	.8byte	0x2020205f503a6c3f
+20008b52:	2022                	.2byte	0x2022
+20008b54:	20202b7b          	.4byte	0x20202b7b
+20008b58:	2020                	.2byte	0x2020
+20008b5a:	7d0d                	.2byte	0x7d0d
+20008b5c:	7c20                	.2byte	0x7c20
+20008b5e:	2020                	.2byte	0x2020
+20008b60:	2020                	.2byte	0x2020
 20008b62:	2020                	.2byte	0x2020
 20008b64:	2020                	.2byte	0x2020
-20008b66:	2020                	.2byte	0x2020
+20008b66:	2008                	.2byte	0x2008
 20008b68:	2020                	.2byte	0x2020
-20008b6a:	2008                	.2byte	0x2008
+20008b6a:	2020                	.2byte	0x2020
 20008b6c:	2020                	.2byte	0x2020
 20008b6e:	2020                	.2byte	0x2020
 20008b70:	2020                	.2byte	0x2020
 20008b72:	2020                	.2byte	0x2020
 20008b74:	2020                	.2byte	0x2020
-20008b76:	2020                	.2byte	0x2020
-20008b78:	2020                	.2byte	0x2020
-20008b7a:	2020201b          	.4byte	0x2020201b
+20008b76:	2020201b          	.4byte	0x2020201b
+20008b7a:	2020                	.2byte	0x2020
+20008b7c:	2020                	.2byte	0x2020
 20008b7e:	2020                	.2byte	0x2020
 20008b80:	2020                	.2byte	0x2020
 20008b82:	2020                	.2byte	0x2020
@@ -10911,65 +10910,65 @@ Disassembly of section .data:
 20008bfa:	2020                	.2byte	0x2020
 20008bfc:	2020                	.2byte	0x2020
 20008bfe:	2020                	.2byte	0x2020
+
+20008c00 <scantoasciitable_lowercase>:
 20008c00:	2020                	.2byte	0x2020
 20008c02:	2020                	.2byte	0x2020
-
-20008c04 <scantoasciitable_lowercase>:
 20008c04:	2020                	.2byte	0x2020
 20008c06:	2020                	.2byte	0x2020
 20008c08:	2020                	.2byte	0x2020
 20008c0a:	2020                	.2byte	0x2020
-20008c0c:	2020                	.2byte	0x2020
-20008c0e:	2020                	.2byte	0x2020
-20008c10:	0b20                	.2byte	0xb20
-20008c12:	2060                	.2byte	0x2060
-20008c14:	2020                	.2byte	0x2020
-20008c16:	2020                	.2byte	0x2020
-20008c18:	7120                	.2byte	0x7120
-20008c1a:	2031                	.2byte	0x2031
-20008c1c:	2020                	.2byte	0x2020
-20008c1e:	737a                	.2byte	0x737a
-20008c20:	7761                	.2byte	0x7761
-20008c22:	2032                	.2byte	0x2032
-20008c24:	6320                	.2byte	0x6320
-20008c26:	6478                	.2byte	0x6478
-20008c28:	3465                	.2byte	0x3465
-20008c2a:	20202033          	.4byte	0x20202033
-20008c2e:	6676                	.2byte	0x6676
-20008c30:	7274                	.2byte	0x7274
-20008c32:	2035                	.2byte	0x2035
-20008c34:	6e20                	.2byte	0x6e20
-20008c36:	6862                	.2byte	0x6862
-20008c38:	20367967          	.4byte	0x20367967
-20008c3c:	2020                	.2byte	0x2020
-20008c3e:	6a6d                	.2byte	0x6a6d
-20008c40:	3775                	.2byte	0x3775
-20008c42:	2038                	.2byte	0x2038
-20008c44:	2c20                	.2byte	0x2c20
-20008c46:	306f696b          	.4byte	0x306f696b
-20008c4a:	2039                	.2byte	0x2039
-20008c4c:	2e20                	.2byte	0x2e20
-20008c4e:	703b6c2f          	.4byte	0x703b6c2f
-20008c52:	202d                	.2byte	0x202d
-20008c54:	2020                	.2byte	0x2020
-20008c56:	3d5b2027          	.4byte	0x3d5b2027
-20008c5a:	2020                	.2byte	0x2020
-20008c5c:	2020                	.2byte	0x2020
-20008c5e:	5d0d                	.2byte	0x5d0d
-20008c60:	5c20                	.2byte	0x5c20
+20008c0c:	0b20                	.2byte	0xb20
+20008c0e:	2060                	.2byte	0x2060
+20008c10:	2020                	.2byte	0x2020
+20008c12:	2020                	.2byte	0x2020
+20008c14:	7120                	.2byte	0x7120
+20008c16:	2031                	.2byte	0x2031
+20008c18:	2020                	.2byte	0x2020
+20008c1a:	737a                	.2byte	0x737a
+20008c1c:	7761                	.2byte	0x7761
+20008c1e:	2032                	.2byte	0x2032
+20008c20:	6320                	.2byte	0x6320
+20008c22:	6478                	.2byte	0x6478
+20008c24:	3465                	.2byte	0x3465
+20008c26:	20202033          	.4byte	0x20202033
+20008c2a:	6676                	.2byte	0x6676
+20008c2c:	7274                	.2byte	0x7274
+20008c2e:	2035                	.2byte	0x2035
+20008c30:	6e20                	.2byte	0x6e20
+20008c32:	6862                	.2byte	0x6862
+20008c34:	20367967          	.4byte	0x20367967
+20008c38:	2020                	.2byte	0x2020
+20008c3a:	6a6d                	.2byte	0x6a6d
+20008c3c:	3775                	.2byte	0x3775
+20008c3e:	2038                	.2byte	0x2038
+20008c40:	2c20                	.2byte	0x2c20
+20008c42:	306f696b          	.4byte	0x306f696b
+20008c46:	2039                	.2byte	0x2039
+20008c48:	2e20                	.2byte	0x2e20
+20008c4a:	703b6c2f          	.4byte	0x703b6c2f
+20008c4e:	202d                	.2byte	0x202d
+20008c50:	2020                	.2byte	0x2020
+20008c52:	3d5b2027          	.4byte	0x3d5b2027
+20008c56:	2020                	.2byte	0x2020
+20008c58:	2020                	.2byte	0x2020
+20008c5a:	5d0d                	.2byte	0x5d0d
+20008c5c:	5c20                	.2byte	0x5c20
+20008c5e:	2020                	.2byte	0x2020
+20008c60:	2020                	.2byte	0x2020
 20008c62:	2020                	.2byte	0x2020
 20008c64:	2020                	.2byte	0x2020
-20008c66:	2020                	.2byte	0x2020
+20008c66:	2008                	.2byte	0x2008
 20008c68:	2020                	.2byte	0x2020
-20008c6a:	2008                	.2byte	0x2008
+20008c6a:	2020                	.2byte	0x2020
 20008c6c:	2020                	.2byte	0x2020
 20008c6e:	2020                	.2byte	0x2020
 20008c70:	2020                	.2byte	0x2020
 20008c72:	2020                	.2byte	0x2020
 20008c74:	2020                	.2byte	0x2020
-20008c76:	2020                	.2byte	0x2020
-20008c78:	2020                	.2byte	0x2020
-20008c7a:	2020201b          	.4byte	0x2020201b
+20008c76:	2020201b          	.4byte	0x2020201b
+20008c7a:	2020                	.2byte	0x2020
+20008c7c:	2020                	.2byte	0x2020
 20008c7e:	2020                	.2byte	0x2020
 20008c80:	2020                	.2byte	0x2020
 20008c82:	2020                	.2byte	0x2020
@@ -11035,15 +11034,17 @@ Disassembly of section .data:
 20008cfa:	2020                	.2byte	0x2020
 20008cfc:	2020                	.2byte	0x2020
 20008cfe:	2020                	.2byte	0x2020
-20008d00:	2020                	.2byte	0x2020
-20008d02:	2020                	.2byte	0x2020
 
-20008d04 <PS2KEYBOARDDATAAVAIL>:
-20008d04:	1028                	.2byte	0x1028
+20008d00 <PS2KEYBOARDDATAAVAIL>:
+20008d00:	1028                	.2byte	0x1028
+20008d02:	8000                	.2byte	0x8000
+
+20008d04 <PS2KEYBOARDDATA>:
+20008d04:	1020                	.2byte	0x1020
 20008d06:	8000                	.2byte	0x8000
 
-20008d08 <PS2KEYBOARDDATA>:
-20008d08:	1020                	.2byte	0x1020
+20008d08 <IO_SPIRXTX>:
+20008d08:	1010                	.2byte	0x1010
 20008d0a:	8000                	.2byte	0x8000
 
 20008d0c <_ZL9VolumeStr>:
@@ -11603,23 +11604,23 @@ Disassembly of section .got:
 20009552:	2000                	.2byte	0x2000
 20009554:	95dc                	.2byte	0x95dc
 20009556:	2000                	.2byte	0x2000
-20009558:	8b04                	.2byte	0x8b04
+20009558:	8b00                	.2byte	0x8b00
 2000955a:	2000                	.2byte	0x2000
 2000955c:	8ae4                	.2byte	0x8ae4
 2000955e:	2000                	.2byte	0x2000
-20009560:	8d04                	.2byte	0x8d04
+20009560:	8d00                	.2byte	0x8d00
 20009562:	2000                	.2byte	0x2000
 20009564:	8af4                	.2byte	0x8af4
 20009566:	2000                	.2byte	0x2000
-20009568:	8afc                	.2byte	0x8afc
+20009568:	8af8                	.2byte	0x8af8
 2000956a:	2000                	.2byte	0x2000
-2000956c:	8c04                	.2byte	0x8c04
+2000956c:	8c00                	.2byte	0x8c00
 2000956e:	2000                	.2byte	0x2000
 20009570:	5210                	.2byte	0x5210
 20009572:	2000                	.2byte	0x2000
-20009574:	8af8                	.2byte	0x8af8
+20009574:	8d08                	.2byte	0x8d08
 20009576:	2000                	.2byte	0x2000
-20009578:	8d08                	.2byte	0x8d08
+20009578:	8d04                	.2byte	0x8d04
 2000957a:	2000                	.2byte	0x2000
 2000957c:	95c8                	.2byte	0x95c8
 2000957e:	2000                	.2byte	0x2000
@@ -11633,7 +11634,7 @@ Disassembly of section .got:
 2000958e:	2000                	.2byte	0x2000
 20009590:	9ea4                	.2byte	0x9ea4
 20009592:	2000                	.2byte	0x2000
-20009594:	8b00                	.2byte	0x8b00
+20009594:	8afc                	.2byte	0x8afc
 20009596:	2000                	.2byte	0x2000
 20009598:	8adc                	.2byte	0x8adc
 2000959a:	2000                	.2byte	0x2000

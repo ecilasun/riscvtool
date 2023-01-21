@@ -11,13 +11,15 @@
 #include "core.h"
 #include "leds.h"
 #include "uart.h"
+#include "dma.h"
 #include "elf.h"
 #include "sdcard.h"
 #include "fat32/ff.h"
 #include "ps2.h"
 #include "ringbuffer.h"
 
-#define ROMREVISION "v0.180"
+// Make sure to keep this 6 characters long
+#define ROMREVISION "v0.181"
 
 const char *FRtoString[]={
 	"Succeeded\n",
