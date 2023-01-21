@@ -5,15 +5,17 @@
 
 int main()
 {
-	UARTWrite("Experimental boot image\nCurrent test: raw keyboard input\n");
+	UARTWrite("┌───────────────────┐\n");
+	UARTWrite("│ Auto boot sample  │\n");
+	UARTWrite("│ PS2 Keyboard test │\n");
+	UARTWrite("└───────────────────┘\n\n");
 
 	while(1)
 	{
 		if (*PS2KEYBOARDDATAAVAIL)
 		{
 			uint32_t code = (*PS2KEYBOARDDATA)&0xFF;
-			UARTWriteHexByte(code);
-			UARTWrite("\n");
+			UARTPutChar(PS2ScanToASCII(code, 0));
 		}
 	};
 

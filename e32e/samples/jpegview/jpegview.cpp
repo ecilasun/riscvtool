@@ -67,8 +67,8 @@ void DecodeJPEG(const char *fname)
 			int W = njGetWidth();
 			int H = njGetHeight();
 
-			int iW = W>320 ? 320 : W;
-			int iH = H>239 ? 239 : H;
+			int iW = W>640 ? 640 : W;
+			int iH = H>479 ? 479 : H;
 			uint8_t *img = njGetImage();
 			if (njIsColor())
 			{
@@ -89,7 +89,7 @@ void DecodeJPEG(const char *fname)
 						G = GOFF/32;
 						B = BOFF/64;
 
-						image[x+y*320] = (uint8_t)((B<<6) | (G<<3) | R);
+						image[x+y*640] = (uint8_t)((B<<6) | (G<<3) | R);
 					}
 				}
 			}
@@ -98,7 +98,7 @@ void DecodeJPEG(const char *fname)
 				// Grayscale
 				for (int j=0;j<iH;++j)
 					for (int i=0;i<iW;++i)
-						image[i+j*320] = img[i+j*W];
+						image[i+j*640] = img[i+j*W];
 			}
 		}
 	}
@@ -130,18 +130,15 @@ int main()
 
 	// Set aside space for the decompressed image
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
-	image = GPUAllocateBuffer(320*240*3);
+	image = GPUAllocateBuffer(640*480*3);
 
 	GPUSetVPage((uint32_t)image);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on
+	GPUSetVMode(MAKEVMODEINFO(VIDEOMODE_640PALETTED, 1)); // Mode 1, video on
 
-    GPUPrintString(image, FRAME_WIDTH_MODE0, 0, 16, "loading...", 0x7FFFFFFF);
+    GPUPrintString(image, FRAME_WIDTH_MODE1, 0, 16, "loading test.jpg", 0x7FFFFFFF);
     CFLUSH_D_L1;
 
 	DecodeJPEG("sd:test.jpg");
-    CFLUSH_D_L1;
-
-	DecodeJPEG("sd:fearless.jpg");
     CFLUSH_D_L1;
 
 	return 0;
