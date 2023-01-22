@@ -39,7 +39,7 @@ int main()
 
 	int32_t offset = 0;
 	int32_t dir = 1;
-	int32_t averagetime = 0;
+	int32_t averagetime = 131072;
 	int32_t outstats = 0;
 	while (1)
 	{
@@ -56,11 +56,11 @@ int main()
 		while (DMAPending()) { asm volatile("nop;"); }
 
 		uint64_t endtime = E32ReadTime();
+		averagetime = (averagetime + (uint32_t)(endtime-starttime))/2;
 
 		if (outstats % 512 == 0)
 		{
-			averagetime = (averagetime + (uint32_t)(endtime-starttime))/2;
-			UARTWrite("DMA average over 512 frames: ");
+			UARTWrite("DMA clocks (average): ");
 			UARTWriteDecimal(averagetime);
 			UARTWrite("\n");
 		}
