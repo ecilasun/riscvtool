@@ -5,6 +5,8 @@
 #include "gpu.h"
 #include "ps2.h"
 
+#include <string.h>
+
 // Keyboard map is at top of S-RAM (512 bytes)
 uint16_t keymap[256];
 // Previous key map to be able to track deltas (512 bytes)
@@ -58,8 +60,7 @@ void HandleUART()
 void HandleKeyboard()
 {
 	// Consume all key state changes from FIFO and update the key map
-	while (*PS2KEYBOARDDATAAVAIL)
-		PS2ScanKeyboard(keymap);
+	PS2ScanKeyboard(keymap);
 
 	// If there's a difference between the previous keymap and current one, generate events for each change
 	for (uint32_t i=0; i<256; ++i)
