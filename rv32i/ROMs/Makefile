@@ -26,7 +26,7 @@ RISCVTOOL ?= ../../build/release/riscvtool
 # No filesystem in this ROM if -DDISABLE_FILESYSTEM is used
 FILESYSTEM ?= -DDISABLE_FILESYSTEM
 # The COE file will be using 16 byte (128bit) output width to match the ROM layout (x4 16byte reads from cache controller)
-ROMWORDSIZE ?= 4
+ROMWORDSIZE ?= 16
 # 512 bit cache lines makes 64 bytes per line
 # 256 cache lines makes total cache size 16 Kbytes
 RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 --param l1-cache-line-size=64 --param l1-cache-size=16 -Wall -Os -static -ffreestanding -march=rv32i -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections,--strip-debug -fPIC -nostartfiles
