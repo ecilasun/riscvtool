@@ -11,29 +11,9 @@
 #include "fat32/ff.h"
 #endif
 
-// Memory region (4Kbytes) used to transfer data between HARTs without polluting their caches
-volatile uint32_t *HARTMAILBOX = (volatile uint32_t* )0x80000000;
-
-// Writing one to a byte offset (between 0 and 15)
-// at this address will wake the corresponding HART
-// from WFI. The awake HART needs to write a zero
-// from its ISR to the same address to stop further IRQs
-volatile uint8_t *HARTIRQ = (volatile uint8_t* )0x80001040;
-
 #define STDOUT_FILENO 1
 
 // Utilities
-
-void InstallTimerISR(const uint32_t hartID, t_timerISR tisr, const uint32_t interval)
-{
-	// Install a timer interrupt routione for given HART
-	HARTMAILBOX[hartID*HARTPARAMCOUNT+0+NUM_HARTS] = (uint32_t)tisr;
-	HARTMAILBOX[hartID*HARTPARAMCOUNT+1+NUM_HARTS] = interval;
-	HARTMAILBOX[hartID] = REQ_InstallTISR;
-
-	// Trigger HART IRQ to wake up given HART's ISR
-	HARTIRQ[hartID] = 1;
-}
 
 uint64_t E32ReadTime()
 {
