@@ -1,7 +1,7 @@
 // Boot ROM
 
 #include "rvcrt0.h"
-//#include "uart.h"
+#include "uart.h"
 #include "leds.h"
 
 int main()
