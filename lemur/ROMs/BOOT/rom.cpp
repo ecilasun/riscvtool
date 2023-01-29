@@ -2,27 +2,18 @@
 
 #include "rvcrt0.h"
 #include "uart.h"
+#include "leds.h"
 
 int main()
 {
-	UARTWrite("┌─────────────────────────┐\n");
-	UARTWrite("│          ▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
-	UARTWrite("│ ████████   ▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
-	UARTWrite("│ █████████  ▒▒▒▒▒▒▒▒▒▒▒▒ │\n");
-	UARTWrite("│ ████████   ▒▒▒▒▒▒▒▒▒▒▒  │\n");
-	UARTWrite("│ █        ▒▒▒▒▒▒▒▒▒▒▒    │\n");
-	UARTWrite("│ ██   ▒▒▒▒▒▒▒▒▒▒▒▒▒   ██ │\n");
-	UARTWrite("│ ████   ▒▒▒▒▒▒▒▒▒   ████ │\n");
-	UARTWrite("│ ██████   ▒▒▒▒▒   ██████ │\n");
-	UARTWrite("│ ████████   ▒   ████████ │\n");
-	UARTWrite("│ ██████████   ██████████ │\n");
-	UARTWrite("├─────────────────────────╡\n");
-	UARTWrite("│ Minimal RISC-V (rv32i)  │\n");
-	UARTWrite("│ (c)2022 Engin Cilasun   │\n");
-	UARTWrite("└─────────────────────────┘\n\n");
+	UARTWrite("\033[H\033[0m\033[2J\nLemur v0.1 (c) 2023 Engin Cilasun\n");
 
 	// Loop forever
-	while(1) { }
+	uint32_t ledout = 0;
+	while(1) {
+		LEDSetState((ledout>>12)&0xFF);
+		++ledout;
+	}
 
 	return 0;
 }
