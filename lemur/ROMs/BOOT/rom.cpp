@@ -6,7 +6,7 @@
 
 int main()
 {
-	//UARTWrite("\033[H\033[0m\033[2J\nLemur v0.1 (c) 2023 Engin Cilasun\n");
+	UARTWrite("\033[H\033[0m\033[2J\nLemur v0.1 (c) 2023 Engin Cilasun\n");
 
 	// Loop forever
 	uint32_t ledout = 0;

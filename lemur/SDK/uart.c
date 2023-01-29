@@ -3,12 +3,18 @@
 #include <math.h> // For abs()
 
 volatile uint32_t *IO_UARTRX     = (volatile uint32_t* ) 0x80000000; // Receive fifo
-volatile uint32_t *IO_UARTTX     = (volatile uint32_t* ) 0x80000004; // Send fifo
-volatile uint32_t *IO_UARTStatus = (volatile uint32_t* ) 0x80000008; // Status (bit#0=rx valid(0:empty,1:havedata),bit#1=rx fifo full,bit#2=tx fifo empty, bit#4=intr enabled, bit#5=overrun, bit#6=frameerr, bit#7=parityerr)
-volatile uint32_t *IO_UARTCtl    = (volatile uint32_t* ) 0x8000000C; // Control (write only, bit#4=interrupt enable, bit#1=reset receive fifo, bit#0=reset send fifo, bit#2/3=reserved)
+volatile uint32_t *IO_UARTTX     = (volatile uint32_t* ) 0x80000004; // Transmit fifo
+volatile uint32_t *IO_UARTStatus = (volatile uint32_t* ) 0x80000008; // Status register
+volatile uint32_t *IO_UARTCtl    = (volatile uint32_t* ) 0x8000000C; // Control register
+
+void UARTEnableInterrupt(int enable)
+{
+    *IO_UARTCtl = enable ? 0x00000010 : 0x00000000;
+}
 
 int UARTHasData()
 {
+    // bit0: RX FIFO has valid data
     return ((*IO_UARTStatus)&0x00000001);
 }
 
@@ -25,24 +31,12 @@ uint8_t UARTRead()
         return 0;
 }
 
-void UARTPutChar(const char _char)
-{
-    // Warning! This might overflow the output FIFO.
-    // It is advised to call UARTFlush() before using it.
-    *IO_UARTTX = (uint32_t)_char;
-}
-
 void UARTWrite(const char *_message)
 {
-    int forceduartflush = 1;
     // Emit all characters from the input string
     int i = 0;
     while (_message[i]!=0)
-    {
-        UARTPutChar(_message[i++]);
-        if (((++forceduartflush)%768) == 0) // This is a very long send operation, flush before we can resume
-            UARTFlush();
-    }
+        *IO_UARTTX = (uint32_t)_message[i++];
 }
 
 void UARTWriteHexByte(const uint8_t i)
