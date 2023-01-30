@@ -31,16 +31,21 @@ inline int evalMandel(const int maxiter, int col, int row, float ox, float oy, f
    return iteration;
 }
 
+int tilex = 0;
+int tiley = 0;
+
 // http://blog.recursiveprocess.com/2014/04/05/mandelbrot-fractal-v2/
-static int row = 0;
-int mandelbrotFloat(float ox, float oy, float sx)
+void mandelbrotFloat(float ox, float oy, float sx)
 {
    int R = int(27.71f-5.156f*logf(sx));
 
-   //for (int row = 0; row < 240; ++row)
+   for (int y = 0; y < 16; ++y)
    {
-      for (int col = 0; col < 320; ++col)
+      int row = y + tiley*16;
+      for (int x = 0; x < 16; ++x)
       {
+         int col = x + tilex*16;
+
          int M = evalMandel(R, col, row, ox, oy, sx);
          int c;
          if (M < 2)
@@ -52,14 +57,9 @@ int mandelbrotFloat(float ox, float oy, float sx)
             float ratio = float(M)/float(R);
             c = int(1.f*ratio*255);
          }
-
          framebuffer[col + (row*320)] = c;
       }
    }
-
-   row = (row+1)%240;
-
-   return 1;
 
    // distance	(via iq's shadertoy sample https://www.shadertoy.com/view/lsX3W4)
 	// d(c) = |Z|·log|Z|/|Z'|
@@ -94,11 +94,19 @@ int main()
       // NOTE: It is unlikely that CPU write speeds can catch up with GPU DMA transfer speed, should not see a flicker
       mandelbrotFloat(X,Y,R);
 
-      if (row == 239)
+      tilex++;
+      if (tilex == 20)
       {
+         tilex = 0;
+         tiley++;
+      }
+      if (tiley == 15)
+      {
+         tiley = 0;
          // Flush leftover writes
          CFLUSH_D_L1;
-         R += 0.001f; // Zoom
+         // Zoom
+         R += 0.001f;
       }
    }
 

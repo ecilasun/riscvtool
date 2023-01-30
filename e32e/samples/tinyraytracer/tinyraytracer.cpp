@@ -302,16 +302,24 @@ void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 {
 	const float fov  = M_PI/3.f;
 	float dir_z = -FRAME_HEIGHT_MODE1/(2.*tan(fov/2.f));
-	for (int j = 0; j<FRAME_HEIGHT_MODE1; j++)// actual rendering loop
-	{
-		float dir_y = -(j + 0.5f) + FRAME_HEIGHT_MODE1/2.f; // this flips the image.
-		for (int i = 0; i<FRAME_WIDTH_MODE1; i++)
-		{
-			float dir_x =  (i + 0.5f) - FRAME_WIDTH_MODE1/2.f;
-			vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-			graphics_set_pixel(i,j,C.x,C.y,C.z);
-		}
-	}
+  for (int tiley = 0;tiley<FRAME_HEIGHT_MODE1/16;++tiley)
+    for (int tilex = 0;tilex<FRAME_WIDTH_MODE1/16;++tilex)
+    {
+      for (int y = 0; y<16; y++)// actual rendering loop
+      {
+        int j = tiley*16 + y;
+        float dir_y = -(j + 0.5f) + FRAME_HEIGHT_MODE1/2.f; // this flips the image.
+        for (int x = 0; x<16; x++)
+        {
+          int i = tilex*16 + x;
+          float dir_x =  (i + 0.5f) - FRAME_WIDTH_MODE1/2.f;
+          vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
+          graphics_set_pixel(i,j,C.x,C.y,C.z);
+        }
+      }
+      // Complete tile
+      //CFLUSH_D_L1;
+    }
 }
 
 int nb_spheres = 4;
