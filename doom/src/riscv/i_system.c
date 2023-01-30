@@ -65,16 +65,6 @@ int
 I_GetTime (void)
 {
 	return (ClockToMs(E32ReadTime())*TICRATE)/1000;
-
-    /*int                 newtics;
-    static int          basetime=0;
-
-	uint64_t currtime = E32ReadTime();
-	if (!basetime)
-		basetime = ClockToSec(currtime);
-
-	newtics = (ClockToSec(currtime) - basetime)*TICRATE + ClockToUs(currtime)*TICRATE/1000000;
-	return newtics;*/
 }
 
 
