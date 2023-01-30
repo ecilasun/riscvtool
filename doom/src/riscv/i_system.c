@@ -64,7 +64,9 @@ I_ZoneBase(int *size)
 int
 I_GetTime (void)
 {
-    int                 newtics;
+	return (ClockToMs(E32ReadTime())*TICRATE)/1000;
+
+    /*int                 newtics;
     static int          basetime=0;
 
 	uint64_t currtime = E32ReadTime();
@@ -72,7 +74,7 @@ I_GetTime (void)
 		basetime = ClockToSec(currtime);
 
 	newtics = (ClockToSec(currtime) - basetime)*TICRATE + ClockToUs(currtime)*TICRATE/1000000;
-	return newtics;
+	return newtics;*/
 }
 
 
