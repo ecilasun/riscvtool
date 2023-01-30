@@ -19,7 +19,7 @@
 #include "ringbuffer.h"
 
 // Make sure to keep this 6 characters long
-#define ROMREVISION "v0.181"
+#define ROMREVISION "v0.182"
 
 const char *FRtoString[]={
 	"Succeeded\n",
