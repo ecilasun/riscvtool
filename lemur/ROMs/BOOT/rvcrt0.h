@@ -16,7 +16,7 @@ extern "C"
          //"la gp, __global_pointer$;"
          //".option pop;"
 
-         "li sp, 0x0000FFF0;"       // Stack is at near end of SDRAM
+         "li sp, 0x0000FFF8;"       // Stack is at near end of SDRAM
 
 #if defined(MULTIHART_SUPPORT)
          // Set up stack spaces automatically when supporting
