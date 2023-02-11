@@ -14,19 +14,7 @@ thirdparty_libs = ../../3rdparty
 
 folders = \
 	helloworld \
-	memtest \
-	tinyraytracer \
 	tinyraytracertty \
-	sdcard \
-	modplayer \
-	vramtest \
-	mandelbrot \
-	jpegview \
-	floattest \
-	bvh \
-	interrupt \
-	miniterm \
-	led \
 
 # Rules
 
