@@ -32,7 +32,7 @@ const uint8_t residentfont[] __attribute__((aligned(4))) = {
 
 // NOTE: Writes to this address will end up in the GPU command FIFO
 // NOTE: Reads from this address will return the vblank counter
-volatile uint32_t *GPUIO = (volatile uint32_t* )0x80003000;
+volatile uint32_t *GPUIO = (volatile uint32_t* )0x80002000;
 
 uint8_t *GPUAllocateBuffer(const uint32_t _size)
 {
