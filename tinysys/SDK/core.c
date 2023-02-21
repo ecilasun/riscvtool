@@ -31,6 +31,22 @@ uint64_t E32ReadTime()
    return now;
 }
 
+uint64_t E32ReadCycles()
+{
+   uint32_t cyclehigh, cyclelow, tmp;
+   asm volatile(
+      "1:\n"
+      "rdcycleh %0\n"
+      "rdcycle %1\n"
+      "rdcycleh %2\n"
+      "bne %0, %2, 1b\n"
+      : "=&r" (cyclehigh), "=&r" (cyclelow), "=&r" (tmp)
+   );
+
+   uint64_t now = ((uint64_t)(cyclehigh)<<32) | cyclelow;
+   return now;
+}
+
 uint64_t E32ReadRetiredInstructions()
 {
    uint32_t retihigh, retilow;

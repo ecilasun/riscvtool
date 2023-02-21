@@ -142,7 +142,7 @@ static inline void stats_end_pixel() {
 }
 
 // Print "fixed point" number (integer/1000)
-/*static void printk(uint64_t kx) {
+static void printk(uint64_t kx) {
     int intpart  = (int)(kx / 1000);
     int fracpart = (int)(kx % 1000);
     UARTWriteDecimal(intpart);
@@ -154,23 +154,23 @@ static inline void stats_end_pixel() {
 	    UARTWrite("0");
     }
     UARTWriteDecimal(fracpart);
-}*/
+}
 
-//static uint64_t instret_start;
-//static uint64_t cycles_start;
+static uint64_t instret_start;
+static uint64_t cycles_start;
 
 // Begins statistics collection for current frame.
 // Leave emtpy if not needed.
 static inline void stats_begin_frame() {
-    /*instret_start = E32ReadRetiredInstructions();
-    cycles_start  = E32ReadCycles();*/
+    instret_start = E32ReadRetiredInstructions();
+    cycles_start  = E32ReadCycles();
 }
 
 // Ends statistics collection for current frame
 // and displays result.
 // Leave emtpy if not needed.
 static inline void stats_end_frame() {
-   /*graphics_terminate();
+   graphics_terminate();
    uint64_t instret = E32ReadRetiredInstructions() - instret_start;
    uint64_t cycles = E32ReadCycles()    - cycles_start ;
    uint64_t kCPI       = cycles*1000/instret;
@@ -184,7 +184,7 @@ static inline void stats_end_frame() {
    UARTWrite(bench_run ? "no gfx output (measurement is accurate)" : "gfx output (measurement is NOT accurate)");
    UARTWrite("CPI="); printk(kCPI); UARTWrite("     ");
    UARTWrite("RAYSTONES="); printk(kRAYSTONES);
-   UARTWrite("\n");*/
+   UARTWrite("\n");
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -573,11 +573,11 @@ int main()
 
   init_scene();
 
-  /*bench_run = 1;
+  bench_run = 1;
   graphics_width  = 40;
   graphics_height = 20;
   UARTWrite("Running without graphic output (for accurate measurement)...\n");
-  render(spheres, nb_spheres, lights, nb_lights);*/
+  render(spheres, nb_spheres, lights, nb_lights);
 
   bench_run = 0;
   graphics_width = 120;
