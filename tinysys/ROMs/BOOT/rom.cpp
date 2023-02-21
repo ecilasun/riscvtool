@@ -505,12 +505,27 @@ void init_scene() {
 
 int main()
 {
+  // Clear terminal
+  UARTWrite("\033[H\033[0m\033[2J");
+
   {
     UARTWrite("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
 
-    //uint64_t startclock = E32ReadTime();
+    uint64_t startclock = E32ReadTime();
+    UARTWrite("Start clock:");
+    UARTWriteDecimal(startclock);
+
     for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
         *((volatile uint32_t*)m) = 0x00000000;
+
+    uint64_t endclock = E32ReadTime();
+    UARTWrite("\nEnd clock:");
+    UARTWriteDecimal(startclock);
+
+    uint32_t deltams = ClockToMs(endclock-startclock);
+    UARTWrite("\nClearing 32Mbytes took ");
+    UARTWriteDecimal((unsigned int)deltams);
+    UARTWrite(" ms\n");
 
     UARTWrite("\n-------------MemTest--------------\n");
     UARTWrite("Copyright (c) 2000 by Michael Barr\n");

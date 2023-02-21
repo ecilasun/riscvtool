@@ -5,6 +5,7 @@
 
 #include <encoding.h>
 
+// tinysys runs wall clock at 10MHz
 #define ONE_SECOND_IN_TICKS				10000000
 #define HUNDRED_MILLISECONDS_IN_TICKS	1000000
 #define TEN_MILLISECONDS_IN_TICKS		100000

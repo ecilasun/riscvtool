@@ -66,8 +66,8 @@ void ClockMsToHMS(uint32_t ms, uint32_t *hours, uint32_t *minutes, uint32_t *sec
 void E32SetTimeCompare(const uint64_t future)
 {
    // NOTE: ALWAYS set high word first to avoid misfires outside timer interrupt
-   swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));
-   swap_csr(0x800, ((uint32_t)(future&0x00000000FFFFFFFF)));
+   swap_csr(0x801, ((future&0xFFFFFFFF00000000)>>32));         // CSR_TIMECMPHI
+   swap_csr(0x800, ((uint32_t)(future&0x00000000FFFFFFFF)));   // CSR_TIMECMPLO
 }
 
 // C stdlib overrides
