@@ -13,14 +13,10 @@ extern "C"
       asm volatile (
 
          // Set up global pointer - NOTE: ROM does not use GP
-         //"la gp, __global_pointer$;"
-         //".option pop;"
-
-         /*"there: "
-         "rdtimeh a1;"              // CSR time read test
-         "rdtime a0;"
-         "rdtimeh a5;"
-         "bne a1,a5,there;"*/
+         /*".option push;"
+         ".option norelax;"
+         "la gp, __global_pointer$;"
+         ".option pop;"*/
 
          "li sp, 0x1000FFFC;"       // Stack is at near end of BRAM
 
