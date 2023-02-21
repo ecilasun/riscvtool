@@ -520,7 +520,7 @@ int main()
 
     uint64_t endclock = E32ReadTime();
     UARTWrite("\nEnd clock:");
-    UARTWriteDecimal(startclock);
+    UARTWriteDecimal(endclock);
 
     uint32_t deltams = ClockToMs(endclock-startclock);
     UARTWrite("\nClearing 32Mbytes took ");
