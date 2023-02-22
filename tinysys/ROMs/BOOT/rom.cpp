@@ -467,7 +467,6 @@ void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
     for (int i = 0; i<graphics_width; i++) {
       render_pixel(i,j  ,spheres,nb_spheres,lights,nb_lights);
     }
-    LEDSetState(j);
   }
 #endif
    stats_end_frame();
@@ -503,8 +502,70 @@ void init_scene() {
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
 
+void HandleTimer()
+{
+  static uint32_t nextstate = 0;
+  LEDSetState(nextstate++);
+
+	uint64_t now = E32ReadTime();
+	uint64_t future = now + ONE_SECOND_IN_TICKS;
+	E32SetTimeCompare(future);
+}
+
+void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine()
+{
+	//uint32_t a7;
+	//asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
+
+	//uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
+	uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
+	//uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
+	uint32_t code = cause & 0x7FFFFFFF;
+
+	if (cause & 0x80000000) // Interrupt
+	{
+		if (code == 0xB) // Machine External Interrupt (hardware)
+		{
+			// Route based on hardware type
+			//if (value & 0x00000001) HandleUART();
+			//if (value & 0x00000002) HandleKeyboard();
+			//if (value & 0x00000010) HandleHARTIRQ(hartid); // HART#0 doesn't use this
+		}
+
+		if (code == 0x7) // Machine Timer Interrupt (timer)
+		{
+			HandleTimer();
+		}
+	}
+	else // Machine Software Exception (trap)
+	{
+		//HandleTrap(cause, a7, value, PC); // Illegal instruction etc
+	}
+}
+
+void InstallISR()
+{
+	// Set machine trap vector
+	swap_csr(mtvec, interrupt_service_routine);
+
+	// Set up timer interrupt one second into the future
+	uint64_t now = E32ReadTime();
+	uint64_t future = now + ONE_SECOND_IN_TICKS; // One seconds into the future
+	E32SetTimeCompare(future);
+
+	// Enable machine software interrupts (breakpoint/illegal instruction)
+	// Enable machine hardware interrupts
+	// Enable machine timer interrupts
+	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
+
+	// Allow all machine interrupts to trigger
+	swap_csr(mstatus, MSTATUS_MIE);
+}
+
 int main()
 {
+  InstallISR();
+
   // Clear terminal
   UARTWrite("\033[H\033[0m\033[2J");
 

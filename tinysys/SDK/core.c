@@ -47,6 +47,15 @@ uint64_t E32ReadCycles()
    return now;
 }
 
+void E32Sleep(uint64_t ms)
+{
+   // Start time is now in ticks
+   uint64_t tstart = E32ReadCycles();
+   // End time is now plus ms in ticks
+   uint64_t tend = tstart + ms*ONE_MILLISECOND_IN_TICKS;
+   while (E32ReadCycles() < tend) { asm volatile("nop;"); }
+}
+
 uint64_t E32ReadRetiredInstructions()
 {
    uint32_t retihigh, retilow;
