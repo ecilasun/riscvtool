@@ -4,14 +4,36 @@
 
 #include "memtest/memtest.h"
 
-/* Modified by Engin Cilasun to fit the E32 graphics architecture  */
-/* from Bruno Levy's original port of 2020                         */
-/* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
-
 #include <math.h>
 #include "core.h"
 #include "uart.h"
 #include "leds.h"
+#include "gpu.h"
+#include "fat32/ff.h"
+
+const char *FRtoString[]={
+	"Succeeded\n",
+	"A hard error occurred in the low level disk I/O layer\n",
+	"Assertion failed\n",
+	"The physical drive cannot work\n",
+	"Could not find the file\n",
+	"Could not find the path\n",
+	"The path name format is invalid\n",
+	"Access denied due to prohibited access or directory full\n",
+	"Access denied due to prohibited access\n",
+	"The file/directory object is invalid\n",
+	"The physical drive is write protected\n",
+	"The logical drive number is invalid\n",
+	"The volume has no work area\n",
+	"There is no valid FAT volume\n",
+	"The f_mkfs() aborted due to any problem\n",
+	"Could not get a grant to access the volume within defined period\n",
+	"The operation is rejected according to the file sharing policy\n",
+	"LFN working buffer could not be allocated\n",
+	"Number of open files > FF_FS_LOCK\n",
+	"Given parameter is invalid\n"
+};
+
 /* A port of Dmitry Sokolov's tiny raytracer to C and to FemtoRV32 */
 /* Displays on the small OLED display and/or HDMI                  */
 /* Bruno Levy, 2020                                                */
@@ -569,8 +591,29 @@ int main()
   // Clear terminal
   UARTWrite("\033[H\033[0m\033[2J");
 
+  // Test video output
+  uint8_t *videobuffer = GPUAllocateBuffer(320*240);
+  EVideoContext vx;
+  GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
+  GPUSetWriteAddress(&vx, (uint32_t)videobuffer);
+  GPUSetScanoutAddress(&vx, (uint32_t)videobuffer);
+  for(uint32_t i=0;i<320*240;++i)
+    videobuffer[i] = (uint8_t)(i%0xFF);
+  UARTWrite("Enabled DVI video out with test pattern @");
+  UARTWriteHex((uint32_t)videobuffer);
+
+  // Test SDCard
   {
-    UARTWrite("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
+    FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
+    FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+    if (mountattempt!=FR_OK)
+      UARTWrite(FRtoString[mountattempt]);
+    else
+      UARTWrite("\nSDCard mounted successfully\n");
+  }
+
+  {
+    UARTWrite("\nClearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
 
     uint64_t startclock = E32ReadTime();
     UARTWrite("Start clock:");
