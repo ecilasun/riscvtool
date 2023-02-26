@@ -11,202 +11,50 @@
 #include "gpu.h"
 #include "fat32/ff.h"
 
-const char *FRtoString[]={
-	"Succeeded\n",
-	"A hard error occurred in the low level disk I/O layer\n",
-	"Assertion failed\n",
-	"The physical drive cannot work\n",
-	"Could not find the file\n",
-	"Could not find the path\n",
-	"The path name format is invalid\n",
-	"Access denied due to prohibited access or directory full\n",
-	"Access denied due to prohibited access\n",
-	"The file/directory object is invalid\n",
-	"The physical drive is write protected\n",
-	"The logical drive number is invalid\n",
-	"The volume has no work area\n",
-	"There is no valid FAT volume\n",
-	"The f_mkfs() aborted due to any problem\n",
-	"Could not get a grant to access the volume within defined period\n",
-	"The operation is rejected according to the file sharing policy\n",
-	"LFN working buffer could not be allocated\n",
-	"Number of open files > FF_FS_LOCK\n",
-	"Given parameter is invalid\n"
-};
-
-/* A port of Dmitry Sokolov's tiny raytracer to C and to FemtoRV32 */
-/* Displays on the small OLED display and/or HDMI                  */
-/* Bruno Levy, 2020                                                */
-/* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
-/* Modified to fit custom architecture by Engin Cilasun            */
+// ----------------------------------------------------------------------------
 
 /*******************************************************************/
+/* Modified by Engin Cilasun to fit the E32 graphics architecture  */
+/* from Bruno Levy's original port of 2020                         */
+/* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
+/*******************************************************************/
 
+static uint8_t *framebuffer = 0;
 typedef int BOOL;
 
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
+// The Bayer matrix for ordered dithering
+const uint8_t dither[4][4] = {
+  { 0, 8, 2,10},
+  {12, 4,14, 6},
+  { 3,11, 1, 9},
+  {15, 7,13, 5}
+};
+
 /*******************************************************************/
-
-// If you want to adapt tinyraytracer to your own platform, there are
-// mostly two macros and two functions to write:
-//   graphics_width
-//   graphics_height
-//   graphics_init()
-//   graphics_set_pixel()
-//
-// You can also write the following functions (or leave them empty if
-// you do not need them):
-//   graphics_terminate()
-//   stats_begin_frame()
-//   stats_begin_pixel()
-//   stats_end_pixel()
-//   stats_end_frame()
-
-
-// Size of the screen
-// Replace with your own variables or values
-
-// Benchmark
-// - graphics deactivated (else UART waiting loop gives
-//   different results according to CPU freq / UART baud rate
-//   ratio).
-// - smaller image size (for faster run in simulation)
-
-static int graphics_width  = 120;
-static int graphics_height = 60;
-
-static int bench_run = 0;
-
-// Two pixels per character using UTF8 character set
-// (comment-out if terminal does not support it)
-//#define graphics_double_lines
-
-// Replace with your own stuff to initialize graphics
-static inline void graphics_init() {
-    UARTWrite("\033[48;5;16m\033[H\033[2J");
-}
-
-// Replace with your own stuff to terminate graphics or leave empty
-// Here I send <ctrl><D> to the UART, to exit the simulation in Verilator,
-// it is captured by special code in RTL/DEVICES/uart.v
-static inline void graphics_terminate() {
-    UARTWrite("\033[48;5;16m\033[38;5;15m");
-}
 
 // Replace with your own code.
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
-   r = max(0.0f, min(1.0f, r));
-   g = max(0.0f, min(1.0f, g));
-   b = max(0.0f, min(1.0f, b));
-   uint8_t R = (uint8_t)(255.0f * r);
-   uint8_t G = (uint8_t)(255.0f * g);
-   uint8_t B = (uint8_t)(255.0f * b);
-   // graphics output deactivated for bench run
-   if(bench_run) {
-       if(y & 1) {
-	  if(x == graphics_width-1) {
-	     UARTWriteDecimal(y/2);
-	  }
-       }
-       return;
-   }
-#ifdef graphics_double_lines
-   static uint8_t prev_R=0;
-   static uint8_t prev_G=0;
-   static uint8_t prev_B=0;
-   if(y&1) {
-       if((R == prev_R) && (G == prev_G) && (B == prev_B)) {
-	   printf("\033[48;2;%d;%d;%dm ",(int)R,(int)G,(int)B);
-       } else {
-	   printf("\033[48;2;%d;%d;%dm",(int)prev_R,(int)prev_G,(int)prev_B);
-	   printf("\033[38;2;%d;%d;%dm",(int)R,(int)G,(int)B);
-	   // https://www.w3.org/TR/xml-entity-names/025.html
-	   // https://onlineunicodetools.com/convert-unicode-to-utf8
-	   printf("\xE2\x96\x83");
-       }
-       if(x == graphics_width-1) {
-	   printf("\033[38;2;0;0;0m");	   
-	   printf("\033[48;2;0;0;0m\n");
-       }
-   } else {
-       prev_R = R;
-       prev_G = G;
-       prev_B = B;
-   }
-#else   
-    UARTWrite("\033[48;2;");
-    UARTWriteDecimal(R);
-    UARTWrite(";");
-    UARTWriteDecimal(G);
-    UARTWrite(";");
-    UARTWriteDecimal(B);
-    UARTWrite("m ");
-   if(x==graphics_width-1)
-       UARTWrite("\033[48;2;0;0;0m");
-#endif   
-}
+	r = max(0.0f, min(1.0f, r));
+	g = max(0.0f, min(1.0f, g));
+	b = max(0.0f, min(1.0f, b));
 
+	uint16_t R = (uint16_t)(r*255.0f);
+	uint16_t G = (uint16_t)(g*255.0f);
+	uint16_t B = (uint16_t)(b*255.0f);
 
-// Begins statistics collection for current pixel
-// Leave emtpy if not needed.
-// There are these two levels because on some
-// femtorv32 cores (quark, tachyon), the clock tick counter does not
-// have sufficient bits and will wrap during the time taken by
-// rendering a frame (up to several minutes).
-static inline void stats_begin_pixel() {
-}
+	uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
+	uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
+	uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
 
-// Ends statistics collection for current pixel
-// Leave emtpy if not needed.
-static inline void stats_end_pixel() {
-}
+	R = ROFF/32;
+	G = GOFF/32;
+	B = BOFF/64;
+	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
 
-// Print "fixed point" number (integer/1000)
-static void printk(uint64_t kx) {
-    int intpart  = (int)(kx / 1000);
-    int fracpart = (int)(kx % 1000);
-    UARTWriteDecimal(intpart);
-    UARTWrite(".");
-    if(fracpart<100) {
-	    UARTWrite("0");
-    }
-    if(fracpart<10) {
-	    UARTWrite("0");
-    }
-    UARTWriteDecimal(fracpart);
-}
-
-static uint64_t instret_start;
-static uint64_t cycles_start;
-
-// Begins statistics collection for current frame.
-// Leave emtpy if not needed.
-static inline void stats_begin_frame() {
-    instret_start = E32ReadRetiredInstructions();
-    cycles_start  = E32ReadCycles();
-}
-
-// Ends statistics collection for current frame
-// and displays result.
-// Leave emtpy if not needed.
-static inline void stats_end_frame() {
-   graphics_terminate();
-   uint64_t instret = E32ReadRetiredInstructions() - instret_start;
-   uint64_t cycles = E32ReadCycles()    - cycles_start ;
-   uint64_t kCPI       = cycles*1000/instret;
-   uint64_t pixels     = graphics_width * graphics_height;
-   uint64_t kRAYSTONES = (pixels*1000000000)/cycles;
-   UARTWrite("\n");
-   UARTWriteDecimal(graphics_width);
-   UARTWrite("x");
-   UARTWriteDecimal(graphics_height);
-   UARTWrite("      ");
-   UARTWrite(bench_run ? "no gfx output (measurement is accurate)" : "gfx output (measurement is NOT accurate)");
-   UARTWrite("CPI="); printk(kCPI); UARTWrite("     ");
-   UARTWrite("RAYSTONES="); printk(kRAYSTONES);
-   UARTWrite("\n");
+	framebuffer[x+y*320] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -459,39 +307,29 @@ vec3 cast_ray(
   return result;
 }
 
-static inline void render_pixel(
-    int i, int j, Sphere* spheres, int nb_spheres, Light* lights, int nb_lights
-) {
-   const float fov  = 3.14159265358979323846/3.;
-   stats_begin_pixel();
-   float dir_x =  (i + 0.5) - graphics_width/2.;
-   float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
-   float dir_z = -graphics_height/(2.*tan(fov/2.));
-   vec3 C = cast_ray(
-       make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)),
-       spheres, nb_spheres, lights, nb_lights, 0
-   );
-   graphics_set_pixel(i,j,C.x,C.y,C.z);
-   stats_end_pixel();
-}
-
-void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
-   stats_begin_frame();
-#ifdef graphics_double_lines  
-   for (int j = 0; j<graphics_height; j+=2) { 
-      for (int i = 0; i<graphics_width; i++) {
-	  render_pixel(i,j  ,spheres,nb_spheres,lights,nb_lights);
-	  render_pixel(i,j+1,spheres,nb_spheres,lights,nb_lights);	  
+#define M_PI 3.14159265358979323846 
+void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
+{
+	const float fov  = M_PI/3.f;
+	float dir_z = -FRAME_HEIGHT_MODE0/(2.*tan(fov/2.f));
+  for (int tiley = 0;tiley<FRAME_HEIGHT_MODE0/16;++tiley)
+    for (int tilex = 0;tilex<FRAME_WIDTH_MODE0/16;++tilex)
+    {
+      for (int y = 0; y<16; y++)// actual rendering loop
+      {
+        int j = tiley*16 + y;
+        float dir_y = -(j + 0.5f) + FRAME_HEIGHT_MODE0/2.f; // this flips the image.
+        for (int x = 0; x<16; x++)
+        {
+          int i = tilex*16 + x;
+          float dir_x =  (i + 0.5f) - FRAME_WIDTH_MODE0/2.f;
+          vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
+          graphics_set_pixel(i,j,C.x,C.y,C.z);
+        }
       }
-   }
-#else
-  for (int j = 0; j<graphics_height; j++) { 
-    for (int i = 0; i<graphics_width; i++) {
-      render_pixel(i,j  ,spheres,nb_spheres,lights,nb_lights);
+      // Complete tile
+      //CFLUSH_D_L1;
     }
-  }
-#endif
-   stats_end_frame();
 }
 
 int nb_spheres = 4;
@@ -523,6 +361,44 @@ void init_scene() {
     lights[1] = make_Light(make_vec3( 30, 50, -25), 1.8);
     lights[2] = make_Light(make_vec3( 30, 20,  30), 1.7);
 }
+
+void tinyraytracer()
+{
+  int target = 0;
+  for (int b=0;b<4;++b)
+    for (int g=0;g<8;++g)
+      for (int r=0;r<8;++r)
+          GPUSetPal(target++, r*36, g*36, b*85);
+
+  init_scene();
+  render(spheres, nb_spheres, lights, nb_lights);
+  //CFLUSH_D_L1;
+}
+
+// ----------------------------------------------------------------------------
+
+const char *FRtoString[]={
+	"Succeeded\n",
+	"A hard error occurred in the low level disk I/O layer\n",
+	"Assertion failed\n",
+	"The physical drive cannot work\n",
+	"Could not find the file\n",
+	"Could not find the path\n",
+	"The path name format is invalid\n",
+	"Access denied due to prohibited access or directory full\n",
+	"Access denied due to prohibited access\n",
+	"The file/directory object is invalid\n",
+	"The physical drive is write protected\n",
+	"The logical drive number is invalid\n",
+	"The volume has no work area\n",
+	"There is no valid FAT volume\n",
+	"The f_mkfs() aborted due to any problem\n",
+	"Could not get a grant to access the volume within defined period\n",
+	"The operation is rejected according to the file sharing policy\n",
+	"LFN working buffer could not be allocated\n",
+	"Number of open files > FF_FS_LOCK\n",
+	"Given parameter is invalid\n"
+};
 
 void HandleTimer()
 {
@@ -591,16 +467,12 @@ int main()
   // Clear terminal
   UARTWrite("\033[H\033[0m\033[2J");
 
-  // Test video output
-  uint8_t *videobuffer = GPUAllocateBuffer(320*240);
-  EVideoContext vx;
+  // Enable video output
+  framebuffer = GPUAllocateBuffer(320*240);
+  struct EVideoContext vx;
   GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
-  GPUSetWriteAddress(&vx, (uint32_t)videobuffer);
-  GPUSetScanoutAddress(&vx, (uint32_t)videobuffer);
-  for(uint32_t i=0;i<320*240;++i)
-    videobuffer[i] = (uint8_t)(i%0xFF);
-  UARTWrite("Enabled DVI video out with test pattern @");
-  UARTWriteHex((uint32_t)videobuffer);
+  GPUSetWriteAddress(&vx, (uint32_t)framebuffer);
+  GPUSetScanoutAddress(&vx, (uint32_t)framebuffer);
 
   // Test SDCard
   {
@@ -675,18 +547,7 @@ int main()
       UARTWrite("Memory device does not appear to be working correctly.\n");
   }
 
-  init_scene();
-
-  bench_run = 1;
-  graphics_width  = 40;
-  graphics_height = 20;
-  UARTWrite("Running without graphic output (for accurate measurement)...\n");
-  render(spheres, nb_spheres, lights, nb_lights);
-
-  bench_run = 0;
-  graphics_width = 120;
-  graphics_height = 60;
-  render(spheres, nb_spheres, lights, nb_lights);
+  tinyraytracer();
 
   while (1) { }
 
