@@ -460,6 +460,44 @@ void InstallISR()
 	swap_csr(mstatus, MSTATUS_MIE);
 }
 
+void ListFiles(const char *path)
+{
+	DIR dir;
+	FRESULT re = f_opendir(&dir, path);
+	if (re == FR_OK)
+	{
+		FILINFO finf;
+		do{
+			re = f_readdir(&dir, &finf);
+			if (re != FR_OK || finf.fname[0] == 0) // Done scanning dir, or error encountered
+				break;
+
+			//char *isexe = strstr(finf.fname, ".elf");
+			//int isdir = finf.fattrib&AM_DIR;
+			//if (isdir)
+			//	UARTWrite("\033[32m"); // Green
+			//if (isexe!=nullptr)
+			//	UARTWrite("\033[33m"); // Yellow
+			UARTWrite(finf.fname);
+			//if (isdir)
+			//	UARTWrite(" <dir>");
+			/*else
+			{
+				UARTWrite(" ");
+				UARTWriteDecimal((int32_t)finf.fsize);
+				UARTWrite("b");
+			}*/
+			//UARTWrite("\033[0m");
+      UARTWrite("\n");
+
+		} while(1);
+
+		f_closedir(&dir);
+	}
+	else
+		UARTWrite(FRtoString[re]);
+}
+
 int main()
 {
   InstallISR();
@@ -473,16 +511,7 @@ int main()
   GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
   GPUSetWriteAddress(&vx, (uint32_t)framebuffer);
   GPUSetScanoutAddress(&vx, (uint32_t)framebuffer);
-
-  // Test SDCard
-  {
-    FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
-    FRESULT mountattempt = f_mount(Fs, "sd:", 1);
-    if (mountattempt!=FR_OK)
-      UARTWrite(FRtoString[mountattempt]);
-    else
-      UARTWrite("\nSDCard mounted successfully\n");
-  }
+  GPUClearScreen(&vx, 0x03030303);
 
   {
     UARTWrite("\nClearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
@@ -545,6 +574,20 @@ int main()
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
       UARTWrite("Memory device does not appear to be working correctly.\n");
+  }
+
+  // Test SDCard
+  {
+    UARTWrite("\nChecking micro SD card...\n");
+    FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
+    FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+    if (mountattempt != FR_OK)
+      UARTWrite(FRtoString[mountattempt]);
+    else
+    {
+      UARTWrite("SDCard mounted successfully\n");
+      ListFiles("sd:");
+    }
   }
 
   tinyraytracer();
