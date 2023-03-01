@@ -1,44 +1,55 @@
-/* Modified by Engin Cilasun to fit the E32 graphics architecture  */
-/* from Bruno Levy's original port of 2020                         */
-/* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
+// Boot ROM
+
+#include "memtest/memtest.h"
 
 #include <math.h>
 #include "core.h"
 #include "uart.h"
+#include "leds.h"
+#include "gpu.h"
 
 /*******************************************************************/
+/* Modified by Engin Cilasun to fit the E32 graphics architecture  */
+/* from Bruno Levy's original port of 2020                         */
+/* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
+/*******************************************************************/
 
+static uint8_t *framebuffer = 0;
 typedef int BOOL;
 
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
-/*******************************************************************/
+// The Bayer matrix for ordered dithering
+const uint8_t dither[4][4] = {
+  { 0, 8, 2,10},
+  {12, 4,14, 6},
+  { 3,11, 1, 9},
+  {15, 7,13, 5}
+};
 
-// Size of the screen
-// Replace with your own variables or values
-#define graphics_width  80
-#define graphics_height 80
+/*******************************************************************/
 
 // Replace with your own code.
 void graphics_set_pixel(int x, int y, float r, float g, float b) {
-  r = max(0.0f, min(1.0f, r));
-  g = max(0.0f, min(1.0f, g));
-  b = max(0.0f, min(1.0f, b));
+	r = max(0.0f, min(1.0f, r));
+	g = max(0.0f, min(1.0f, g));
+	b = max(0.0f, min(1.0f, b));
 
-    uint8_t R = (uint8_t)(255.0f * r);
-    uint8_t G = (uint8_t)(255.0f * g);
-    uint8_t B = (uint8_t)(255.0f * b);
+	uint16_t R = (uint16_t)(r*255.0f);
+	uint16_t G = (uint16_t)(g*255.0f);
+	uint16_t B = (uint16_t)(b*255.0f);
 
-    UARTWrite("\033[48;2;");
-    UARTWriteDecimal(R);
-    UARTWrite(";");
-    UARTWriteDecimal(G);
-    UARTWrite(";");
-    UARTWriteDecimal(B);
-    UARTWrite("m ");
-    if(x==graphics_width-1)
-        UARTWrite("\033[48;2;0;0;0m");
+	uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
+	uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
+	uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
+
+	R = ROFF/32;
+	G = GOFF/32;
+	B = BOFF/64;
+	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
+
+	framebuffer[x+y*320] = RGB;
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -292,17 +303,29 @@ vec3 cast_ray(
 }
 
 #define M_PI 3.14159265358979323846 
-void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights) {
-  const float fov  = M_PI/3.;
-  for (int j = 0; j<graphics_height; j++) { // actual rendering loop
-    for (int i = 0; i<graphics_width; i++) {
-      float dir_x =  (i + 0.5) - graphics_width/2.;
-      float dir_y = -(j + 0.5) + graphics_height/2.; // this flips the image.
-      float dir_z = -graphics_height/(2.*tan(fov/2.));
-      vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
-      graphics_set_pixel(i,j,C.x,C.y,C.z);
+void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
+{
+	const float fov  = M_PI/3.f;
+	float dir_z = -FRAME_HEIGHT_MODE0/(2.*tan(fov/2.f));
+  for (int tiley = 0;tiley<FRAME_HEIGHT_MODE0/16;++tiley)
+    for (int tilex = 0;tilex<FRAME_WIDTH_MODE0/16;++tilex)
+    {
+      for (int y = 0; y<16; y++)// actual rendering loop
+      {
+        int j = tiley*16 + y;
+        float dir_y = -(j + 0.5f) + FRAME_HEIGHT_MODE0/2.f; // this flips the image.
+        for (int x = 0; x<16; x++)
+        {
+          int i = tilex*16 + x;
+          float dir_x =  (i + 0.5f) - FRAME_WIDTH_MODE0/2.f;
+          vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
+          graphics_set_pixel(i,j,C.x,C.y,C.z);
+        }
+      }
+
+      // Finalize tile writes (not necessary if this is a backbuffer)
+      CFLUSH_D_L1;
     }
-  }
 }
 
 int nb_spheres = 4;
@@ -337,18 +360,29 @@ void init_scene() {
 
 int main()
 {
-    init_scene();
+  // Enable video output
+  framebuffer = GPUAllocateBuffer(320*240);
+  struct EVideoContext vx;
+  GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
+  GPUSetWriteAddress(&vx, (uint32_t)framebuffer);
+  GPUSetScanoutAddress(&vx, (uint32_t)framebuffer);
+  GPUClearScreen(&vx, 0x03030303);
 
-    uint64_t startclock = E32ReadTime();
+  int target = 0;
+  for (int b=0;b<4;++b)
+    for (int g=0;g<8;++g)
+      for (int r=0;r<8;++r)
+          GPUSetPal(target++, r*36, g*36, b*85);
 
-    UARTWrite("tinyraytracertty\n");
-    render(spheres, nb_spheres, lights, nb_lights);
+  init_scene();
+  render(spheres, nb_spheres, lights, nb_lights);
 
-    uint64_t endclock = E32ReadTime();
-    uint32_t deltams = ClockToMs(endclock-startclock);
-    UARTWrite("\ntinyraytracertty took ");
-    UARTWriteDecimal((unsigned int)deltams);
-    UARTWrite(" ms at 80x80 resolution\n");
+  // Finalize all writes.
+  // GPU does not see CPU cache contents, so it needs
+  // all data to be present in memory to show an intact image.
+  CFLUSH_D_L1;
 
-    return 0;
+  while (1) { }
+
+  return 0;
 }
