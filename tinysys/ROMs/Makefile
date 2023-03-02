@@ -14,6 +14,7 @@ thirdparty_libs = ../../3rdparty
 
 folders = \
 	BOOT \
+	FETCH
 
 # Rules
 
