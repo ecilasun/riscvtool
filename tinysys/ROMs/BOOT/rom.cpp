@@ -325,7 +325,9 @@ int main()
 		RunExecutable(0, "sd:\\boot.elf", true);
 	}
 
-	while (1) { }
+	while (1) {
+		asm volatile ("wfi;");
+	}
 
 	return 0;
 }
