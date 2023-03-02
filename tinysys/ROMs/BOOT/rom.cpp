@@ -71,23 +71,29 @@ void UnmountDrive()
 	}
 }
 
-void HandleTimer()
+/*void HandleTimer()
 {
-  static uint32_t nextstate = 0;
-  LEDSetState(nextstate++);
+	static uint32_t nextstate = 0;
+	LEDSetState(nextstate++);
 
 	uint64_t now = E32ReadTime();
 	uint64_t future = now + ONE_SECOND_IN_TICKS;
 	E32SetTimeCompare(future);
-}
+}*/
 
 void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine()
 {
+	static uint32_t nextstate = 0;
+	LEDSetState(nextstate++);
+	uint64_t now = E32ReadTime();
+	uint64_t future = now + ONE_SECOND_IN_TICKS;
+	E32SetTimeCompare(future);
+
 	//uint32_t a7;
 	//asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
 
 	//uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
-	uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
+	/*uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
 	//uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
 
@@ -109,7 +115,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 	else // Machine Software Exception (trap)
 	{
 		//HandleTrap(cause, a7, value, PC); // Illegal instruction etc
-	}
+	}*/
 }
 
 void InstallISR()
@@ -251,66 +257,66 @@ int main()
 	UARTWrite("\033[H\033[0m\033[2J");
 
 	{
-	UARTWrite("\nClearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
+		UARTWrite("\nClearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
 
-	uint64_t startclock = E32ReadTime();
-	UARTWrite("Start clock:");
-	UARTWriteDecimal(startclock);
+		uint64_t startclock = E32ReadTime();
+		UARTWrite("Start clock:");
+		UARTWriteDecimal(startclock);
 
-	for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
-		*((volatile uint32_t*)m) = 0x00000000;
+		for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
+			*((volatile uint32_t*)m) = 0x00000000;
 
-	uint64_t endclock = E32ReadTime();
-	UARTWrite("\nEnd clock:");
-	UARTWriteDecimal(endclock);
+		uint64_t endclock = E32ReadTime();
+		UARTWrite("\nEnd clock:");
+		UARTWriteDecimal(endclock);
 
-	uint32_t deltams = ClockToMs(endclock-startclock);
-	UARTWrite("\nClearing 32Mbytes took ");
-	UARTWriteDecimal((unsigned int)deltams);
-	UARTWrite(" ms\n");
+		uint32_t deltams = ClockToMs(endclock-startclock);
+		UARTWrite("\nClearing 32Mbytes took ");
+		UARTWriteDecimal((unsigned int)deltams);
+		UARTWrite(" ms\n");
 
-	UARTWrite("\n-------------MemTest--------------\n");
-	UARTWrite("Copyright (c) 2000 by Michael Barr\n");
-	UARTWrite("----------------------------------\n");
+		UARTWrite("\n-------------MemTest--------------\n");
+		UARTWrite("Copyright (c) 2000 by Michael Barr\n");
+		UARTWrite("----------------------------------\n");
 
-	UARTWrite("Data bus test (0x0A000000-0x0A03FFFF)...");
-	int failed = 0;
-	for (uint32_t i=0x0A000000; i<0x0A03FFFF; i+=4)
-	{
-		failed += memTestDataBus((volatile datum*)i);
-	}
-	UARTWrite(failed == 0 ? "passed (" : "failed (");
-	UARTWriteDecimal(failed);
-	UARTWrite(" failures)\n");
+		UARTWrite("Data bus test (0x0A000000-0x0A03FFFF)...");
+		int failed = 0;
+		for (uint32_t i=0x0A000000; i<0x0A03FFFF; i+=4)
+		{
+			failed += memTestDataBus((volatile datum*)i);
+		}
+		UARTWrite(failed == 0 ? "passed (" : "failed (");
+		UARTWriteDecimal(failed);
+		UARTWrite(" failures)\n");
 
-	UARTWrite("Address bus test (0x0B000000-0x0B03FFFF)...");
-	int errortype = 0;
-	datum* res = memTestAddressBus((volatile datum*)0x0B000000, 262144, &errortype);
-	UARTWrite(res == NULL ? "passed\n" : "failed\n");
-	if (res != NULL)
-	{
-		if (errortype == 0)
-			UARTWrite("Reason: Address bit stuck high at 0x");
-		if (errortype == 1)
-			UARTWrite("Reason: Address bit stuck low at 0x");
-		if (errortype == 2)
-			UARTWrite("Reason: Address bit shorted at 0x");
-		UARTWriteHex((unsigned int)res);
-		UARTWrite("\n");
-	}
+		UARTWrite("Address bus test (0x0B000000-0x0B03FFFF)...");
+		int errortype = 0;
+		datum* res = memTestAddressBus((volatile datum*)0x0B000000, 262144, &errortype);
+		UARTWrite(res == NULL ? "passed\n" : "failed\n");
+		if (res != NULL)
+		{
+			if (errortype == 0)
+				UARTWrite("Reason: Address bit stuck high at 0x");
+			if (errortype == 1)
+				UARTWrite("Reason: Address bit stuck low at 0x");
+			if (errortype == 2)
+				UARTWrite("Reason: Address bit shorted at 0x");
+			UARTWriteHex((unsigned int)res);
+			UARTWrite("\n");
+		}
 
-	UARTWrite("Memory device test (0x0C000000-0x0C03FFFF)...");
-	datum* res2 = memTestDevice((volatile datum *)0x0C000000, 262144);
-	UARTWrite(res2 == NULL ? "passed\n" : "failed\n");
-	if (res2 != NULL)
-	{
-		UARTWrite("Reason: incorrect value read at 0x");
-		UARTWriteHex((unsigned int)res2);
-		UARTWrite("\n");
-	}
+		UARTWrite("Memory device test (0x0C000000-0x0C03FFFF)...");
+		datum* res2 = memTestDevice((volatile datum *)0x0C000000, 262144);
+		UARTWrite(res2 == NULL ? "passed\n" : "failed\n");
+		if (res2 != NULL)
+		{
+			UARTWrite("Reason: incorrect value read at 0x");
+			UARTWriteHex((unsigned int)res2);
+			UARTWrite("\n");
+		}
 
-	if ((failed != 0) | (res != NULL) | (res2 != NULL))
-		UARTWrite("Memory device does not appear to be working correctly.\n");
+		if ((failed != 0) | (res != NULL) | (res2 != NULL))
+			UARTWrite("Memory device does not appear to be working correctly.\n");
 	}
 
 	// Load startup executable

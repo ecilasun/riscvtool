@@ -81,7 +81,8 @@ extern "C"
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrc a5, mie, a5;"        // Clear MSTATUS[3(MIE)]
             // 5
-            // Hardware sets PC <= MTVEC;
+            "csrr a5, mtvec;"           // Grab MTVEC
+            "jalr 0(a5);"               // Enter the ISR
         );
     }
 
