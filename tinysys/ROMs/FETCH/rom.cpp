@@ -79,10 +79,10 @@ extern "C"
             "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
             // 4
             "li a5, 8;"                 // Generate mask for bit 3
-            "csrrc a5, mie, a5;"        // Clear MSTATUS[3(MIE)]
+            "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
             // 5
-            "csrr a5, mtvec;"           // Grab MTVEC
-            "jalr 0(a5);"               // Enter the ISR
+            //"csrr a5, mtvec;"           // Grab MTVEC
+            //"jalr 0(a5);"               // Enter the ISR
         );
     }
 
@@ -94,10 +94,10 @@ extern "C"
             // 2
             "li a5, 128;"               // Generate mask for bit 7
             "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
-            "csrrs a5, mstatus, a5;"    // Copy it to MIE[7(MTIE)]
+            "csrrs a5, mie, a5;"        // Copy it to MIE[7(MTIE)]
             // 3
             "li a5, 8;"                 // Generate mask for bit 3
-            "csrrs a5, mie, a5;"        // Set MSTATUS[3(MIE)]
+            "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
             // 4
             "lw a5, 0(sp);"             // Restore old A5 before ISR entry
             "addi sp,sp,4;"

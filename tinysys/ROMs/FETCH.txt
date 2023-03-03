@@ -6,43 +6,43 @@ EXEC_P, HAS_SYMS, D_PAGED
 start address 0x00000000
 
 Program Header:
-0x70000003 off    0x000010cf vaddr 0x00000000 paddr 0x00000000 align 2**0
+0x70000003 off    0x000010c7 vaddr 0x00000000 paddr 0x00000000 align 2**0
          filesz 0x00000025 memsz 0x00000000 flags r--
     LOAD off    0x00001000 vaddr 0x00000000 paddr 0x00000000 align 2**12
-         filesz 0x000000b4 memsz 0x000000b4 flags r-x
+         filesz 0x000000ac memsz 0x000000ac flags r-x
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
   0 .boot         00000008  00000000  00000000  00001000  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .LUT          00000048  00000008  00000008  00001008  2**2
+  1 .LUT          00000040  00000008  00000008  00001008  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .eh_frame     00000064  00000050  00000050  00001050  2**2
+  2 .eh_frame     00000064  00000048  00000048  00001048  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .comment      0000001b  00000000  00000000  000010b4  2**0
+  3 .comment      0000001b  00000000  00000000  000010ac  2**0
                   CONTENTS, READONLY
-  4 .riscv.attributes 00000025  00000000  00000000  000010cf  2**0
+  4 .riscv.attributes 00000025  00000000  00000000  000010c7  2**0
                   CONTENTS, READONLY
 SYMBOL TABLE:
 00000000 l    d  .boot	00000000 .boot
-00000050 l    d  .eh_frame	00000000 .eh_frame
+00000048 l    d  .eh_frame	00000000 .eh_frame
 00000000 l    d  .comment	00000000 .comment
 00000000 l    d  .riscv.attributes	00000000 .riscv.attributes
 00000000 l    df *ABS*	00000000 rom.cpp
-000000c0 g       .eh_frame	00000000 _fdata
-00000050 g       .LUT	00000000 _etext
+000000b0 g       .eh_frame	00000000 _fdata
+00000048 g       .LUT	00000000 _etext
 00000100 g       *ABS*	00000000 __stack_size
 00000008 g       .boot	00000000 _boot
-00000034 g     F .LUT	0000001c leaveTimerISR
-000000c0 g       .eh_frame	00000000 _bss_start
-000000c0 g       .eh_frame	00000000 _bss_end
-00000008 g     F .LUT	0000002c enterTimerISR
+0000002c g     F .LUT	0000001c leaveTimerISR
+000000b0 g       .eh_frame	00000000 _bss_start
+000000b0 g       .eh_frame	00000000 _bss_end
+00000008 g     F .LUT	00000024 enterTimerISR
 00000008 g       .boot	00000000 _ftext
 00000000 g     F .boot	00000008 _start
-000000c0 g       .eh_frame	00000000 _edata
-000000c0 g       .eh_frame	00000000 _end
+000000b0 g       .eh_frame	00000000 _edata
+000000b0 g       .eh_frame	00000000 _end
 00000008 g     F .boot	00000000 _exit
-000000c0 g       .eh_frame	00000000 _fbss
+000000b0 g       .eh_frame	00000000 _fbss
 
 
 
@@ -50,7 +50,7 @@ Disassembly of section .boot:
 
 00000000 <_start>:
    0:	008000ef          	jal	ra,8 <_exit>
-   4:	030000ef          	jal	ra,34 <leaveTimerISR>
+   4:	028000ef          	jal	ra,2c <leaveTimerISR>
 
 Disassembly of section .LUT:
 
@@ -63,66 +63,64 @@ Disassembly of section .LUT:
   1c:	3047b7f3          	csrrc	a5,mie,a5
   20:	3007a7f3          	csrrs	a5,mstatus,a5
   24:	00800793          	li	a5,8
-  28:	3047b7f3          	csrrc	a5,mie,a5
-  2c:	305027f3          	csrr	a5,mtvec
-  30:	000780e7          	jalr	a5 # 10 <enterTimerISR+0x8>
+  28:	3007b7f3          	csrrc	a5,mstatus,a5
 
-00000034 <leaveTimerISR>:
-  34:	08000793          	li	a5,128
-  38:	3007b7f3          	csrrc	a5,mstatus,a5
+0000002c <leaveTimerISR>:
+  2c:	08000793          	li	a5,128
+  30:	3007b7f3          	csrrc	a5,mstatus,a5
+  34:	3047a7f3          	csrrs	a5,mie,a5
+  38:	00800793          	li	a5,8
   3c:	3007a7f3          	csrrs	a5,mstatus,a5
-  40:	00800793          	li	a5,8
-  44:	3047a7f3          	csrrs	a5,mie,a5
-  48:	00012783          	lw	a5,0(sp)
-  4c:	00410113          	addi	sp,sp,4
+  40:	00012783          	lw	a5,0(sp)
+  44:	00410113          	addi	sp,sp,4
 
 Disassembly of section .eh_frame:
 
-00000050 <_bss_end-0x70>:
-  50:	0010                	.2byte	0x10
-  52:	0000                	.2byte	0x0
-  54:	0000                	.2byte	0x0
-  56:	0000                	.2byte	0x0
-  58:	00527a03          	.4byte	0x527a03
-  5c:	7c01                	.2byte	0x7c01
-  5e:	0101                	.2byte	0x101
-  60:	00020d1b          	.4byte	0x20d1b
-  64:	0010                	.2byte	0x10
-  66:	0000                	.2byte	0x0
-  68:	0018                	.2byte	0x18
+00000048 <_bss_end-0x68>:
+  48:	0010                	.2byte	0x10
+  4a:	0000                	.2byte	0x0
+  4c:	0000                	.2byte	0x0
+  4e:	0000                	.2byte	0x0
+  50:	00527a03          	.4byte	0x527a03
+  54:	7c01                	.2byte	0x7c01
+  56:	0101                	.2byte	0x101
+  58:	00020d1b          	.4byte	0x20d1b
+  5c:	0010                	.2byte	0x10
+  5e:	0000                	.2byte	0x0
+  60:	0018                	.2byte	0x18
+  62:	0000                	.2byte	0x0
+  64:	ffa4                	.2byte	0xffa4
+  66:	ffff                	.2byte	0xffff
+  68:	0024                	.2byte	0x24
   6a:	0000                	.2byte	0x0
-  6c:	ff9c                	.2byte	0xff9c
-  6e:	ffff                	.2byte	0xffff
-  70:	002c                	.2byte	0x2c
+  6c:	0000                	.2byte	0x0
+  6e:	0000                	.2byte	0x0
+  70:	0010                	.2byte	0x10
   72:	0000                	.2byte	0x0
-  74:	0000                	.2byte	0x0
+  74:	002c                	.2byte	0x2c
   76:	0000                	.2byte	0x0
-  78:	0010                	.2byte	0x10
-  7a:	0000                	.2byte	0x0
-  7c:	002c                	.2byte	0x2c
+  78:	ffb4                	.2byte	0xffb4
+  7a:	ffff                	.2byte	0xffff
+  7c:	001c                	.2byte	0x1c
   7e:	0000                	.2byte	0x0
-  80:	ffb4                	.2byte	0xffb4
-  82:	ffff                	.2byte	0xffff
-  84:	001c                	.2byte	0x1c
+  80:	0000                	.2byte	0x0
+  82:	0000                	.2byte	0x0
+  84:	0010                	.2byte	0x10
   86:	0000                	.2byte	0x0
-  88:	0000                	.2byte	0x0
+  88:	0040                	.2byte	0x40
   8a:	0000                	.2byte	0x0
-  8c:	0010                	.2byte	0x10
-  8e:	0000                	.2byte	0x0
-  90:	0040                	.2byte	0x40
+  8c:	ff74                	.2byte	0xff74
+  8e:	ffff                	.2byte	0xffff
+  90:	0008                	.2byte	0x8
   92:	0000                	.2byte	0x0
-  94:	ff6c                	.2byte	0xff6c
-  96:	ffff                	.2byte	0xffff
-  98:	0008                	.2byte	0x8
+  94:	0000                	.2byte	0x0
+  96:	0000                	.2byte	0x0
+  98:	0010                	.2byte	0x10
   9a:	0000                	.2byte	0x0
-  9c:	0000                	.2byte	0x0
+  9c:	0054                	.2byte	0x54
   9e:	0000                	.2byte	0x0
-  a0:	0010                	.2byte	0x10
-  a2:	0000                	.2byte	0x0
-  a4:	0054                	.2byte	0x54
-  a6:	0000                	.2byte	0x0
-  a8:	ff60                	.2byte	0xff60
-  aa:	ffff                	.2byte	0xffff
+  a0:	ff68                	.2byte	0xff68
+  a2:	ffff                	.2byte	0xffff
 	...
 
 Disassembly of section .comment:
