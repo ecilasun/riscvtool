@@ -90,7 +90,7 @@ extern "C"
     {
         asm volatile(
             // 1
-            ";" // No privileges to restore
+            ";" // No privileges to restore on this architecture
             // 2
             "li a5, 128;"               // Generate mask for bit 7
             "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
