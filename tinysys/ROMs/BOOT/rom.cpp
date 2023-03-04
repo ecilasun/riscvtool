@@ -104,7 +104,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 
 	//uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
 	uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
-	//uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
+	//uint32_t PC = read_csr(mepc)-4;   // Return address minus one is the crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
 
 	if (cause & 0x80000000)
@@ -112,9 +112,13 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 		// This is a hardware or timer interrupt
 		if (code == IRQ_M_EXT)
 		{
+			// TODO: We need to read the 'reason' for HW interrupt from a custom register
+			// For now, ignore the reason as we only have one possible IRQ generator.
+			HandleUART();
+
 			// Machine External Interrupt (hardware)
 			// Route based on hardware type
-			if (value & 0x00000001) HandleUART();
+			//if (value & 0x00000001) HandleUART();
 			//if (value & 0x00000002) HandleKeyboard();
 		}
 

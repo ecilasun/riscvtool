@@ -93,10 +93,9 @@ extern "C"
     // 2) Save current privilege level to MSTATUS[MPP[1:0]]
     // 3) Save MIE[*] to MSTATUS[MPIE]
     // 4) Set MCAUSE[31] and MCAUSE[30:0] to 7 (interrupt, machine timer interrupt)
-    // 4a) Set MTVAL to the specific device code if this is an external machine interrupt (i.e. UART? Keyboard? etc)
     // 5) Set zero to MSTATUS[MIE]
     // 6) Set PC to MTVEC (hardware)
-    // TODO: Also set a task context pointer in MSCRATCH?
+    // NOTE: Specific hardware interrupt tupe bits (UART/KEYBOARD/SDCARD etc) can be accessed via a custom CSR from the ISR itself
     //
     // Exit:
     // 1) Set current privilege level to MSTATUS[MPP[1:0]]
@@ -106,6 +105,8 @@ extern "C"
     // NOTE: Hardware calls these instructions with the same PC
     // of the instruction after which the IRQ occurs
     // (i.e. PC+4 which is the return address)
+
+    // TIMER
 
     void __attribute__((naked, section (".LUT"))) enterTimerISR()
     {
@@ -154,10 +155,64 @@ extern "C"
          );
     }
 
+    // HARDWARE
+
+    void __attribute__((naked, section (".LUT"))) enterHWISR()
+    {
+        asm volatile(
+            // 0
+            "addi sp,sp,-4;"            // Save current A5 
+            "sw a5, 0(sp);"
+            // 1
+            "auipc a5, 0;"              // Grab PC+0
+            "csrrw a5, mepc, a5;"       // Set MEPC to current PC
+            // 2
+            ";"                         // No privileges to save in this architecture
+            // 3
+            "li a5, 2048;"              // Generate mask for bit 11
+            "csrrc a5, mie, a5;"        // Extract MIE[11(MEIE)] and set it to zero
+            "srl a5, a5, 4;"            // Shift to 7th bit position
+            "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
+            // 4
+            "li a5, 0x8000000A;"        // Set MCAUSE[31] for interrupt and set MCAUSE[30:0] to 11
+            "csrrw a5, mcause, a5;"
+            // 5
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
+            // 6
+            //"csrr a5, mtvec;"           // Grab MTVEC
+            //"jalr 0(a5);"               // Enter the ISR
+        );
+    }
+
+    void __attribute__((naked, section (".LUT"))) leaveHWSR()
+    {
+        asm volatile(
+            // 1
+            ";" // No privileges to restore on this architecture
+            // 2
+            "li a5, 128;"               // Generate mask for bit 7
+            "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
+            "sll a5, a5, 4;"            // Shift to 11th bit position
+            "csrrs a5, mie, a5;"        // Copy it to MIE[11(MEIE)]
+            // 3
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
+            // 4
+            "lw a5, 0(sp);"             // Restore old A5 before ISR entry
+            "addi sp,sp,4;"
+            // 5
+            // Hardware sets PC <= MEPC;
+         );
+    }
+
     void __attribute__((naked, section (".boot"))) _start()
     {
+        // Make sure we call every function so that there's an asm listing produced for all
         enterTimerISR();
         leaveTimerISR();
+        enterHWISR();
+        leaveHWSR();
     }
 
     void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
