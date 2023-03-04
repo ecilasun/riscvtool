@@ -1,5 +1,8 @@
 #include <inttypes.h>
 
+#define MAX_TASKS 16
+#define TASK_MAX_BREAKPOINTS 16
+
 typedef void(*taskfunc)();
 
 struct STaskBreakpoint

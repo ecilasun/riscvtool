@@ -1,5 +1,4 @@
 #include "core.h"
-#include "console.h"
 #include <setjmp.h>
 #include <string.h>
 #include "uart.h"
@@ -231,9 +230,9 @@ void RemoveBreakPoint(struct STaskContext *task, uint32_t breakaddress)
             }
 
             task->num_breakpoints--;
-            EchoConsole("RMV ");
-            EchoConsoleHex(breakaddress);
-            EchoConsole("\r\n");
+            UARTWrite("RMV ");
+            UARTWriteHex(breakaddress);
+            UARTWrite("\r\n");
         }
     }
 }
@@ -248,9 +247,9 @@ void AddBreakPoint(struct STaskContext *task, uint32_t breakaddress)
     // Replace with EBREAK
     *(uint32_t*)(breakaddress) = 0x00100073;
 
-    EchoConsole("BRK ");
-    EchoConsoleHex(breakaddress);
-    EchoConsole("\r\n");
+    UARTWrite("BRK ");
+    UARTWriteHex(breakaddress);
+    UARTWrite("\r\n");
 }
 
 uint32_t gdb_breakpoint(struct STaskContext tasks[])
@@ -386,7 +385,7 @@ uint32_t gdb_handler(struct STaskContext tasks[], const uint32_t num_tasks)
             if (packetbuffer[5]=='c') // Continue action
                 tasks[dbg_current_thread].ctrlc = 8;
             if (packetbuffer[5]=='s') // Step action
-                EchoConsole("step\r\n");
+                UARTWrite("step\r\n");
             if (packetbuffer[5]=='t') // Stop action
                 tasks[dbg_current_thread].ctrlc = 1;
 
@@ -541,9 +540,9 @@ uint32_t gdb_handler(struct STaskContext tasks[], const uint32_t num_tasks)
         }
         else // Unknown command
         {
-            EchoConsole(">");
-            EchoConsole(packetbuffer); // NOTE: Don't do this
-            EchoConsole("\r\n");
+            UARTWrite(">");
+            UARTWrite(packetbuffer); // NOTE: Don't do this
+            UARTWrite("\r\n");
         }
     }
 

@@ -33,6 +33,8 @@ extern "C"
     // Machine Trap Vector register which holds the base address of the interrupt vector table, as well as the interrupt mode configuration (direct or vectored) for CLINT and CLIC controllers. All synchronous exceptions also use mtvec as the base address for exception handling in all CLINT and CLIC modes.
     // BASE[31:2] MODE[1:0] (modes-> 00:direct, 01:vectored, 10/11:reserved)
     // Vectored interrupts (exceptions jump to BASE, interrupts jump to BASE+excode*4)
+    //
+    // Interrupt codes
     // int excode   description
     // 1   0        user software interrupt
     // 1   1        supervisor software interrupt
@@ -48,22 +50,65 @@ extern "C"
     // 1   11       machine external interrupt
     // 1   12>=     reserved
     //
+    // Cause codes
+    // Interrupt	Exception Code	Description	
+    // 1	0	Reserved	
+    // 1	1	Supervisor software interrupt	
+    // 1	2	Reserved	
+    // 1	3	Machine software interrupt	
+    // 1	4	Reserved	
+    // 1	5	Supervisor timer interrupt	
+    // 1	6	Reserved	
+    // 1	7	Machine timer interrupt	
+    // 1	8	Reserved	
+    // 1	9	Supervisor external interrupt	
+    // 1	10	Reserved	
+    // 1	11	Machine external interrupt	
+    // 1	12–15	Reserved	
+    // 1	≥16	Designated for platform use
+    // 0	0	Instruction address misaligned	
+    // 0	1	Instruction access fault	
+    // 0	2	Illegal instruction	
+    // 0	3	Breakpoint	
+    // 0	4	Load address misaligned	
+    // 0	5	Load access fault	
+    // 0	6	Store/AMO address misaligned	
+    // 0	7	Store/AMO access fault	
+    // 0	8	Environment call from U-mode	
+    // 0	9	Environment call from S-mode	
+    // 0	10	Reserved	
+    // 0	11	Environment call from M-mode	
+    // 0	12	Instruction page fault	
+    // 0	13	Load page fault	
+    // 0	14	Reserved	
+    // 0	15	Store/AMO page fault	
+    // 0	16–23	Reserved	
+    // 0	24–31	Designated for custom use	
+    // 0	32–47	Reserved	
+    // 0	48–63	Designated for custom use	
+    // 0	≥64	Reserved
+    //
     // Entry:
     // 1) Save PC to MEPC
     // 2) Save current privilege level to MSTATUS[MPP[1:0]]
     // 3) Save MIE[*] to MSTATUS[MPIE]
-    // 4) Set zero to MSTATUS[MIE]
-    // 5) Set PC to MTVEC
+    // 4) Set MCAUSE[31] and MCAUSE[30:0] to 7 (interrupt, machine timer interrupt)
+    // 4a) Set MTVAL to the specific device code if this is an external machine interrupt (i.e. UART? Keyboard? etc)
+    // 5) Set zero to MSTATUS[MIE]
+    // 6) Set PC to MTVEC (hardware)
+    // TODO: Also set a task context pointer in MSCRATCH?
     //
     // Exit:
     // 1) Set current privilege level to MSTATUS[MPP[1:0]]
     // 2) Set MIE[*] to MSTATUS[MPIE]
-    // 4) Set MEPC to PC
+    // 4) Set MEPC to PC (hardware)
+
+    // NOTE: Hardware calls these instructions with the same PC
+    // of the instruction after which the IRQ occurs
+    // (i.e. PC+4 which is the return address)
 
     void __attribute__((naked, section (".LUT"))) enterTimerISR()
     {
-        // NOTE: Hardware calls these instructions with the same PC
-        // of the instruction after which the IRQ occurs
         asm volatile(
             // 0
             "addi sp,sp,-4;"            // Save current A5 
@@ -78,9 +123,12 @@ extern "C"
             "csrrc a5, mie, a5;"        // Extract MIE[7(MTIE)] and set it to zero
             "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
             // 4
+            "li a5, 0x80000007;"        // Set MCAUSE[31] for interrupt and set MCAUSE[30:0] to 7
+            "csrrw a5, mcause, a5;"
+            // 5
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
-            // 5
+            // 6
             //"csrr a5, mtvec;"           // Grab MTVEC
             //"jalr 0(a5);"               // Enter the ISR
         );

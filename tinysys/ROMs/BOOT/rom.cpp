@@ -71,7 +71,23 @@ void UnmountDrive()
 	}
 }
 
-/*void HandleTimer()
+void HandleUART()
+{
+	// *IO_UARTRXTX = 0x13; // XOFF
+
+	// Echo back incoming bytes
+	while (UARTHasData())
+	{
+		// Consume incoming character
+		uint8_t incoming = *IO_UARTRX;
+		// Echo back
+		*IO_UARTTX = incoming;
+	}
+
+	// *IO_UARTRXTX = 0x11; // XON
+}
+
+void HandleTimer()
 {
 	static uint32_t nextstate = 0;
 	LEDSetState(nextstate++);
@@ -79,43 +95,64 @@ void UnmountDrive()
 	uint64_t now = E32ReadTime();
 	uint64_t future = now + ONE_SECOND_IN_TICKS;
 	E32SetTimeCompare(future);
-}*/
+}
 
 void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine()
 {
-	static uint32_t nextstate = 0;
-	LEDSetState(nextstate++);
-	uint64_t now = E32ReadTime();
-	uint64_t future = now + ONE_SECOND_IN_TICKS;
-	E32SetTimeCompare(future);
-
 	//uint32_t a7;
-	//asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined.
+	//asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined (this is the SYSCALL function code)
 
 	//uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
-	/*uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
+	uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
 	//uint32_t PC = read_csr(mepc)-4;     // Return address minus one is the crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
 
-	if (cause & 0x80000000) // Interrupt
+	if (cause & 0x80000000)
 	{
-		if (code == 0xB) // Machine External Interrupt (hardware)
+		// This is a hardware or timer interrupt
+		if (code == IRQ_M_EXT)
 		{
+			// Machine External Interrupt (hardware)
 			// Route based on hardware type
-			//if (value & 0x00000001) HandleUART();
+			if (value & 0x00000001) HandleUART();
 			//if (value & 0x00000002) HandleKeyboard();
-			//if (value & 0x00000010) HandleHARTIRQ(hartid); // HART#0 doesn't use this
 		}
 
-		if (code == 0x7) // Machine Timer Interrupt (timer)
+		if (code == IRQ_M_TIMER)
 		{
+			// Machine Timer Interrupt (timer)
 			HandleTimer();
 		}
 	}
-	else // Machine Software Exception (trap)
+	else
 	{
-		//HandleTrap(cause, a7, value, PC); // Illegal instruction etc
-	}*/
+		switch(code)
+		{
+			case CAUSE_MISALIGNED_FETCH:
+			case CAUSE_FETCH_ACCESS:
+			case CAUSE_ILLEGAL_INSTRUCTION:
+			case CAUSE_BREAKPOINT:
+			case CAUSE_MISALIGNED_LOAD:
+			case CAUSE_LOAD_ACCESS:
+			case CAUSE_MISALIGNED_STORE:
+			case CAUSE_STORE_ACCESS:
+			case CAUSE_USER_ECALL:
+			case CAUSE_SUPERVISOR_ECALL:
+			case CAUSE_HYPERVISOR_ECALL:
+			case CAUSE_MACHINE_ECALL:
+			case CAUSE_FETCH_PAGE_FAULT:
+			case CAUSE_LOAD_PAGE_FAULT:
+			case CAUSE_STORE_PAGE_FAULT:
+			{
+				// This is an exception
+				//
+				//HandleTrap(cause, a7, value, PC); // Illegal instruction etc
+			}
+			break;
+
+			default: break;
+		}
+	}
 }
 
 void InstallISR()
