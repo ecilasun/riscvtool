@@ -107,28 +107,35 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 	//uint32_t PC = read_csr(mepc)-4;   // Return address minus one is the crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
 
-	if (cause & 0x80000000)
+	if (cause & 0x80000000) // Hardware interrupts
 	{
-		// This is a hardware or timer interrupt
-		if (code == IRQ_M_EXT)
+		switch (code)
 		{
-			// TODO: We need to read the 'reason' for HW interrupt from a custom register
-			// For now, ignore the reason as we only have one possible IRQ generator.
-			HandleUART();
+			case IRQ_M_EXT:
+			{
+				// TODO: We need to read the 'reason' for HW interrupt from a custom register
+				// For now, ignore the reason as we only have one possible IRQ generator.
+				HandleUART();
 
-			// Machine External Interrupt (hardware)
-			// Route based on hardware type
-			//if (value & 0x00000001) HandleUART();
-			//if (value & 0x00000002) HandleKeyboard();
-		}
+				// Machine External Interrupt (hardware)
+				// Route based on hardware type
+				//if (value & 0x00000001) HandleUART();
+				//if (value & 0x00000002) HandleKeyboard();
+			}
+			break;
 
-		if (code == IRQ_M_TIMER)
-		{
-			// Machine Timer Interrupt (timer)
-			HandleTimer();
+			case IRQ_M_TIMER:
+			{
+				// Machine Timer Interrupt (timer)
+				HandleTimer();
+			}
+			break;
+
+			default:
+			break;
 		}
 	}
-	else
+	else // Exceptions
 	{
 		switch(code)
 		{
@@ -148,8 +155,6 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 			case CAUSE_LOAD_PAGE_FAULT:
 			case CAUSE_STORE_PAGE_FAULT:
 			{
-				// This is an exception
-				//
 				//HandleTrap(cause, a7, value, PC); // Illegal instruction etc
 			}
 			break;

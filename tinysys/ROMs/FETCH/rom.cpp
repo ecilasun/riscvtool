@@ -174,7 +174,7 @@ extern "C"
             "srl a5, a5, 4;"            // Shift to 7th bit position
             "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
             // 4
-            "li a5, 0x8000000A;"        // Set MCAUSE[31] for interrupt and set MCAUSE[30:0] to 11
+            "li a5, 0x8000000B;"        // Set MCAUSE[31] for interrupt and set MCAUSE[30:0] to 11
             "csrrw a5, mcause, a5;"
             // 5
             "li a5, 8;"                 // Generate mask for bit 3
