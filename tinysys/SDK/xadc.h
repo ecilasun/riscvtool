@@ -1,3 +1,5 @@
+#pragma once
+
 #include <inttypes.h>
 
 // Read only port for ADC access

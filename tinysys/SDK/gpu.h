@@ -1,3 +1,5 @@
+#pragma once
+
 #include <inttypes.h>
 
 #define FRAME_WIDTH_MODE0 320

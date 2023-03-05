@@ -1,3 +1,5 @@
+#pragma once
+
 #include <inttypes.h>
 
 // R/W access to memory mapped CSR memory (4Kbytes)

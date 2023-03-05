@@ -1,3 +1,5 @@
+#pragma once
+
 #include <inttypes.h>
 
 #define DMACMD_SETSOURCE    0x00000000

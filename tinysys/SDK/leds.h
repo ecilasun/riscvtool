@@ -1,3 +1,5 @@
+#pragma once
+
 #include <inttypes.h>
 
 // R/W port for LED status access

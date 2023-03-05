@@ -1,4 +1,6 @@
-#include "inttypes.h"
+#pragma once
+
+#include <inttypes.h>
 
 int SDCardStartup();
 //void SDCardControl(int power_cs_n);
