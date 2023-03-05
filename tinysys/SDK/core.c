@@ -99,7 +99,7 @@ void E32SetTimeCompare(const uint64_t future)
 
 // Heap total size: 223 Mbytes
 static uint8_t *heap_start  = (uint8_t*)0x02000000; // Program/static data can use up to 32MBytes, rest is reserved for heap
-static uint8_t *heap_end    = (uint8_t*)0x0FFE0000; // 8Kbytes are reserved for default stack, we can use up to this point
+static uint8_t *heap_end    = (uint8_t*)0x0FFEE000; // 8Kbytes are reserved for default stack, heap can grow up to this point
 
 //#undef errno
 //int nerrno;
