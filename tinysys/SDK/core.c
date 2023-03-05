@@ -97,11 +97,12 @@ void E32SetTimeCompare(const uint64_t future)
 
 // C stdlib overrides
 
-// Place the heap into DDR3 memory
+// Heap total size: 223 Mbytes
+static uint8_t *heap_start  = (uint8_t*)0x02000000; // Program/static data can use up to 32MBytes, rest is reserved for heap
+static uint8_t *heap_end    = (uint8_t*)0x0FFE0000; // 8Kbytes are reserved for default stack, we can use up to this point
+
 //#undef errno
 //int nerrno;
-static uint8_t *heap_start  = (uint8_t*)0x04000000; // Program/static data can use up to 64MBytes, rest is for dynamic memory
-static uint8_t *heap_end    = (uint8_t*)0x0FFE0000; // ~255MBytes of heap, minus 128KBytes at the end reserved for stacks
 
 #ifdef __cplusplus
 extern "C" {
