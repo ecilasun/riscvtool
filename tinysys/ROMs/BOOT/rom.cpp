@@ -121,6 +121,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 				// Route based on hardware type
 				//if (value & 0x00000001) HandleUART();
 				//if (value & 0x00000002) HandleKeyboard();
+				//if (value & 0x00000004) HandleJTAG();
 			}
 			break;
 

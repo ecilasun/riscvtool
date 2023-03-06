@@ -12,6 +12,25 @@
 #define ONE_MILLISECOND_IN_TICKS		10000
 #define ONE_MICROSECOND_IN_TICKS		10
 
+#define APPMEM_START                0x00000000 // Top of RAM
+#define HEAP_START_APPMEM_END       0x02000000 // 32Mbytes application space above this
+#define HEAP_END_TASKMEM_START      0x0FFE0000 // 223Mbytes Heap space above this
+#define TASKMEM_END_STACK_END       0x0FFEE000 // 56Kbyte space for tasks above this
+#define STACK_BASE                  0x0FFEFFFC // Stack above this
+#define ROMSHADOW_START             0x0FFF0000 // 4byte gap above this
+#define ROMSHADOW_END_MEM_END       0x0FFFFFFF // 64Kbyte ROM shadow copy above this
+
+// Device addresses
+// Each device has a 4Kbyte region mapped to i
+#define DEVICE_BASE 0x80000000
+#define DEVICE_UART (DEVICE_BASE+0x0000)
+#define DEVICE_LEDS (DEVICE_BASE+0x1000)
+#define DEVICE_GPUC (DEVICE_BASE+0x2000)
+#define DEVICE_SPIC (DEVICE_BASE+0x3000)
+#define DEVICE_CSRF (DEVICE_BASE+0x4000)
+#define DEVICE_XADC (DEVICE_BASE+0x5000)
+#define DEVICE_DMAC (DEVICE_BASE+0x6000)
+
 uint64_t E32ReadTime();
 uint64_t E32ReadCycles();
 uint64_t E32ReadRetiredInstructions();
