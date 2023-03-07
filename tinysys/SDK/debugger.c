@@ -14,7 +14,7 @@ void putDebugChar(int dbgchar)
 
 int getDebugChar()
 {
-    while (!UARTHasData()) { } // Wait for data
+    while (!UARTInputFifoHasData()) { } // Wait for data
     return IO_UARTRX[0];
 }
 
@@ -289,7 +289,7 @@ uint32_t gdb_handler(struct STaskContext tasks[], const uint32_t num_tasks)
     char outstring[1024] = "";
 
     int external_break = 0;
-    while (UARTHasData())
+    while (UARTInputFifoHasData())
     {
         char checkchar = *IO_UARTRX;
 

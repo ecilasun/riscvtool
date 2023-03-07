@@ -3,7 +3,7 @@
 #include <math.h> // For abs()
 
 // Status register bits
-// uartstateregister: {29'd0, uartTxBusy, fifoFull, fifohasData}
+// uartstateregister: {29'd0, uartTxBusy, fifoFull, inFifohasData}
 
 volatile uint32_t *IO_UARTRX     = (volatile uint32_t* ) 0x80000000; // Receive fifo
 volatile uint32_t *IO_UARTTX     = (volatile uint32_t* ) 0x80000004; // Transmit fifo
@@ -15,20 +15,35 @@ void UARTEnableInterrupt(int enable)
     *IO_UARTCtl = enable ? 0x00000010 : 0x00000000;
 }
 
-int UARTHasData()
+int UARTInputFifoHasData()
 {
     // bit0: RX FIFO has valid data
-    return ((*IO_UARTStatus)&0x00000001); // fifohasData
+    return ((*IO_UARTStatus)&0x00000001); // inFifohasData
 }
 
-void UARTFlush()
+int UARTOutputFifoHasData()
 {
-    while (UARTHasData()) { asm volatile("nop;"); }
+    // TODO:
+    // bit?: TX FIFO has valid data
+    //return ((*IO_UARTStatus)&0x0000000?); // outFifohasData
+
+    return 1;
+}
+
+void UARTDrainInput()
+{
+    while (UARTInputFifoHasData()) { asm volatile("nop;"); }
+}
+
+void UARTFlushOutput()
+{
+    // TODO:
+    //while (UARTOutputFifoHasData()) { asm volatile("nop;"); }
 }
 
 uint8_t UARTRead()
 {
-    if (UARTHasData())
+    if (UARTInputFifoHasData())
         return (uint8_t)(*IO_UARTRX);
     else
         return 0;
