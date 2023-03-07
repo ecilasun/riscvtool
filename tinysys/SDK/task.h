@@ -34,4 +34,4 @@ struct STaskContext {
 
 void TaskInitSystem(struct STaskContext *_ctx);
 int TaskAdd(struct STaskContext *_ctx, volatile uint32_t *taskcount, taskfunc _task, uint32_t _stacksizeword, uint32_t _interval);
-void TaskSwitchToTask(volatile uint32_t *currentTask, volatile uint32_t *taskcount, struct STaskContext *_ctx);
+void TaskSwitchToNext(volatile uint32_t *currentTask, volatile uint32_t *taskcount, struct STaskContext *_ctx);

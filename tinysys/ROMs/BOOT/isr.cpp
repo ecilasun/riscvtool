@@ -39,7 +39,7 @@ void HandleUART()
 void HandleTimer()
 {
 	// Switch between running tasks
-	TaskSwitchToTask(&g_currentTask, &g_taskcount, g_taskctx);
+	TaskSwitchToNext(&g_currentTask, &g_taskcount, g_taskctx);
 
 	uint64_t now = E32ReadTime();
 	uint64_t future = now + ONE_SECOND_IN_TICKS;

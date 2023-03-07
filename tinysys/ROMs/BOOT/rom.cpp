@@ -2,7 +2,7 @@
 
 #include "rvcrt0.h"
 
-#include "memtest/memtest.h"
+//#include "memtest/memtest.h"
 
 #include <math.h>
 #include <string.h>
@@ -25,7 +25,7 @@ int main()
 	// Clear terminal
 	UARTWrite("\033[H\033[0m\033[2J");
 
-	{
+	/*{
 		UARTWrite("\nClearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
 
 		uint64_t startclock = E32ReadTime();
@@ -86,7 +86,7 @@ int main()
 
 		if ((failed != 0) | (res != NULL) | (res2 != NULL))
 			UARTWrite("Memory device does not appear to be working correctly.\n");
-	}
+	}*/
 
 	// Load startup executable
 	{

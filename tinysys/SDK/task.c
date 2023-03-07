@@ -59,7 +59,7 @@ int TaskAdd(struct STaskContext *_ctx, volatile uint32_t *taskcount, taskfunc _t
 	return 1;
 }
 
-void TaskSwitchToTask(volatile uint32_t *currentTask, volatile uint32_t *taskcount, struct STaskContext *_ctx)
+void TaskSwitchToNext(volatile uint32_t *currentTask, volatile uint32_t *taskcount, struct STaskContext *_ctx)
 {
 	// TODO:
 	// 1) Make sure we came here from a 'task', else bail out (for instance we might end up here from main())
