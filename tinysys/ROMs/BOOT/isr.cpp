@@ -53,47 +53,47 @@ void HandleUART()
 	// *IO_UARTTX = 0x11;
 }
 
-void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine() // Auto-saves registers
+//void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine() // Auto-saves registers
+void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routine() // Manual register save
 {
 	// Use extra space in CSR file to store a copy of the current register set before we overwrite anything
 	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
-	/*asm volatile(" \
-		csrrw zero, 0xFE0, ra; \
-		csrrw zero, 0xFE1, sp; \
-		csrrw zero, 0xFE2, gp; \
-		csrrw zero, 0xFE3, tp; \
-		csrrw zero, 0xFE4, t0; \
-		csrrw zero, 0xFE5, t1; \
-		csrrw zero, 0xFE6, t2; \
-		csrrw zero, 0xFE7, s0; \
-		csrrw zero, 0xFE8, s1; \
-		csrrw zero, 0xFE9, a0; \
-		csrrw zero, 0xFEA, a1; \
-		csrrw zero, 0xFEB, a2; \
-		csrrw zero, 0xFEC, a3; \
-		csrrw zero, 0xFED, a4; \
-		csrrw zero, 0xFEE, a5; \
-		csrrw zero, 0xFEF, a6; \
-		csrrw zero, 0xFF0, a7; \
-		csrrw zero, 0xFF1, s2; \
-		csrrw zero, 0xFF2, s3; \
-		csrrw zero, 0xFF3, s4; \
-		csrrw zero, 0xFF4, s5; \
-		csrrw zero, 0xFF5, s6; \
-		csrrw zero, 0xFF6, s7; \
-		csrrw zero, 0xFF7, s8; \
-		csrrw zero, 0xFF8, s9; \
-		csrrw zero, 0xFF9, s10; \
-		csrrw zero, 0xFFA, s11; \
-		csrrw zero, 0xFFB, t3; \
-		csrrw zero, 0xFFC, t4; \
-		csrrw zero, 0xFFD, t5; \
-		csrrw zero, 0xFFE, t6; \
-		csrr a5, mepc; \
-		csrrw zero, 0xFFF, a5;");*/
+	asm volatile(" \
+		csrw 0xFE0, ra; \
+		csrw 0xFE1, sp; \
+		csrw 0xFE2, gp; \
+		csrw 0xFE3, tp; \
+		csrw 0xFE4, t0; \
+		csrw 0xFE5, t1; \
+		csrw 0xFE6, t2; \
+		csrw 0xFE7, s0; \
+		csrw 0xFE8, s1; \
+		csrw 0xFE9, a0; \
+		csrw 0xFEA, a1; \
+		csrw 0xFEB, a2; \
+		csrw 0xFEC, a3; \
+		csrw 0xFED, a4; \
+		csrw 0xFEE, a5; \
+		csrw 0xFEF, a6; \
+		csrw 0xFF0, a7; \
+		csrw 0xFF1, s2; \
+		csrw 0xFF2, s3; \
+		csrw 0xFF3, s4; \
+		csrw 0xFF4, s5; \
+		csrw 0xFF5, s6; \
+		csrw 0xFF6, s7; \
+		csrw 0xFF7, s8; \
+		csrw 0xFF8, s9; \
+		csrw 0xFF9, s10; \
+		csrw 0xFFA, s11; \
+		csrw 0xFFB, t3; \
+		csrw 0xFFC, t4; \
+		csrw 0xFFD, t5; \
+		csrw 0xFFE, t6;");
+		//csrr a5, mepc;
+		//csrw 0xFFF, a5;
 
-	//uint32_t a7;
-	//asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined (this is the SYSCALL function code)
+	// CSR[0xFF0] now contains A7 (SYSCALL number)
 
 	//uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
 	uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
@@ -168,40 +168,41 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 
 	// Restore registers to next task's register set
 	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
-	/*asm volatile(" \
-		csrrw a5, 0xFFF, zero; \
-		csrrw zero, mepc, a5; \
-		csrrw ra, 0xFE0, zero; \
-		csrrw sp, 0xFE1, zero; \
-		csrrw gp, 0xFE2, zero; \
-		csrrw tp, 0xFE3, zero; \
-		csrrw t0, 0xFE4, zero; \
-		csrrw t1, 0xFE5, zero; \
-		csrrw t2, 0xFE6, zero; \
-		csrrw s0, 0xFE7, zero; \
-		csrrw s1, 0xFE8, zero; \
-		csrrw a0, 0xFE9, zero; \
-		csrrw a1, 0xFEA, zero; \
-		csrrw a2, 0xFEB, zero; \
-		csrrw a3, 0xFEC, zero; \
-		csrrw a4, 0xFED, zero; \
-		csrrw a5, 0xFEE, zero; \
-		csrrw a6, 0xFEF, zero; \
-		csrrw a7, 0xFF0, zero; \
-		csrrw s2, 0xFF1, zero; \
-		csrrw s3, 0xFF2, zero; \
-		csrrw s4, 0xFF3, zero; \
-		csrrw s5, 0xFF4, zero; \
-		csrrw s6, 0xFF5, zero; \
-		csrrw s7, 0xFF6, zero; \
-		csrrw s8, 0xFF7, zero; \
-		csrrw s9, 0xFF8, zero; \
-		csrrw s10, 0xFF9, zero; \
-		csrrw s11, 0xFFA, zero; \
-		csrrw t3, 0xFFB, zero; \
-		csrrw t4, 0xFFC, zero; \
-		csrrw t5, 0xFFD, zero; \
-		csrrw t6, 0xFFE, zero;");*/
+	// csrr a5, 0xFFF;
+	// csrw mepc, a5;
+	asm volatile(" \
+		csrr ra, 0xFE0; \
+		csrr sp, 0xFE1; \
+		csrr gp, 0xFE2; \
+		csrr tp, 0xFE3; \
+		csrr t0, 0xFE4; \
+		csrr t1, 0xFE5; \
+		csrr t2, 0xFE6; \
+		csrr s0, 0xFE7; \
+		csrr s1, 0xFE8; \
+		csrr a0, 0xFE9; \
+		csrr a1, 0xFEA; \
+		csrr a2, 0xFEB; \
+		csrr a3, 0xFEC; \
+		csrr a4, 0xFED; \
+		csrr a5, 0xFEE; \
+		csrr a6, 0xFEF; \
+		csrr a7, 0xFF0; \
+		csrr s2, 0xFF1; \
+		csrr s3, 0xFF2; \
+		csrr s4, 0xFF3; \
+		csrr s5, 0xFF4; \
+		csrr s6, 0xFF5; \
+		csrr s7, 0xFF6; \
+		csrr s8, 0xFF7; \
+		csrr s9, 0xFF8; \
+		csrr s10, 0xFF9; \
+		csrr s11, 0xFFA; \
+		csrr t3, 0xFFB; \
+		csrr t4, 0xFFC; \
+		csrr t5, 0xFFD; \
+		csrr t6, 0xFFE; \
+		mret;");
 }
 
 void InstallISR()
