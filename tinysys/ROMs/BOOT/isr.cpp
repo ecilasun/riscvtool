@@ -89,9 +89,10 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 		csrw 0xFFB, t3; \
 		csrw 0xFFC, t4; \
 		csrw 0xFFD, t5; \
-		csrw 0xFFE, t6;");
-		//csrr a5, mepc;
-		//csrw 0xFFF, a5;
+		csrw 0xFFE, t6; \
+		csrr a5, mepc; \
+		csrw 0xFFF, a5; \
+	");
 
 	// CSR[0xFF0] now contains A7 (SYSCALL number)
 
@@ -168,8 +169,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 	// Restore registers to next task's register set
 	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
-	// csrr a5, 0xFFF;
-	// csrw mepc, a5;
 	asm volatile(" \
 		csrr ra, 0xFE0; \
 		csrr sp, 0xFE1; \
@@ -202,7 +201,10 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 		csrr t4, 0xFFC; \
 		csrr t5, 0xFFD; \
 		csrr t6, 0xFFE; \
-		mret;");
+		csrr a5, 0xFFF; \
+		csrw mepc, a5; \
+		mret; \
+	");
 }
 
 void InstallISR()
