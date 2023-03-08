@@ -112,8 +112,7 @@ extern "C"
     {
         asm volatile(
             // 0
-            "addi sp,sp,-4;"            // Save current A5 
-            "sw a5, 0(sp);"
+            "csrrw zero, 0xFD0, a5;"    // Save current A5
             // 1
             "auipc a5, 0;"              // Grab PC+0
             "csrrw a5, mepc, a5;"       // Set MEPC to current PC
@@ -148,8 +147,7 @@ extern "C"
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
             // 4
-            "lw a5, 0(sp);"             // Restore old A5 before ISR entry
-            "addi sp,sp,4;"
+            "csrr a5, 0xFD0;"           // Restore old A5 before ISR entry
             // 5
             // Hardware sets PC <= MEPC;
          );
@@ -161,8 +159,7 @@ extern "C"
     {
         asm volatile(
             // 0
-            "addi sp,sp,-4;"            // Save current A5 
-            "sw a5, 0(sp);"
+            "csrrw zero, 0xFD0, a5;"    // Save current A5
             // 1
             "auipc a5, 0;"              // Grab PC+0
             "csrrw a5, mepc, a5;"       // Set MEPC to current PC
@@ -199,8 +196,7 @@ extern "C"
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
             // 4
-            "lw a5, 0(sp);"             // Restore old A5 before ISR entry
-            "addi sp,sp,4;"
+            "csrr a5, 0xFD0;"           // Restore old A5 before ISR entry
             // 5
             // Hardware sets PC <= MEPC;
          );

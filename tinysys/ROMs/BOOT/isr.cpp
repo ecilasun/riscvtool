@@ -55,40 +55,42 @@ void HandleUART()
 
 void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine() // Auto-saves registers
 {
-	/*asm volatile (
-		"mv tp, sp;"		// Save current stack pointer
-		"addi sp,sp,-112;"	// Make space
-		"sw ra,0(sp);"		// Save all registers
-		"sw tp,4(sp);"
-		"sw t0,8(sp);"
-		"sw t1,12(sp);"
-		"sw t2,16(sp);"
-		"sw a0,20(sp);"
-		"sw a1,24(sp);"
-		"sw a2,28(sp);"
-		"sw a3,32(sp);"
-		"sw a4,36(sp);"
-		"sw a5,40(sp);"
-		"sw a6,44(sp);"
-		"sw a7,48(sp);"
-		"sw t3,52(sp);"
-		"sw t4,56(sp);"
-		"sw t5,60(sp);"
-		"sw t6,64(sp);"
-		"sw s0,68(sp);"
-		"sw s1,72(sp);"
-		"sw s2,76(sp);"
-		"sw s3,80(sp);"
-		"sw s4,84(sp);"
-		"sw s5,88(sp);"
-		"sw s6,92(sp);"
-		"sw s7,96(sp);"
-		"sw s8,100(sp);"
-		"sw s9,104(sp);"
-		"sw s10,108(sp);"
-		"sw s11,112(sp);"
-		//"sw gp,114(sp);" 	// Do not save/restore global pointer across tasks
-	);*/
+	// Use extra space in CSR file to store a copy of the current register set before we overwrite anything
+	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
+	/*asm volatile(" \
+		csrrw zero, 0xFE0, ra; \
+		csrrw zero, 0xFE1, sp; \
+		csrrw zero, 0xFE2, gp; \
+		csrrw zero, 0xFE3, tp; \
+		csrrw zero, 0xFE4, t0; \
+		csrrw zero, 0xFE5, t1; \
+		csrrw zero, 0xFE6, t2; \
+		csrrw zero, 0xFE7, s0; \
+		csrrw zero, 0xFE8, s1; \
+		csrrw zero, 0xFE9, a0; \
+		csrrw zero, 0xFEA, a1; \
+		csrrw zero, 0xFEB, a2; \
+		csrrw zero, 0xFEC, a3; \
+		csrrw zero, 0xFED, a4; \
+		csrrw zero, 0xFEE, a5; \
+		csrrw zero, 0xFEF, a6; \
+		csrrw zero, 0xFF0, a7; \
+		csrrw zero, 0xFF1, s2; \
+		csrrw zero, 0xFF2, s3; \
+		csrrw zero, 0xFF3, s4; \
+		csrrw zero, 0xFF4, s5; \
+		csrrw zero, 0xFF5, s6; \
+		csrrw zero, 0xFF6, s7; \
+		csrrw zero, 0xFF7, s8; \
+		csrrw zero, 0xFF8, s9; \
+		csrrw zero, 0xFF9, s10; \
+		csrrw zero, 0xFFA, s11; \
+		csrrw zero, 0xFFB, t3; \
+		csrrw zero, 0xFFC, t4; \
+		csrrw zero, 0xFFD, t5; \
+		csrrw zero, 0xFFE, t6; \
+		csrr a5, mepc; \
+		csrrw zero, 0xFFF, a5;");*/
 
 	//uint32_t a7;
 	//asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined (this is the SYSCALL function code)
@@ -125,7 +127,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 				// Switch between running tasks
 				TaskSwitchToNext(g_taskctx);
 
-				// Task scheduler resolution is 100 ms
+				// Task scheduler will re-visit in 100ms
 				uint64_t now = E32ReadTime();
 				uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
 				E32SetTimeCompare(future);
@@ -164,40 +166,42 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 		}
 	}
 
-	/*asm volatile (
-		"sw ra,0(sp);"		// Save all registers
-		"sw tp,4(sp);"
-		"sw t0,8(sp);"
-		"sw t1,12(sp);"
-		"sw t2,16(sp);"
-		"sw a0,20(sp);"
-		"sw a1,24(sp);"
-		"sw a2,28(sp);"
-		"sw a3,32(sp);"
-		"sw a4,36(sp);"
-		"sw a5,40(sp);"
-		"sw a6,44(sp);"
-		"sw a7,48(sp);"
-		"sw t3,52(sp);"
-		"sw t4,56(sp);"
-		"sw t5,60(sp);"
-		"sw t6,64(sp);"
-		"sw s0,68(sp);"
-		"sw s1,72(sp);"
-		"sw s2,76(sp);"
-		"sw s3,80(sp);"
-		"sw s4,84(sp);"
-		"sw s5,88(sp);"
-		"sw s6,92(sp);"
-		"sw s7,96(sp);"
-		"sw s8,100(sp);"
-		"sw s9,104(sp);"
-		"sw s10,108(sp);"
-		"sw s11,112(sp);"
-		//"sw gp,114(sp);" 	// Do not save/restore global pointer across tasks
-		"mv sp,tp;"			// Restore stack pointer
-		"mret;"
-	);*/
+	// Restore registers to next task's register set
+	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
+	/*asm volatile(" \
+		csrrw a5, 0xFFF, zero; \
+		csrrw zero, mepc, a5; \
+		csrrw ra, 0xFE0, zero; \
+		csrrw sp, 0xFE1, zero; \
+		csrrw gp, 0xFE2, zero; \
+		csrrw tp, 0xFE3, zero; \
+		csrrw t0, 0xFE4, zero; \
+		csrrw t1, 0xFE5, zero; \
+		csrrw t2, 0xFE6, zero; \
+		csrrw s0, 0xFE7, zero; \
+		csrrw s1, 0xFE8, zero; \
+		csrrw a0, 0xFE9, zero; \
+		csrrw a1, 0xFEA, zero; \
+		csrrw a2, 0xFEB, zero; \
+		csrrw a3, 0xFEC, zero; \
+		csrrw a4, 0xFED, zero; \
+		csrrw a5, 0xFEE, zero; \
+		csrrw a6, 0xFEF, zero; \
+		csrrw a7, 0xFF0, zero; \
+		csrrw s2, 0xFF1, zero; \
+		csrrw s3, 0xFF2, zero; \
+		csrrw s4, 0xFF3, zero; \
+		csrrw s5, 0xFF4, zero; \
+		csrrw s6, 0xFF5, zero; \
+		csrrw s7, 0xFF6, zero; \
+		csrrw s8, 0xFF7, zero; \
+		csrrw s9, 0xFF8, zero; \
+		csrrw s10, 0xFF9, zero; \
+		csrrw s11, 0xFFA, zero; \
+		csrrw t3, 0xFFB, zero; \
+		csrrw t4, 0xFFC, zero; \
+		csrrw t5, 0xFFD, zero; \
+		csrrw t6, 0xFFE, zero;");*/
 }
 
 void InstallISR()

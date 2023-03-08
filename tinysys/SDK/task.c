@@ -45,7 +45,7 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, uint32
 	//swap_csr(mie, MIP_MSIP | MIP_MEIP);
 
 	uint32_t *stackbase = (uint32_t*)malloc(_stacksizeword*sizeof(uint32_t));
-	uint32_t *stackpointer = stackbase + (_stacksizeword-1);
+	uint32_t *stackpointer = stackbase + (_stacksizeword-1); // End of allocated memory
 
 	// Insert the task before we increment task count
 	_ctx->tasks[prevcount].PC = (uint32_t)_task;
@@ -71,13 +71,84 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, uint32
 
 void TaskSwitchToNext(struct STaskContext *_ctx)
 {
+/*
 	// Load current process ID from TP register
-	//asm volatile("mv x31, tp;");
+	uint32_t currenttask;
+	asm volatile("mv a5, tp; sw a5, %0;" : "=m" (currenttask));
 
-	// TODO:
-	// 1) Make sure we came here from a 'task', else bail out (for instance we might end up here from main())
-	// 2) Make sure we have more than one task running, else bail out
-	// 3) Save current tasks' registers and PC into its task context
-	// 4) Load next tasks' registers
-	// 5) Swap MEPC to next tasks' PC and mret
+	// Get current task's register stash
+	uint32_t *regs = _ctx->tasks[currenttask].regs;
+
+	// Store register back-ups in current task's structure
+	asm volatile("csrr a5, 0xFE0; sw a5, %0;" : "=m" (regs[1]));		// ra
+	asm volatile("csrr a5, 0xFE1; sw a5, %0;" : "=m" (regs[2]));		// sp
+	asm volatile("csrr a5, 0xFE2; sw a5, %0;" : "=m" (regs[3]));		// gp
+	asm volatile("csrr a5, 0xFE3; sw a5, %0;" : "=m" (regs[4]));		// tp
+	asm volatile("csrr a5, 0xFE4; sw a5, %0;" : "=m" (regs[5]));		// t0
+	asm volatile("csrr a5, 0xFE5; sw a5, %0;" : "=m" (regs[6]));		// t1
+	asm volatile("csrr a5, 0xFE6; sw a5, %0;" : "=m" (regs[7]));		// t2
+	asm volatile("csrr a5, 0xFE7; sw a5, %0;" : "=m" (regs[8]));		// s0
+	asm volatile("csrr a5, 0xFE8; sw a5, %0;" : "=m" (regs[9]));		// s1
+	asm volatile("csrr a5, 0xFE9; sw a5, %0;" : "=m" (regs[10]));		// a0
+	asm volatile("csrr a5, 0xFEA; sw a5, %0;" : "=m" (regs[11]));		// a1
+	asm volatile("csrr a5, 0xFEB; sw a5, %0;" : "=m" (regs[12]));		// a2
+	asm volatile("csrr a5, 0xFEC; sw a5, %0;" : "=m" (regs[13]));		// a3
+	asm volatile("csrr a5, 0xFED; sw a5, %0;" : "=m" (regs[14]));		// a4
+	asm volatile("csrr a5, 0xFEE; sw a5, %0;" : "=m" (regs[15]));		// a5
+	asm volatile("csrr a5, 0xFEF; sw a5, %0;" : "=m" (regs[16]));		// a6
+	asm volatile("csrr a5, 0xFF0; sw a5, %0;" : "=m" (regs[17]));		// a7
+	asm volatile("csrr a5, 0xFF1; sw a5, %0;" : "=m" (regs[18]));		// s2
+	asm volatile("csrr a5, 0xFF2; sw a5, %0;" : "=m" (regs[19]));		// s3
+	asm volatile("csrr a5, 0xFF3; sw a5, %0;" : "=m" (regs[20]));		// s4
+	asm volatile("csrr a5, 0xFF4; sw a5, %0;" : "=m" (regs[21]));		// s5
+	asm volatile("csrr a5, 0xFF5; sw a5, %0;" : "=m" (regs[22]));		// s6
+	asm volatile("csrr a5, 0xFF6; sw a5, %0;" : "=m" (regs[23]));		// s7
+	asm volatile("csrr a5, 0xFF7; sw a5, %0;" : "=m" (regs[24]));		// s8
+	asm volatile("csrr a5, 0xFF8; sw a5, %0;" : "=m" (regs[25]));		// s9
+	asm volatile("csrr a5, 0xFF9; sw a5, %0;" : "=m" (regs[26]));		// s10
+	asm volatile("csrr a5, 0xFFA; sw a5, %0;" : "=m" (regs[27]));		// s11
+	asm volatile("csrr a5, 0xFFB; sw a5, %0;" : "=m" (regs[28]));		// t3
+	asm volatile("csrr a5, 0xFFC; sw a5, %0;" : "=m" (regs[29]));		// t4
+	asm volatile("csrr a5, 0xFFD; sw a5, %0;" : "=m" (regs[30]));		// t5
+	asm volatile("csrr a5, 0xFFE; sw a5, %0;" : "=m" (regs[31]));		// t6
+	asm volatile("csrr a5, 0xFFF; sw a5, %0;" : "=m" (_ctx->tasks[currenttask].PC));
+
+	// Switch to next task
+	currenttask = (_ctx->numTasks <= 1) ? 0 : (currenttask+1) % _ctx->numTasks;
+	regs = _ctx->tasks[currenttask].regs;
+
+	// Load next tasks's registers into CSR file
+	asm volatile("lw a5, %0; csrrw zero, 0xFE0, a5;" : "=m" (regs[1]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE1, a5;" : "=m" (regs[2]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE2, a5;" : "=m" (regs[3]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE3, a5;" : "=m" (regs[4]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE4, a5;" : "=m" (regs[5]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE5, a5;" : "=m" (regs[6]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE6, a5;" : "=m" (regs[7]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE7, a5;" : "=m" (regs[8]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE8, a5;" : "=m" (regs[9]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFE9, a5;" : "=m" (regs[10]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFEA, a5;" : "=m" (regs[11]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFEB, a5;" : "=m" (regs[12]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFEC, a5;" : "=m" (regs[13]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFED, a5;" : "=m" (regs[14]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFEE, a5;" : "=m" (regs[15]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFEF, a5;" : "=m" (regs[16]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF0, a5;" : "=m" (regs[17]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF1, a5;" : "=m" (regs[18]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF2, a5;" : "=m" (regs[19]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF3, a5;" : "=m" (regs[20]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF4, a5;" : "=m" (regs[21]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF5, a5;" : "=m" (regs[22]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF6, a5;" : "=m" (regs[23]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF7, a5;" : "=m" (regs[24]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF8, a5;" : "=m" (regs[25]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFF9, a5;" : "=m" (regs[26]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFFA, a5;" : "=m" (regs[27]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFFB, a5;" : "=m" (regs[28]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFFC, a5;" : "=m" (regs[29]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFFD, a5;" : "=m" (regs[30]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFFE, a5;" : "=m" (regs[31]));
+	asm volatile("lw a5, %0; csrrw zero, 0xFFF, a5;" : "=m" (_ctx->tasks[currenttask].PC)); // Return address of next task
+*/
 }
