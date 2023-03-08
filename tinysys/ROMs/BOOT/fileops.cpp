@@ -143,7 +143,7 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 	FRESULT fr = f_open(&fp, filename, FA_READ);
 	if (fr == FR_OK)
 	{
-		UARTWrite("Loading boot executable...");
+		//UARTWrite("Loading boot executable...");
 		SElfFileHeader32 fheader;
 		UINT readsize;
 		f_read(&fp, &fheader, sizeof(fheader), &readsize);
@@ -154,7 +154,7 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 		// Unmount filesystem and reset to root directory before passing control
 		UnmountDrive();
 
-		UARTWrite("done. Launching\n");
+		//UARTWrite("done. Launching\n");
 
 		// Run the executable
 		asm volatile(
@@ -168,7 +168,7 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 		// Re-mount filesystem before re-gaining control, if execution falls back here
 		MountDrive();
 	}
-	else
+	/*else
 	{
 		if (reportError)
 		{
@@ -176,5 +176,5 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 			UARTWrite(filename);
 			UARTWrite("' not found.\n");
 		}
-	}
+	}*/
 }

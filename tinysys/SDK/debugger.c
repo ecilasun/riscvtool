@@ -152,7 +152,7 @@ void byte2architectureorderedstring(const uint8_t val, char *regstring)
 }
 
 // NOTE: This cannot be re-entrant
-void SendDebugPacketRegisters(struct STaskContext *task)
+void SendDebugPacketRegisters(struct STask *task)
 {
     char packetString[512];
 
@@ -214,7 +214,7 @@ uint32_t hex2int(char *hex)
     return val;
 }
 
-void RemoveBreakPoint(struct STaskContext *task, uint32_t breakaddress)
+void RemoveBreakPoint(struct STask *task, uint32_t breakaddress)
 {
     for (uint32_t i=0; i<task->num_breakpoints; ++i)
     {
@@ -237,7 +237,7 @@ void RemoveBreakPoint(struct STaskContext *task, uint32_t breakaddress)
     }
 }
 
-void AddBreakPoint(struct STaskContext *task, uint32_t breakaddress)
+void AddBreakPoint(struct STask *task, uint32_t breakaddress)
 {
     task->breakpoints[task->num_breakpoints].address = breakaddress;
     // Save instruction
@@ -252,8 +252,9 @@ void AddBreakPoint(struct STaskContext *task, uint32_t breakaddress)
     UARTWrite("\r\n");
 }
 
-uint32_t gdb_breakpoint(struct STaskContext tasks[])
+uint32_t gdb_breakpoint(struct STaskContext *_ctx)
 {
+    struct STask *tasks = _ctx->tasks;
     if (tasks[dbg_current_thread].breakhit == 0)
     {
         tasks[dbg_current_thread].breakhit = 1;
@@ -267,8 +268,9 @@ uint32_t gdb_breakpoint(struct STaskContext tasks[])
     return 0x0;
 }
 
-uint32_t gdb_handler(struct STaskContext tasks[], const uint32_t num_tasks)
+uint32_t gdb_handler(struct STaskContext *_ctx)
 {
+    struct STask *tasks = _ctx->tasks;
     // NOTES:
     // Checksum is computed as the modulo 256 sum of the packet info characters.
     // For each packet received, responses is either + (for accepted) or - (for retry): $packet-data#checksum
@@ -330,7 +332,7 @@ uint32_t gdb_handler(struct STaskContext tasks[], const uint32_t num_tasks)
             if (offset == 0)
             {
                 strcat(outstring, "l<?xml version=\"1.0\"?>\n<threads>\n");
-                for (uint32_t i=0;i<num_tasks;++i)
+                for (uint32_t i=0;i<_ctx->numTasks;++i)
                 {
                     char threadid[10];
                     uint2dec(i+1, threadid);

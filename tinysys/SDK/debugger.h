@@ -2,8 +2,8 @@
 
 #include "task.h"
 
-uint32_t gdb_handler(struct STaskContext tasks[], const uint32_t num_tasks);
-uint32_t gdb_breakpoint(struct STaskContext tasks[]);
+uint32_t gdb_handler(struct STaskContext *_ctx);
+uint32_t gdb_breakpoint(struct STaskContext *_ctx);
 
-void AddBreakPoint(struct STaskContext *task, uint32_t breakaddress);
-void RemoveBreakPoint(struct STaskContext *task, uint32_t breakaddress);
+void AddBreakPoint(struct STask *task, uint32_t breakaddress);
+void RemoveBreakPoint(struct STask *task, uint32_t breakaddress);

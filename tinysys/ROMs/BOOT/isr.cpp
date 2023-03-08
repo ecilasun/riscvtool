@@ -1,5 +1,6 @@
 #include "encoding.h"
 #include "core.h"
+#include "debugger.h"
 #include "leds.h"
 #include "uart.h"
 #include "task.h"
@@ -7,19 +8,35 @@
 
 #include <stdlib.h>
 
-volatile static uint32_t g_currentTask = 0x0;
-volatile static uint32_t g_taskcount = 0;
 static STaskContext *g_taskctx = (STaskContext *)0x0;
+
+void OSIdleTask()
+{
+	while(1)
+	{
+		asm volatile("nop;");
+	}
+}
 
 void LEDBlinkyTask()
 {
-	// Invoked every 250 ms
 	static uint32_t nextstate = 0;
-	LEDSetState(nextstate++);
+	static uint64_t prevTime = 0;
+	while(1)
+	{
+		uint64_t now = E32ReadTime();
+		if (now - prevTime > ONE_SECOND_IN_TICKS)
+		{
+			prevTime = now;
+			// Advance LED state approximately every second
+			LEDSetState(nextstate++);
+		}
+	}
 }
 
 void HandleUART()
 {
+
 	// XOFF - hold data traffic from sender so that we don't get stuck here
 	// *IO_UARTTX = 0x13;
 
@@ -36,18 +53,43 @@ void HandleUART()
 	// *IO_UARTTX = 0x11;
 }
 
-void HandleTimer()
+void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine() // Auto-saves registers
 {
-	// Switch between running tasks
-	TaskSwitchToNext(&g_currentTask, &g_taskcount, g_taskctx);
+	/*asm volatile (
+		"mv tp, sp;"		// Save current stack pointer
+		"addi sp,sp,-112;"	// Make space
+		"sw ra,0(sp);"		// Save all registers
+		"sw tp,4(sp);"
+		"sw t0,8(sp);"
+		"sw t1,12(sp);"
+		"sw t2,16(sp);"
+		"sw a0,20(sp);"
+		"sw a1,24(sp);"
+		"sw a2,28(sp);"
+		"sw a3,32(sp);"
+		"sw a4,36(sp);"
+		"sw a5,40(sp);"
+		"sw a6,44(sp);"
+		"sw a7,48(sp);"
+		"sw t3,52(sp);"
+		"sw t4,56(sp);"
+		"sw t5,60(sp);"
+		"sw t6,64(sp);"
+		"sw s0,68(sp);"
+		"sw s1,72(sp);"
+		"sw s2,76(sp);"
+		"sw s3,80(sp);"
+		"sw s4,84(sp);"
+		"sw s5,88(sp);"
+		"sw s6,92(sp);"
+		"sw s7,96(sp);"
+		"sw s8,100(sp);"
+		"sw s9,104(sp);"
+		"sw s10,108(sp);"
+		"sw s11,112(sp);"
+		//"sw gp,114(sp);" 	// Do not save/restore global pointer across tasks
+	);*/
 
-	uint64_t now = E32ReadTime();
-	uint64_t future = now + ONE_SECOND_IN_TICKS;
-	E32SetTimeCompare(future);
-}
-
-void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine()
-{
 	//uint32_t a7;
 	//asm volatile ("sw a7, %0;" : "=m" (a7)); // Catch value of A7 before it's ruined (this is the SYSCALL function code)
 
@@ -64,6 +106,7 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 			{
 				// TODO: We need to read the 'reason' for HW interrupt from a custom register
 				// For now, ignore the reason as we only have one possible IRQ generator.
+				//gdb_handler(g_taskctx);
 				HandleUART();
 
 				// Machine External Interrupt (hardware)
@@ -77,7 +120,15 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 			case IRQ_M_TIMER:
 			{
 				// Machine Timer Interrupt (timer)
-				HandleTimer();
+				// Task scheduler runs here
+
+				// Switch between running tasks
+				TaskSwitchToNext(g_taskctx);
+
+				// Task scheduler resolution is 100 ms
+				uint64_t now = E32ReadTime();
+				uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
+				E32SetTimeCompare(future);
 			}
 			break;
 
@@ -112,12 +163,47 @@ void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrup
 			default: break;
 		}
 	}
+
+	/*asm volatile (
+		"sw ra,0(sp);"		// Save all registers
+		"sw tp,4(sp);"
+		"sw t0,8(sp);"
+		"sw t1,12(sp);"
+		"sw t2,16(sp);"
+		"sw a0,20(sp);"
+		"sw a1,24(sp);"
+		"sw a2,28(sp);"
+		"sw a3,32(sp);"
+		"sw a4,36(sp);"
+		"sw a5,40(sp);"
+		"sw a6,44(sp);"
+		"sw a7,48(sp);"
+		"sw t3,52(sp);"
+		"sw t4,56(sp);"
+		"sw t5,60(sp);"
+		"sw t6,64(sp);"
+		"sw s0,68(sp);"
+		"sw s1,72(sp);"
+		"sw s2,76(sp);"
+		"sw s3,80(sp);"
+		"sw s4,84(sp);"
+		"sw s5,88(sp);"
+		"sw s6,92(sp);"
+		"sw s7,96(sp);"
+		"sw s8,100(sp);"
+		"sw s9,104(sp);"
+		"sw s10,108(sp);"
+		"sw s11,112(sp);"
+		//"sw gp,114(sp);" 	// Do not save/restore global pointer across tasks
+		"mv sp,tp;"			// Restore stack pointer
+		"mret;"
+	);*/
 }
 
 void InstallISR()
 {
 	// Initialize task context memory
-	g_taskctx = (STaskContext *)malloc(sizeof(STaskContext)*MAX_TASKS);
+	g_taskctx = (STaskContext *)malloc(sizeof(STaskContext));
 	TaskInitSystem(g_taskctx);
 
 	// Set machine trap vector
@@ -125,7 +211,7 @@ void InstallISR()
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + TEN_MILLISECONDS_IN_TICKS; // One seconds into the future
+	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS; // One seconds into the future
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
@@ -134,8 +220,8 @@ void InstallISR()
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 
 	// Add a test task to run every quarter of a second.
-	g_taskcount = 0;
-	TaskAdd(g_taskctx, &g_taskcount, LEDBlinkyTask, 512, ONE_SECOND_IN_TICKS/4);
+	TaskAdd(g_taskctx, "OSIdle", OSIdleTask, 512, ONE_SECOND_IN_TICKS/4);
+	TaskAdd(g_taskctx, "Blinky", LEDBlinkyTask, 512, ONE_SECOND_IN_TICKS/4);
 
 	// Allow all machine interrupts to trigger (thus also enabling task system)
 	swap_csr(mstatus, MSTATUS_MIE);
