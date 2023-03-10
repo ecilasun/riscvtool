@@ -158,10 +158,15 @@ void SendDebugPacketRegisters(struct STask *task)
 
     // All registers first
     for(uint32_t i=0;i<32;++i)
-        int2architectureorderedstring(task->regs[i], &packetString[i*8]);
+    {
+        if (i==0)
+            int2architectureorderedstring(0, &packetString[i*8]);
+        else
+            int2architectureorderedstring(task->regs[i], &packetString[i*8]);
+    }
 
     // PC is sent last
-    int2architectureorderedstring(task->PC, &packetString[32*8]);
+    int2architectureorderedstring(task->regs[0], &packetString[32*8]);
 
     // Not sure if float registers follow?
 
@@ -332,7 +337,7 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
             if (offset == 0)
             {
                 strcat(outstring, "l<?xml version=\"1.0\"?>\n<threads>\n");
-                for (uint32_t i=0;i<_ctx->numTasks;++i)
+                for (int32_t i=0;i<_ctx->numTasks;++i)
                 {
                     char threadid[10];
                     uint2dec(i+1, threadid);
@@ -442,7 +447,10 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
             hexbuf[r]=0;
             r = hex2int(hexbuf);
 
-            int2architectureorderedstring(tasks[dbg_current_thread].regs[r], regstring);
+            if (r==0)
+                int2architectureorderedstring(0, regstring);
+            else
+                int2architectureorderedstring(tasks[dbg_current_thread].regs[r], regstring);
 
             SendDebugPacket(regstring); // Return register data
         }

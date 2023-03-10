@@ -137,13 +137,13 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 	}
 }
 
-void RunExecutable(const int hartID, const char *filename, const bool reportError)
+uint32_t LoadExecutable(const char *filename, const bool reportError)
 {
 	FIL fp;
 	FRESULT fr = f_open(&fp, filename, FA_READ);
 	if (fr == FR_OK)
 	{
-		//UARTWrite("Loading boot executable...");
+		UARTWrite("Loading boot executable...");
 		SElfFileHeader32 fheader;
 		UINT readsize;
 		f_read(&fp, &fheader, sizeof(fheader), &readsize);
@@ -153,20 +153,13 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 
 		// Unmount filesystem and reset to root directory before passing control
 		UnmountDrive();
-
-		//UARTWrite("done. Launching\n");
-
-		// Run the executable
 		asm volatile(
 			".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
 			"fence.i;"          // Invalidate I$
-			"lw s0, %0;"        // Target branch address
-			"jalr s0;"          // Branch to the entry point
-			: "=m" (branchaddress) : : 
 		);
+		UARTWrite("done.\n");
 
-		// Re-mount filesystem before re-gaining control, if execution falls back here
-		MountDrive();
+		return branchaddress;
 	}
 	/*else
 	{
@@ -177,4 +170,21 @@ void RunExecutable(const int hartID, const char *filename, const bool reportErro
 			UARTWrite("' not found.\n");
 		}
 	}*/
+
+	return 0;
+}
+
+void RunExecutable(uint32_t startAddress)
+{
+	//UARTWrite("Launching\n");
+
+	// Run the executable
+	asm volatile(
+		"lw s0, %0;"        // Target branch address
+		"jalr s0;"          // Branch to the entry point
+		: "=m" (startAddress) : : 
+	);
+
+	// Re-mount filesystem before re-gaining control, if execution falls back here
+	//MountDrive();
 }

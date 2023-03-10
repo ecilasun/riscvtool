@@ -1,37 +1,20 @@
 #include "encoding.h"
 #include "core.h"
 #include "debugger.h"
-#include "leds.h"
 #include "uart.h"
-#include "task.h"
 #include "isr.h"
 
 #include <stdlib.h>
 
 static STaskContext *g_taskctx = (STaskContext *)0x0;
 
-void OSIdleTask()
+STaskContext *StartTaskContext()
 {
-	while(1)
-	{
-		asm volatile("nop;");
-	}
-}
+	// Initialize task context memory
+	g_taskctx = (STaskContext *)malloc(sizeof(STaskContext));
+	TaskInitSystem(g_taskctx);
 
-void LEDBlinkyTask()
-{
-	static uint32_t nextstate = 0;
-	static uint64_t prevTime = 0;
-	while(1)
-	{
-		uint64_t now = E32ReadTime();
-		if (now - prevTime > ONE_SECOND_IN_TICKS)
-		{
-			prevTime = now;
-			// Advance LED state approximately every second
-			LEDSetState(nextstate++);
-		}
-	}
+	return g_taskctx;
 }
 
 void HandleUART()
@@ -58,11 +41,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 {
 	// Use extra space in CSR file to store a copy of the current register set before we overwrite anything
 	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
+//		csrw 0xFE3, tp;
 	asm volatile(" \
 		csrw 0xFE0, ra; \
 		csrw 0xFE1, sp; \
 		csrw 0xFE2, gp; \
-		csrw 0xFE3, tp; \
 		csrw 0xFE4, t0; \
 		csrw 0xFE5, t1; \
 		csrw 0xFE6, t2; \
@@ -169,11 +152,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 	// Restore registers to next task's register set
 	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
+//		csrr tp, 0xFE3;
 	asm volatile(" \
 		csrr ra, 0xFE0; \
 		csrr sp, 0xFE1; \
 		csrr gp, 0xFE2; \
-		csrr tp, 0xFE3; \
 		csrr t0, 0xFE4; \
 		csrr t1, 0xFE5; \
 		csrr t2, 0xFE6; \
@@ -209,27 +192,19 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 void InstallISR()
 {
-	// Initialize task context memory
-	g_taskctx = (STaskContext *)malloc(sizeof(STaskContext));
-	TaskInitSystem(g_taskctx);
-
 	// Set machine trap vector
-	swap_csr(mtvec, interrupt_service_routine);
+	write_csr(mtvec, interrupt_service_routine);
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS; // One seconds into the future
+	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)
 	// Enable machine hardware interrupts
 	// Enable machine timer interrupts
-	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
-
-	// Add a test task to run every quarter of a second.
-	TaskAdd(g_taskctx, "OSIdle", OSIdleTask, 512, ONE_SECOND_IN_TICKS/4);
-	TaskAdd(g_taskctx, "Blinky", LEDBlinkyTask, 512, ONE_SECOND_IN_TICKS/4);
+	write_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 
 	// Allow all machine interrupts to trigger (thus also enabling task system)
-	swap_csr(mstatus, MSTATUS_MIE);
+	write_csr(mstatus, MSTATUS_MIE);
 }

@@ -14,17 +14,11 @@ struct STaskBreakpoint
 };
 
 struct STask {
-    taskfunc task;      // Task entry point
-    uint32_t HART;      // HART affinity mask (for migration)
-    uint32_t PC;        // Program counter
-    uint32_t regs[64];  // Integer and float registers
-
-	// Setup
-	void *taskstack;	// Initial stack pointer, allocated by task caller
-	uint32_t stacksize;	// Size of stack for this task
-	char name[16];		// Name of this task
+	uint32_t HART;      // HART affinity mask (for migration)
+	uint32_t regs[32];  // Integer registers - NOTE: register zero here is actually the PC
 
 	// Debug support - this will probably move somewhere else
+	char name[16];				// Name of this task
 	uint32_t ctrlc;				// Stop on first chance
 	uint32_t breakhit;			// We've stopped due to a breakpoint
 	uint32_t num_breakpoints;	// Breakpoint count
@@ -33,9 +27,10 @@ struct STask {
 
 struct STaskContext {
 	struct STask *tasks;			// List of all the tasks
-	volatile uint32_t numTasks;		// Number of tasks
+	volatile int32_t currentTask;	// Current task index
+	volatile int32_t numTasks;		// Number of tasks
 };
 
 void TaskInitSystem(struct STaskContext *_ctx);
-int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, uint32_t _stacksizeword, uint32_t _interval);
+int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task/*, uint32_t _stacksizeword*/);
 void TaskSwitchToNext(struct STaskContext *_ctx);

@@ -114,7 +114,7 @@ extern "C"
             // 0
             "csrrw zero, 0xFD0, a5;"    // Save current A5
             // 1
-            "auipc a5, 0;"              // Grab PC+0
+            "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
             "csrrw a5, mepc, a5;"       // Set MEPC to current PC
             // 2
             ";"                         // No privileges to save in this architecture
@@ -161,7 +161,7 @@ extern "C"
             // 0
             "csrrw zero, 0xFD0, a5;"    // Save current A5
             // 1
-            "auipc a5, 0;"              // Grab PC+0
+            "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
             "csrrw a5, mepc, a5;"       // Set MEPC to current PC
             // 2
             ";"                         // No privileges to save in this architecture
