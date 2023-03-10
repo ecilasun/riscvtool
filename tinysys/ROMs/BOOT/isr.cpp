@@ -6,15 +6,14 @@
 
 #include <stdlib.h>
 
-static STaskContext *g_taskctx = (STaskContext *)0x0;
+static STaskContext g_taskctx;
 
 STaskContext *StartTaskContext()
 {
 	// Initialize task context memory
-	g_taskctx = (STaskContext *)malloc(sizeof(STaskContext));
-	TaskInitSystem(g_taskctx);
+	TaskInitSystem(&g_taskctx);
 
-	return g_taskctx;
+	return &g_taskctx;
 }
 
 void HandleUART()
@@ -41,40 +40,40 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 {
 	// Use extra space in CSR file to store a copy of the current register set before we overwrite anything
 	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
-//		csrw 0xFE3, tp;
 	asm volatile(" \
-		csrw 0xFE0, ra; \
-		csrw 0xFE1, sp; \
-		csrw 0xFE2, gp; \
-		csrw 0xFE4, t0; \
-		csrw 0xFE5, t1; \
-		csrw 0xFE6, t2; \
-		csrw 0xFE7, s0; \
-		csrw 0xFE8, s1; \
-		csrw 0xFE9, a0; \
-		csrw 0xFEA, a1; \
-		csrw 0xFEB, a2; \
-		csrw 0xFEC, a3; \
-		csrw 0xFED, a4; \
-		csrw 0xFEE, a5; \
-		csrw 0xFEF, a6; \
-		csrw 0xFF0, a7; \
-		csrw 0xFF1, s2; \
-		csrw 0xFF2, s3; \
-		csrw 0xFF3, s4; \
-		csrw 0xFF4, s5; \
-		csrw 0xFF5, s6; \
-		csrw 0xFF6, s7; \
-		csrw 0xFF7, s8; \
-		csrw 0xFF8, s9; \
-		csrw 0xFF9, s10; \
-		csrw 0xFFA, s11; \
-		csrw 0xFFB, t3; \
-		csrw 0xFFC, t4; \
-		csrw 0xFFD, t5; \
-		csrw 0xFFE, t6; \
+		csrw 0x001, ra; \
+		csrw 0x002, sp; \
+		csrw 0x003, gp; \
+		csrw 0x004, tp; \
+		csrw 0x005, t0; \
+		csrw 0x006, t1; \
+		csrw 0x007, t2; \
+		csrw 0x008, s0; \
+		csrw 0x009, s1; \
+		csrw 0x00A, a0; \
+		csrw 0x00B, a1; \
+		csrw 0x00C, a2; \
+		csrw 0x00D, a3; \
+		csrw 0x00E, a4; \
+		csrw 0x00F, a5; \
+		csrw 0x010, a6; \
+		csrw 0x011, a7; \
+		csrw 0x012, s2; \
+		csrw 0x013, s3; \
+		csrw 0x014, s4; \
+		csrw 0x015, s5; \
+		csrw 0x016, s6; \
+		csrw 0x017, s7; \
+		csrw 0x018, s8; \
+		csrw 0x019, s9; \
+		csrw 0x01A, s10; \
+		csrw 0x01B, s11; \
+		csrw 0x01C, t3; \
+		csrw 0x01D, t4; \
+		csrw 0x01E, t5; \
+		csrw 0x01F, t6; \
 		csrr a5, mepc; \
-		csrw 0xFFF, a5; \
+		csrw 0x000, a5; \
 	");
 
 	// CSR[0xFF0] now contains A7 (SYSCALL number)
@@ -109,11 +108,13 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				// Task scheduler runs here
 
 				// Switch between running tasks
-				TaskSwitchToNext(g_taskctx);
+				// TODO: Return time slice request of current task
+				TaskSwitchToNext(&g_taskctx);
 
-				// Task scheduler will re-visit in 100ms
+				// Task scheduler will re-visit
 				uint64_t now = E32ReadTime();
-				uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
+				// TODO: Use time slice request returned from TaskSwitchToNext()
+				uint64_t future = now + TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS;
 				E32SetTimeCompare(future);
 			}
 			break;
@@ -152,40 +153,40 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 	// Restore registers to next task's register set
 	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
-//		csrr tp, 0xFE3;
 	asm volatile(" \
-		csrr ra, 0xFE0; \
-		csrr sp, 0xFE1; \
-		csrr gp, 0xFE2; \
-		csrr t0, 0xFE4; \
-		csrr t1, 0xFE5; \
-		csrr t2, 0xFE6; \
-		csrr s0, 0xFE7; \
-		csrr s1, 0xFE8; \
-		csrr a0, 0xFE9; \
-		csrr a1, 0xFEA; \
-		csrr a2, 0xFEB; \
-		csrr a3, 0xFEC; \
-		csrr a4, 0xFED; \
-		csrr a5, 0xFEE; \
-		csrr a6, 0xFEF; \
-		csrr a7, 0xFF0; \
-		csrr s2, 0xFF1; \
-		csrr s3, 0xFF2; \
-		csrr s4, 0xFF3; \
-		csrr s5, 0xFF4; \
-		csrr s6, 0xFF5; \
-		csrr s7, 0xFF6; \
-		csrr s8, 0xFF7; \
-		csrr s9, 0xFF8; \
-		csrr s10, 0xFF9; \
-		csrr s11, 0xFFA; \
-		csrr t3, 0xFFB; \
-		csrr t4, 0xFFC; \
-		csrr t5, 0xFFD; \
-		csrr t6, 0xFFE; \
-		csrr a5, 0xFFF; \
+		csrr a5, 0x000; \
 		csrw mepc, a5; \
+		csrr ra,  0x001; \
+		csrr sp,  0x002; \
+		csrr gp,  0x003; \
+		csrr tp,  0x004; \
+		csrr t0,  0x005; \
+		csrr t1,  0x006; \
+		csrr t2,  0x007; \
+		csrr s0,  0x008; \
+		csrr s1,  0x009; \
+		csrr a0,  0x00A; \
+		csrr a1,  0x00B; \
+		csrr a2,  0x00C; \
+		csrr a3,  0x00D; \
+		csrr a4,  0x00E; \
+		csrr a5,  0x00F; \
+		csrr a6,  0x010; \
+		csrr a7,  0x011; \
+		csrr s2,  0x012; \
+		csrr s3,  0x013; \
+		csrr s4,  0x014; \
+		csrr s5,  0x015; \
+		csrr s6,  0x016; \
+		csrr s7,  0x017; \
+		csrr s8,  0x018; \
+		csrr s9,  0x019; \
+		csrr s10, 0x01A; \
+		csrr s11, 0x01B; \
+		csrr t3,  0x01C; \
+		csrr t4,  0x01D; \
+		csrr t5,  0x01E; \
+		csrr t6,  0x01F; \
 		mret; \
 	");
 }
@@ -197,7 +198,7 @@ void InstallISR()
 
 	// Set up timer interrupt one second into the future
 	uint64_t now = E32ReadTime();
-	uint64_t future = now + HUNDRED_MILLISECONDS_IN_TICKS;
+	uint64_t future = now + TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS;
 	E32SetTimeCompare(future);
 
 	// Enable machine software interrupts (breakpoint/illegal instruction)

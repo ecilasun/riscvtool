@@ -106,98 +106,72 @@ extern "C"
     // of the instruction after which the IRQ occurs
     // (i.e. PC+4 which is the return address)
 
-    // TIMER
+    // TIMER INTERRUPT
 
     void __attribute__((naked, section (".LUT"))) enterTimerISR()
     {
         asm volatile(
-            // 0
-            "csrrw zero, 0xFD0, a5;"    // Save current A5
-            // 1
+            "csrw 0xFD0, a5;"           // Save current A5
             "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
-            "csrrw a5, mepc, a5;"       // Set MEPC to current PC
-            // 2
-            ";"                         // No privileges to save in this architecture
-            // 3
+            "csrw mepc, a5;"            // Set MEPC to PC+4 for mret
             "li a5, 128;"               // Generate mask for bit 7
             "csrrc a5, mie, a5;"        // Extract MIE[7(MTIE)] and set it to zero
             "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
-            // 4
             "li a5, 0x80000007;"        // Set MCAUSE[31] for interrupt and set MCAUSE[30:0] to 7
-            "csrrw a5, mcause, a5;"
-            // 5
+            "csrw mcause, a5;"
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
-            // 6
-            //"csrr a5, mtvec;"           // Grab MTVEC
-            //"jalr 0(a5);"               // Enter the ISR
+            "csrr a5, 0xFD0;"           // Restore old A5
+            // Hardware branches to mtvec
         );
     }
 
     void __attribute__((naked, section (".LUT"))) leaveTimerISR()
     {
         asm volatile(
-            // 1
-            ";" // No privileges to restore on this architecture
-            // 2
+            "csrw 0xFD0, a5;"           // Save current A5
             "li a5, 128;"               // Generate mask for bit 7
             "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
             "csrrs a5, mie, a5;"        // Copy it to MIE[7(MTIE)]
-            // 3
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
-            // 4
-            "csrr a5, 0xFD0;"           // Restore old A5 before ISR entry
-            // 5
+            "csrr a5, 0xFD0;"           // Restore old A5
             // Hardware sets PC <= MEPC;
          );
     }
 
-    // HARDWARE
+    // HARDWARE INTERRUPT
 
     void __attribute__((naked, section (".LUT"))) enterHWISR()
     {
         asm volatile(
-            // 0
-            "csrrw zero, 0xFD0, a5;"    // Save current A5
-            // 1
+            "csrw 0xFD0, a5;"           // Save current A5
             "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
-            "csrrw a5, mepc, a5;"       // Set MEPC to current PC
-            // 2
-            ";"                         // No privileges to save in this architecture
-            // 3
+            "csrw mepc, a5;"            // Set MEPC to PC+4 for mret
             "li a5, 2048;"              // Generate mask for bit 11
             "csrrc a5, mie, a5;"        // Extract MIE[11(MEIE)] and set it to zero
             "srl a5, a5, 4;"            // Shift to 7th bit position
             "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
-            // 4
             "li a5, 0x8000000B;"        // Set MCAUSE[31] for interrupt and set MCAUSE[30:0] to 11
-            "csrrw a5, mcause, a5;"
-            // 5
+            "csrw mcause, a5;"
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
-            // 6
-            //"csrr a5, mtvec;"           // Grab MTVEC
-            //"jalr 0(a5);"               // Enter the ISR
+            "csrr a5, 0xFD0;"           // Restore old A5
+            // Hardware branches to mtvec
         );
     }
 
     void __attribute__((naked, section (".LUT"))) leaveHWSR()
     {
         asm volatile(
-            // 1
-            ";" // No privileges to restore on this architecture
-            // 2
+            "csrw 0xFD0, a5;"           // Save current A5
             "li a5, 128;"               // Generate mask for bit 7
             "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
             "sll a5, a5, 4;"            // Shift to 11th bit position
             "csrrs a5, mie, a5;"        // Copy it to MIE[11(MEIE)]
-            // 3
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
-            // 4
-            "csrr a5, 0xFD0;"           // Restore old A5 before ISR entry
-            // 5
+            "csrr a5, 0xFD0;"           // Restore old A5
             // Hardware sets PC <= MEPC;
          );
     }

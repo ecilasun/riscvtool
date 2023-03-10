@@ -26,7 +26,7 @@ struct STask {
 };
 
 struct STaskContext {
-	struct STask *tasks;			// List of all the tasks
+	struct STask tasks[TASK_MAX];	// List of all the tasks
 	volatile int32_t currentTask;	// Current task index
 	volatile int32_t numTasks;		// Number of tasks
 };

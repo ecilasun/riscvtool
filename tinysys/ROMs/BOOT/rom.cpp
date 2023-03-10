@@ -9,22 +9,24 @@
 
 #include "core.h"
 #include "fileops.h"
-#include "uart.h"
 #include "isr.h"
+#include "leds.h"
+#include "uart.h"
 
 static uint32_t s_startAddress = 0;
 
 void OSIdleTask()
 {
 	static uint32_t past = 0;
+	uint32_t evenodd = 0;
 	while(1)
 	{
 		uint64_t present = E32ReadTime();
 		if (present-past > ONE_SECOND_IN_TICKS)
 		{
 			past = present;
-			UARTWrite(".");
-			asm volatile("nop;");
+			LEDSetState((evenodd%2==0) ? 0xFFFFFFFF : 0x00000000);
+			++evenodd;
 		}
 	}
 }
@@ -51,12 +53,17 @@ int main()
 	STaskContext *taskctx = StartTaskContext();
 	TaskAdd(taskctx, "OSIdle", OSIdleTask);
 	TaskAdd(taskctx, "BootTask", RunExecTask);
+	UARTWrite("task[0].PC=");
+	UARTWriteHex(taskctx->tasks[0].regs[0]);
+	UARTWrite("\ntask[1].PC=");
+	UARTWriteHex(taskctx->tasks[1].regs[0]);
+	UARTWrite("\n");
 
 	// Start the timer and hardware interrupt handlers
 	InstallISR();
 
 	while (1) {
-		asm volatile ("nop;");
+		asm volatile ("wfi;");
 	}
 
 	return 0;
