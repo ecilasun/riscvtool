@@ -15,6 +15,7 @@ struct STaskBreakpoint
 
 struct STask {
 	uint32_t HART;      // HART affinity mask (for migration)
+	uint32_t runLength;	// Time slice dedicated to this task
 	uint32_t regs[32];  // Integer registers - NOTE: register zero here is actually the PC
 
 	// Debug support - this will probably move somewhere else
@@ -31,6 +32,11 @@ struct STaskContext {
 	volatile int32_t numTasks;		// Number of tasks
 };
 
+// Start up the task system
 void TaskInitSystem(struct STaskContext *_ctx);
-int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task/*, uint32_t _stacksizeword*/);
-void TaskSwitchToNext(struct STaskContext *_ctx);
+
+// Add a new task to the pool
+int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const uint32_t _runLength);
+
+// Switch to next task and return its time slice
+uint32_t TaskSwitchToNext(struct STaskContext *_ctx);

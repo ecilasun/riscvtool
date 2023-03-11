@@ -15,19 +15,13 @@
 
 static uint32_t s_startAddress = 0;
 
-void OSIdleTask()
-{
-	// NOTE: This task should not run
-	// First time we enter the ISR it will be stomped over by main()
-	while(1)
-	{
-		asm volatile("nop;");
-	}
-}
+// NOTE: This task won't actually run.
+// First time we enter the ISR it will be stomped over by whatever the MRET was inside main()
+void OSMainStubTask() { asm volatile("nop;"); }
 
+// This task is a trampoline to the loaded executable
 void RunExecTask()
 {
-
 	// Start the loaded executable
 	asm volatile(
 		"lw s0, %0;"        // Target branch address
@@ -48,13 +42,10 @@ int main()
 	// Start task sytem and add tasks
 	// NOTE: First task should be OSIdle to replace the main loop here.
 	STaskContext *taskctx = StartTaskContext();
-	TaskAdd(taskctx, "OSIdle", OSIdleTask);
-	TaskAdd(taskctx, "BootTask", RunExecTask);
-	UARTWrite("task[0].PC=");
-	UARTWriteHex(taskctx->tasks[0].regs[0]);
-	UARTWrite("\ntask[1].PC=");
-	UARTWriteHex(taskctx->tasks[1].regs[0]);
-	UARTWrite("\n");
+
+	// With current layout, OS takes up ten millisecond slices out of whatever is left from other tasks
+	TaskAdd(taskctx, "OSMain", OSMainStubTask, TEN_MILLISECONDS_IN_TICKS);
+	TaskAdd(taskctx, "BootTask", RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
 
 	// Start the timer and hardware interrupt handlers
 	InstallISR();
@@ -62,6 +53,7 @@ int main()
 	uint64_t past = 0;
 	uint32_t evenodd = 0;
 	while (1) {
+		// Main loop gets 10ms run time every 250ms which is more than enough for very slow periodic tasks
 		uint64_t present = E32ReadTime();
 		if (present-past > ONE_SECOND_IN_TICKS)
 		{

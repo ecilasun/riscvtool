@@ -34,7 +34,7 @@ void TaskInitSystem(struct STaskContext *_ctx)
 	}
 }
 
-int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task)
+int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const uint32_t _runLength)
 {
 	int32_t prevcount = _ctx->numTasks;
 	if (prevcount >= TASK_MAX)
@@ -54,6 +54,7 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task)
 	task->regs[0] = (uint32_t)_task;	// PC
 	task->regs[2] = stackpointer;		// Stack pointer
 	task->regs[8] = stackpointer;		// Frame pointer
+	task->runLength = _runLength;		// Time slice dedicated to this task
 
 	char *np = (char*)_name;
 	int idx = 0;
@@ -70,7 +71,7 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task)
 	return 1;
 }
 
-void TaskSwitchToNext(struct STaskContext *_ctx)
+uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 {
 	// Load current process ID from TP register
 	int32_t currentTask = _ctx->currentTask;
@@ -117,16 +118,6 @@ void TaskSwitchToNext(struct STaskContext *_ctx)
 	_ctx->currentTask = currentTask;
 	regs = _ctx->tasks[currentTask].regs;
 
-	UARTWrite("next task=");
-	UARTWriteHex(currentTask);
-	UARTWrite(" MEPC=");
-	UARTWriteHex(regs[0]);
-	UARTWrite(" SP=");
-	UARTWriteHex(regs[2]);
-	UARTWrite(" GP=");
-	UARTWriteHex(regs[3]);
-	UARTWrite("\n");
-
 	// Load next tasks's registers into CSR file
 	asm volatile("lw tp, %0; csrw 0x000, tp;" : "=m" (regs[0]));		// PC of next task
 	asm volatile("lw tp, %0; csrw 0x001, tp;" : "=m" (regs[1]));		// ra
@@ -160,4 +151,6 @@ void TaskSwitchToNext(struct STaskContext *_ctx)
 	asm volatile("lw tp, %0; csrw 0x01D, tp;" : "=m" (regs[29]));		// t4
 	asm volatile("lw tp, %0; csrw 0x01E, tp;" : "=m" (regs[30]));		// t5
 	asm volatile("lw tp, %0; csrw 0x01F, tp;" : "=m" (regs[31]));		// t6
+
+	return _ctx->tasks[currentTask].runLength;
 }

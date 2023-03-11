@@ -109,12 +109,12 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 				// Switch between running tasks
 				// TODO: Return time slice request of current task
-				TaskSwitchToNext(&g_taskctx);
+				uint32_t runLength = TaskSwitchToNext(&g_taskctx);
 
 				// Task scheduler will re-visit
 				uint64_t now = E32ReadTime();
 				// TODO: Use time slice request returned from TaskSwitchToNext()
-				uint64_t future = now + TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS;
+				uint64_t future = now + runLength;
 				E32SetTimeCompare(future);
 			}
 			break;
