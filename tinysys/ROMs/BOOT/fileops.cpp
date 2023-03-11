@@ -161,7 +161,7 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 
 		return branchaddress;
 	}
-	/*else
+	else
 	{
 		if (reportError)
 		{
@@ -169,7 +169,7 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 			UARTWrite(filename);
 			UARTWrite("' not found.\n");
 		}
-	}*/
+	}
 
 	return 0;
 }

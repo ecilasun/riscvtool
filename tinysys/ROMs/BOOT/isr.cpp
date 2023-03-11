@@ -8,7 +8,7 @@
 
 static STaskContext g_taskctx;
 
-STaskContext *StartTaskContext()
+STaskContext *CreateTaskContext()
 {
 	// Initialize task context memory
 	TaskInitSystem(&g_taskctx);

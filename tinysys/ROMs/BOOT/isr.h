@@ -2,5 +2,5 @@
 
 #include "task.h"
 
-STaskContext *StartTaskContext();
+STaskContext *CreateTaskContext();
 void InstallISR();

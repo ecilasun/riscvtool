@@ -28,6 +28,12 @@ void RunExecTask()
 		"jalr s0;"          // Branch to the entry point
 		: "=m" (s_startAddress) : : 
 	);
+
+	UARTWrite("Returned from boot executable.\n");
+	while (1)
+	{
+		asm volatile("nop;");
+	}	
 }
 
 int main()
@@ -39,24 +45,29 @@ int main()
 	MountDrive();
 	s_startAddress = LoadExecutable("sd:\\boot.elf", true);
 
-	// Start task sytem and add tasks
-	// NOTE: First task should be OSIdle to replace the main loop here.
-	STaskContext *taskctx = StartTaskContext();
+	// Create task context
+	STaskContext *taskctx = CreateTaskContext();
 
 	// With current layout, OS takes up ten millisecond slices out of whatever is left from other tasks
 	TaskAdd(taskctx, "OSMain", OSMainStubTask, TEN_MILLISECONDS_IN_TICKS);
-	TaskAdd(taskctx, "BootTask", RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
+	// If we succeeded in loading the boot executable, add it to the task list
+	if (s_startAddress != 0x0)
+		TaskAdd(taskctx, "BootTask", RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
 
-	// Start the timer and hardware interrupt handlers
+	// Start the timer and hardware interrupt handlers.
+	// This is where all task switching and other interrupt handling occurs
+	// TODO: Software debugger will run here in the UART interrupt handler
+	// and modify task memory to aid in debugging via gdb serial interface.
 	InstallISR();
 
 	uint64_t past = 0;
 	uint32_t evenodd = 0;
 	while (1) {
-		// Main loop gets 10ms run time every 250ms which is more than enough for very slow periodic tasks
 		uint64_t present = E32ReadTime();
 		if (present-past > ONE_SECOND_IN_TICKS)
 		{
+			// Swap LED state roughtly every other second
+			// We have a 10ms window for this which is a whole lot more than enough
 			past = present;
 			LEDSetState((evenodd%2==0) ? 0xFFFFFFFF : 0x00000000);
 			++evenodd;
