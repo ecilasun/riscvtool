@@ -382,9 +382,5 @@ int main()
   // all data to be present in memory to show an intact image.
   CFLUSH_D_L1;
 
-  while (1) {
-    asm volatile ("wfi;");
-  }
-
   return 0;
 }
