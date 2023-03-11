@@ -173,18 +173,3 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 
 	return 0;
 }
-
-void RunExecutable(uint32_t startAddress)
-{
-	//UARTWrite("Launching\n");
-
-	// Run the executable
-	asm volatile(
-		"lw s0, %0;"        // Target branch address
-		"jalr s0;"          // Branch to the entry point
-		: "=m" (startAddress) : : 
-	);
-
-	// Re-mount filesystem before re-gaining control, if execution falls back here
-	//MountDrive();
-}

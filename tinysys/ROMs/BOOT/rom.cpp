@@ -27,10 +27,13 @@ void OSIdleTask()
 
 void RunExecTask()
 {
-	UARTWrite("Running...\n");
 
 	// Start the loaded executable
-	RunExecutable(s_startAddress);
+	asm volatile(
+		"lw s0, %0;"        // Target branch address
+		"jalr s0;"          // Branch to the entry point
+		: "=m" (s_startAddress) : : 
+	);
 }
 
 int main()
