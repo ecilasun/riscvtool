@@ -113,9 +113,19 @@ void TaskSwitchToNext(struct STaskContext *_ctx)
 	asm volatile("csrr tp, 0x01F; sw tp, %0;" : "=m" (regs[31]));		// t6
 
 	// Switch to next task
-	currentTask = (_ctx->numTasks <= 1) ? 0 : (currentTask+1) % _ctx->numTasks;
+	currentTask = (_ctx->numTasks <= 1) ? 0 : ((currentTask+1) % _ctx->numTasks);
 	_ctx->currentTask = currentTask;
 	regs = _ctx->tasks[currentTask].regs;
+
+	UARTWrite("next task=");
+	UARTWriteHex(currentTask);
+	UARTWrite(" MEPC=");
+	UARTWriteHex(regs[0]);
+	UARTWrite(" SP=");
+	UARTWriteHex(regs[2]);
+	UARTWrite(" GP=");
+	UARTWriteHex(regs[3]);
+	UARTWrite("\n");
 
 	// Load next tasks's registers into CSR file
 	asm volatile("lw tp, %0; csrw 0x000, tp;" : "=m" (regs[0]));		// PC of next task

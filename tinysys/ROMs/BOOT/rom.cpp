@@ -17,17 +17,11 @@ static uint32_t s_startAddress = 0;
 
 void OSIdleTask()
 {
-	static uint32_t past = 0;
-	uint32_t evenodd = 0;
+	// NOTE: This task should not run
+	// First time we enter the ISR it will be stomped over by main()
 	while(1)
 	{
-		uint64_t present = E32ReadTime();
-		if (present-past > ONE_SECOND_IN_TICKS)
-		{
-			past = present;
-			LEDSetState((evenodd%2==0) ? 0xFFFFFFFF : 0x00000000);
-			++evenodd;
-		}
+		asm volatile("nop;");
 	}
 }
 
@@ -62,8 +56,16 @@ int main()
 	// Start the timer and hardware interrupt handlers
 	InstallISR();
 
+	uint64_t past = 0;
+	uint32_t evenodd = 0;
 	while (1) {
-		asm volatile ("wfi;");
+		uint64_t present = E32ReadTime();
+		if (present-past > ONE_SECOND_IN_TICKS)
+		{
+			past = present;
+			LEDSetState((evenodd%2==0) ? 0xFFFFFFFF : 0x00000000);
+			++evenodd;
+		}
 	}
 
 	return 0;
