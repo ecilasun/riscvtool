@@ -76,11 +76,10 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 		csrw 0x000, a5; \
 	");
 
-	// CSR[0xFF0] now contains A7 (SYSCALL number)
-
-	//uint32_t value = read_csr(mtval);   // Instruction word or hardware bit
-	uint32_t cause = read_csr(mcause);  // Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
-	//uint32_t PC = read_csr(mepc)-4;   // Return address minus one is the crash PC
+	// CSR[0x011] now contains A7 (SYSCALL number)
+	uint32_t value = read_csr(0x011);	// Instruction word or hardware bit
+	uint32_t cause = read_csr(mcause);	// Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
+	uint32_t PC = read_csr(mepc)-4;		// Return address minus one is the crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
 
 	if (cause & 0x80000000) // Hardware interrupts
@@ -127,10 +126,39 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 	{
 		switch(code)
 		{
+			case CAUSE_BREAKPOINT:
+			{
+				// TODO: Stop here until debugger replaces it with a real instruction
+			}
+
+			case CAUSE_MACHINE_ECALL:
+			{
+				// NOTE: See \usr\include\asm-generic\unistd.h for a full list
+				// A7
+				// 64  sys_write  -> print (A0==1->stdout, A1->string, A2->length)
+				// 96  sys_exit   -> terminate (A0==return code)
+				// 116 sys_syslog -> 
+				// 117 sys_ptrace -> 
+
+				// TODO: Implement system calls
+
+				UARTWrite("\033[31m\033[40m");
+
+				UARTWrite("┌───────────────────────────────────────────────────┐\n");
+				UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
+				UARTWrite("│ execution, though it might crash.                 │\n");
+				UARTWrite("│ #");
+				UARTWriteHex((uint32_t)value); // Syscall ID
+				UARTWrite(" @");
+				UARTWriteHex((uint32_t)PC); // PC
+				UARTWrite("                               │\n");
+				UARTWrite("└───────────────────────────────────────────────────┘\n");
+				UARTWrite("\033[0m\n");
+			}
+
 			case CAUSE_MISALIGNED_FETCH:
 			case CAUSE_FETCH_ACCESS:
 			case CAUSE_ILLEGAL_INSTRUCTION:
-			case CAUSE_BREAKPOINT:
 			case CAUSE_MISALIGNED_LOAD:
 			case CAUSE_LOAD_ACCESS:
 			case CAUSE_MISALIGNED_STORE:
@@ -138,12 +166,33 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_USER_ECALL:
 			case CAUSE_SUPERVISOR_ECALL:
 			case CAUSE_HYPERVISOR_ECALL:
-			case CAUSE_MACHINE_ECALL:
 			case CAUSE_FETCH_PAGE_FAULT:
 			case CAUSE_LOAD_PAGE_FAULT:
 			case CAUSE_STORE_PAGE_FAULT:
 			{
-				//HandleTrap(cause, a7, value, PC); // Illegal instruction etc
+				UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
+
+				// reverse on: \033[7m
+				// blink on: \033[5m
+				// Set foreground color to red and bg color to black
+				UARTWrite("\033[31m\033[40m");
+
+				UARTWrite("┌───────────────────────────────────────────────────┐\n");
+				UARTWrite("│ Software Failure. Press reset button to continue. │\n");
+				UARTWrite("│   Guru Meditation #");
+				UARTWriteHex((uint32_t)cause); // Cause
+				UARTWrite(".");
+				UARTWriteHex((uint32_t)value); // A7 for no reason
+				UARTWrite(" @");
+				UARTWriteHex((uint32_t)PC); // PC
+				UARTWrite("    │\n");
+				UARTWrite("└───────────────────────────────────────────────────┘\n");
+				UARTWrite("\033[0m\n");
+
+				// Put core to endless sleep
+				while(1) {
+					asm volatile("wfi;");
+				}
 			}
 			break;
 
