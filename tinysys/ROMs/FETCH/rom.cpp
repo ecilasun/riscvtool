@@ -176,7 +176,8 @@ extern "C"
          );
     }
 
-    // SOFTWARE INTERRUPT (ecall/ebreak)
+    // SOFTWARE INTERRUPT (ecall)
+    // TODO: same for ebreak, return value is 0x00000003 instead
 
     void __attribute__((naked, section (".LUT"))) enterSWISR()
     {
@@ -188,7 +189,7 @@ extern "C"
             "csrrc a5, mie, a5;"        // Extract MIE[3(MSIE)] and set it to zero
             "sll a5, a5, 4;"            // Shift to 7th bit position
             "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
-            "li a5, 0x00000003;"        // Clear MCAUSE[31] for trap and set MCAUSE[30:0] to 3
+            "li a5, 0x0000000B;"        // Clear MCAUSE[31] for trap and set MCAUSE[30:0] to 0xB (machine ecall)
             "csrw mcause, a5;"
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
@@ -204,7 +205,7 @@ extern "C"
             "li a5, 128;"               // Generate mask for bit 7
             "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
             "srl a5, a5, 4;"            // Shift to 3rd bit position
-            "csrrs a5, mie, a5;"        // Copy it to MIE[11(MEIE)]
+            "csrrs a5, mie, a5;"        // Copy it to MIE[3(MSIE)]
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
             "csrr a5, 0xFD0;"           // Restore old A5

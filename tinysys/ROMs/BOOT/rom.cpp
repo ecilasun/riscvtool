@@ -48,9 +48,9 @@ int main()
 	// Create task context
 	STaskContext *taskctx = CreateTaskContext();
 
-	// With current layout, OS takes up ten millisecond slices out of whatever is left from other tasks
-	TaskAdd(taskctx, "OSMain", OSMainStubTask, TEN_MILLISECONDS_IN_TICKS);
-	// If we succeeded in loading the boot executable, add it to the task list
+	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
+	TaskAdd(taskctx, "OSMain", OSMainStubTask, ONE_MILLISECOND_IN_TICKS);
+	// If we succeeded in loading the boot executable, add a trampoline function to launch it
 	if (s_startAddress != 0x0)
 		TaskAdd(taskctx, "BootTask", RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
 

@@ -119,6 +119,12 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			break;
 
 			default:
+				UARTWrite("Unknown hardware interrupt 0x");
+				UARTWriteHex(code);
+				UARTWrite("\n");
+				while(1) {
+					asm volatile("wfi;");
+				}
 			break;
 		}
 	}
@@ -129,6 +135,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_BREAKPOINT:
 			{
 				// TODO: Stop here until debugger replaces it with a real instruction
+				UARTWrite("Software breakpoints are not implemented yet\n");
 			}
 
 			case CAUSE_MACHINE_ECALL:
@@ -196,7 +203,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			}
 			break;
 
-			default: break;
+			default:
+				UARTWrite("Unknown software interrupt 0x");
+				UARTWriteHex(code);
+				UARTWrite("\n");
+				while(1) {
+					asm volatile("wfi;");
+				}
+			break;
 		}
 	}
 
