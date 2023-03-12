@@ -137,6 +137,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				// TODO: Stop here until debugger replaces it with a real instruction
 				UARTWrite("Software breakpoints are not implemented yet\n");
 			}
+			break;
 
 			case CAUSE_MACHINE_ECALL:
 			{
@@ -162,6 +163,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				UARTWrite("└───────────────────────────────────────────────────┘\n");
 				UARTWrite("\033[0m\n");
 			}
+			break;
 
 			case CAUSE_MISALIGNED_FETCH:
 			case CAUSE_FETCH_ACCESS:
