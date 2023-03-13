@@ -11,6 +11,12 @@ Currently ROM images and samples are provided for the following platform, under 
 You'll need the risc-v toolchain from https://github.com/riscv/riscv-gnu-toolchain or its precompiled version (make sure to have support for 32bit ELF and rv32imc variant)
 You'll also need a working Python so that the WAF build system can build the riscvtool.
 
+There's a convenience script in this directory that will automate this task for you. Simply run:
+
+```
+./buildrisctoolchain.sh
+```
+
 # Building riscvtool
 
 Before you can build the riscvtool itself, use the ctrl+shift+b shortcut in Visual Studio Code and select 'configure'. After this initial step you can use the same shortcut and select 'build'.
