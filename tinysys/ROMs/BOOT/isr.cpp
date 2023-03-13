@@ -90,8 +90,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			{
 				// TODO: We need to read the 'reason' for HW interrupt from a custom register
 				// For now, ignore the reason as we only have one possible IRQ generator.
-				//gdb_handler(g_taskctx);
-				HandleUART();
+				gdb_handler(&g_taskctx);
+				//HandleUART();
 
 				// Machine External Interrupt (hardware)
 				// Route based on hardware type
@@ -119,9 +119,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			break;
 
 			default:
-				UARTWrite("Unknown hardware interrupt 0x");
+				UARTWrite("\033[0m\n\n\033[31m\033[40mUnknown hardware interrupt 0x");
 				UARTWriteHex(code);
-				UARTWrite("\n");
+				UARTWrite("\n\033[0m\n");
 				while(1) {
 					asm volatile("wfi;");
 				}
@@ -134,14 +134,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 		{
 			case CAUSE_BREAKPOINT:
 			{
-				// TODO: Stop here until debugger replaces it with a real instruction
-				UARTWrite("Software breakpoints are not implemented yet\n");
+				// TODO: Handle debugger breakpoints
+				UARTWrite("\033[0m\n\n\033[31m\033[40mSoftware breakpoints are not implemented\n\033[0m\n");
 			}
 			break;
 
 			case CAUSE_MACHINE_ECALL:
 			{
-				if (value == 93)
+				if (value == 93) // exit()
 				{
 					// Terminate and remove from list of running tasks
 					TaskExitCurrentTask(&g_taskctx);
@@ -150,11 +150,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				{
 					// TODO: Implement other system calls
 
-					UARTWrite("\033[31m\033[40m");
+					UARTWrite("\033[0m\n\n\033[31m\033[40m");
 
 					UARTWrite("┌───────────────────────────────────────────────────┐\n");
 					UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
-					UARTWrite("│ execution, though it might crash.                 │\n");
+					UARTWrite("│ execution past the call, and might crash or hang. │\n");
 					UARTWrite("│ #");
 					UARTWriteHex((uint32_t)value); // Syscall ID
 					UARTWrite(" @");
@@ -166,7 +166,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			}
 			break;
 
-			case CAUSE_MISALIGNED_FETCH:
+			/*case CAUSE_MISALIGNED_FETCH:
 			case CAUSE_FETCH_ACCESS:
 			case CAUSE_ILLEGAL_INSTRUCTION:
 			case CAUSE_MISALIGNED_LOAD:
@@ -178,14 +178,13 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_HYPERVISOR_ECALL:
 			case CAUSE_FETCH_PAGE_FAULT:
 			case CAUSE_LOAD_PAGE_FAULT:
-			case CAUSE_STORE_PAGE_FAULT:
+			case CAUSE_STORE_PAGE_FAULT:*/
+			default:
 			{
-				UARTWrite("\033[0m\n\n"); // Clear attributes, step down a couple lines
-
-				// reverse on: \033[7m
-				// blink on: \033[5m
-				// Set foreground color to red and bg color to black
-				UARTWrite("\033[31m\033[40m");
+				// reverse on: \033[7m blink on: \033[5m
+				// Clear attributes, step down a couple lines and
+				// set foreground color to red, bg color to black
+				UARTWrite("\033[0m\n\n\033[31m\033[40m");
 
 				UARTWrite("┌───────────────────────────────────────────────────┐\n");
 				UARTWrite("│ Software Failure. Press reset button to continue. │\n");
@@ -204,15 +203,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					asm volatile("wfi;");
 				}
 			}
-			break;
-
-			default:
-				UARTWrite("Unknown software interrupt 0x");
-				UARTWriteHex(code);
-				UARTWrite("\n");
-				while(1) {
-					asm volatile("wfi;");
-				}
 			break;
 		}
 	}

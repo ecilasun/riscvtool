@@ -78,11 +78,6 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const 
 void TaskExitCurrentTask(struct STaskContext *_ctx)
 {
 	int32_t currentTask = read_csr(0x004); // TP
-
-	UARTWrite("\033[31m\033[40mMarking task #");
-	UARTWriteHex(currentTask);
-	UARTWrite("\033[0m\n");
-
 	_ctx->tasks[currentTask].state = TS_TERMINATING;
 	write_csr(0x00A, 0); // Return a0 = 0x0
 }
@@ -137,10 +132,12 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	// NOTE: Task #0 cannot be terminated
 	if (_ctx->tasks[currentTask].state == TS_TERMINATING && currentTask != 0)
 	{
-		UARTWrite("\033[31m\033[40mTask #");
-		UARTWriteHex(currentTask);
-		UARTWrite(" terminated\033[0m\n");
-		// Mark terminated
+		UARTWrite("\033[31m\033[40mTask '");
+		UARTWrite(_ctx->tasks[currentTask].name);
+		UARTWrite("' exited with return code 0x");
+		UARTWriteHex(regs[10]);
+		UARTWrite("\033[0m\n");
+		// Mark as 'terminated'
 		_ctx->tasks[currentTask].state = TS_TERMINATED;
 		// Replace with task at end of list, if we're not the end of list
 		if (currentTask != _ctx->numTasks-1)

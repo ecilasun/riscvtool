@@ -15,9 +15,12 @@
 
 static uint32_t s_startAddress = 0;
 
-// NOTE: This task won't actually run.
-// First time we enter the ISR it will be stomped over by whatever the MRET was inside main()
-void OSMainStubTask() { asm volatile("nop;"); }
+void OSMainStubTask() {
+	// NOTE: This task won't actually run
+	// It is a stub routine which will be stomped over by main()
+	// on first entry to the timer ISR
+	asm volatile("nop;");
+}
 
 // This task is a trampoline to the loaded executable
 void RunExecTask()
@@ -29,8 +32,9 @@ void RunExecTask()
 		: "=m" (s_startAddress) : : 
 	);
 
-	UARTWrite("Should not be seeing this\n");
-	while (1) { asm volatile("nop;"); }	
+	// NOTE: Execution should never reach here since the ELF will invoke ECALL(0x5D) to quit
+	// and will be removed from the task list, thus removing this function from the
+	// execution pool.
 }
 
 int main()
