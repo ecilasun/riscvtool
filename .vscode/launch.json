@@ -10,14 +10,21 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/tinysys/samples/boot.elf",
-            "miDebuggerServerAddress": "/dev/ttyUSB3",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/",
             "environment": [],
-            "targetArchitecture": "risc-v",
-            "externalConsole": true,
-            "MIMode": "gdb"
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/opt/riscv/bin/riscv64-unknown-elf-gdb",
+            "miDebuggerServerAddress": "/dev/ttyUSB0"
         }
     ]
 }
