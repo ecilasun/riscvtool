@@ -124,6 +124,25 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	regs[30] = read_csr(0x01E);	// t5
 	regs[31] = read_csr(0x01F);	// t6
 
+	// Break
+	// Replace current instruction with an EBREAK
+	/*if (_ctx->tasks[currentTask].ctrlc == 1)
+	{
+		_ctx->tasks[currentTask].ctrlc = 2;
+		_ctx->tasks[currentTask].ctrlcaddress = regs[0];
+		_ctx->tasks[currentTask].ctrlcbackup = *(uint32_t*)(regs[0]);
+		*(uint32_t*)(regs[0]) = 0x00100073; // EBREAK
+	}
+
+	// Resume
+	// Restore saved instruction at break address
+	if (_ctx->tasks[currentTask].ctrlc == 8)
+	{
+		_ctx->tasks[currentTask].breakhit = 0;
+		_ctx->tasks[currentTask].ctrlc = 0;
+		*(uint32_t*)(regs[0]) = _ctx->tasks[currentTask].ctrlcbackup;
+	}*/
+
 	// Switch to next task
 	currentTask = (_ctx->numTasks <= 1) ? 0 : ((currentTask+1) % _ctx->numTasks);
 	_ctx->currentTask = currentTask;
