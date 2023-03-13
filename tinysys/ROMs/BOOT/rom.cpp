@@ -75,7 +75,7 @@ int main()
 		// Swap LED state roughtly every other second
 		if (present-past > ONE_SECOND_IN_TICKS)
 		{
-			past = present-past; // Keep leftover time in case we exceeded 1 second
+			past += ONE_SECOND_IN_TICKS; // Preserve leftover difference in present
 			LEDSetState((evenodd%2==0) ? 0xFFFFFFFF : 0x00000000); // Toggle all LEDs on/off
 			++evenodd;
 		}
