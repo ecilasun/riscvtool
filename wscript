@@ -16,14 +16,14 @@ def options(opt):
     if ('COMSPEC' in os.environ):
         opt.load('msvc')
     else:
-        opt.load('g++')
+        opt.load('clang++')
 
 def configure(conf):
     # Prefers msvc, but could also use conf.load('clang++') instead
     if ('COMSPEC' in os.environ):
         conf.load('msvc')
     else:
-        conf.load('g++')
+        conf.load('clang++')
 
 def build(bld):
 
