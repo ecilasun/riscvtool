@@ -13,9 +13,18 @@ struct STaskBreakpoint
 	uint32_t originalinstruction;	// Instruction we replaced with EBREAK
 };
 
+enum ETaskState
+{
+	TS_UNKNOWN,
+	TS_RUNNING,
+	TS_TERMINATING,
+	TS_TERMINATED
+};
+
 struct STask {
 	uint32_t HART;      // HART affinity mask (for migration)
 	uint32_t runLength;	// Time slice dedicated to this task
+	ETaskState state;	// State of this task
 	uint32_t regs[32];  // Integer registers - NOTE: register zero here is actually the PC
 
 	// Debug support - this will probably move somewhere else
@@ -40,3 +49,6 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const 
 
 // Switch to next task and return its time slice
 uint32_t TaskSwitchToNext(struct STaskContext *_ctx);
+
+// Exit current active task as soon as possible
+void TaskExitCurrentTask(struct STaskContext *_ctx);

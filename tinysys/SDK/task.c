@@ -53,6 +53,7 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const 
 	struct STask *task = &(_ctx->tasks[prevcount]);
 	task->regs[0] = (uint32_t)_task;	// PC
 	task->regs[2] = stackpointer;		// Stack pointer
+	task->regs[4] = prevcount;			// Thread pointer - taskID
 	task->regs[8] = stackpointer;		// Frame pointer
 	task->runLength = _runLength;		// Time slice dedicated to this task
 
@@ -65,10 +66,25 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const 
 	}
 	task->name[idx] = 0;
 
+	// We assume running state as soon as we start
+	task->state = TS_RUNNING;
+
 	// Resume timer interrupts on this core
 	//write_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 
 	return 1;
+}
+
+void TaskExitCurrentTask(struct STaskContext *_ctx)
+{
+	int32_t currentTask = read_csr(0x004); // TP
+
+	UARTWrite("\033[31m\033[40mMarking task #");
+	UARTWriteHex(currentTask);
+	UARTWrite("\033[0m\n");
+
+	_ctx->tasks[currentTask].state = TS_TERMINATING;
+	write_csr(0x00A, 0); // Return a0 = 0x0
 }
 
 uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
@@ -80,77 +96,97 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	uint32_t *regs = _ctx->tasks[currentTask].regs;
 
 	// Store register back-ups in current task's structure
-	asm volatile("csrr tp, 0x000; sw tp, %0;" : "=m" (regs[0]));		// PC of halted task
-	asm volatile("csrr tp, 0x001; sw tp, %0;" : "=m" (regs[1]));		// ra
-	asm volatile("csrr tp, 0x002; sw tp, %0;" : "=m" (regs[2]));		// sp
-	asm volatile("csrr tp, 0x003; sw tp, %0;" : "=m" (regs[3]));		// gp
-	asm volatile("csrr tp, 0x004; sw tp, %0;" : "=m" (regs[4]));		// tp
-	asm volatile("csrr tp, 0x005; sw tp, %0;" : "=m" (regs[5]));		// t0
-	asm volatile("csrr tp, 0x006; sw tp, %0;" : "=m" (regs[6]));		// t1
-	asm volatile("csrr tp, 0x007; sw tp, %0;" : "=m" (regs[7]));		// t2
-	asm volatile("csrr tp, 0x008; sw tp, %0;" : "=m" (regs[8]));		// s0
-	asm volatile("csrr tp, 0x009; sw tp, %0;" : "=m" (regs[9]));		// s1
-	asm volatile("csrr tp, 0x00A; sw tp, %0;" : "=m" (regs[10]));		// a0
-	asm volatile("csrr tp, 0x00B; sw tp, %0;" : "=m" (regs[11]));		// a1
-	asm volatile("csrr tp, 0x00C; sw tp, %0;" : "=m" (regs[12]));		// a2
-	asm volatile("csrr tp, 0x00D; sw tp, %0;" : "=m" (regs[13]));		// a3
-	asm volatile("csrr tp, 0x00E; sw tp, %0;" : "=m" (regs[14]));		// a4
-	asm volatile("csrr tp, 0x00F; sw tp, %0;" : "=m" (regs[15]));		// a5
-	asm volatile("csrr tp, 0x010; sw tp, %0;" : "=m" (regs[16]));		// a6
-	asm volatile("csrr tp, 0x011; sw tp, %0;" : "=m" (regs[17]));		// a7
-	asm volatile("csrr tp, 0x012; sw tp, %0;" : "=m" (regs[18]));		// s2
-	asm volatile("csrr tp, 0x013; sw tp, %0;" : "=m" (regs[19]));		// s3
-	asm volatile("csrr tp, 0x014; sw tp, %0;" : "=m" (regs[20]));		// s4
-	asm volatile("csrr tp, 0x015; sw tp, %0;" : "=m" (regs[21]));		// s5
-	asm volatile("csrr tp, 0x016; sw tp, %0;" : "=m" (regs[22]));		// s6
-	asm volatile("csrr tp, 0x017; sw tp, %0;" : "=m" (regs[23]));		// s7
-	asm volatile("csrr tp, 0x018; sw tp, %0;" : "=m" (regs[24]));		// s8
-	asm volatile("csrr tp, 0x019; sw tp, %0;" : "=m" (regs[25]));		// s9
-	asm volatile("csrr tp, 0x01A; sw tp, %0;" : "=m" (regs[26]));		// s10
-	asm volatile("csrr tp, 0x01B; sw tp, %0;" : "=m" (regs[27]));		// s11
-	asm volatile("csrr tp, 0x01C; sw tp, %0;" : "=m" (regs[28]));		// t3
-	asm volatile("csrr tp, 0x01D; sw tp, %0;" : "=m" (regs[29]));		// t4
-	asm volatile("csrr tp, 0x01E; sw tp, %0;" : "=m" (regs[30]));		// t5
-	asm volatile("csrr tp, 0x01F; sw tp, %0;" : "=m" (regs[31]));		// t6
+	regs[0] = read_csr(0x000);	// PC of halted task
+	regs[1] = read_csr(0x001);	// ra
+	regs[2] = read_csr(0x002);	// sp
+	regs[3] = read_csr(0x003);	// gp
+	regs[4] = read_csr(0x004);	// tp
+	regs[5] = read_csr(0x005);	// t0
+	regs[6] = read_csr(0x006);	// t1
+	regs[7] = read_csr(0x007);	// t2
+	regs[8] = read_csr(0x008);	// s0
+	regs[9] = read_csr(0x009);	// s1
+	regs[10] = read_csr(0x00A);	// a0
+	regs[11] = read_csr(0x00B);	// a1
+	regs[12] = read_csr(0x00C);	// a2
+	regs[13] = read_csr(0x00D);	// a3
+	regs[14] = read_csr(0x00E);	// a4
+	regs[15] = read_csr(0x00F);	// a5
+	regs[16] = read_csr(0x010);	// a6
+	regs[17] = read_csr(0x011);	// a7
+	regs[18] = read_csr(0x012);	// s2
+	regs[19] = read_csr(0x013);	// s3
+	regs[20] = read_csr(0x014);	// s4
+	regs[21] = read_csr(0x015);	// s5
+	regs[22] = read_csr(0x016);	// s6
+	regs[23] = read_csr(0x017);	// s7
+	regs[24] = read_csr(0x018);	// s8
+	regs[25] = read_csr(0x019);	// s9
+	regs[26] = read_csr(0x01A);	// s10
+	regs[27] = read_csr(0x01B);	// s11
+	regs[28] = read_csr(0x01C);	// t3
+	regs[29] = read_csr(0x01D);	// t4
+	regs[30] = read_csr(0x01E);	// t5
+	regs[31] = read_csr(0x01F);	// t6
 
 	// Switch to next task
 	currentTask = (_ctx->numTasks <= 1) ? 0 : ((currentTask+1) % _ctx->numTasks);
 	_ctx->currentTask = currentTask;
+
+	// Terminate task
+	// NOTE: Task #0 cannot be terminated
+	if (_ctx->tasks[currentTask].state == TS_TERMINATING && currentTask != 0)
+	{
+		UARTWrite("\033[31m\033[40mTask #");
+		UARTWriteHex(currentTask);
+		UARTWrite(" terminated\033[0m\n");
+		// Mark terminated
+		_ctx->tasks[currentTask].state = TS_TERMINATED;
+		// Replace with task at end of list, if we're not the end of list
+		if (currentTask != _ctx->numTasks-1)
+			__builtin_memcpy(&_ctx->tasks[currentTask], &_ctx->tasks[_ctx->numTasks-1], sizeof(struct STask));
+		// One less task to run
+		--_ctx->numTasks;
+		// Rewind back to OS Idle task (always guaranteed to be alive)
+		_ctx->currentTask = 0;
+		currentTask = 0;
+	}
+
 	regs = _ctx->tasks[currentTask].regs;
 
 	// Load next tasks's registers into CSR file
-	asm volatile("lw tp, %0; csrw 0x000, tp;" : "=m" (regs[0]));		// PC of next task
-	asm volatile("lw tp, %0; csrw 0x001, tp;" : "=m" (regs[1]));		// ra
-	asm volatile("lw tp, %0; csrw 0x002, tp;" : "=m" (regs[2]));		// sp
-	asm volatile("lw tp, %0; csrw 0x003, tp;" : "=m" (regs[3]));		// gp
-	asm volatile("lw tp, %0; csrw 0x004, tp;" : "=m" (regs[4]));		// tp
-	asm volatile("lw tp, %0; csrw 0x005, tp;" : "=m" (regs[5]));		// t0
-	asm volatile("lw tp, %0; csrw 0x006, tp;" : "=m" (regs[6]));		// t1
-	asm volatile("lw tp, %0; csrw 0x007, tp;" : "=m" (regs[7]));		// t2
-	asm volatile("lw tp, %0; csrw 0x008, tp;" : "=m" (regs[8]));		// s0
-	asm volatile("lw tp, %0; csrw 0x009, tp;" : "=m" (regs[9]));		// s1
-	asm volatile("lw tp, %0; csrw 0x00A, tp;" : "=m" (regs[10]));		// a0
-	asm volatile("lw tp, %0; csrw 0x00B, tp;" : "=m" (regs[11]));		// a1
-	asm volatile("lw tp, %0; csrw 0x00C, tp;" : "=m" (regs[12]));		// a2
-	asm volatile("lw tp, %0; csrw 0x00D, tp;" : "=m" (regs[13]));		// a3
-	asm volatile("lw tp, %0; csrw 0x00E, tp;" : "=m" (regs[14]));		// a4
-	asm volatile("lw tp, %0; csrw 0x00F, tp;" : "=m" (regs[15]));		// a5
-	asm volatile("lw tp, %0; csrw 0x010, tp;" : "=m" (regs[16]));		// a6
-	asm volatile("lw tp, %0; csrw 0x011, tp;" : "=m" (regs[17]));		// a7
-	asm volatile("lw tp, %0; csrw 0x012, tp;" : "=m" (regs[18]));		// s2
-	asm volatile("lw tp, %0; csrw 0x013, tp;" : "=m" (regs[19]));		// s3
-	asm volatile("lw tp, %0; csrw 0x014, tp;" : "=m" (regs[20]));		// s4
-	asm volatile("lw tp, %0; csrw 0x015, tp;" : "=m" (regs[21]));		// s5
-	asm volatile("lw tp, %0; csrw 0x016, tp;" : "=m" (regs[22]));		// s6
-	asm volatile("lw tp, %0; csrw 0x017, tp;" : "=m" (regs[23]));		// s7
-	asm volatile("lw tp, %0; csrw 0x018, tp;" : "=m" (regs[24]));		// s8
-	asm volatile("lw tp, %0; csrw 0x019, tp;" : "=m" (regs[25]));		// s9
-	asm volatile("lw tp, %0; csrw 0x01A, tp;" : "=m" (regs[26]));		// s10
-	asm volatile("lw tp, %0; csrw 0x01B, tp;" : "=m" (regs[27]));		// s11
-	asm volatile("lw tp, %0; csrw 0x01C, tp;" : "=m" (regs[28]));		// t3
-	asm volatile("lw tp, %0; csrw 0x01D, tp;" : "=m" (regs[29]));		// t4
-	asm volatile("lw tp, %0; csrw 0x01E, tp;" : "=m" (regs[30]));		// t5
-	asm volatile("lw tp, %0; csrw 0x01F, tp;" : "=m" (regs[31]));		// t6
+	write_csr(0x000, regs[0]);	// PC of next task
+	write_csr(0x001, regs[1]);	// ra
+	write_csr(0x002, regs[2]);	// sp
+	write_csr(0x003, regs[3]);	// gp
+	write_csr(0x004, regs[4]);	// tp
+	write_csr(0x005, regs[5]);	// t0
+	write_csr(0x006, regs[6]);	// t1
+	write_csr(0x007, regs[7]);	// t2
+	write_csr(0x008, regs[8]);	// s0
+	write_csr(0x009, regs[9]);	// s1
+	write_csr(0x00A, regs[10]);	// a0
+	write_csr(0x00B, regs[11]);	// a1
+	write_csr(0x00C, regs[12]);	// a2
+	write_csr(0x00D, regs[13]);	// a3
+	write_csr(0x00E, regs[14]);	// a4
+	write_csr(0x00F, regs[15]);	// a5
+	write_csr(0x010, regs[16]);	// a6
+	write_csr(0x011, regs[17]);	// a7
+	write_csr(0x012, regs[18]);	// s2
+	write_csr(0x013, regs[19]);	// s3
+	write_csr(0x014, regs[20]);	// s4
+	write_csr(0x015, regs[21]);	// s5
+	write_csr(0x016, regs[22]);	// s6
+	write_csr(0x017, regs[23]);	// s7
+	write_csr(0x018, regs[24]);	// s8
+	write_csr(0x019, regs[25]);	// s9
+	write_csr(0x01A, regs[26]);	// s10
+	write_csr(0x01B, regs[27]);	// s11
+	write_csr(0x01C, regs[28]);	// t3
+	write_csr(0x01D, regs[29]);	// t4
+	write_csr(0x01E, regs[30]);	// t5
+	write_csr(0x01F, regs[31]);	// t6
 
 	return _ctx->tasks[currentTask].runLength;
 }

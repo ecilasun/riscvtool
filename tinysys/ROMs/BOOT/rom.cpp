@@ -29,11 +29,8 @@ void RunExecTask()
 		: "=m" (s_startAddress) : : 
 	);
 
-	UARTWrite("Returned from boot executable.\n");
-	while (1)
-	{
-		asm volatile("nop;");
-	}	
+	UARTWrite("Should not be seeing this\n");
+	while (1) { asm volatile("nop;"); }	
 }
 
 int main()

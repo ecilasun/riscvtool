@@ -110,7 +110,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				// TODO: Return time slice request of current task
 				uint32_t runLength = TaskSwitchToNext(&g_taskctx);
 
-				// Task scheduler will re-visit
+				// Task scheduler will re-visit after we've filled run length of this task
 				uint64_t now = E32ReadTime();
 				// TODO: Use time slice request returned from TaskSwitchToNext()
 				uint64_t future = now + runLength;
@@ -141,27 +141,28 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			case CAUSE_MACHINE_ECALL:
 			{
-				// NOTE: See \usr\include\asm-generic\unistd.h for a full list
-				// A7
-				// 64  sys_write  -> print (A0==1->stdout, A1->string, A2->length)
-				// 96  sys_exit   -> terminate (A0==return code)
-				// 116 sys_syslog -> 
-				// 117 sys_ptrace -> 
+				if (value == 93)
+				{
+					// Terminate and remove from list of running tasks
+					TaskExitCurrentTask(&g_taskctx);
+				}
+				else
+				{
+					// TODO: Implement other system calls
 
-				// TODO: Implement system calls
+					UARTWrite("\033[31m\033[40m");
 
-				UARTWrite("\033[31m\033[40m");
-
-				UARTWrite("┌───────────────────────────────────────────────────┐\n");
-				UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
-				UARTWrite("│ execution, though it might crash.                 │\n");
-				UARTWrite("│ #");
-				UARTWriteHex((uint32_t)value); // Syscall ID
-				UARTWrite(" @");
-				UARTWriteHex((uint32_t)PC); // PC
-				UARTWrite("                               │\n");
-				UARTWrite("└───────────────────────────────────────────────────┘\n");
-				UARTWrite("\033[0m\n");
+					UARTWrite("┌───────────────────────────────────────────────────┐\n");
+					UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
+					UARTWrite("│ execution, though it might crash.                 │\n");
+					UARTWrite("│ #");
+					UARTWriteHex((uint32_t)value); // Syscall ID
+					UARTWrite(" @");
+					UARTWriteHex((uint32_t)PC); // PC
+					UARTWrite("                               │\n");
+					UARTWrite("└───────────────────────────────────────────────────┘\n");
+					UARTWrite("\033[0m\n");
+				}
 			}
 			break;
 
