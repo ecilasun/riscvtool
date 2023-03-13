@@ -3,6 +3,7 @@
 #include "debugger.h"
 #include "uart.h"
 #include "isr.h"
+#include "ringbuffer.h"
 
 #include <stdlib.h>
 
@@ -18,17 +19,15 @@ STaskContext *CreateTaskContext()
 
 void HandleUART()
 {
-
 	// XOFF - hold data traffic from sender so that we don't get stuck here
 	// *IO_UARTTX = 0x13;
 
 	// Echo back incoming bytes
 	while (UARTInputFifoHasData())
 	{
-		// Consume incoming character
-		uint8_t incoming = *IO_UARTRX;
-		// Echo back
-		*IO_UARTTX = incoming;
+		// Store incoming character in ring buffer
+		uint32_t incoming = *IO_UARTRX;
+		RingBufferWrite(&incoming, sizeof(uint32_t));
 	}
 
 	// XON - resume data traffic from sender
@@ -90,8 +89,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			{
 				// TODO: We need to read the 'reason' for HW interrupt from a custom register
 				// For now, ignore the reason as we only have one possible IRQ generator.
-				gdb_handler(&g_taskctx);
-				//HandleUART();
+				//gdb_handler(&g_taskctx);
+				HandleUART();
 
 				// Machine External Interrupt (hardware)
 				// Route based on hardware type

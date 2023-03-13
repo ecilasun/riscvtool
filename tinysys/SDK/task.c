@@ -129,9 +129,9 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	/*if (_ctx->tasks[currentTask].ctrlc == 1)
 	{
 		_ctx->tasks[currentTask].ctrlc = 2;
-		_ctx->tasks[currentTask].ctrlcaddress = regs[0];
+		_ctx->tasks[currentTask].ctrlcaddress = regs[0]; // If we're on a branch instruction this is the branch target, else it's PC+4
 		_ctx->tasks[currentTask].ctrlcbackup = *(uint32_t*)(regs[0]);
-		*(uint32_t*)(regs[0]) = 0x00100073; // EBREAK
+		*(uint32_t*)(regs[0]) = 0x00100073; // EBREAK instruction
 	}
 
 	// Resume

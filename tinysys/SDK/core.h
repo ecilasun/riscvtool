@@ -12,6 +12,7 @@
 #define HUNDRED_MILLISECONDS_IN_TICKS	        1000000
 #define TEN_MILLISECONDS_IN_TICKS		        100000
 #define ONE_MILLISECOND_IN_TICKS		        10000
+#define HALF_MILLISECOND_IN_TICKS		        5000
 #define ONE_MICROSECOND_IN_TICKS		        10
 
 #define APPMEM_START                0x00000000 // Top of RAM
