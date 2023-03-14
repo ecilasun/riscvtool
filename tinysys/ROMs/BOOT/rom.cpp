@@ -44,13 +44,9 @@ void RunExecTask()
 void ExecuteCmd(char *_cmd)
 {
 	const char *command = strtok(_cmd, " ");
-	if (command)
-	{
-		UARTWrite("token: ");
-		UARTWrite(command);
-	}
-	else
-		UARTWrite("sad token :(\r\n");
+	if (!command)
+		return;
+
 	if (!strcmp(command, "dir"))
 	{
 		ListFiles("sd:\\");
@@ -60,6 +56,7 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("dir: Show list of files on sd:\\\r\n");
 		UARTWrite("help: Show help text\r\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\r\n");
+		UARTWrite("CTRL+C terminates the current program\r\n");
 	}
 	else // Anything else defers to being a command on storage
 	{
@@ -170,6 +167,7 @@ int main()
 			UARTWrite("\033[2K\rsd:\\");
 			UARTWrite(s_cmdString);
 		}
+
 		if (execcmd)
 		{
 			stringchanged = 1;
