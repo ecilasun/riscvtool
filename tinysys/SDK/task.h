@@ -39,6 +39,7 @@ struct STaskContext {
 	struct STask tasks[TASK_MAX];	// List of all the tasks
 	volatile int32_t currentTask;	// Current task index
 	volatile int32_t numTasks;		// Number of tasks
+	volatile int32_t debugMode;		// Debug mode toggle
 };
 
 // Start up the task system

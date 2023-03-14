@@ -13,6 +13,7 @@ void TaskInitSystem(struct STaskContext *_ctx)
 {
 	_ctx->currentTask = 0;
 	_ctx->numTasks = 0;
+	_ctx->debugMode = 0;
 
 	// Clean out all tasks
 	for (uint32_t i=0; i<TASK_MAX; ++i)

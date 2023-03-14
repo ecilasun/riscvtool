@@ -39,6 +39,11 @@ void HandleUART()
 	// *IO_UARTTX = 0x11;
 }
 
+void TaskDebugMode(uint32_t _mode)
+{
+	g_taskctx.debugMode = _mode;
+}
+
 //void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine() // Auto-saves registers
 void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routine() // Manual register save
 {
@@ -94,8 +99,10 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			{
 				// TODO: We need to read the 'reason' for HW interrupt from a custom register
 				// For now, ignore the reason as we only have one possible IRQ generator.
-				//gdb_handler(&g_taskctx);
-				HandleUART();
+				if (g_taskctx.debugMode)
+					gdb_handler(&g_taskctx);
+				else
+					HandleUART();
 
 				// Machine External Interrupt (hardware)
 				// Route based on hardware type

@@ -59,10 +59,16 @@ void ExecuteCmd(char *_cmd)
 	{
 		UARTWrite("tinysys " VERSIONSTRING "\r\n");
 	}
+	else if (!strcmp(command, "gdb"))
+	{
+		UARTWrite("\033[H\033[0m\033[2JEntering gdb debug server mode\r\n");
+		TaskDebugMode(1);
+	}
 	else if (!strcmp(command, "help"))
 	{
 		UARTWrite("dir: Show list of files on sd:\\\r\n");
 		UARTWrite("cls: Clear terminal\r\n");
+		UARTWrite("gdb: Enter gdb server mode\r\n");
 		UARTWrite("ver: Show version info\r\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\r\n");
 		UARTWrite("CTRL+C terminates the current program\r\n");
@@ -112,6 +118,7 @@ int main()
 	uint32_t evenodd = 0;
 	int stringchanged = 1;
 	while (1) {
+
 		uint64_t present = E32ReadTime();
 		// Swap LED state roughtly every other second
 		if (present-past > ONE_SECOND_IN_TICKS)
