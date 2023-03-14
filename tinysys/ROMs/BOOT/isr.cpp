@@ -145,8 +145,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 		{
 			case CAUSE_BREAKPOINT:
 			{
-				// TODO: Handle debugger breakpoints
-				UARTWrite("\033[0m\r\n\r\n\033[31m\033[40mSoftware breakpoints are not implemented\r\n\033[0m\r\n");
+				gdb_breakpoint(&g_taskctx);
 			}
 			break;
 

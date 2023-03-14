@@ -136,23 +136,23 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	regs[31] = read_csr(0x01F);	// t6
 
 	// Break
-	// Replace current instruction with an EBREAK
-	/*if (_ctx->tasks[currentTask].ctrlc == 1)
+	if (_ctx->tasks[currentTask].ctrlc == 1)
 	{
 		_ctx->tasks[currentTask].ctrlc = 2;
-		_ctx->tasks[currentTask].ctrlcaddress = regs[0]; // If we're on a branch instruction this is the branch target, else it's PC+4
-		_ctx->tasks[currentTask].ctrlcbackup = *(uint32_t*)(regs[0]);
-		*(uint32_t*)(regs[0]) = 0x00100073; // EBREAK instruction
+		_ctx->tasks[currentTask].ctrlcaddress = regs[0];				// Save PC of the instruction on which we stopped
+		_ctx->tasks[currentTask].ctrlcbackup = *(uint32_t*)(regs[0]);	// Save the instruction at this address
+		*(uint32_t*)(regs[0]) = 0x00100073;								// Replace it with EBREAK instruction
+		FENCE_I;														// Make sure I$ is flushed so it can see this write
 	}
 
 	// Resume
-	// Restore saved instruction at break address
 	if (_ctx->tasks[currentTask].ctrlc == 8)
 	{
 		_ctx->tasks[currentTask].breakhit = 0;
 		_ctx->tasks[currentTask].ctrlc = 0;
-		*(uint32_t*)(regs[0]) = _ctx->tasks[currentTask].ctrlcbackup;
-	}*/
+		*(uint32_t*)(_ctx->tasks[currentTask].ctrlcaddress) = _ctx->tasks[currentTask].ctrlcbackup;	// Restore old instruction
+		FENCE_I;																					// Make sure I$ is flushed so it can see this write
+	}
 
 	// Switch to next task
 	currentTask = (_ctx->numTasks <= 1) ? 0 : ((currentTask+1) % _ctx->numTasks);

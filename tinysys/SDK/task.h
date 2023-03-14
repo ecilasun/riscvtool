@@ -30,6 +30,8 @@ struct STask {
 	// Debug support - this will probably move somewhere else
 	char name[16];				// Name of this task
 	uint32_t ctrlc;				// Stop on first chance
+	uint32_t ctrlcaddress;
+	uint32_t ctrlcbackup;
 	uint32_t breakhit;			// We've stopped due to a breakpoint
 	uint32_t num_breakpoints;	// Breakpoint count
 	struct STaskBreakpoint breakpoints[TASK_MAX_BREAKPOINTS];	// List of breakpoints

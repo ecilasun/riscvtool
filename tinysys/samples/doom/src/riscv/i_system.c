@@ -64,21 +64,23 @@ I_GetTime (void)
 static void
 I_GetRemoteEvent(void)
 {
+	if (!UARTInputFifoHasData())
+		return;
+
 	event_t event;
 
 	// Any pending keyboard events to handle?
 	// NOTE: OS feeds keyboard input to us from an ISR
-	uint32_t val = 0;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
-	//int R = PS2RingBufferRead(&val, 4); // TODO: Keyboard input
-	int R = UARTInputFifoHasData() ? UARTRead();
+	int updown = UARTRead();
+	int R = UARTRead();
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
-		uint32_t key = val&0x7F;
+		uint32_t key = R&0xFF;
 
 		// Check break/make bit
-		event.type = val&0x80;// TODO: (val & PS2KEYMASK_BREAKCODE) ? ev_keyup : ev_keydown;
+		event.type = updown ? ev_keydown : ev_keyup;// TODO: (val & PS2KEYMASK_BREAKCODE) ? ev_keyup : ev_keydown;
 		switch(key)
 		{
 			case 0x74: event.data1 = KEY_RIGHTARROW; break;
@@ -108,7 +110,7 @@ I_GetRemoteEvent(void)
 			case 0x14: event.data1 = KEY_RCTRL; break;
 			//case 0x11: event.data1 = KEY_RALT; break; // 0xE0+0x11
 			case 0x11: event.data1 = KEY_LALT; break;
-			default: event.data1 = 0;// TODO: PS2ScanToASCII(key, false); break; // Always lowercase
+			default: event.data1 = key;// TODO: PS2ScanToASCII(key, false); break; // Always lowercase
 		}
 
 		D_PostEvent(&event);
