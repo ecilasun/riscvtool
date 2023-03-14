@@ -177,9 +177,8 @@ extern "C"
     }
 
     // SOFTWARE INTERRUPT (ecall)
-    // TODO: same for ebreak, return value is 0x00000003 instead
 
-    void __attribute__((naked, section (".LUT"))) enterSWISR()
+    void __attribute__((naked, section (".LUT"))) enterSWecallISR()
     {
         asm volatile(
             "csrw 0xFD0, a5;"           // Save current A5
@@ -198,7 +197,43 @@ extern "C"
         );
     }
 
-    void __attribute__((naked, section (".LUT"))) leaveSWSR()
+    void __attribute__((naked, section (".LUT"))) leaveSWecallISR()
+    {
+        asm volatile(
+            "csrw 0xFD0, a5;"           // Save current A5
+            "li a5, 128;"               // Generate mask for bit 7
+            "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
+            "srl a5, a5, 4;"            // Shift to 3rd bit position
+            "csrrs a5, mie, a5;"        // Copy it to MIE[3(MSIE)]
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
+            "csrr a5, 0xFD0;"           // Restore old A5
+            // Hardware sets PC <= MEPC;
+         );
+    }
+
+    // SOFTWARE INTERRUPT (ebreak)
+
+    void __attribute__((naked, section (".LUT"))) enterSWebreakISR()
+    {
+        asm volatile(
+            "csrw 0xFD0, a5;"           // Save current A5
+            "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
+            "csrw mepc, a5;"            // Set MEPC to PC+4 for mret
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrc a5, mie, a5;"        // Extract MIE[3(MSIE)] and set it to zero
+            "sll a5, a5, 4;"            // Shift to 7th bit position
+            "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
+            "li a5, 0x00000003;"        // Clear MCAUSE[31] for trap and set MCAUSE[30:0] to 0x3 (debug breakpoint)
+            "csrw mcause, a5;"
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
+            "csrr a5, 0xFD0;"           // Restore old A5
+            // Hardware branches to mtvec
+        );
+    }
+
+    void __attribute__((naked, section (".LUT"))) leaveSWebreakISR() // Same as leaveSWecallISR
     {
         asm volatile(
             "csrw 0xFD0, a5;"           // Save current A5
@@ -220,8 +255,10 @@ extern "C"
         leaveTimerISR();
         enterHWISR();
         leaveHWSR();
-        enterSWISR();
-        leaveSWSR();
+        enterSWecallISR();
+        leaveSWecallISR();
+        enterSWebreakISR();
+        leaveSWebreakISR();
     }
 
     void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)
