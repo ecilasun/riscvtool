@@ -5,7 +5,7 @@
 
 int main()
 {
-	UARTWrite("DMA test\n");
+	UARTWrite("DMA test\r\n");
 
 	const uint32_t W = 320;
 	const uint32_t H = 240;

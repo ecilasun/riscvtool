@@ -13,6 +13,8 @@
 #include "uart.h"
 #include "ringbuffer.h"
 
+#define VERSIONSTRING "v0.95"
+
 static char s_cmdString[512];
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
@@ -53,11 +55,15 @@ void ExecuteCmd(char *_cmd)
 	{
 		UARTWrite("\033[H\033[0m\033[2J");
 	}
+	else if (!strcmp(command, "ver"))
+	{
+		UARTWrite("tinysys " VERSIONSTRING "\r\n");
+	}
 	else if (!strcmp(command, "help"))
 	{
 		UARTWrite("dir: Show list of files on sd:\\\r\n");
 		UARTWrite("cls: Clear terminal\r\n");
-		UARTWrite("help: Show help text\r\n");
+		UARTWrite("ver: Show version info\r\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\r\n");
 		UARTWrite("CTRL+C terminates the current program\r\n");
 	}
@@ -82,7 +88,7 @@ void ExecuteCmd(char *_cmd)
 int main()
 {
 	// Clear terminal
-	UARTWrite("\033[H\033[0m\033[2Jtinysys v0.8\r\n");
+	UARTWrite("\033[H\033[0m\033[2Jtinysys " VERSIONSTRING "\r\nType 'help' for CLI usage info\r\n\r\n");
 
 	// Set up internals
 	RingBufferReset();
@@ -131,10 +137,10 @@ int main()
 				}
 				break;
 
-				case 3:		// ETX (Ctrl+C)
+				case 3:		// EXT (Ctrl+C)
 				{
 					// TODO: Terminate process 1 (the executable)
-					TaskExitTaskWithID(taskctx, 1);
+					TaskExitTaskWithID(taskctx, 1, 0); // Sig:0
 				}
 
 				case 8:		// Backspace

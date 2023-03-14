@@ -61,6 +61,9 @@ void mandelbrotFloat(float ox, float oy, float sx)
       }
    }
 
+   // Flush tile to memory
+   CFLUSH_D_L1;
+
    // distance	(via iq's shadertoy sample https://www.shadertoy.com/view/lsX3W4)
 	// d(c) = |Z|·log|Z|/|Z'|
 	//float d = 0.5*sqrt(dot(z,z)/dot(dz,dz))*log(dot(z,z));
