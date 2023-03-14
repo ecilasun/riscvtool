@@ -22,10 +22,10 @@ enum ETaskState
 };
 
 struct STask {
-	uint32_t HART;      // HART affinity mask (for migration)
-	uint32_t runLength;	// Time slice dedicated to this task
-	ETaskState state;	// State of this task
-	uint32_t regs[32];  // Integer registers - NOTE: register zero here is actually the PC
+	uint32_t HART;			// HART affinity mask (for migration)
+	uint32_t runLength;		// Time slice dedicated to this task
+	enum ETaskState state;	// State of this task
+	uint32_t regs[32];		// Integer registers - NOTE: register zero here is actually the PC
 
 	// Debug support - this will probably move somewhere else
 	char name[16];				// Name of this task
