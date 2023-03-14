@@ -93,6 +93,9 @@ This will break into the currently executing program. Use 'c' command to resume 
 
 Please note that this is an entirely software based feature and its usage pattern / implementation may change over time.
 
+One very useful visual too to aid in debugging is gdbgui which you can find here:
+https://www.gdbgui.com/gettingstarted/
+
 # RISC-V compiler tools
 
 NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknown-elf-g++) are missing from your system, please follow the instructions at https://github.com/riscv/riscv-gnu-toolchain
