@@ -173,6 +173,7 @@ int main()
 		}
 		if (execcmd)
 		{
+			stringchanged = 1;
 			UARTWrite("\r\n");
 			ExecuteCmd(s_cmdString);
 			// Rewind

@@ -123,9 +123,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			break;
 
 			default:
-				UARTWrite("\033[0m\n\n\033[31m\033[40mUnknown hardware interrupt 0x");
+				UARTWrite("\033[0m\r\n\r\n\033[31m\033[40mUnknown hardware interrupt 0x");
 				UARTWriteHex(code);
-				UARTWrite("\n\033[0m\n");
+				UARTWrite("\r\n\033[0m\r\n");
 				while(1) {
 					asm volatile("wfi;");
 				}
@@ -139,7 +139,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_BREAKPOINT:
 			{
 				// TODO: Handle debugger breakpoints
-				UARTWrite("\033[0m\n\n\033[31m\033[40mSoftware breakpoints are not implemented\n\033[0m\n");
+				UARTWrite("\033[0m\r\n\r\n\033[31m\033[40mSoftware breakpoints are not implemented\r\n\033[0m\r\n");
 			}
 			break;
 
@@ -154,18 +154,18 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				{
 					// TODO: Implement other system calls
 
-					UARTWrite("\033[0m\n\n\033[31m\033[40m");
+					UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
 
-					UARTWrite("┌───────────────────────────────────────────────────┐\n");
-					UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\n");
-					UARTWrite("│ execution past the call, and might crash or hang. │\n");
+					UARTWrite("┌───────────────────────────────────────────────────┐\r\n");
+					UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\r\n");
+					UARTWrite("│ execution past the call, and might crash or hang. │\r\n");
 					UARTWrite("│ #");
 					UARTWriteHex((uint32_t)value); // Syscall ID
 					UARTWrite(" @");
 					UARTWriteHex((uint32_t)PC); // PC
-					UARTWrite("                               │\n");
-					UARTWrite("└───────────────────────────────────────────────────┘\n");
-					UARTWrite("\033[0m\n");
+					UARTWrite("                               │\r\n");
+					UARTWrite("└───────────────────────────────────────────────────┘\r\n");
+					UARTWrite("\033[0m\r\n");
 				}
 			}
 			break;
@@ -188,19 +188,19 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				// reverse on: \033[7m blink on: \033[5m
 				// Clear attributes, step down a couple lines and
 				// set foreground color to red, bg color to black
-				UARTWrite("\033[0m\n\n\033[31m\033[40m");
+				UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
 
-				UARTWrite("┌───────────────────────────────────────────────────┐\n");
-				UARTWrite("│ Software Failure. Press reset button to continue. │\n");
+				UARTWrite("┌───────────────────────────────────────────────────┐\r\n");
+				UARTWrite("│ Software Failure. Press reset button to continue. │\r\n");
 				UARTWrite("│   Guru Meditation #");
 				UARTWriteHex((uint32_t)cause); // Cause
 				UARTWrite(".");
 				UARTWriteHex((uint32_t)value); // A7 for no reason
 				UARTWrite(" @");
 				UARTWriteHex((uint32_t)PC); // PC
-				UARTWrite("    │\n");
-				UARTWrite("└───────────────────────────────────────────────────┘\n");
-				UARTWrite("\033[0m\n");
+				UARTWrite("    │\r\n");
+				UARTWrite("└───────────────────────────────────────────────────┘\r\n");
+				UARTWrite("\033[0mv\n");
 
 				// Put core to endless sleep
 				while(1) {

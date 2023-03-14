@@ -4,7 +4,7 @@
 int main()
 {
 	// Output to UART port
-    UARTWrite("Hello, world!\n");
+    UARTWrite("Hello, world!\r\n");
 
     return 0;
 }

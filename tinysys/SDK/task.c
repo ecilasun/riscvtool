@@ -151,11 +151,11 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	// NOTE: Task #0 cannot be terminated
 	if (_ctx->tasks[currentTask].state == TS_TERMINATING && currentTask != 0)
 	{
-		UARTWrite("\033[31m\033[40mTask '");
+		/*UARTWrite("\033[31m\033[40mTask '");
 		UARTWrite(_ctx->tasks[currentTask].name);
 		UARTWrite("' exited with return code 0x");
 		UARTWriteHex(regs[10]);
-		UARTWrite("\033[0m\n");
+		UARTWrite("\033[0m\n");*/
 		// Mark as 'terminated'
 		_ctx->tasks[currentTask].state = TS_TERMINATED;
 		// Replace with task at end of list, if we're not the end of list

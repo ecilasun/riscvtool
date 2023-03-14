@@ -69,9 +69,12 @@ void EchoConsole(const char *echostring)
     char *str = (char*)echostring;
     while (*str != 0)
     {
-        if (*str == '\n')
+        if (*str == '\r')
         {
             cursorx = 0;
+        }
+        else if (*str == '\n')
+        {
 			++cursory;
         }
         else

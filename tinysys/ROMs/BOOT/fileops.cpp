@@ -15,26 +15,26 @@ static int havedrive = 0;
 FATFS *Fs = nullptr;
 
 const char *FRtoString[]={
-	"Succeeded\n",
-	"A hard error occurred in the low level disk I/O layer\n",
-	"Assertion failed\n",
-	"The physical drive cannot work\n",
-	"Could not find the file\n",
-	"Could not find the path\n",
-	"The path name format is invalid\n",
-	"Access denied due to prohibited access or directory full\n",
-	"Access denied due to prohibited access\n",
-	"The file/directory object is invalid\n",
-	"The physical drive is write protected\n",
-	"The logical drive number is invalid\n",
-	"The volume has no work area\n",
-	"There is no valid FAT volume\n",
-	"The f_mkfs() aborted due to any problem\n",
-	"Could not get a grant to access the volume within defined period\n",
-	"The operation is rejected according to the file sharing policy\n",
-	"LFN working buffer could not be allocated\n",
-	"Number of open files > FF_FS_LOCK\n",
-	"Given parameter is invalid\n"
+	"Succeeded\r\n",
+	"A hard error occurred in the low level disk I/O layer\r\n",
+	"Assertion failed\r\n",
+	"The physical drive cannot work\r\n",
+	"Could not find the file\r\n",
+	"Could not find the path\r\n",
+	"The path name format is invalid\r\n",
+	"Access denied due to prohibited access or directory full\r\n",
+	"Access denied due to prohibited access\r\n",
+	"The file/directory object is invalid\r\n",
+	"The physical drive is write protected\r\n",
+	"The logical drive number is invalid\r\n",
+	"The volume has no work area\r\n",
+	"There is no valid FAT volume\r\n",
+	"The f_mkfs() aborted due to any problem\r\n",
+	"Could not get a grant to access the volume within defined period\r\n",
+	"The operation is rejected according to the file sharing policy\r\n",
+	"LFN working buffer could not be allocated\r\n",
+	"Number of open files > FF_FS_LOCK\r\n",
+	"Given parameter is invalid\r\n"
 };
 
 void MountDrive()
@@ -79,24 +79,22 @@ void ListFiles(const char *path)
 			if (re != FR_OK || finf.fname[0] == 0) // Done scanning dir, or error encountered
 				break;
 
-			//char *isexe = strstr(finf.fname, ".elf");
-			//int isdir = finf.fattrib&AM_DIR;
-			//if (isdir)
-			//	UARTWrite("\033[32m"); // Green
-			//if (isexe!=nullptr)
-			//	UARTWrite("\033[33m"); // Yellow
+			char *isexe = strstr(finf.fname, ".elf");
+			int isdir = finf.fattrib&AM_DIR;
+			if (isdir)
+				UARTWrite("\033[32m"); // Green
+			if (isexe!=nullptr)
+				UARTWrite("\033[33m"); // Yellow
 			UARTWrite(finf.fname);
-			//if (isdir)
-			//	UARTWrite(" <dir>");
-			/*else
+			if (isdir)
+				UARTWrite(" <dir>");
+			else
 			{
 				UARTWrite(" ");
 				UARTWriteDecimal((int32_t)finf.fsize);
 				UARTWrite("b");
-			}*/
-			//UARTWrite("\033[0m");
-			UARTWrite("\n");
-
+			}
+			UARTWrite("\033[0m\r\n");
 		} while(1);
 
 		f_closedir(&dir);
@@ -109,7 +107,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 {
 	if (fheader->m_Magic != 0x464C457F)
 	{
-		UARTWrite(" failed: expecting 0x7F+'ELF'");
+		UARTWrite(" failed: expecting 0x7F+'ELF'\r\n");
 		return;
 	}
 
@@ -163,7 +161,7 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 		{
 			UARTWrite("Executable '");
 			UARTWrite(filename);
-			UARTWrite("' not found.\n");
+			UARTWrite("' not found.\r\n");
 		}
 	}
 
