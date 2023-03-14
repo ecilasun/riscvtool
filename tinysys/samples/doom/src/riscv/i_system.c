@@ -70,14 +70,15 @@ I_GetRemoteEvent(void)
 	// NOTE: OS feeds keyboard input to us from an ISR
 	uint32_t val = 0;
 	swap_csr(mie, MIP_MSIP | MIP_MTIP);
-	int R = 0; //PS2RingBufferRead(&val, 4); // TODO: Keyboard input
+	//int R = PS2RingBufferRead(&val, 4); // TODO: Keyboard input
+	int R = UARTInputFifoHasData() ? UARTRead();
 	swap_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
 	if (R)
 	{
-		uint32_t key = val&0xFF;
+		uint32_t key = val&0x7F;
 
 		// Check break/make bit
-		event.type = 0;// TODO: (val & PS2KEYMASK_BREAKCODE) ? ev_keyup : ev_keydown;
+		event.type = val&0x80;// TODO: (val & PS2KEYMASK_BREAKCODE) ? ev_keyup : ev_keydown;
 		switch(key)
 		{
 			case 0x74: event.data1 = KEY_RIGHTARROW; break;
