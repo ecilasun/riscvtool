@@ -14,7 +14,10 @@ thirdparty_libs = ../../3rdparty
 
 folders = \
 	helloworld \
-	boot \
+	memtest \
+	mandelbrot \
+	tinyrt \
+	dmatest \
 
 # Rules
 

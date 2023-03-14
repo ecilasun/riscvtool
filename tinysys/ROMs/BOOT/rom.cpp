@@ -63,8 +63,6 @@ void ExecuteCmd(char *_cmd)
 	}
 	else // Anything else defers to being a command on storage
 	{
-		// NOTE: We _could_ load two executables at the same time and run them
-		// if we handled relocation, or if we had virtual memory support.
 		char filename[128];
 		strcpy(filename, "sd:\\");
 		strcat(filename, command);
@@ -73,7 +71,9 @@ void ExecuteCmd(char *_cmd)
 		// First parameter is excutable name
 		s_startAddress = LoadExecutable(filename, true);
 
-		// Once task is done, it will remove itself
+		// If we succeeded in loading the executable, the trampoline task can branch into it.
+		// NOTE: Without code relocation or virtual memory, two executables will overwrite when loaded
+		// even though each gets a new task.
 		if (s_startAddress != 0x0)
 			TaskAdd(GetTaskContext(), command, RunExecTask, HUNDRED_MILLISECONDS_IN_TICKS);
 	}
@@ -87,21 +87,14 @@ int main()
 	// Set up internals
 	RingBufferReset();
 
-	// Load startup executable
+	// Mount the FAT volume on micro sd card
 	MountDrive();
-	s_startAddress = LoadExecutable("sd:\\helloworld.elf", true);
 
 	// Create task context
 	STaskContext *taskctx = CreateTaskContext();
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
 	TaskAdd(taskctx, "_stub", _stubTask, HALF_MILLISECOND_IN_TICKS);
-
-	// If we succeeded in loading the boot executable, add a trampoline function to launch it
-	// TODO: This would normally be done by the command line (i.e. same as loading and executing a program)
-	// NOTE: If this program wants to spawn threads, it simply needs to add more tasks to the pool
-	if (s_startAddress != 0x0)
-		TaskAdd(taskctx, "BootTask", RunExecTask, HUNDRED_MILLISECONDS_IN_TICKS);
 
 	// Start the timer and hardware interrupt handlers.
 	// This is where all task switching and other interrupt handling occurs
@@ -137,6 +130,12 @@ int main()
 					execcmd++;
 				}
 				break;
+
+				case 3:		// ETX (Ctrl+C)
+				{
+					// TODO: Terminate process 1 (the executable)
+					TaskExitTaskWithID(taskctx, 1);
+				}
 
 				case 8:		// Backspace
 				{
