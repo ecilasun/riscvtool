@@ -10,7 +10,7 @@ int main()
 	const uint32_t W = 320;
 	const uint32_t H = 240;
 
-	UARTWrite("Preparing buffers\n");
+	UARTWrite("Preparing buffers\r\n");
 
 	// Create source and target buffers (using GPU functions to get aligned buffer addresses)
 	uint8_t *bufferB = GPUAllocateBuffer(W*H);
@@ -37,7 +37,7 @@ int main()
 	const uint32_t blockCountInMultiplesOf16bytes = (W*H)/16;
 	UARTWrite("Initiating copy loop of ");
 	UARTWriteDecimal(blockCountInMultiplesOf16bytes);
-	UARTWrite(" blocks\n");
+	UARTWrite(" blocks\r\n");
 
 	int32_t offset = 0;
 	int32_t dir = 2;
@@ -60,7 +60,7 @@ int main()
 		{
 			UARTWrite("DMA clocks (average): ");
 			UARTWriteDecimal(averagetime);
-			UARTWrite("\n");
+			UARTWrite("\r\n");
 		}
 		++outstats;
 

@@ -2,8 +2,6 @@
 
 #include "rvcrt0.h"
 
-//#include "memtest/memtest.h"
-
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -51,9 +49,14 @@ void ExecuteCmd(char *_cmd)
 	{
 		ListFiles("sd:\\");
 	}
+	else if (!strcmp(command, "cls"))
+	{
+		UARTWrite("\033[H\033[0m\033[2J");
+	}
 	else if (!strcmp(command, "help"))
 	{
 		UARTWrite("dir: Show list of files on sd:\\\r\n");
+		UARTWrite("cls: Clear terminal\r\n");
 		UARTWrite("help: Show help text\r\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\r\n");
 		UARTWrite("CTRL+C terminates the current program\r\n");

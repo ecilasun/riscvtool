@@ -54,4 +54,4 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx);
 void TaskExitCurrentTask(struct STaskContext *_ctx);
 
 // Exit a specific task
-void TaskExitTaskWithID(struct STaskContext *_ctx, uint32_t _taskid);
+void TaskExitTaskWithID(struct STaskContext *_ctx, uint32_t _taskid, uint32_t _signal);

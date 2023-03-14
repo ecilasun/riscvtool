@@ -89,7 +89,7 @@ int main()
    float X = -0.235125f;
    float Y = 0.827215f;
 
-   printf("Mandelbrot test\n");
+   printf("Mandelbrot test\r\n");
 
    while(1)
    {

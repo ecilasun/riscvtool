@@ -145,27 +145,41 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			case CAUSE_MACHINE_ECALL:
 			{
-				if (value == 93) // exit()
+				switch(value)
 				{
-					// Terminate and remove from list of running tasks
-					TaskExitCurrentTask(&g_taskctx);
-				}
-				else
-				{
-					// TODO: Implement other system calls
+					// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
+					case 93: // exit()
+					{
+						// Terminate and remove from list of running tasks
+						TaskExitCurrentTask(&g_taskctx);
+					}
+					break;
+					case 129: // kill(pid_t pid, int sig)
+					{
+						// Signal process to terminate
+						uint32_t pid = read_csr(0x00A); // A0
+						uint32_t sig = read_csr(0x00B); // A1
+						TaskExitTaskWithID(&g_taskctx, pid, sig);
+					}
+					break;
+					default:
+					{
+						// TODO: Implement other system calls
 
-					UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
+						UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
 
-					UARTWrite("┌───────────────────────────────────────────────────┐\r\n");
-					UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\r\n");
-					UARTWrite("│ execution past the call, and might crash or hang. │\r\n");
-					UARTWrite("│ #");
-					UARTWriteHex((uint32_t)value); // Syscall ID
-					UARTWrite(" @");
-					UARTWriteHex((uint32_t)PC); // PC
-					UARTWrite("                               │\r\n");
-					UARTWrite("└───────────────────────────────────────────────────┘\r\n");
-					UARTWrite("\033[0m\r\n");
+						UARTWrite("┌───────────────────────────────────────────────────┐\r\n");
+						UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\r\n");
+						UARTWrite("│ execution past the call, and might crash or hang. │\r\n");
+						UARTWrite("│ #");
+						UARTWriteHex((uint32_t)value); // Syscall ID
+						UARTWrite(" @");
+						UARTWriteHex((uint32_t)PC); // PC
+						UARTWrite("                               │\r\n");
+						UARTWrite("└───────────────────────────────────────────────────┘\r\n");
+						UARTWrite("\033[0m\r\n");
+					}
+					break;
 				}
 			}
 			break;
