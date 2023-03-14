@@ -17,6 +17,11 @@ STaskContext *CreateTaskContext()
 	return &g_taskctx;
 }
 
+STaskContext *GetTaskContext()
+{
+	return &g_taskctx;
+}
+
 void HandleUART()
 {
 	// XOFF - hold data traffic from sender so that we don't get stuck here

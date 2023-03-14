@@ -143,7 +143,6 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 	FRESULT fr = f_open(&fp, filename, FA_READ);
 	if (fr == FR_OK)
 	{
-		UARTWrite("Loading boot executable...");
 		SElfFileHeader32 fheader;
 		UINT readsize;
 		f_read(&fp, &fheader, sizeof(fheader), &readsize);
@@ -151,13 +150,10 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
 		f_close(&fp);
 
-		// Unmount filesystem and reset to root directory before passing control
-		UnmountDrive();
 		asm volatile(
 			".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
 			"fence.i;"          // Invalidate I$
 		);
-		UARTWrite("done.\n");
 
 		return branchaddress;
 	}
