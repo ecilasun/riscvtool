@@ -5,6 +5,7 @@
 #include <math.h>
 #include <cmath>
 
+#include "basesystem.h"
 #include "core.h"
 #include "uart.h"
 #include "gpu.h"

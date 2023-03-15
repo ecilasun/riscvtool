@@ -13,9 +13,10 @@
 #include "uart.h"
 #include "ringbuffer.h"
 
-#define VERSIONSTRING "v0.95"
+#define VERSIONSTRING "v0.97"
 
 static char s_cmdString[512];
+static char s_currentPath[128];
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 
@@ -49,11 +50,54 @@ void ExecuteCmd(char *_cmd)
 
 	if (!strcmp(command, "dir"))
 	{
-		ListFiles("sd:\\");
+		ListFiles(s_currentPath);
 	}
 	else if (!strcmp(command, "cls"))
 	{
 		UARTWrite("\033[H\033[0m\033[2J");
+	}
+	else if (!strcmp(command, "ps"))
+	{
+		STaskContext *ctx = GetTaskContext();
+		for (int i=1;i<ctx->numTasks;++i)
+		{
+			STask *task = &ctx->tasks[i];
+			UARTWrite("#");
+			UARTWriteDecimal(i);
+			UARTWrite(", ");
+			UARTWrite(task->name);
+			UARTWrite(", ");
+			UARTWriteDecimal(task->runLength);
+			UARTWrite(", ");
+			UARTWriteDecimal(task->state);
+			UARTWrite("\r\n");
+		}
+	}
+	else if (!strcmp(command, "del"))
+	{
+		const char *path = strtok(nullptr, " ");
+		if (!path)
+			UARTWrite("usage: del fname\r\n");
+		else
+			UARTWrite("TODO: Delete given file\r\n");
+		// TODO: delete a file
+	}
+	else if (!strcmp(command, "cwd"))
+	{
+		const char *path = strtok(nullptr, " ");
+		if (!path)
+			UARTWrite("usage: cwd path\r\n");
+		else
+			strncpy(s_currentPath, path, 128);
+	}
+	else if (!strcmp(command, "uget"))
+	{
+		const char *savename = strtok(nullptr, " ");
+		if (!savename)
+			UARTWrite("usage: uget targetfilename\r\n");
+		else
+			UARTWrite("TODO: Add task to receive files\r\n");
+		// TODO: Load file from remote over UART
 	}
 	else if (!strcmp(command, "ver"))
 	{
@@ -66,17 +110,24 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "help"))
 	{
-		UARTWrite("dir: Show list of files on sd:\\\r\n");
+		UARTWrite("\033[0m\r\n\033[31m\033[40m");
+		UARTWrite("dir: Show list of files in working directory\r\n");
 		UARTWrite("cls: Clear terminal\r\n");
+		UARTWrite("del fname: Delete file\r\n");
+		UARTWrite("cwd path: Change working directory\r\n");
+		UARTWrite("uget fname: Save binary from UART to micro sd card\r\n");
+		UARTWrite("ps: Show process list\r\n");
 		UARTWrite("gdb: Enter gdb server mode\r\n");
 		UARTWrite("ver: Show version info\r\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\r\n");
-		UARTWrite("CTRL+C terminates the current program\r\n");
+		UARTWrite("CTRL+C terminates current program\r\n");
+		UARTWrite("\033[0m\r\n");
 	}
 	else // Anything else defers to being a command on storage
 	{
 		char filename[128];
-		strcpy(filename, "sd:\\");
+		strcpy(filename, s_currentPath);
+		strcat(filename, "\\");
 		strcat(filename, command);
 		strcat(filename, ".elf");
 
@@ -95,6 +146,8 @@ int main()
 {
 	// Clear terminal
 	UARTWrite("\033[H\033[0m\033[2Jtinysys " VERSIONSTRING "\r\nType 'help' for CLI usage info\r\n\r\n");
+
+	strncpy(s_currentPath, "sd:", 128);
 
 	// Set up internals
 	RingBufferReset();
@@ -180,7 +233,9 @@ int main()
 			stringchanged = 0;
 			s_cmdString[s_cmdLen] = 0;
 			// Reset current line and emit the command string
-			UARTWrite("\033[2K\rsd:\\");
+			UARTWrite("\033[2K\r");
+			UARTWrite(s_currentPath);
+			UARTWrite(":");
 			UARTWrite(s_cmdString);
 		}
 

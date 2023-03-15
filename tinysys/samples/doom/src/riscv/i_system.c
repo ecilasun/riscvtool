@@ -35,7 +35,9 @@
 
 #include "i_system.h"
 
+#include "basesystem.h"
 #include "core.h"
+#include "uart.h"
 #include "console.h"
 #include "config.h"
 

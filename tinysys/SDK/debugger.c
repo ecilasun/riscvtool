@@ -5,7 +5,7 @@
 #include "debugger.h"
 
 const char hexdigits[] = "0123456789ABCDEF";
-uint32_t dbg_current_thread = 0;
+uint32_t dbg_current_thread = 1; // Never debug kernel
 
 void putDebugChar(int dbgchar)
 {
@@ -536,9 +536,9 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
                 threadbuf[a]=0;
                 uint32_t idx = hex2int(threadbuf);
                 if (idx == 0) // Eh?
-                    dbg_current_thread = 0;
+                    dbg_current_thread = 1; // Never debug kernel
                 else
-                    dbg_current_thread = idx-1; // Thread IDs start from one, so we have to go one down
+                    dbg_current_thread = idx == 1 ? 1 : (idx-1); // Thread IDs start from one, so we have to go one down
 
                 SendDebugPacket("OK");
             }

@@ -308,7 +308,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				UARTWriteHex((uint32_t)PC); // PC
 				UARTWrite("    │\r\n");
 				UARTWrite("└───────────────────────────────────────────────────┘\r\n");
-				UARTWrite("\033[0mv\n");
+				UARTWrite("\033[0m\r\n");
 
 				// Put core to endless sleep
 				while(1) {

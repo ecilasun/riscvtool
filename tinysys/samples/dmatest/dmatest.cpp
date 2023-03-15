@@ -1,3 +1,4 @@
+#include "basesystem.h"
 #include "core.h"
 #include "gpu.h"
 #include "dma.h"

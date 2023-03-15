@@ -1,5 +1,6 @@
 #pragma once
 
+#include "basesystem.h"
 #include "task.h"
 
 STaskContext *CreateTaskContext();

@@ -4,7 +4,7 @@
 #include <string.h>
 #include <memory.h>
 
-#include "core.h"
+#include "basesystem.h"
 #include "uart.h"
 #include "memtest/memtest.h"
 

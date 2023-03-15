@@ -17,7 +17,7 @@
 
 #include <stdint.h>
 
-#include "core.h"
+#include "basesystem.h"
 #include "mini-printf.h"
 #include "uart.h"
 

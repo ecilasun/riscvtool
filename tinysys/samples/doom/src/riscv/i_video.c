@@ -27,6 +27,7 @@
 #include "../v_video.h"
 #include "../i_video.h"
 
+#include "basesystem.h"
 #include "core.h"
 #include "gpu.h"
 
