@@ -227,6 +227,8 @@ void RemoveBreakPoint(struct STask *task, uint32_t breakaddress)
         {
             // Restore saved instruction
             *(uint32_t*)(breakaddress) = task->breakpoints[i].originalinstruction;
+            CFLUSH_D_L1; // Make sure the write makes it to RAM
+            FENCE_I; // Make sure I$ is flushed so it can see this write
             
             if (task->num_breakpoints-1 != i)
             {
@@ -235,9 +237,9 @@ void RemoveBreakPoint(struct STask *task, uint32_t breakaddress)
             }
 
             task->num_breakpoints--;
-            UARTWrite("RMV ");
-            UARTWriteHex(breakaddress);
-            UARTWrite("\r\n");
+            //EchoConsole("RMV ");
+            //EchoConsoleHex(breakaddress);
+            //EchoConsole("\r\n");
         }
     }
 }
@@ -251,28 +253,36 @@ void AddBreakPoint(struct STask *task, uint32_t breakaddress)
 
     // Replace with EBREAK
     *(uint32_t*)(breakaddress) = 0x00100073;
+    CFLUSH_D_L1; // Make sure the write makes it to RAM
+    FENCE_I; // Make sure I$ is flushed so it can see this write
 
-    UARTWrite("BRK ");
-    UARTWriteHex(breakaddress);
-    UARTWrite("\r\n");
+    //EchoConsole("BRK ");
+    //EchoConsoleHex(breakaddress);
+    //EchoConsole("\r\n");
 }
 
 uint32_t gdb_breakpoint(struct STaskContext *_ctx)
 {
+    // We've encountered an ebreak instruction
     struct STask *tasks = _ctx->tasks;
+
+    // "Hit" the breakpoint if it's not already hit
     if (tasks[dbg_current_thread].breakhit == 0)
     {
         tasks[dbg_current_thread].breakhit = 1;
         // https://man7.org/linux/man-pages/man7/signal.7.html
         // https://chromium.googlesource.com/native_client/nacl-gdb/+/refs/heads/main/include/gdb/signals.def
         //SendDebugPacket("S05"); // S05==SIGTRAP, S02==SIGINT 
+        // Let gdb know we've hit the breakpoint
         SendDebugPacket("T02"); // T0X can also send the 'important' registers and their values across such as PC/RA/SP, but S0X  cannot
         return 0x1;
     }
 
+    // Nope
     return 0x0;
 }
 
+// Invoked per-character on input queue
 uint32_t gdb_handler(struct STaskContext *_ctx)
 {
     struct STask *tasks = _ctx->tasks;
@@ -336,6 +346,7 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
 
             if (offset == 0)
             {
+                // Each task is a 'thread', including programs and their child threads
                 strcat(outstring, "l<?xml version=\"1.0\"?>\n<threads>\n");
                 for (int32_t i=0;i<_ctx->numTasks;++i)
                 {
@@ -392,7 +403,7 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
             if (packetbuffer[5]=='c') // Continue action
                 tasks[dbg_current_thread].ctrlc = 8;
             if (packetbuffer[5]=='s') // Step action
-                UARTWrite("step\r\n");
+                EchoConsole("step\r\n"); // TODO:
             if (packetbuffer[5]=='t') // Stop action
                 tasks[dbg_current_thread].ctrlc = 1;
 
@@ -548,12 +559,12 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
                 SendDebugPacket("OK"); // deprecated, use vCont
             }
         }
-        else // Unknown command
+        /*else // Unknown command
         {
-            UARTWrite(">");
-            UARTWrite(packetbuffer); // NOTE: Don't do this
-            UARTWrite("\r\n");
-        }
+            EchoConsole(">");
+            EchoConsole(packetbuffer); // NOTE: Don't do this
+            EchoConsole("\r\n");
+        }*/
     }
 
     return 0x0; // TODO: might want to pass data back
