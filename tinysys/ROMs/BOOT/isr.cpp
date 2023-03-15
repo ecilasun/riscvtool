@@ -154,35 +154,123 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				switch(value)
 				{
 					// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
+					// 0	io_setup	long sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
+					// 57	close		long sys_close(unsigned int fd);
+					// 62	lseek		long sys_llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, loff_t __user *result, unsigned int whence);
+					// 63	read		long sys_read(unsigned int fd, char __user *buf, size_t count);
+					// 64	write		long sys_write(unsigned int fd, const char __user *buf, size_t count);
+					// 80	newfstat	long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
+					// 93	exit		long sys_exit(int error_code);
+					// 129	kill		long sys_kill(pid_t pid, int sig);
+					// 214	brk			long sys_brk(void* brk);
+					// 1024	open		long sys_open(const char __user * filename, int flags, umode_t mode); open/create file
+
+					case 0: // io_setup()
+					{
+						//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
+						UARTWrite("unimpl: io_setup()\r\n");
+					}
+					break;
+
+					case 57: // close()
+					{
+						//sys_close(unsigned int fd);
+						UARTWrite("unimpl: close()\r\n");
+					}
+					break;
+
+					case 62: // lseek()
+					{
+						//sys_llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, loff_t __user *result, unsigned int whence);
+						UARTWrite("unimpl: lseek()\r\n");
+					}
+					break;
+
+					case 63: // read()
+					{
+						//sys_read(unsigned int fd, char __user *buf, size_t count);
+						UARTWrite("unimpl: read()\r\n");
+					}
+					break;
+
+					case 64: // write()
+					{
+						uint32_t file = read_csr(0x00A); // A0
+						uint32_t ptr = read_csr(0x00B); // A1
+						uint32_t count = read_csr(0x00C); // A2
+						if (file == 1) { // STDOUT_FILENO==1
+							char *cptr = (char*)ptr;
+							const char *eptr = cptr + count;
+							int i = 0;
+							while (cptr != eptr)
+							{
+								*IO_UARTTX = *cptr;
+								++i;
+								++cptr;
+							}
+							write_csr(0x00A, i);
+						}
+						else
+						{
+							UARTWrite("unimpl: write(");
+							UARTWriteHex(file);
+							UARTWrite(", ");
+							UARTWriteHex(ptr);
+							UARTWrite(", ");
+							UARTWriteHex(count);
+							UARTWrite(");\r\n");
+							write_csr(0x00A, 0);
+						}
+					}
+					break;
+
+					case 80: // newfstat()
+					{
+						//sys_newfstat(unsigned int fd, struct stat __user *statbuf);
+						UARTWrite("unimpl: newfstat()\r\n");
+					}
+					break;
+
 					case 93: // exit()
 					{
 						// Terminate and remove from list of running tasks
 						TaskExitCurrentTask(&g_taskctx);
 					}
 					break;
+
 					case 129: // kill(pid_t pid, int sig)
 					{
 						// Signal process to terminate
 						uint32_t pid = read_csr(0x00A); // A0
 						uint32_t sig = read_csr(0x00B); // A1
 						TaskExitTaskWithID(&g_taskctx, pid, sig);
+						UARTWrite("Process killed\r\n");
 					}
 					break;
+
+					case 214: // brk()
+					{
+						uint32_t addrs = read_csr(0x00A); // A0
+						int retval = core_brk(addrs);
+						write_csr(0x00A, retval);
+					}
+					break;
+
+					case 1024: // open()
+					{
+						//sys_open(const char __user * filename, int flags, umode_t mode);
+						UARTWrite("unimpl: open()\r\n");
+					}
+					break;
+
+					// Unimplemented syscalls drop here
 					default:
 					{
-						// TODO: Implement other system calls
-
 						UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
-
-						UARTWrite("┌───────────────────────────────────────────────────┐\r\n");
-						UARTWrite("│ Unimplemented machine ECALL. Program will resume  │\r\n");
-						UARTWrite("│ execution past the call, and might crash or hang. │\r\n");
-						UARTWrite("│ #");
+						UARTWrite("Unimplemented machine ECALL: #");
 						UARTWriteHex((uint32_t)value); // Syscall ID
 						UARTWrite(" @");
 						UARTWriteHex((uint32_t)PC); // PC
-						UARTWrite("                               │\r\n");
-						UARTWrite("└───────────────────────────────────────────────────┘\r\n");
 						UARTWrite("\033[0m\r\n");
 					}
 					break;

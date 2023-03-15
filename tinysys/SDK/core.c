@@ -314,6 +314,16 @@ extern "C" {
       }
       return old_heapstart;
    }
+
 #ifdef __cplusplus
 }
 #endif
+
+// syscall helpers
+int core_brk(uint32_t brkptr)
+{
+   if (brkptr < (uint32_t)heap_start || brkptr >= (uint32_t)heap_end)
+      return -1; // Out of allowed range
+   heap_start = (uint8_t*)brkptr;
+   return 0; // Success
+}
