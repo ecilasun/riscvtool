@@ -56,6 +56,22 @@ void ExecuteCmd(char *_cmd)
 	{
 		UARTWrite("\033[H\033[0m\033[2J");
 	}
+	else if (!strcmp(command, "mem"))
+	{
+		UARTWrite("Available memory:");
+		int inkbytes = core_memavail()/1024;
+		int inmbytes = inkbytes/1024;
+		if (inmbytes!=0)
+		{
+			UARTWriteDecimal(inmbytes);
+			UARTWrite(" Mbytes\r\n");
+		}
+		else
+		{
+			UARTWriteDecimal(inkbytes);
+			UARTWrite(" Kbytes\r\n");
+		}
+	}
 	else if (!strcmp(command, "ps"))
 	{
 		STaskContext *ctx = GetTaskContext();
@@ -110,9 +126,11 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "help"))
 	{
-		UARTWrite("\033[0m\r\n\033[31m\033[40m");
+		// Bright blue
+		UARTWrite("\033[0m\r\n\033[94m");
 		UARTWrite("dir: Show list of files in working directory\r\n");
 		UARTWrite("cls: Clear terminal\r\n");
+		UARTWrite("mem: Show available memory\r\n");
 		UARTWrite("del fname: Delete file\r\n");
 		UARTWrite("cwd path: Change working directory\r\n");
 		UARTWrite("uget fname: Save binary from UART to micro sd card\r\n");

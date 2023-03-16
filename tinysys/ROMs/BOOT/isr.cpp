@@ -169,6 +169,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
 						UARTWrite("unimpl: io_setup()\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 
@@ -176,6 +177,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						//sys_close(unsigned int fd);
 						UARTWrite("unimpl: close()\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 
@@ -183,6 +185,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						//sys_llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, loff_t __user *result, unsigned int whence);
 						UARTWrite("unimpl: lseek()\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 
@@ -190,6 +193,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						//sys_read(unsigned int fd, char __user *buf, size_t count);
 						UARTWrite("unimpl: read()\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 
@@ -228,6 +232,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						//sys_newfstat(unsigned int fd, struct stat __user *statbuf);
 						UARTWrite("unimpl: newfstat()\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 
@@ -260,6 +265,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						//sys_open(const char __user * filename, int flags, umode_t mode);
 						UARTWrite("unimpl: open()\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 
@@ -272,6 +278,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						UARTWrite(" @");
 						UARTWriteHex((uint32_t)PC); // PC
 						UARTWrite("\033[0m\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 				}
