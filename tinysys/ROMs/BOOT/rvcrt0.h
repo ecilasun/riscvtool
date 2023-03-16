@@ -87,6 +87,7 @@ extern "C"
       // Halt if we ever attempt to exit ROM
       asm (
          "_romfreeze: "
+		 "wfi;"
          "j _romfreeze;"
       );
    }

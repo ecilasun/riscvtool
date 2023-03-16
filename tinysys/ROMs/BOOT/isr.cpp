@@ -243,6 +243,15 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					}
 					break;
 
+					case 95: // wait()
+					{
+						// Wait for child process status change - unused
+						// pid_t wait(int *wstatus);
+						UARTWrite("unimpl: wait()\r\n");
+						write_csr(0x00A, 0xFFFFFFFF);
+					}
+					break;
+
 					case 129: // kill(pid_t pid, int sig)
 					{
 						// Signal process to terminate
