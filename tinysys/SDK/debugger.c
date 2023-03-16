@@ -7,31 +7,6 @@
 const char hexdigits[] = "0123456789ABCDEF";
 uint32_t dbg_current_thread = 1; // Never debug kernel
 
-void putDebugChar(int dbgchar)
-{
-    IO_UARTTX[0] = (uint8_t)dbgchar;
-}
-
-int getDebugChar()
-{
-    while (!UARTInputFifoHasData()) { } // Wait for data
-    return IO_UARTRX[0];
-}
-
-void flush_i_cache()
-{
-    // TODO:
-}
-
-void exceptionHandler (int exception_number, void *exception_address)
-{
-    // TODO:
-}
-
-// void *memset(void *, int, int) also in stdlib
-
-// ----------------------------------------------------------
-
 char packetbuffer[1200]; // Report 1024 but allocate more space just in case
 int packetcursor = 0;
 int checksumcounter = 0;
@@ -306,14 +281,12 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
     char outstring[1024] = "";
 
     int external_break = 0;
-    while (UARTInputFifoHasData())
-    {
-        char checkchar = *IO_UARTRX;
 
-        if (checkchar == '\003')
-            external_break = 1;
-        processgdbpacket(checkchar);
-    }
+	char checkchar = UARTRead();
+	if (checkchar == '\003')
+		external_break = 1;
+	if (checkchar!=0)
+		processgdbpacket(checkchar);
 
     if (external_break)
         tasks[dbg_current_thread].ctrlc = 1; // Stop on first chance
@@ -546,19 +519,23 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
                     threadbuf[a++] = packetbuffer[p++];
                 threadbuf[a]=0;
                 uint32_t idx = hex2int(threadbuf);
-                if (idx == 0) // Eh?
-                    dbg_current_thread = 1; // Never debug kernel
-                else
-                    dbg_current_thread = idx == 1 ? 1 : (idx-1); // Thread IDs start from one, so we have to go one down
+				// Never debug kernel
+				dbg_current_thread = idx <= 1 ? 1 : (idx-1); // Thread IDs start from one, so we have to go one down
 
                 SendDebugPacket("OK");
             }
             if (packetbuffer[1]=='c') // Continue
             {
                 tasks[dbg_current_thread].ctrlc = 8;
+
                 SendDebugPacket("OK"); // deprecated, use vCont
             }
         }
+		else
+		{
+			// Unknown, respond with empty
+			SendDebugPacket("");
+		}
         /*else // Unknown command
         {
             EchoConsole(">");
