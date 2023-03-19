@@ -13,14 +13,6 @@ ENTRY(_start)
 
 SECTIONS
 {
-  /* Program/static data can use up to 32MBytes, rest is reserved for heap */
-  __heap_start = 0x02000000;
-  PROVIDE(__heap_start = __heap_start);
-
-  /* 8Kbytes are reserved for default stack, heap can grow up to this point */
-  __heap_end = 0x0FFE0000;
-  PROVIDE(__heap_end = __heap_end);
-
   /* Default stack size is 256 bytes unless overriden by linker by defining __stack_size, see Makefile */
   __stack_size = DEFINED(__stack_size) ? __stack_size : 0x100;
   PROVIDE(__stack_size$ = __stack_size);

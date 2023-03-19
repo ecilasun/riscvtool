@@ -265,7 +265,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 214: // brk()
 					{
 						uint32_t addrs = read_csr(0x00A); // A0
-						int retval = core_brk(addrs);
+						uint32_t retval = core_brk(addrs);
 						write_csr(0x00A, retval);
 					}
 					break;

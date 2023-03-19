@@ -138,7 +138,7 @@ uint8_t __attribute__ ((noinline)) SDIdle()
    {
       UARTWrite("SDIdle expected 0x01, got 0x");
       UARTWriteHex(response);
-      UARTWrite("\n");
+      UARTWrite("\r\n");
    }
 
    return response;
@@ -156,14 +156,14 @@ uint8_t __attribute__ ((noinline)) SDCheckVoltageRange()
    {
       UARTWrite("SDCheckVoltageRange expected 0x01, got 0x");
       UARTWriteHex(response);
-      UARTWrite("\n");
+      UARTWrite("\r\n");
    }
 
    if (databack != 0x000001AA)
    {
       UARTWrite("SDCheckVoltageRange expected 0x000001AA, got 0x");
       UARTWriteHex(databack);
-      UARTWrite("\n");
+      UARTWrite("\r\n");
    }
 
    return response;
@@ -187,14 +187,14 @@ uint8_t __attribute__ ((noinline)) SDCardInit()
    {
       UARTWrite("SDCardInit expected 0x01, got 0x");
       UARTWriteHex(rA);
-      UARTWrite("\n");
+      UARTWrite("\r\n");
    }
 
    if (rB != 0x00)
    {
       UARTWrite("SDCardInit expected 0x00, got 0x");
       UARTWriteHex(rB);
-      UARTWrite("\n");
+      UARTWrite("\r\n");
    }
 
    // Initialize
@@ -255,19 +255,19 @@ uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *d
    if (!(response&0xF0))
    {
       if (response&0x01)
-         UARTWrite("SDReadSingleBlock: error response = 'error'\n");
+         UARTWrite("SDReadSingleBlock: error response = 'error'\r\n");
       if (response&0x02)
-         UARTWrite("SDReadSingleBlock: error response = 'CC error'\n");
+         UARTWrite("SDReadSingleBlock: error response = 'CC error'\r\n");
       if (response&0x04)
-         UARTWrite("SDReadSingleBlock: error response = 'Card ECC failed'\n");
+         UARTWrite("SDReadSingleBlock: error response = 'Card ECC failed'\r\n");
       if (response&0x08)
       {
          UARTWrite("SDReadSingleBlock: error response = 'Out of range' sector: 0x");
          UARTWriteHex(sector);
-         UARTWrite("\n");
+         UARTWrite("\r\n");
       }
       if (response&0x10)
-         UARTWrite("SDReadSingleBlock: error response = 'Card locked'\n");
+         UARTWrite("SDReadSingleBlock: error response = 'Card locked'\r\n");
    }
 
    return response;
@@ -299,7 +299,7 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t blockaddress, uin
 		}
 		else
 		{
-			UARTWrite("SDWriteSingleBlock: write error\n");
+			UARTWrite("SDWriteSingleBlock: write error\r\n");
 			return 0xFF;
 		}
    }

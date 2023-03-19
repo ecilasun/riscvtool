@@ -7,8 +7,8 @@
 
 #if defined(BUILDING_ROM)
 // syscall handlers for ROM
-int core_brk(uint32_t brkptr);
-int core_memavail();
+uint32_t core_brk(uint32_t brkptr);
+uint32_t core_memavail();
 #endif
 
 #define E32AlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))

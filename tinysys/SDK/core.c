@@ -13,11 +13,37 @@
 
 #define STDOUT_FILENO 1
 
-extern uint8_t* __heap_start;
-extern uint8_t* __heap_end;
+#if defined(BUILDING_ROM)
 
-uint8_t* heap_start = __heap_start;
-uint8_t* heap_end = __heap_end;
+// TODO: __heap_start should be set to __bss_end and __heap_end to __heap_start+__heap_size for loaded executables
+// This also means we have to get rid of any addresses between bss and heap as they might get overwritten
+static uint8_t* __heap_start = (uint8_t*)0x02000000;
+static uint8_t* __heap_end = (uint8_t*)0x0FFE0000;
+static uint8_t* __breakpos = __heap_start;
+
+uint32_t core_memavail()
+{
+	return (uint32_t)(__heap_end - __heap_start);
+}
+
+uint32_t core_brk(uint32_t brkptr)
+{
+	// Address set to zero will query current break position
+	if (brkptr == 0)
+		return (uint32_t)__breakpos;
+
+	// Out of bounds will return all ones (-1)
+	if (brkptr<(uint32_t)__heap_start || brkptr>(uint32_t)__heap_end)
+		return 0xFFFFFFFF;
+
+	// Set new break position and return 0 (success) in all other cases
+	__breakpos = (uint8_t*)brkptr;
+	return 0;
+}
+
+#else
+
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -210,45 +236,28 @@ extern "C" {
 
 	int _brk(void *addr)
 	{
-		// TODO: Do an ecall instead
-		if (addr<__heap_end || addr>__heap_end)
-			return -1;
-
-		heap_start = (uint8_t*)addr;
-		return 0;
+		uint32_t brkaddr = (uint32_t)addr;
+		int retval = 0;
+		asm volatile(
+			"li a7, 214;"
+			"lw a0, %1;"
+			"ecall;"
+			"sw a0, %0;" :
+			// Return value
+			"=m" (retval) :
+			// Input parameters
+			"m" (brkaddr)
+		);
+		return retval;
 	}
 
 	void *_sbrk(intptr_t incr)
 	{
-		uint8_t *old_heapstart = heap_start;
-
-		if (heap_start == heap_end) {
-			return NULL;
-		}
-
-		if ((heap_start += incr) < heap_end) {
-			heap_start += incr;
-		} else {
-			heap_start = heap_end;
-		}
-		return old_heapstart;
+		uint8_t *old_heapstart = (uint8_t *)_brk(0);
+		uint32_t res = _brk(old_heapstart + incr);
+		return res != 0xFFFFFFFF ? old_heapstart : NULL;
 	}
 
 #ifdef __cplusplus
-}
-#endif
-
-#if defined(BUILDING_ROM)
-int core_memavail()
-{
-	return (heap_end-heap_start);
-}
-int core_brk(uint32_t brkptr)
-{
-	if (brkptr<(uint32_t)__heap_end || brkptr>(uint32_t)__heap_end)
-		return -1;
-
-	heap_start = (uint8_t*)brkptr;
-	return 0;
 }
 #endif

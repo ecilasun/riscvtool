@@ -13,7 +13,7 @@
 #include "uart.h"
 #include "ringbuffer.h"
 
-#define VERSIONSTRING "v0.97"
+#define VERSIONSTRING "v0.982"
 
 static char s_cmdString[512];
 static char s_currentPath[128];
@@ -42,6 +42,15 @@ void RunExecTask()
 	// execution pool.
 }
 
+void uget(const char *savename)
+{
+	// TODO: Load file from remote over UART
+	if (!savename)
+		UARTWrite("usage: uget targetfilename\r\n");
+	else
+		UARTWrite("TODO: Add task to receive files\r\n");
+}
+
 void ExecuteCmd(char *_cmd)
 {
 	const char *command = strtok(_cmd, " ");
@@ -59,8 +68,8 @@ void ExecuteCmd(char *_cmd)
 	else if (!strcmp(command, "mem"))
 	{
 		UARTWrite("Available memory:");
-		int inkbytes = core_memavail()/1024;
-		int inmbytes = inkbytes/1024;
+		uint32_t inkbytes = core_memavail()/1024;
+		uint32_t inmbytes = inkbytes/1024;
 		if (inmbytes!=0)
 		{
 			UARTWriteDecimal(inmbytes);
@@ -92,15 +101,16 @@ void ExecuteCmd(char *_cmd)
 	else if (!strcmp(command, "del"))
 	{
 		const char *path = strtok(nullptr, " ");
+		// TODO: delete a file
 		if (!path)
 			UARTWrite("usage: del fname\r\n");
 		else
 			UARTWrite("TODO: Delete given file\r\n");
-		// TODO: delete a file
 	}
 	else if (!strcmp(command, "cwd"))
 	{
 		const char *path = strtok(nullptr, " ");
+		// Change working directory
 		if (!path)
 			UARTWrite("usage: cwd path\r\n");
 		else
@@ -109,11 +119,7 @@ void ExecuteCmd(char *_cmd)
 	else if (!strcmp(command, "uget"))
 	{
 		const char *savename = strtok(nullptr, " ");
-		if (!savename)
-			UARTWrite("usage: uget targetfilename\r\n");
-		else
-			UARTWrite("TODO: Add task to receive files\r\n");
-		// TODO: Load file from remote over UART
+		uget(savename);
 	}
 	else if (!strcmp(command, "ver"))
 	{
