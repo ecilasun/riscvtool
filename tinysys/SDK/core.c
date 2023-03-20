@@ -236,17 +236,19 @@ extern "C" {
 
 	int _brk(void *addr)
 	{
-		uint32_t brkaddr = (uint32_t)addr;
-		int retval = 0;
-		asm volatile(
+		register uint32_t brkaddr = (uint32_t)addr;
+		register int retval = 0;
+		asm (
 			"li a7, 214;"
-			"lw a0, %1;"
+			"mv a0, %1;"
 			"ecall;"
-			"sw a0, %0;" :
+			"mv %0, a0;" :
 			// Return value
-			"=m" (retval) :
+			"=r" (retval) :
 			// Input parameters
-			"m" (brkaddr)
+			"r" (brkaddr) :
+			// Clobber list
+			"a0", "a5", "a7"
 		);
 		return retval;
 	}

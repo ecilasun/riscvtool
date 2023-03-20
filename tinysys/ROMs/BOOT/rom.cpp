@@ -13,7 +13,7 @@
 #include "uart.h"
 #include "ringbuffer.h"
 
-#define VERSIONSTRING "v0.982"
+#define VERSIONSTRING "v0.983"
 
 static char s_cmdString[512];
 static char s_currentPath[128];
