@@ -40,7 +40,7 @@ uint32_t __attribute__ ((noinline)) RingBufferRead(void* pvDest, const uint32_t 
     uint32_t bytesLeft = cbDest;
 
     const uint32_t cbTailBytes = bytesLeft < c_cbBufferSize - actualReadOffset ? bytesLeft : c_cbBufferSize - actualReadOffset;
-    memcpy( pbDest, ringbuffer + actualReadOffset, cbTailBytes );
+    __builtin_memcpy( pbDest, ringbuffer + actualReadOffset, cbTailBytes );
     bytesLeft -= cbTailBytes;
 
     //EAssert(bytesLeft == 0, "Item not an exact multiple of ring buffer, this will cause multiple memcpy() calls during Read()");
@@ -67,7 +67,7 @@ uint32_t __attribute__ ((noinline)) RingBufferWrite( const void* pvSrc, const ui
     uint32_t bytesLeft = cbSrc;
 
     const uint32_t cbTailBytes = bytesLeft < c_cbBufferSize - actualWriteOffset ? bytesLeft : c_cbBufferSize - actualWriteOffset;
-    memcpy(ringbuffer + actualWriteOffset, pbSrc, cbTailBytes);
+    __builtin_memcpy(ringbuffer + actualWriteOffset, pbSrc, cbTailBytes);
     bytesLeft -= cbTailBytes;
 
     //EAssert(bytesLeft == 0, "Item not an exact multiple of ring buffer, this will cause multiple memcpy() calls during Write()");

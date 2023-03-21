@@ -1,22 +1,14 @@
 // Boot ROM
 
 #include "rvcrt0.h"
+#include "rombase.h"
 
-#include <math.h>
 #include <string.h>
-#include <stdio.h>
 
-#include "core.h"
-#include "fileops.h"
-#include "isr.h"
-#include "leds.h"
-#include "uart.h"
-#include "ringbuffer.h"
+#define VERSIONSTRING "v0.985"
 
-#define VERSIONSTRING "v0.983"
-
-static char s_cmdString[512];
-static char s_currentPath[128];
+static char s_cmdString[128];
+static char s_currentPath[64];
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 
@@ -159,8 +151,9 @@ void ExecuteCmd(char *_cmd)
 		s_startAddress = LoadExecutable(filename, true);
 
 		// If we succeeded in loading the executable, the trampoline task can branch into it.
-		// NOTE: Without code relocation or virtual memory, two executables will overwrite when loaded
-		// even though each gets a new task.
+		// NOTE: Without code relocation or virtual memory, two executables will ovelap when loaded
+		// even though each gets a new task slot assigned.
+		// This will cause corruption of the runtime environment.
 		if (s_startAddress != 0x0)
 			TaskAdd(GetTaskContext(), command, RunExecTask, HUNDRED_MILLISECONDS_IN_TICKS);
 	}

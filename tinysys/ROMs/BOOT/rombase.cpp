@@ -1,11 +1,167 @@
-#include "encoding.h"
-#include "core.h"
-#include "debugger.h"
-#include "uart.h"
-#include "isr.h"
-#include "ringbuffer.h"
+#include "rombase.h"
 
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+
+#define STDOUT_FILENO 1
+
+static char currentdir[128] = "sd:\\";
+static int havedrive = 0;
+FATFS *Fs = nullptr;
+
+void ReportError(const uint32_t _width, const char *_error)
+{
+	UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
+	UARTWrite("┌");
+	for (uint32_t w=0;w<_width-2;++w)
+		UARTWrite("─");
+	UARTWrite("┐\r\n│");
+	int W = strlen(_error);
+	W = (_width-2) - W;
+	for (int w=0;w<W;++w)
+		UARTWrite(" ");
+	UARTWrite(_error);
+	UARTWrite("│\r\n");
+	UARTWrite("└");
+	for (uint32_t w=0;w<_width-2;++w)
+		UARTWrite("─");
+	UARTWrite("┘\r\n\033[0m\r\n");
+}
+
+void MountDrive()
+{
+	if (havedrive)
+		return;
+
+	// Attempt to mount file system on micro-SD card
+	Fs = (FATFS*)malloc(sizeof(FATFS));
+	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+	if (mountattempt!=FR_OK)
+	{
+		havedrive = 0;
+		ReportError(32, "File system error");
+	}
+	else
+	{
+		strcpy(currentdir, "sd:\\");
+		havedrive = 1;
+	}
+}
+
+void UnmountDrive()
+{
+	if (havedrive)
+	{
+		f_mount(nullptr, "sd:", 1);
+		free(Fs);
+		havedrive = 0;
+	}
+}
+
+void ListFiles(const char *path)
+{
+	DIR dir;
+	FRESULT re = f_opendir(&dir, path);
+	if (re == FR_OK)
+	{
+		FILINFO finf;
+		do{
+			re = f_readdir(&dir, &finf);
+			if (re != FR_OK || finf.fname[0] == 0) // Done scanning dir, or error encountered
+				break;
+
+			char *isexe = strstr(finf.fname, ".elf");
+			int isdir = finf.fattrib&AM_DIR;
+			if (isdir)
+				UARTWrite("\033[32m"); // Green
+			if (isexe!=nullptr)
+				UARTWrite("\033[33m"); // Yellow
+			UARTWrite(finf.fname);
+			if (isdir)
+				UARTWrite(" <dir>");
+			else
+			{
+				UARTWrite(" ");
+				UARTWriteDecimal((int32_t)finf.fsize);
+				UARTWrite("b");
+			}
+			UARTWrite("\033[0m\r\n");
+		} while(1);
+
+		f_closedir(&dir);
+	}
+	else
+	{
+		UARTWrite("fs error: 0x");
+		UARTWriteHex(re);
+		UARTWrite("\r\n");
+	}
+}
+
+void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
+{
+	if (fheader->m_Magic != 0x464C457F)
+	{
+		ReportError(32, "ELF header error");
+		return;
+	}
+
+	jumptarget = fheader->m_Entry;
+	UINT bytesread = 0;
+
+	// Read program headers
+	for (uint32_t i=0; i<fheader->m_PHNum; ++i)
+	{
+		SElfProgramHeader32 pheader;
+		f_lseek(fp, fheader->m_PHOff + fheader->m_PHEntSize*i);
+		f_read(fp, &pheader, sizeof(SElfProgramHeader32), &bytesread);
+
+		// Something here
+		if (pheader.m_MemSz != 0)
+		{
+			uint8_t *memaddr = (uint8_t *)pheader.m_PAddr;
+			// Initialize the memory range at target physical address
+			// This can be larger than the loaded size
+			memset(memaddr, 0x0, pheader.m_MemSz);
+			// Load the binary
+			f_lseek(fp, pheader.m_Offset);
+			f_read(fp, memaddr, pheader.m_FileSz, &bytesread);
+		}
+	}
+}
+
+uint32_t LoadExecutable(const char *filename, const bool reportError)
+{
+	FIL fp;
+	FRESULT fr = f_open(&fp, filename, FA_READ);
+	if (fr == FR_OK)
+	{
+		SElfFileHeader32 fheader;
+		UINT readsize;
+		f_read(&fp, &fheader, sizeof(fheader), &readsize);
+		uint32_t branchaddress;
+		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
+		f_close(&fp);
+
+		asm volatile(
+			".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+			"fence.i;"          // Invalidate I$
+		);
+
+		return branchaddress;
+	}
+	else
+	{
+		if (reportError)
+			ReportError(32, "Executable not found");
+	}
+
+	return 0;
+}
+
+FIL s_filehandles[32];
+int s_numhandles = 0;
 
 static STaskContext g_taskctx;
 
@@ -88,7 +244,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 	// CSR[0x011] now contains A7 (SYSCALL number)
 	uint32_t value = read_csr(0x011);	// Instruction word or hardware bit
 	uint32_t cause = read_csr(mcause);	// Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
-	uint32_t PC = read_csr(mepc)-4;		// Return address minus one is the crash PC
+	//uint32_t PC = read_csr(mepc);		// Return address == crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
 
 	if (cause & 0x80000000) // Hardware interrupts
@@ -130,9 +286,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			break;
 
 			default:
-				UARTWrite("\033[0m\r\n\r\n\033[31m\033[40mUnknown hardware interrupt 0x");
-				UARTWriteHex(code);
-				UARTWrite("\r\n\033[0m\r\n");
+				ReportError(32, "Unknown hardware interrupt");
 				while(1) {
 					asm volatile("wfi;");
 				}
@@ -168,32 +322,53 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 0: // io_setup()
 					{
 						//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
-						UARTWrite("unimpl: io_setup()\r\n");
+						ReportError(32, "unimpl: io_setup()");
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
 
 					case 57: // close()
 					{
-						//sys_close(unsigned int fd);
-						UARTWrite("unimpl: close()\r\n");
-						write_csr(0x00A, 0xFFFFFFFF);
+						uint32_t file = read_csr(0x00A); // A0
+						f_close(&s_filehandles[file]);
+						write_csr(0x00A, 0);
 					}
 					break;
 
 					case 62: // lseek()
 					{
-						//sys_llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, loff_t __user *result, unsigned int whence);
-						UARTWrite("unimpl: lseek()\r\n");
-						write_csr(0x00A, 0xFFFFFFFF);
+						uint32_t file = read_csr(0x00A); // A0
+						uint32_t ptr = read_csr(0x00B); // A1
+						uint32_t dir = read_csr(0x00C); // A2
+						FSIZE_t currptr = s_filehandles[file].fptr;
+						if (dir == 2 ) // SEEK_END
+						{
+							DWORD flen = s_filehandles[file].obj.objsize;
+							currptr = flen;
+						}
+						else if (dir == 1) // SEEK_CUR
+						{
+							currptr = ptr + currptr;
+						}
+						else// if (dir == 0) // SEEK_SET
+						{
+							currptr = ptr;
+						}
+						f_lseek(&s_filehandles[file], currptr);
+						write_csr(0x00A, currptr);
 					}
 					break;
 
 					case 63: // read()
 					{
-						//sys_read(unsigned int fd, char __user *buf, size_t count);
-						UARTWrite("unimpl: read()\r\n");
-						write_csr(0x00A, 0xFFFFFFFF);
+						UINT readlen;
+						uint32_t file = read_csr(0x00A); // A0
+						uint32_t ptr = read_csr(0x00B); // A1
+						uint32_t len = read_csr(0x00C); // A2
+						if (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen))
+							write_csr(0x00A, readlen);
+						else
+							write_csr(0x00A, 0);
 					}
 					break;
 
@@ -202,7 +377,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t file = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t count = read_csr(0x00C); // A2
-						if (file == 1) { // STDOUT_FILENO==1
+						if (file == STDOUT_FILENO) {
 							char *cptr = (char*)ptr;
 							const char *eptr = cptr + count;
 							int i = 0;
@@ -216,14 +391,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						else
 						{
-							UARTWrite("unimpl: write(");
-							UARTWriteHex(file);
-							UARTWrite(", ");
-							UARTWriteHex(ptr);
-							UARTWrite(", ");
-							UARTWriteHex(count);
-							UARTWrite(");\r\n");
-							write_csr(0x00A, 0);
+							ReportError(32, "unimpl: write()");
+							write_csr(0x00A, 0xFFFFFFFF);
 						}
 					}
 					break;
@@ -231,7 +400,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 80: // newfstat()
 					{
 						//sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-						UARTWrite("unimpl: newfstat()\r\n");
+						ReportError(32, "unimpl: newfstat()");
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -247,7 +416,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						// Wait for child process status change - unused
 						// pid_t wait(int *wstatus);
-						UARTWrite("unimpl: wait()\r\n");
+						ReportError(32, "unimpl: wait()");
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -272,21 +441,28 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 					case 1024: // open()
 					{
-						//sys_open(const char __user * filename, int flags, umode_t mode);
-						UARTWrite("unimpl: open()\r\n");
-						write_csr(0x00A, 0xFFFFFFFF);
+						int currenthandle = s_numhandles;
+						uint32_t nptr = read_csr(0x00A); // A0
+						//uint32_t flags = read_csr(0x00B); // A1
+						//uint32_t mode = read_csr(0x00C); // A2
+						// TODO: map 'mode' to FA_ modes
+						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, FA_READ)) //mode))
+						{
+							++s_numhandles;
+							write_csr(0x00A, currenthandle);
+						}
+						else
+						{
+							errno = ENOENT;
+							write_csr(0x00A, 0xFFFFFFFF);
+						}
 					}
 					break;
 
 					// Unimplemented syscalls drop here
 					default:
 					{
-						UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
-						UARTWrite("Unimplemented machine ECALL: #");
-						UARTWriteHex((uint32_t)value); // Syscall ID
-						UARTWrite(" @");
-						UARTWriteHex((uint32_t)PC); // PC
-						UARTWrite("\033[0m\r\n");
+						ReportError(32, "unimplemented ECALL");
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -309,22 +485,10 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_STORE_PAGE_FAULT:*/
 			default:
 			{
-				// reverse on: \033[7m blink on: \033[5m
-				// Clear attributes, step down a couple lines and
-				// set foreground color to red, bg color to black
-				UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
-
-				UARTWrite("┌───────────────────────────────────────────────────┐\r\n");
-				UARTWrite("│ Software Failure. Press reset button to continue. │\r\n");
-				UARTWrite("│   Guru Meditation #");
-				UARTWriteHex((uint32_t)cause); // Cause
-				UARTWrite(".");
-				UARTWriteHex((uint32_t)value); // A7 for no reason
-				UARTWrite(" @");
-				UARTWriteHex((uint32_t)PC); // PC
-				UARTWrite("    │\r\n");
-				UARTWrite("└───────────────────────────────────────────────────┘\r\n");
-				UARTWrite("\033[0m\r\n");
+				ReportError(32, "Guru meditation");
+				//U/ARTWriteHex((uint32_t)cause); // Cause
+				//UARTWriteHex((uint32_t)value); // A7 for no reason
+				//UARTWriteHex((uint32_t)PC); // PC
 
 				// Put core to endless sleep
 				while(1) {

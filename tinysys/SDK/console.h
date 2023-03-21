@@ -4,6 +4,7 @@
 #define CONSOLE_COLUMNS 40
 #define CONSOLE_ROWS 30
 
+void InitConsole();
 void ClearConsole();
 void ScrollConsole();
 void SetConsoleCursor(const int x, const int y);

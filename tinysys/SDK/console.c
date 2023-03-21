@@ -3,9 +3,14 @@
 #include "console.h"
 #include "gpu.h"
 
-static char consoleText[CONSOLE_COLUMNS*CONSOLE_ROWS];
+static char *consoleText;
 static int cursorx = 0;
 static int cursory = 0;
+
+void InitConsole()
+{
+	consoleText = (char*)malloc(CONSOLE_COLUMNS*CONSOLE_ROWS*sizeof(char));
+}
 
 void ClearConsole()
 {

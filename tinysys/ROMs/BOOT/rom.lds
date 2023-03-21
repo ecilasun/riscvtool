@@ -6,7 +6,7 @@ OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 GROUP( -lc -lgloss -lgcc )
 
 MEMORY{
-   ROMRAM (xwr) : ORIGIN = 0x0FFF0000, LENGTH = 0x0FFFF
+   ROMRAM (xwr) : ORIGIN = 0x0FFE0000, LENGTH = 0x1FFFF
 }
 
 ENTRY(_start)

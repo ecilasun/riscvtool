@@ -14,10 +14,10 @@
 
 #define APPMEM_START                0x00000000 // Top of RAM
 #define HEAP_START_APPMEM_END       0x02000000 // 32Mbytes application space above this
-#define HEAP_END_TASKMEM_START      0x0FFE0000 // 223Mbytes Heap space above this
-#define TASKMEM_END_STACK_END       0x0FFEE000 // 56Kbyte space for tasks above this
-#define STACK_BASE                  0x0FFEFFFC // Stack above this
-#define ROMSHADOW_START             0x0FFF0000 // 4byte gap above this
+#define HEAP_END_TASKMEM_START      0x0FFD0000 // 223Mbytes Heap space above this
+#define TASKMEM_END_STACK_END       0x0FFDE000 // 56Kbyte space for tasks above this
+#define STACK_BASE                  0x0FFDFFFC // Stack above this
+#define ROMSHADOW_START             0x0FFE0000 // 4byte gap above this
 #define ROMSHADOW_END_MEM_END       0x0FFFFFFF // 64Kbyte ROM shadow copy above this
 
 // Device addresses

@@ -1,4 +1,5 @@
 #include "core.h"
+#include "basesystem.h"
 #include "task.h"
 #include "leds.h"
 #include "uart.h"
@@ -46,9 +47,9 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const 
 
 	++_ctx->numTasks;
 
-	// Task stacks start at 0x0FFEE000
+	// Task stacks
 	const uint32_t stacksizeword = 1024;
-	uint32_t stackpointer = 0x0FFEE000 - (prevcount*stacksizeword);
+	uint32_t stackpointer = TASKMEM_END_STACK_END - (prevcount*stacksizeword);
 
 	// Insert the task before we increment task count
 	struct STask *task = &(_ctx->tasks[prevcount]);
