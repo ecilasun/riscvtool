@@ -29,7 +29,10 @@ uint32_t core_brk(uint32_t brkptr)
 
 	// Out of bounds will return all ones (-1)
 	if (brkptr<(uint32_t)__heap_start || brkptr>(uint32_t)__heap_end)
+	{
+		errno = ENOMEM;
 		return 0xFFFFFFFF;
+	}
 
 	// Set new break position and return 0 (success) in all other cases
 	__breakpos = (uint8_t*)brkptr;
@@ -216,6 +219,7 @@ extern "C" {
 	int _stat(const char *file, struct stat *st)
 	{
 		//st->st_mode = S_IFCHR; // S_IFBLK for disk data?
+		errno = EIO;
 		return 0;
 	}
 
@@ -246,10 +250,6 @@ extern "C" {
 	{
 		errno = ECHILD;
 		return -1;
-	}
-
-	void unimplemented_syscall()
-	{
 	}
 
 	int _brk(void *addr)

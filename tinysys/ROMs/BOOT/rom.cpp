@@ -5,7 +5,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.985"
+#define VERSIONSTRING "v0.986"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -79,14 +79,16 @@ void ExecuteCmd(char *_cmd)
 		for (int i=1;i<ctx->numTasks;++i)
 		{
 			STask *task = &ctx->tasks[i];
-			UARTWrite("#");
-			UARTWriteDecimal(i);
-			UARTWrite(", ");
+			// UARTWrite("#");
+			// UARTWriteDecimal(i);
+			UARTWrite(" task:");
 			UARTWrite(task->name);
-			UARTWrite(", ");
+			UARTWrite(" len:");
 			UARTWriteDecimal(task->runLength);
-			UARTWrite(", ");
+			UARTWrite(" state:");
 			UARTWriteDecimal(task->state);
+			UARTWrite(" PC:");
+			UARTWriteHex(task->regs[0]);
 			UARTWrite("\r\n");
 		}
 	}
@@ -169,7 +171,8 @@ int main()
 	// Set up internals
 	RingBufferReset();
 
-	// Mount the FAT volume on micro sd card
+	// Attempt to mount the FAT volume on micro sd card
+	// NOTE: Loaded executables do not have to worry about this part
 	MountDrive();
 
 	// Create task context
@@ -216,7 +219,8 @@ int main()
 
 				case 3:		// EXT (Ctrl+C)
 				{
-					// TODO: Terminate process 1 (the executable)
+					execcmd++;
+					// Terminate process 1 (the current executable)
 					TaskExitTaskWithID(taskctx, 1, 0); // Sig:0
 				}
 

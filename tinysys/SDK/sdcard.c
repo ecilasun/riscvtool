@@ -4,6 +4,8 @@
 #include "uart.h"
 #include <stdio.h>
 
+static uint8_t s_tmp[512];
+
 typedef enum {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */
     CMD0_GO_IDLE_STATE = 0,             /**< Resets the SD Memory Card */
@@ -309,46 +311,44 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t blockaddress, uin
 
 int __attribute__ ((noinline)) SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
-   if (numblocks == 0)
-      return -1;
+	if (numblocks == 0)
+		return -1;
 
-   uint32_t cursor = 0;
+	uint32_t cursor = 0;
 
-   uint8_t tmp[512];
-   uint8_t checksum[2];
+	uint8_t checksum[2];
 
-   for(uint32_t b=0; b<numblocks; ++b)
-   {
-      uint8_t response = SDReadSingleBlock(b+blockaddress, tmp, checksum);
-      if (response != 0xFE)
-         return -1;
-      __builtin_memcpy(datablock+cursor, tmp, 512);
-      cursor += 512;
-   }
+	for(uint32_t b=0; b<numblocks; ++b)
+	{
+		uint8_t response = SDReadSingleBlock(b+blockaddress, s_tmp, checksum);
+		if (response != 0xFE)
+			return -1;
+		__builtin_memcpy(datablock+cursor, s_tmp, 512);
+		cursor += 512;
+	}
 
-   return cursor;
+	return cursor;
 }
 
 int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
-   if (numblocks == 0)
-      return -1;
+	if (numblocks == 0)
+		return -1;
 
-   uint32_t cursor = 0;
+	uint32_t cursor = 0;
 
-   uint8_t tmp[512];
-   uint8_t checksum[2];
+	uint8_t checksum[2];
 
-   for(uint32_t b=0; b<numblocks; ++b)
-   {
-      __builtin_memcpy(tmp, datablock+cursor, 512);
-      uint8_t response = SDWriteSingleBlock(b+blockaddress, tmp, checksum);
-      if (response != 0xFE)
-         return -1;
-      cursor += 512;
-   }
+	for(uint32_t b=0; b<numblocks; ++b)
+	{
+		__builtin_memcpy(s_tmp, datablock+cursor, 512);
+		uint8_t response = SDWriteSingleBlock(b+blockaddress, s_tmp, checksum);
+		if (response != 0xFE)
+			return -1;
+		cursor += 512;
+	}
 
-   return cursor;
+	return cursor;
 }
 
 /*void __attribute__ ((noinline)) SDCardControl(int power_cs_n)
