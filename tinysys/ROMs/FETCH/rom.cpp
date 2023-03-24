@@ -104,7 +104,6 @@ extern "C"
 
     // NOTE: Hardware calls these instructions with the same PC
     // of the instruction after which the IRQ occurs
-    // (i.e. PC+4 which is the return address)
 
     // TIMER INTERRUPT
 
@@ -112,8 +111,8 @@ extern "C"
     {
         asm volatile(
             "csrw 0xFD0, a5;"           // Save current A5
-            "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
-            "csrw mepc, a5;"            // Set MEPC to PC+4 for mret
+            "auipc a5, 0;"              // Grab PC from INJECT stage of the CPU
+            "csrw mepc, a5;"            // Set MEPC to PC for mret
             "li a5, 128;"               // Generate mask for bit 7
             "csrrc a5, mie, a5;"        // Extract MIE[7(MTIE)] and set it to zero
             "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
@@ -146,7 +145,7 @@ extern "C"
     {
         asm volatile(
             "csrw 0xFD0, a5;"           // Save current A5
-            "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
+            "auipc a5, 0;"              // Grab PC from INJECT stage of the CPU
             "csrw mepc, a5;"            // Set MEPC to PC+4 for mret
             "li a5, 2048;"              // Generate mask for bit 11
             "csrrc a5, mie, a5;"        // Extract MIE[11(MEIE)] and set it to zero
@@ -218,8 +217,8 @@ extern "C"
     {
         asm volatile(
             "csrw 0xFD0, a5;"           // Save current A5
-            "auipc a5, 0;"              // Grab PC+4 from INJECT stage of the CPU
-            "csrw mepc, a5;"            // Set MEPC to PC+4 for mret
+            "auipc a5, 0;"              // Grab PC from INJECT stage of the CPU
+            "csrw mepc, a5;"            // Set MEPC to PC for mret
             "li a5, 8;"                 // Generate mask for bit 3
             "csrrc a5, mie, a5;"        // Extract MIE[3(MSIE)] and set it to zero
             "sll a5, a5, 4;"            // Shift to 7th bit position
