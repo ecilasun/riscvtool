@@ -2,6 +2,7 @@
 
 #include "rvcrt0.h"
 #include "rombase.h"
+#include "xadc.h"
 
 #include <string.h>
 
@@ -73,7 +74,7 @@ void ExecuteCmd(char *_cmd)
 			UARTWrite(" Kbytes\r\n");
 		}
 	}
-	else if (!strcmp(command, "ps"))
+	else if (!strcmp(command, "prc"))
 	{
 		STaskContext *ctx = GetTaskContext();
 		for (int i=1;i<ctx->numTasks;++i)
@@ -110,7 +111,7 @@ void ExecuteCmd(char *_cmd)
 		else
 			strncpy(s_currentPath, path, 128);
 	}
-	else if (!strcmp(command, "uget"))
+	else if (!strcmp(command, "get"))
 	{
 		const char *savename = strtok(nullptr, " ");
 		uget(savename);
@@ -124,6 +125,14 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("\033[H\033[0m\033[2JEntering gdb debug server mode\r\n");
 		TaskDebugMode(1);
 	}
+	else if (!strcmp(command, "tmp"))
+	{
+		UARTWrite("Temperature:");
+		uint32_t ADCcode = *XADCTEMP;
+		float temp_centigrates = (ADCcode*503.975f)/4096.f-273.15f;
+		UARTWriteDecimal((int32_t)temp_centigrates);
+		UARTWrite("\r\n");
+	}
 	else if (!strcmp(command, "help"))
 	{
 		// Bright blue
@@ -131,10 +140,11 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("dir: Show list of files in working directory\r\n");
 		UARTWrite("cls: Clear terminal\r\n");
 		UARTWrite("mem: Show available memory\r\n");
+		UARTWrite("tmp: Show device temperature\r\n");
 		UARTWrite("del fname: Delete file\r\n");
 		UARTWrite("cwd path: Change working directory\r\n");
-		UARTWrite("uget fname: Save binary from UART to micro sd card\r\n");
-		UARTWrite("ps: Show process list\r\n");
+		UARTWrite("get fname: Save binary from UART to micro sd card\r\n");
+		UARTWrite("prc: Show process list\r\n");
 		UARTWrite("gdb: Enter gdb server mode\r\n");
 		UARTWrite("ver: Show version info\r\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\r\n");
