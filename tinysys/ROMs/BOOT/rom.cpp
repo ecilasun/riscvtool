@@ -5,7 +5,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.986"
+#define VERSIONSTRING "v0.987"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -187,20 +187,9 @@ int main()
 	// and modify task memory to aid in debugging via gdb serial interface.
 	InstallISR();
 
-	uint64_t past = 0;
-	uint32_t evenodd = 0;
 	int stringchanged = 1;
+
 	while (1) {
-
-		uint64_t present = E32ReadTime();
-		// Swap LED state roughtly every other second
-		if (present-past > ONE_SECOND_IN_TICKS)
-		{
-			past += ONE_SECOND_IN_TICKS; // Preserve leftover difference in present
-			LEDSetState((evenodd%2==0) ? 0xFFFFFFFF : 0x00000000); // Toggle all LEDs on/off
-			++evenodd;
-		}
-
 		// Echo all of the characters we can find back to the sender
 		uint32_t uartData = 0;
 		int execcmd = 0;

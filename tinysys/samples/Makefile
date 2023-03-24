@@ -18,6 +18,7 @@ folders = \
 	mandelbrot \
 	tinyrt \
 	dmatest \
+	syscalltest \
 
 # Rules
 

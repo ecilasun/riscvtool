@@ -10,7 +10,6 @@ extern volatile uint32_t *IO_UARTCtl;
 void UARTEnableInterrupt(int enable);
 void UARTDrainInput();
 int UARTInputFifoHasData();
-int UARTOutputFifoHasData();
 void UARTWrite(const char *_message);
 uint8_t UARTRead();
 void UARTWriteHex(const uint32_t i);

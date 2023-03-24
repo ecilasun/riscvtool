@@ -2,6 +2,8 @@
 
 #include "core.h"
 #include "basesystem.h"
+#include "uart.h"
+
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -62,6 +64,7 @@ extern "C" {
 			return 0;
 		else*/
 		{
+			UARTWrite("unimpl: _chdir()\r\n");
 			errno = ENOSYS;
 			return -1;
 		}
@@ -73,6 +76,7 @@ extern "C" {
 			return buf;
 		else*/
 		{
+			UARTWrite("unimpl: _getcwd()\r\n");
 			errno = -ENOSYS;
 			return NULL;
 		}
@@ -81,6 +85,7 @@ extern "C" {
 	int _fstat(int fd, struct stat *statbuf)
 	{
 		// Not implemented
+		UARTWrite("unimpl: _fstat()\r\n");
 		errno = ENOSYS;
 		return -1;
 	}
@@ -158,16 +163,17 @@ extern "C" {
 		}
 		else*/
 		{
+			UARTWrite("unimpl: _lstat()\r\n");
 			errno = ENOSYS;
 			return -1;
 		}
 	}
 
-	int _open(const char *name, int flags, int mode)
+	int _open(const char *name, int flags, int permmode)
 	{
 		register uint32_t nptr = (uint32_t)name;
 		register uint32_t oflags = (uint32_t)flags;
-		register uint32_t fmode = (uint32_t)mode;
+		register uint32_t pmode = (uint32_t)permmode;
 		register int retval = 0;
 		asm (
 			"li a7, 1024;"
@@ -179,7 +185,7 @@ extern "C" {
 			// Return values
 			"=r" (retval) :
 			// Input parameters
-			"r" (nptr), "r" (oflags), "r" (fmode) :
+			"r" (nptr), "r" (oflags), "r" (pmode) :
 			// Clobber list
 			"a0", "a1", "a2", "a7"
 		);
@@ -188,6 +194,7 @@ extern "C" {
 
 	int _openat(int dirfd, const char *name, int flags, int mode)
 	{
+		UARTWrite("unimpl: _openat()\r\n");
 		// https://linux.die.net/man/2/openat
 		errno = ENOSYS;
 		return -1;
@@ -219,6 +226,7 @@ extern "C" {
 	int _stat(const char *file, struct stat *st)
 	{
 		//st->st_mode = S_IFCHR; // S_IFBLK for disk data?
+		UARTWrite("unimpl: _stat()\r\n");
 		errno = EIO;
 		return 0;
 	}
@@ -248,6 +256,7 @@ extern "C" {
 
 	int _wait(int *status)
 	{
+		UARTWrite("unimpl: _wait()\r\n");
 		errno = ECHILD;
 		return -1;
 	}

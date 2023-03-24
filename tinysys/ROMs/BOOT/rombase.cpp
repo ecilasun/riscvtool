@@ -6,7 +6,6 @@
 
 #define STDOUT_FILENO 1
 
-static char currentdir[128] = "sd:\\";
 static int havedrive = 0;
 FATFS *Fs = nullptr;
 
@@ -51,7 +50,6 @@ void MountDrive()
 	}
 	else
 	{
-		strcpy(currentdir, "sd:\\");
 		havedrive = 1;
 	}
 }
@@ -167,8 +165,8 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 	return 0;
 }
 
-FIL s_filehandles[32];
-int s_numhandles = 0;
+static FIL s_filehandles[32];
+static int s_numhandles = 0;
 
 static STaskContext g_taskctx;
 
@@ -294,6 +292,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			default:
 				ReportError(32, "Unknown hardware interrupt", code);
+
+				// Put core to endless sleep
 				while(1) {
 					asm volatile("wfi;");
 				}
@@ -337,9 +337,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 57: // close()
 					{
 						uint32_t file = read_csr(0x00A); // A0
-						UARTWrite("\r\nclose():");
-						UARTWriteHex(file); UARTWrite("\r\n");
-
 						f_close(&s_filehandles[file]);
 						write_csr(0x00A, 0);
 					}
@@ -350,10 +347,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t file = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t dir = read_csr(0x00C); // A2
-						UARTWrite("\r\nseek():");
-						UARTWriteHex(file); UARTWrite(":");
-						UARTWriteHex(ptr); UARTWrite(":");
-						UARTWriteHex(dir); UARTWrite("\r\n");
 
 						FSIZE_t currptr = s_filehandles[file].fptr;
 						if (dir == 2 ) // SEEK_END
@@ -380,15 +373,16 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t file = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t len = read_csr(0x00C); // A2
-						UARTWrite("\r\nread():");
-						UARTWriteHex(file); UARTWrite(":");
-						UARTWriteHex(ptr); UARTWrite(":");
-						UARTWriteHex(len); UARTWrite("\r\n");
 
 						if (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen))
+						{
 							write_csr(0x00A, readlen);
+						}
 						else
-							write_csr(0x00A, 0);
+						{
+							errno = EIO;
+							write_csr(0x00A, 0xFFFFFFFF);
+						}
 					}
 					break;
 
@@ -398,7 +392,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t count = read_csr(0x00C); // A2
 
-						if (file == STDOUT_FILENO) {
+						if (file == STDOUT_FILENO)
+						{
 							char *cptr = (char*)ptr;
 							const char *eptr = cptr + count;
 							int i = 0;
@@ -463,33 +458,28 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 1024: // open()
 					{
 						uint32_t nptr = read_csr(0x00A); // A0
-						uint32_t flags = read_csr(0x00B); // A1
-						uint32_t mode = read_csr(0x00C); // A2
-						UARTWrite("\r\nopen():");
-						UARTWrite((char*)nptr); UARTWrite(":");
-						UARTWriteHex(flags); UARTWrite(":");
-						UARTWriteHex(mode); UARTWrite(":");
-						BYTE omode = FA_READ;
-						/*switch (mode & 3)
+						uint32_t oflags = read_csr(0x00B); // A1
+						//uint32_t pmode = read_csr(0x00C); // A2 - permission mode unused for now
+
+						BYTE ff_flags = FA_READ;
+						switch (oflags & 3)
 						{
-							case 0: omode = FA_READ; break; // O_RDONLY
-							case 1: omode = FA_WRITE; break; // O_WRONLY
-							case 2: omode = FA_READ|FA_WRITE; break; // O_RDWR
-							default: omode = FA_READ; break;
+							case 00: ff_flags = FA_READ; break; // O_RDONLY
+							case 01: ff_flags = FA_WRITE; break; // O_WRONLY
+							case 02: ff_flags = FA_READ|FA_WRITE; break; // O_RDWR
+							default: ff_flags = FA_READ; break;
 						}
-						omode |= (mode&100) ? FA_CREATE_ALWAYS : 0; // O_CREAT
-						omode |= (mode&2000) ? FA_OPEN_APPEND : 0; // O_APPEND */
+						ff_flags |= (oflags&100) ? FA_CREATE_ALWAYS : 0; // O_CREAT
+						ff_flags |= (oflags&2000) ? FA_OPEN_APPEND : 0; // O_APPEND
 
 						int currenthandle = s_numhandles;
-						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, omode))
+						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
 						{
-							UARTWrite("opened:"); UARTWriteHex(currenthandle); UARTWrite("\r\n");
 							++s_numhandles;
 							write_csr(0x00A, currenthandle);
 						}
 						else
 						{
-							UARTWrite("failed\r\n");
 							errno = ENOENT;
 							write_csr(0x00A, 0xFFFFFFFF);
 						}

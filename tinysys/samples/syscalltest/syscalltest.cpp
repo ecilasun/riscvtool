@@ -18,6 +18,7 @@ int main()
 		for (uint32_t i=0;i<5;++i)
 		{
 			fread(buffer, 8, 1, fp);
+			printf(".");
 			for (uint32_t j=0;j<8;++j)
 				printf("%.2X ", buffer[i]);
 		}
@@ -25,7 +26,9 @@ int main()
 		for (uint32_t i=0;i<5;++i)
 		{
 			fseek(fp, i*32, SEEK_SET);
+			printf("*");
 			fread(buffer, 8, 1, fp);
+			printf("!");
 			for (uint32_t j=0;j<8;++j)
 				printf("%.2X ", buffer[i]);
 		}

@@ -3,7 +3,7 @@
 #include <math.h> // For abs()
 
 // Status register bits
-// uartstateregister: {29'd0, uartTxBusy, fifoFull, inFifohasData}
+// uartstateregister: {30'd0, fifoFull, inFifohasData};
 
 volatile uint32_t *IO_UARTRX     = (volatile uint32_t* ) 0x80000000; // Receive fifo
 volatile uint32_t *IO_UARTTX     = (volatile uint32_t* ) 0x80000004; // Transmit fifo
@@ -19,15 +19,6 @@ int UARTInputFifoHasData()
 {
     // bit0: RX FIFO has valid data
     return ((*IO_UARTStatus)&0x00000001); // inFifohasData
-}
-
-int UARTOutputFifoHasData()
-{
-    // TODO:
-    // bit?: TX FIFO has valid data
-    //return ((*IO_UARTStatus)&0x0000000?); // outFifohasData
-
-    return 1;
 }
 
 void UARTDrainInput()
