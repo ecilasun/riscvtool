@@ -247,6 +247,41 @@ extern "C"
          );
     }
 
+    // SOFTWARE INTERRUPT (illegal instruction)
+
+    void __attribute__((naked, section (".LUT"))) enterSWillegalISR()
+    {
+        asm volatile(
+            "csrw 0xFD0, a5;"           // Save current A5
+            "auipc a5, 0;"              // Grab PC from INJECT stage of the CPU
+            "csrw mepc, a5;"            // Set MEPC to PC for mret
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrc a5, mie, a5;"        // Extract MIE[3(MSIE)] and set it to zero
+            "sll a5, a5, 4;"            // Shift to 7th bit position
+            "csrrs a5, mstatus, a5;"    // Copy it to MSTATUS[7(MPIE)]
+            "li a5, 0x00000002;"        // Clear MCAUSE[31] for trap and set MCAUSE[30:0] to 0x2 (illegal instruction)
+            "csrw mcause, a5;"
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrc a5, mstatus, a5;"    // Clear MSTATUS[3(MIE)]
+            "csrr a5, 0xFD0;"           // Restore old A5
+            // Hardware branches to mtvec
+        );
+    }
+
+    void __attribute__((naked, section (".LUT"))) leaveSWillegalISR() // Same as leaveSWecallISR
+    {
+        asm volatile(
+            "csrw 0xFD0, a5;"           // Save current A5
+            "li a5, 128;"               // Generate mask for bit 7
+            "csrrc a5, mstatus, a5;"    // Extract MSTATUS[7(MPIE)] and set it to zero
+            "srl a5, a5, 4;"            // Shift to 3rd bit position
+            "csrrs a5, mie, a5;"        // Copy it to MIE[3(MSIE)]
+            "li a5, 8;"                 // Generate mask for bit 3
+            "csrrs a5, mstatus, a5;"    // Set MSTATUS[3(MIE)]
+            "csrr a5, 0xFD0;"           // Restore old A5
+            // Hardware sets PC <= MEPC;
+         );
+    }
     void __attribute__((naked, section (".boot"))) _start()
     {
         // Make sure we call every function so that there's an asm listing produced for all
@@ -258,6 +293,8 @@ extern "C"
         leaveSWecallISR();
         enterSWebreakISR();
         leaveSWebreakISR();
+        enterSWillegalISR();
+        leaveSWillegalISR();
     }
 
     void __attribute__((noreturn, naked, section (".boot"))) _exit(int x)

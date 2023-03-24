@@ -9,7 +9,7 @@
 static int havedrive = 0;
 FATFS *Fs = nullptr;
 
-void ReportError(const uint32_t _width, const char *_error, uint32_t _errornumber)
+void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uint32_t _value, uint32_t _PC)
 {
 	UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
 
@@ -18,6 +18,7 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _errornumbe
 		UARTWrite("─");
 	UARTWrite("┐\r\n│");
 
+	// Message
 	int W = strlen(_error);
 	W = (_width-2) - W;
 	UARTWrite(_error);
@@ -25,8 +26,22 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _errornumbe
 		UARTWrite(" ");
 	UARTWrite("│\r\n|");
 
-	UARTWriteHex(_errornumber);
-	for (uint32_t w=0;w<_width-10;++w)
+	// Cause
+	UARTWrite("cause:");
+	UARTWriteHex(_cause);
+	for (uint32_t w=0;w<_width-16;++w)
+		UARTWrite(" ");
+
+	// Value
+	UARTWrite("│\r\n|value:");
+	UARTWriteHex(_value);
+	for (uint32_t w=0;w<_width-16;++w)
+		UARTWrite(" ");
+
+	// PC
+	UARTWrite("│\r\n|PC:");
+	UARTWriteHex(_value);
+	for (uint32_t w=0;w<_width-13;++w)
 		UARTWrite(" ");
 
 	UARTWrite("│\r\n└");
@@ -46,7 +61,7 @@ void MountDrive()
 	if (mountattempt!=FR_OK)
 	{
 		havedrive = 0;
-		ReportError(32, "File system error", mountattempt);
+		ReportError(32, "File system error", mountattempt, 0, 0);
 	}
 	else
 	{
@@ -108,7 +123,7 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 {
 	if (fheader->m_Magic != 0x464C457F)
 	{
-		ReportError(32, "ELF header error", fheader->m_Magic);
+		ReportError(32, "ELF header error", fheader->m_Magic, 0, 0);
 		return;
 	}
 
@@ -159,7 +174,7 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 	else
 	{
 		if (reportError)
-			ReportError(32, "Executable not found", fr);
+			ReportError(32, "Executable not found", fr, 0, 0);
 	}
 
 	return 0;
@@ -249,7 +264,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 	// CSR[0x011] now contains A7 (SYSCALL number)
 	uint32_t value = read_csr(0x011);	// Instruction word or hardware bit
 	uint32_t cause = read_csr(mcause);	// Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
-	//uint32_t PC = read_csr(mepc);		// Return address == crash PC
+	uint32_t PC = read_csr(mepc);		// Return address == crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
 
 	if (cause & 0x80000000) // Hardware interrupts
@@ -291,7 +306,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			break;
 
 			default:
-				ReportError(32, "Unknown hardware interrupt", code);
+				ReportError(32, "Unknown hardware interrupt", cause, value, PC);
 
 				// Put core to endless sleep
 				while(1) {
@@ -306,9 +321,25 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 		{
 			case CAUSE_BREAKPOINT:
 			{
-				gdb_breakpoint(&g_taskctx);
+				if (g_taskctx.debugMode)
+					gdb_breakpoint(&g_taskctx);
+				else
+					; // Ignore breakpoint instruction in non-debug mode
 			}
 			break;
+		
+			case CAUSE_ILLEGAL_INSTRUCTION:
+			{
+				uint32_t instruction = *((uint32_t*)PC);
+				ReportError(32, "Illegal instruction", cause, instruction, PC);
+
+				// TODO: We'd probably want to break here if (g_taskctx.debugMode)
+
+				// Put core to endless sleep
+				while(1) {
+					asm volatile("wfi;");
+				}
+			}
 
 			case CAUSE_MACHINE_ECALL:
 			{
@@ -329,7 +360,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 0: // io_setup()
 					{
 						//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
-						ReportError(32, "unimpl: io_setup()", 0);
+						ReportError(32, "unimpl: io_setup()", cause, value, PC);
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -407,7 +438,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						else
 						{
-							ReportError(32, "unimpl: write()", 64);
+							ReportError(32, "unimpl: write()", cause, value, PC);
 							write_csr(0x00A, 0xFFFFFFFF);
 						}
 					}
@@ -416,7 +447,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 80: // newfstat()
 					{
 						//sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-						ReportError(32, "unimpl: newfstat()", 80);
+						ReportError(32, "unimpl: newfstat()", cause, value, PC);
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -432,7 +463,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						// Wait for child process status change - unused
 						// pid_t wait(int *wstatus);
-						ReportError(32, "unimpl: wait()", 95);
+						ReportError(32, "unimpl: wait()", cause, value, PC);
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -489,8 +520,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					// Unimplemented syscalls drop here
 					default:
 					{
-						uint32_t ecallnumber = read_csr(0x00A); // A7
-						ReportError(32, "unimplemented ECALL", ecallnumber);
+						ReportError(32, "unimplemented ECALL", cause, value, PC);
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -500,7 +530,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			/*case CAUSE_MISALIGNED_FETCH:
 			case CAUSE_FETCH_ACCESS:
-			case CAUSE_ILLEGAL_INSTRUCTION:
 			case CAUSE_MISALIGNED_LOAD:
 			case CAUSE_LOAD_ACCESS:
 			case CAUSE_MISALIGNED_STORE:
@@ -513,9 +542,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_STORE_PAGE_FAULT:*/
 			default:
 			{
-				//UARTWriteHex((uint32_t)value); // A7 for no reason
-				//UARTWriteHex((uint32_t)PC); // PC
-				ReportError(32, "Guru meditation", cause);
+				ReportError(32, "Guru meditation", cause, value, PC);
 
 				// Put core to endless sleep
 				while(1) {

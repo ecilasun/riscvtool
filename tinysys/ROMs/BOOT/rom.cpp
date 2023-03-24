@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.987"
+#define VERSIONSTRING "v0.988"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
