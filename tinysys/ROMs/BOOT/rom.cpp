@@ -6,12 +6,13 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.988"
+#define VERSIONSTRING "v0.990"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
+static int refreshConsoleOut = 1;
 
 void _stubTask() {
 	// NOTE: This task won't actually run
@@ -197,8 +198,6 @@ int main()
 	// and modify task memory to aid in debugging via gdb serial interface.
 	InstallISR();
 
-	int stringchanged = 1;
-
 	while (1) {
 		// Echo all of the characters we can find back to the sender
 		uint32_t uartData = 0;
@@ -206,7 +205,7 @@ int main()
 		while (RingBufferRead(&uartData, sizeof(uint32_t)))
 		{
 			uint8_t asciicode = (uint8_t)(uartData&0xFF);
-			stringchanged++;
+			refreshConsoleOut++;
 			switch (asciicode)
 			{
 				case 10:
@@ -248,9 +247,9 @@ int main()
 			}
 		}
 
-		if (stringchanged)
+		if (refreshConsoleOut)
 		{
-			stringchanged = 0;
+			refreshConsoleOut = 0;
 			s_cmdString[s_cmdLen] = 0;
 			// Reset current line and emit the command string
 			UARTWrite("\033[2K\r");
@@ -261,7 +260,7 @@ int main()
 
 		if (execcmd)
 		{
-			stringchanged = 1;
+			refreshConsoleOut = 1;
 			UARTWrite("\r\n");
 			ExecuteCmd(s_cmdString);
 			// Rewind

@@ -40,7 +40,7 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uin
 
 	// PC
 	UARTWrite("│\r\n|PC:");
-	UARTWriteHex(_value);
+	UARTWriteHex(_PC);
 	for (uint32_t w=0;w<_width-13;++w)
 		UARTWrite(" ");
 
@@ -273,7 +273,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 		{
 			case IRQ_M_EXT:
 			{
-				// TODO: We need to read the 'reason' for HW interrupt from a custom register
+				// TODO: We need to read the 'reason' for HW interrupt from mscratch
 				// For now, ignore the reason as we only have one possible IRQ generator.
 				if (g_taskctx.debugMode)
 					gdb_handler(&g_taskctx);
@@ -333,12 +333,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				uint32_t instruction = *((uint32_t*)PC);
 				ReportError(32, "Illegal instruction", cause, instruction, PC);
 
-				// TODO: We'd probably want to break here if (g_taskctx.debugMode)
-
-				// Put core to endless sleep
-				while(1) {
-					asm volatile("wfi;");
-				}
+				// Terminate and remove from list of running tasks
+				TaskExitCurrentTask(&g_taskctx);
 			}
 
 			case CAUSE_MACHINE_ECALL:
@@ -439,6 +435,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						else
 						{
 							ReportError(32, "unimpl: write()", cause, value, PC);
+							errno = EIO;
 							write_csr(0x00A, 0xFFFFFFFF);
 						}
 					}
@@ -448,7 +445,32 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						//sys_newfstat(unsigned int fd, struct stat __user *statbuf);
 						ReportError(32, "unimpl: newfstat()", cause, value, PC);
+						errno = EBADF;
 						write_csr(0x00A, 0xFFFFFFFF);
+						/*if (fd < 0)
+						{
+							errno = EBADF;
+							write_csr(0x00A, 0xFFFFFFFF);
+						}
+						else
+						{
+							// __fstatat (fd, "", buf, AT_EMPTY_PATH)
+							if (fd < 0 && fd != AT_FDCWD)
+							{
+								errno = EBADF;
+								write_csr(0x00A, 0xFFFFFFFF);
+							}
+							if (buf == NULL || (flag & ~AT_SYMLINK_NOFOLLOW) != 0)
+							{
+								errno = EINVAL;
+								write_csr(0x00A, 0xFFFFFFFF);
+							}
+							errno = ENOSYS;
+							write_csr(0x00A, 0xFFFFFFFF);
+						}
+
+						errno = EACCES;
+						write_csr(0x00A, 0xFFFFFFFF);*/
 					}
 					break;
 
@@ -456,6 +478,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						// Terminate and remove from list of running tasks
 						TaskExitCurrentTask(&g_taskctx);
+						write_csr(0x00A, 0x0);
 					}
 					break;
 
@@ -464,6 +487,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						// Wait for child process status change - unused
 						// pid_t wait(int *wstatus);
 						ReportError(32, "unimpl: wait()", cause, value, PC);
+						errno = ECHILD;
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;
@@ -474,6 +498,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t pid = read_csr(0x00A); // A0
 						uint32_t sig = read_csr(0x00B); // A1
 						TaskExitTaskWithID(&g_taskctx, pid, sig);
+						write_csr(0x00A, 0x0);
 						UARTWrite("Task killed\r\n");
 					}
 					break;
@@ -521,6 +546,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					default:
 					{
 						ReportError(32, "unimplemented ECALL", cause, value, PC);
+						errno = EIO;
 						write_csr(0x00A, 0xFFFFFFFF);
 					}
 					break;

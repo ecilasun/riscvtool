@@ -17,8 +17,11 @@ folders = \
 	memtest \
 	mandelbrot \
 	tinyrt \
+	tinyrtty \
 	dmatest \
 	syscalltest \
+	usbhost \
+	jpegview \
 
 # Rules
 

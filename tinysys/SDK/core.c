@@ -58,11 +58,11 @@ extern "C" {
 		return -1;
 	}*/
 
-	int _chdir(const char *path)
+	/*int _chdir(const char *path)
 	{
-		/*if (FR_OK == f_chdir(path))
-			return 0;
-		else*/
+		//if (FR_OK == f_chdir(path))
+		//	return 0;
+		//else
 		{
 			UARTWrite("unimpl: _chdir()\r\n");
 			errno = ENOSYS;
@@ -72,9 +72,9 @@ extern "C" {
 
 	char *_getcwd(char *buf, size_t size)
 	{
-		/*if (FR_OK == f_getcwd(buf, size))
-			return buf;
-		else*/
+		//if (FR_OK == f_getcwd(buf, size))
+		//	return buf;
+		//else
 		{
 			UARTWrite("unimpl: _getcwd()\r\n");
 			errno = -ENOSYS;
@@ -139,29 +139,29 @@ extern "C" {
 
 	int _lstat(const char *file, struct stat *st)
 	{
-		/*FILINFO finf;
-		if (FR_OK == f_stat(file, &finf))
-		{
-			st->st_dev = 1;
-			st->st_ino = 0;
-			st->st_mode = 0; // File mode
-			st->st_nlink = 0;
-			st->st_uid = 0;
-			st->st_gid = 0;
-			st->st_rdev = 1;
-			st->st_size = finf.fsize;
-			st->st_blksize = 512;
-			st->st_blocks = (finf.fsize+511)/512;
-			st->st_atime = finf.ftime;
-			st->st_atime_nsec = 0;
-			st->st_mtime = finf.ftime;
-			st->st_mtime_nsec = 0;
-			st->st_ctime = finf.ftime;
-			st->st_ctime_nsec = 0;
+		//FILINFO finf;
+		//if (FR_OK == f_stat(file, &finf))
+		//{
+		//	st->st_dev = 1;
+		//	st->st_ino = 0;
+		//	st->st_mode = 0; // File mode
+		//	st->st_nlink = 0;
+		//	st->st_uid = 0;
+		//	st->st_gid = 0;
+		//	st->st_rdev = 1;
+		//	st->st_size = finf.fsize;
+		//	st->st_blksize = 512;
+		//	st->st_blocks = (finf.fsize+511)/512;
+		//	st->st_atime = finf.ftime;
+		//	st->st_atime_nsec = 0;
+		//	st->st_mtime = finf.ftime;
+		//	st->st_mtime_nsec = 0;
+		//	st->st_ctime = finf.ftime;
+		//	st->st_ctime_nsec = 0;
 
-			return 0;
-		}
-		else*/
+		//	return 0;
+		//}
+		//else
 		{
 			UARTWrite("unimpl: _lstat()\r\n");
 			errno = ENOSYS;
@@ -259,7 +259,7 @@ extern "C" {
 		UARTWrite("unimpl: _wait()\r\n");
 		errno = ECHILD;
 		return -1;
-	}
+	}*/
 
 	int _brk(void *addr)
 	{
