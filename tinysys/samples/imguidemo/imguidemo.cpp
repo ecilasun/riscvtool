@@ -48,6 +48,8 @@ int main()
 	// We try to align it to a cache boundary to support future DMA copies
 	uint32_t *imguiframebuffer = (uint32_t*)GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0*4);
 
+	static float temps[] = { 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f };
+
 	uint32_t cycle = 0;
 	uint32_t prevvblankcount = GPUReadVBlankCounter();
 	do {
@@ -76,8 +78,13 @@ int main()
 			ImGui::SetNextWindowSize(ImVec2(200, 80));
 			ImGui::Begin("Test");
 			ImGui::Text("Device temperature: %f C", temp_centigrates);
-			ImGui::Text("Frame: %d", (int)cycle);       
+			ImGui::Text("Frame: %d", (int)cycle);
+            ImGui::PlotLines("Curve", temps, IM_ARRAYSIZE(temps));
 			ImGui::End();
+
+			for (int i=0;i<9;++i)
+				temps[i] = temps[i+1];
+			temps[9] = temp_centigrates;
 
 			ImGui::Render();
 			imgui_sw::paint_imgui((uint32_t*)imguiframebuffer, FRAME_WIDTH_MODE0, FRAME_HEIGHT_MODE0);
