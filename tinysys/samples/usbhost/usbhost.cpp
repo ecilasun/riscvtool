@@ -27,48 +27,51 @@ int main()
 {
     UARTWrite("USB serial interface test\r\n");
 
-	// Test raw input
-	/*while (1)
-	{
-		if (USBInputFifoHasData())
-			UARTWriteHexByte(USBRead());
-	}*/
-
 	while(1)
 	{
-		while (USBInputFifoHasData())
+		while(1)
 		{
-			uartRxBuff[rxPos] = USBRead();
-			UARTWriteHexByte(uartRxBuff[rxPos]);
-			if (rxPos == 0 && uartRxBuff[rxPos] == 0xFE)
+			if (USBInputFifoHasData())
 			{
-				cmdType = 1;
-			}
-			else if (rxPos == 1 && cmdType == 1)
-			{
-				cmdLength = uartRxBuff[rxPos];
-			}
-			else if (rxPos == 2 && cmdType == 1)
-			{
-				cmdLength += (uartRxBuff[rxPos] << 8);
-			}
-			else if (cmdType == 0 && uartRxBuff[rxPos] == '\n')
-			{
-				// No command received
-				rxPos = 0;
-				cmdType = 0;
-				break;
-			}
-			if (((rxPos > 0) && (rxPos == cmdLength + 11) && (cmdType != 0)) || (rxPos > 1024))
-			{
-				filterCommand(cmdLength, uartRxBuff);
-				rxPos = 0;
-				cmdType = 0;
-				break;
-			}
-			else
-			{
-				rxPos++;
+				uartRxBuff[rxPos] = USBRead();
+				if (rxPos == 0 && uartRxBuff[rxPos] == 0xFE)
+				{
+					UARTWrite("len(");
+					cmdType = 1;
+				}
+				else if (rxPos == 1 && cmdType == 1)
+				{
+					cmdLength = uartRxBuff[rxPos];
+				}
+				else if (rxPos == 2 && cmdType == 1)
+				{
+					cmdLength += (uartRxBuff[rxPos] << 8);
+					UARTWriteDecimal(cmdLength);
+					UARTWrite(");");
+				}
+				else if (cmdType == 0 && uartRxBuff[rxPos] == '\n')
+				{
+					UARTWrite("?;");
+					// No command received
+					rxPos = 0;
+					cmdType = 0;
+					break;
+				}
+
+				if (((rxPos > 0) && (rxPos == cmdLength + 11) && (cmdType != 0)) || (rxPos > 1024))
+				{
+					UARTWrite("!\r\n");
+					filterCommand(cmdLength, uartRxBuff);
+					rxPos = 0;
+					cmdType = 0;
+					break;
+				}
+				else
+				{
+					if (rxPos >2)
+						UARTWriteHexByte(uartRxBuff[rxPos]);
+					rxPos++;
+				}
 			}
 		}
 		rxPos = 0;
