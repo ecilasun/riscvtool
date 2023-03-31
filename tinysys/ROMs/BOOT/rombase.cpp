@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #define STDOUT_FILENO 1
 
@@ -181,6 +182,7 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 }
 
 static FIL s_filehandles[32];
+char s_fileNames[32][64];
 static int s_numhandles = 0;
 
 static STaskContext g_taskctx;
@@ -444,33 +446,52 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 80: // newfstat()
 					{
 						//sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-						ReportError(32, "unimpl: newfstat()", cause, value, PC);
+						/*ReportError(32, "unimpl: newfstat()", cause, value, PC);
 						errno = EBADF;
-						write_csr(0x00A, 0xFFFFFFFF);
-						/*if (fd < 0)
+						write_csr(0x00A, 0xFFFFFFFF);*/
+
+						uint32_t fd = read_csr(0x00A); // A0
+						uint32_t ptr = read_csr(0x00B); // A1
+						struct stat *buf = (struct stat *)ptr;
+
+						if (fd < 0)
 						{
 							errno = EBADF;
 							write_csr(0x00A, 0xFFFFFFFF);
 						}
 						else
 						{
-							// __fstatat (fd, "", buf, AT_EMPTY_PATH)
-							if (fd < 0 && fd != AT_FDCWD)
-							{
-								errno = EBADF;
-								write_csr(0x00A, 0xFFFFFFFF);
-							}
-							if (buf == NULL || (flag & ~AT_SYMLINK_NOFOLLOW) != 0)
+							FILINFO finf;
+							FRESULT fr = f_stat(s_fileNames[fd], &finf);
+
+							if (fr != FR_OK)
 							{
 								errno = EINVAL;
 								write_csr(0x00A, 0xFFFFFFFF);
 							}
-							errno = ENOSYS;
-							write_csr(0x00A, 0xFFFFFFFF);
-						}
+							else
+							{
+								// TODO: Fill in more info here
+								buf->st_dev = 1;
+								buf->st_ino = 0;
+								buf->st_mode = 0; // TODO
+								buf->st_nlink = 0;
+								buf->st_uid = 0;
+								buf->st_gid = 0;
+								buf->st_rdev = 1;
+								buf->st_size = finf.fsize;
+								buf->st_blksize = 512;
+								buf->st_blocks = (finf.fsize+511)/512;
+								buf->st_atim.tv_sec = finf.ftime;
+								buf->st_atim.tv_nsec = 0;
+								buf->st_mtim.tv_sec = 0;
+								buf->st_mtim.tv_nsec = 0;
+								buf->st_ctim.tv_sec = 0;
+								buf->st_ctim.tv_nsec = 0;
 
-						errno = EACCES;
-						write_csr(0x00A, 0xFFFFFFFF);*/
+								write_csr(0x00A, 0x0);
+							}
+						}
 					}
 					break;
 
@@ -531,6 +552,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						int currenthandle = s_numhandles;
 						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
 						{
+							strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 64);
 							++s_numhandles;
 							write_csr(0x00A, currenthandle);
 						}
