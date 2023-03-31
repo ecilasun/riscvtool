@@ -6,7 +6,7 @@
 
 #include "basesystem.h"
 #include "uart.h"
-#include "memtest/memtest.h"
+#include "memtest.h"
 
 int main()
 {

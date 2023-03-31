@@ -8,19 +8,20 @@ default: all
 
 src_dir = .
 corelib_dir = ../SDK
-thirdparty_libs = ../../3rdparty
+memtest_libs = ../../3rdparty/memtest
+nanojpeg_libs = ../../3rdparty/nanojpeg
 
 # Executable folders
 
 folders = \
 	helloworld \
 	memtest \
-	mandelbrot \
-	tinyrt \
-	tinyrtty \
-	dmatest \
 	syscalltest \
+	dmatest \
 	usbhost \
+	tinyrtty \
+	tinyrt \
+	mandelbrot \
 	jpegview \
 
 # Rules
@@ -30,8 +31,8 @@ RISCV_GCC ?= $(RISCV_PREFIX)g++
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 RISCV_GCC_OPTS ?= -mcmodel=medany -std=c++14 -Wall -Ofast -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -fPIC -lgcc -lm
 
-incs  += -I$(src_dir) -I$(corelib_dir) -I$(thirdparty_libs)/ $(addprefix -I$(src_dir)/, $(folders))
-libs += $(wildcard $(corelib_dir)/*.S) $(wildcard $(corelib_dir)/*.c) $(wildcard $(thirdparty_libs)/**/*.c)
+incs  += -I$(src_dir) -I$(corelib_dir) -I$(memtest_libs)/ -I$(nanojpeg_libs)/ $(addprefix -I$(src_dir)/, $(folders))
+libs += $(wildcard $(corelib_dir)/*.S) $(wildcard $(corelib_dir)/*.c) $(wildcard $(memtest_libs)/*.c) $(wildcard $(nanojpeg_libs)/*.c)
 objs  :=
 
 define compile_template

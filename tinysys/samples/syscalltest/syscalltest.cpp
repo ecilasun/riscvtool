@@ -11,28 +11,31 @@ int main()
 	FILE *fp = fopen("sd:test.jpg", "rb");
 	if (fp)
 	{
-		printf("File's there, reading.\r\n");
+		printf("File's there, doing seek/read check.\r\n");
+
 		// Grab a tiny memory chunk
 		uint8_t *buffer = new uint8_t[8];
+
 		// Read 16 byte blocks
 		for (uint32_t i=0;i<5;++i)
 		{
 			fread(buffer, 8, 1, fp);
-			printf(".");
 			for (uint32_t j=0;j<8;++j)
-				printf("%.2X ", buffer[i]);
+				printf("%.2X ", buffer[j]);
+			printf("\r\n");
 		}
 		// Read non-adjacent blocks
 		for (uint32_t i=0;i<5;++i)
 		{
 			fseek(fp, i*32, SEEK_SET);
-			printf("*");
 			fread(buffer, 8, 1, fp);
-			printf("!");
 			for (uint32_t j=0;j<8;++j)
-				printf("%.2X ", buffer[i]);
+				printf("%.2X ", buffer[j]);
+			printf("\r\n");
 		}
+
 		delete [] buffer;
+
 		fclose(fp);
 	}
 	else

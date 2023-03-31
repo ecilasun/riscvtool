@@ -1,38 +1,13 @@
 #include "core.h"
 #include "gpu.h"
 #include "sdcard.h"
-#include "fat32/ff.h"
-#include "uart.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-#include "nanojpeg/nanojpeg.h"
-
-const char *FRtoString[]={
-	"Succeeded\n",
-	"A hard error occurred in the low level disk I/O layer\n",
-	"Assertion failed\n",
-	"The physical drive cannot work\n",
-	"Could not find the file\n",
-	"Could not find the path\n",
-	"The path name format is invalid\n",
-	"Access denied due to prohibited access or directory full\n",
-	"Access denied due to prohibited access\n",
-	"The file/directory object is invalid\n",
-	"The physical drive is write protected\n",
-	"The logical drive number is invalid\n",
-	"The volume has no work area\n",
-	"There is no valid FAT volume\n",
-	"The f_mkfs() aborted due to any problem\n",
-	"Could not get a grant to access the volume within defined period\n",
-	"The operation is rejected according to the file sharing policy\n",
-	"LFN working buffer could not be allocated\n",
-	"Number of open files > FF_FS_LOCK\n",
-	"Given parameter is invalid\n"
-};
+#include "nanojpeg.h"
 
 uint8_t *image;
 
@@ -51,16 +26,24 @@ void DecodeJPEG(const char *fname)
 {
 	njInit();
 
-	FIL fp;
-	FRESULT fr = f_open(&fp, fname, FA_READ);
-	if (fr == FR_OK)
+	FILE *fp = fopen(fname, "rb");
+	if (fp)
 	{
-		UINT readlen;
-		uint8_t *rawjpeg = (uint8_t *)malloc(fp.obj.objsize);
-		f_read(&fp, rawjpeg, fp.obj.objsize, &readlen);
-		f_close(&fp);
+		// Grab file size
+		fpos_t pos, endpos;
+		fgetpos(fp, &pos);
+		fseek(fp, 0, SEEK_END);
+		fgetpos(fp, &endpos);
+		fsetpos(fp, &pos);
+		uint32_t fsize = (uint32_t)endpos;
 
-		nj_result_t jres = njDecode(rawjpeg, fp.obj.objsize);
+		printf("Reading %ld bytes\r\n", fsize);
+		uint8_t *rawjpeg = (uint8_t *)malloc(fsize);
+		fread(rawjpeg, fsize, 1, fp);
+		fclose(fp);
+
+		printf("Decoding image\r\n");
+		nj_result_t jres = njDecode(rawjpeg, fsize);
 
 		if (jres == NJ_OK)
 		{
@@ -102,6 +85,8 @@ void DecodeJPEG(const char *fname)
 			}
 		}
 	}
+	else
+		printf("Could not open file %s\r\n", fname);
 
 	njDone();
 }
@@ -119,14 +104,6 @@ void Setup()
 int main()
 {
 	Setup();
-
-	FATFS *Fs = (FATFS*)malloc(sizeof(FATFS));
-	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
-	if (mountattempt != FR_OK)
-	{
-		UARTWrite(FRtoString[mountattempt]);
-		return -1;
-	}
 
 	// Set aside space for the decompressed image
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary

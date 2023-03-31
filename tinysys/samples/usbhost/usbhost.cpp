@@ -84,11 +84,11 @@ void filterCommand(int buffLength, unsigned char *msgbuffer)
 	unsigned char msgType = msgbuffer[3];
 	unsigned char devType = msgbuffer[4];
 	unsigned char device = msgbuffer[5];
-	unsigned char endpoint = msgbuffer[6];
-	unsigned char idVendorL = msgbuffer[7];
-	unsigned char idVendorH = msgbuffer[8];
-	unsigned char idProductL = msgbuffer[9];
-	unsigned char idProductH = msgbuffer[10];
+	//unsigned char endpoint = msgbuffer[6];
+	//unsigned char idVendorL = msgbuffer[7];
+	//unsigned char idVendorH = msgbuffer[8];
+	//unsigned char idProductL = msgbuffer[9];
+	//unsigned char idProductH = msgbuffer[10];
 	switch (msgType)
 	{
 		case MSG_TYPE_CONNECTED:

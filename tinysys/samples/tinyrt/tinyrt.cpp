@@ -1,7 +1,3 @@
-// Boot ROM
-
-#include "memtest/memtest.h"
-
 #include <math.h>
 #include "core.h"
 #include "uart.h"
