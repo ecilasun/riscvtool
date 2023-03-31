@@ -4,8 +4,7 @@ CC = $(CROSS)gcc
 OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
 
-CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lm -I.. -I../../../../SDK/ -I../../../../../3rdparty/
-# CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../../SDK/ -I../../../../../3rdparty/
+CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../../SDK/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -20,6 +19,7 @@ SOURCES_doom := $(filter-out d_main.c,$(SOURCES_doom))
 SOURCES_doom := $(filter-out s_sound.c,$(SOURCES_doom))
 
 SOURCES_doom_arch := \
+	../../../../SDK/*.c \
 	d_main.c \
 	i_main.c \
 	i_net.c \
@@ -29,7 +29,6 @@ SOURCES_doom_arch := \
 	s_sound.c \
 	console.c  \
 	mini-printf.c \
-	../../../../SDK/*.c \
 	$(NULL)
 
 all: doom.elf doom.txt
