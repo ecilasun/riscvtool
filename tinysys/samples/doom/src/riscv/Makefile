@@ -5,6 +5,7 @@ OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
 
 CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lm -I.. -I../../../../SDK/ -I../../../../../3rdparty/
+# CFLAGS=-mcmodel=medany -std=gnu99 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../../SDK/ -I../../../../../3rdparty/
 
 CFLAGS += \
 	-DNORMALUNIX \
@@ -29,7 +30,6 @@ SOURCES_doom_arch := \
 	console.c  \
 	mini-printf.c \
 	../../../../SDK/*.c \
-	../../../../../3rdparty/fat32/*.c \
 	$(NULL)
 
 all: doom.elf doom.txt

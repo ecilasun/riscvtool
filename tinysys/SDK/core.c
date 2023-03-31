@@ -29,15 +29,18 @@ uint32_t core_brk(uint32_t brkptr)
 	if (brkptr == 0)
 		return (uint32_t)__breakpos;
 
+	// NOTE: The value of the argument to brk() is rounded up for alignment with eight-byte boundaries
+	uint32_t alignedbrk = E32AlignUp(brkptr, 8);
+
 	// Out of bounds will return all ones (-1)
-	if (brkptr<(uint32_t)__heap_start || brkptr>(uint32_t)__heap_end)
+	if (alignedbrk<(uint32_t)__heap_start || alignedbrk>(uint32_t)__heap_end)
 	{
 		errno = ENOMEM;
 		return 0xFFFFFFFF;
 	}
 
 	// Set new break position and return 0 (success) in all other cases
-	__breakpos = (uint8_t*)brkptr;
+	__breakpos = (uint8_t*)alignedbrk;
 	return 0;
 }
 
