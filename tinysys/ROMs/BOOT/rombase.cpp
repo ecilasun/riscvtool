@@ -195,9 +195,8 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 //1	Standard output	STDOUT_FILENO	stdout
 //2	Standard error	STDERR_FILENO	stderr
 static uint32_t s_handleAllocMask = 0x00000007;
-
 static FIL s_filehandles[MAX_HANDLES];
-static char s_fileNames[MAX_HANDLES][64];
+static char s_fileNames[MAX_HANDLES][64] = {"stdin","stdout","stderr","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",};
 
 static STaskContext g_taskctx;
 
@@ -353,12 +352,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			break;
 
 			default:
+			{
 				ReportError(32, "Unknown hardware interrupt", cause, value, PC);
 
 				// Put core to endless sleep
 				while(1) {
 					asm volatile("wfi;");
 				}
+			}
 			break;
 		}
 	}
@@ -385,21 +386,22 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 				// TODO: Automatically add a debug breakpoint here and halt (or jump into gdb_breakpoint)
 			}
+			break;
 
 			case CAUSE_MACHINE_ECALL:
 			{
 				switch(value)
 				{
 					// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
-					// 0	io_setup	long sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
-					// 57	close		long sys_close(unsigned int fd);
-					// 62	lseek		long sys_llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low, loff_t __user *result, unsigned int whence);
-					// 63	read		long sys_read(unsigned int fd, char __user *buf, size_t count);
-					// 64	write		long sys_write(unsigned int fd, const char __user *buf, size_t count);
+					// 0	io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
+					// 57	close		int sys_close(unsigned int fd);
+					// 62	lseek		off_t sys_lseek(int fd, off_t offset, int whence);
+					// 63	read		ssize_t read(int fd, void *buf, size_t count);
+					// 64	write		ssize_t write(int fd, const void *buf, size_t count);
 					// 80	newfstat	long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-					// 93	exit		long sys_exit(int error_code);
-					// 129	kill		long sys_kill(pid_t pid, int sig);
-					// 214	brk			long sys_brk(void* brk);
+					// 93	exit		noreturn void _exit(int status);
+					// 129	kill		int kill(pid_t pid, int sig);
+					// 214	brk			int brk(void *addr); / void *sbrk(intptr_t increment);
 					// 1024	open		long sys_open(const char __user * filename, int flags, umode_t mode); open/create file
 
 					case 0: // io_setup()
@@ -540,7 +542,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						else
 						{
-							if (fd < STDERR_FILENO)
+							if (fd <= STDERR_FILENO)
 							{
 								buf->st_dev = 1;
 								buf->st_ino = 0;
@@ -560,7 +562,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								buf->st_ctim.tv_nsec = 0;
 								write_csr(0x00A, 0x0);
 							}
-							else
+							else // Ordinary files
 							{
 								FILINFO finf;
 								FRESULT fr = f_stat(s_fileNames[fd], &finf);
