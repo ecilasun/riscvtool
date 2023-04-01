@@ -4,8 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
-
-#define STDOUT_FILENO 1
+#include <unistd.h>
 
 static int havedrive = 0;
 FATFS *Fs = nullptr;
@@ -413,9 +412,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						UARTWriteDecimal(file);
 						UARTWrite("\r\n");
 
-						ReleaseFileHandle(file, &s_handleAllocMask);
-
-						f_close(&s_filehandles[file]);
+						if (file > 2) // Won't let stderr, stdout and stdin be closed
+						{
+							ReleaseFileHandle(file, &s_handleAllocMask);
+							f_close(&s_filehandles[file]);
+						}
 						write_csr(0x00A, 0);
 					}
 					break;
@@ -476,14 +477,23 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						UARTWrite(s_fileNames[file]);
 						UARTWrite("\r\n");
 
-						if (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen))
+						if (file == STDIN_FILENO)
 						{
-							write_csr(0x00A, readlen);
+							// TODO: implement stdin
+							errno = EIO;
+							write_csr(0x00A, 0xFFFFFFFF);
 						}
 						else
 						{
-							errno = EIO;
-							write_csr(0x00A, 0xFFFFFFFF);
+							if (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen))
+							{
+								write_csr(0x00A, readlen);
+							}
+							else
+							{
+								errno = EIO;
+								write_csr(0x00A, 0xFFFFFFFF);
+							}
 						}
 					}
 					break;
@@ -502,7 +512,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						UARTWriteDecimal(count);
 						UARTWrite("\r\n");
 
-						if (file == STDOUT_FILENO)
+						if (file == STDOUT_FILENO || file == STDERR_FILENO)
 						{
 							char *cptr = (char*)ptr;
 							const char *eptr = cptr + count;
@@ -517,9 +527,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						else
 						{
-							ReportError(32, "unimpl: write()", cause, value, PC);
-							errno = EIO;
-							write_csr(0x00A, 0xFFFFFFFF);
+							UINT writtenbytes = 0;
+							if (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &writtenbytes))
+								write_csr(0x00A, writtenbytes);
+							else
+							{
+								errno = EACCES;
+								write_csr(0x00A, 0xFFFFFFFF);
+							}
 						}
 					}
 					break;
