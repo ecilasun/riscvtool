@@ -4,7 +4,8 @@ CC = $(CROSS)gcc
 OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
 
-CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../../SDK/
+# CFLAGS=-mcmodel=medany -std=gnu99 -Wall -Ofast -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../../SDK/
+CFLAGS=-Wall -O2 -march=rv32im -mabi=ilp32 -ffreestanding -flto -fomit-frame-pointer -Wl,--gc-section --specs=nano.specs -I.. -I../../../../SDK/
 
 CFLAGS += \
 	-DNORMALUNIX \

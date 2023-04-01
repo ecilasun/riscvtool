@@ -39,7 +39,6 @@
 #include "core.h"
 #include "uart.h"
 #include "console.h"
-#include "config.h"
 
 void
 I_Init(void)
@@ -50,8 +49,8 @@ I_Init(void)
 byte *
 I_ZoneBase(int *size)
 {
-	/* Give 32M to DOOM */
-	*size = 32 * 1024 * 1024;
+	/* Give 8M to DOOM */
+	*size = 8 * 1024 * 1024;
 	return (byte *) malloc (*size);
 }
 
