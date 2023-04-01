@@ -17,8 +17,8 @@ sudo make
 export PATH=/opt/riscv/bin:$PATH
 
 # To make path permanent, use the following
-cd ~
-nano .bashrc
+#     cd ~
+#     nano .bashrc
 # Add this to the end of the file, save and quit
-export PATH=/opt/riscv/bin:$PATH
+#     export PATH=/opt/riscv/bin:$PATH
 # You'll need to re-login for this to take effect
