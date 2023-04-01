@@ -19,7 +19,11 @@ SOURCES_doom := $(filter-out d_main.c,$(SOURCES_doom))
 SOURCES_doom := $(filter-out s_sound.c,$(SOURCES_doom))
 
 SOURCES_doom_arch := \
-	../../../../SDK/*.c \
+	../../../../SDK/core.c \
+	../../../../SDK/basesystem.c \
+	../../../../SDK/uart.c \
+	../../../../SDK/gpu.c \
+	../../../../SDK/dma.c \
 	mini-printf.c \
 	d_main.c \
 	i_main.c \
