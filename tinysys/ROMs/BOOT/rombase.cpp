@@ -261,6 +261,12 @@ void ReleaseFileHandle(const uint32_t _bitIndex, uint32_t * _input)
 	*_input = (*_input) & (~mask);
 }
 
+uint32_t IsFileHandleAllocated(const uint32_t _bitIndex, const uint32_t  _input)
+{
+	uint32_t mask = 1 << (_bitIndex-1);
+	return (_input & mask) ? 1 : 0;
+}
+
 //void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine() // Auto-saves registers
 void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routine() // Manual register save
 {
@@ -457,13 +463,25 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 						if (file == STDIN_FILENO)
 						{
-							// TODO: implement stdin
+							// TODO: Maybe read one characer from UART here?
 							errno = EIO;
 							write_csr(0x00A, 0xFFFFFFFF);
 						}
-						else
+						else if (file == STDOUT_FILENO)
 						{
-							if (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen))
+							// Can't read from stdout
+							errno = EIO;
+							write_csr(0x00A, 0xFFFFFFFF);
+						}
+						else if (file == STDERR_FILENO)
+						{
+							// Can't read from stderr
+							errno = EIO;
+							write_csr(0x00A, 0xFFFFFFFF);
+						}
+						else // Any other ordinary file
+						{
+							if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen)))
 							{
 								write_csr(0x00A, readlen);
 							}
@@ -511,11 +529,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 					case 80: // newfstat()
 					{
-						//sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-						/*ReportError(32, "unimpl: newfstat()", cause, value, PC);
-						errno = EBADF;
-						write_csr(0x00A, 0xFFFFFFFF);*/
-
 						uint32_t fd = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						struct stat *buf = (struct stat *)ptr;
@@ -527,35 +540,56 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						else
 						{
-							FILINFO finf;
-							FRESULT fr = f_stat(s_fileNames[fd], &finf);
-
-							if (fr != FR_OK)
+							if (fd < STDERR_FILENO)
 							{
-								errno = EINVAL;
-								write_csr(0x00A, 0xFFFFFFFF);
-							}
-							else
-							{
-								// TODO: Fill in more info here
 								buf->st_dev = 1;
 								buf->st_ino = 0;
-								buf->st_mode = 0; // TODO
+								buf->st_mode = S_IFCHR; // character device
 								buf->st_nlink = 0;
 								buf->st_uid = 0;
 								buf->st_gid = 0;
 								buf->st_rdev = 1;
-								buf->st_size = finf.fsize;
-								buf->st_blksize = 512;
-								buf->st_blocks = (finf.fsize+511)/512;
-								buf->st_atim.tv_sec = finf.ftime;
+								buf->st_size = 0;
+								buf->st_blksize = 0;
+								buf->st_blocks = 0;
+								buf->st_atim.tv_sec = 0;
 								buf->st_atim.tv_nsec = 0;
 								buf->st_mtim.tv_sec = 0;
 								buf->st_mtim.tv_nsec = 0;
 								buf->st_ctim.tv_sec = 0;
 								buf->st_ctim.tv_nsec = 0;
-
 								write_csr(0x00A, 0x0);
+							}
+							else
+							{
+								FILINFO finf;
+								FRESULT fr = f_stat(s_fileNames[fd], &finf);
+
+								if (fr != FR_OK)
+								{
+									errno = ENOENT;
+									write_csr(0x00A, 0xFFFFFFFF);
+								}
+								else
+								{
+									buf->st_dev = 0;
+									buf->st_ino = 0;
+									buf->st_mode = S_IFREG; // regular file
+									buf->st_nlink = 0;
+									buf->st_uid = 0;
+									buf->st_gid = 0;
+									buf->st_rdev = 0;
+									buf->st_size = finf.fsize;
+									buf->st_blksize = 512;
+									buf->st_blocks = (finf.fsize+511)/512;
+									buf->st_atim.tv_sec = finf.ftime;
+									buf->st_atim.tv_nsec = 0;
+									buf->st_mtim.tv_sec = 0;
+									buf->st_mtim.tv_nsec = 0;
+									buf->st_ctim.tv_sec = 0;
+									buf->st_ctim.tv_nsec = 0;
+									write_csr(0x00A, 0x0);
+								}
 							}
 						}
 					}
