@@ -15,3 +15,10 @@ sudo make
 
 # When done, add /opt/riscv/bin to PATH
 export PATH=/opt/riscv/bin:$PATH
+
+# To make path permanent, use the following
+cd ~
+nano .bashrc
+# Add this to the end of the file, save and quit
+export PATH=/opt/riscv/bin:$PATH
+# You'll need to re-login for this to take effect
