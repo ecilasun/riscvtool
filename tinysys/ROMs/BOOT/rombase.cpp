@@ -408,11 +408,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						uint32_t file = read_csr(0x00A); // A0
 
-						UARTWrite("C:");
-						UARTWriteDecimal(file);
-						UARTWrite("\r\n");
-
-						if (file > 2) // Won't let stderr, stdout and stdin be closed
+						if (file > STDERR_FILENO) // Won't let stderr, stdout and stdin be closed
 						{
 							ReleaseFileHandle(file, &s_handleAllocMask);
 							f_close(&s_filehandles[file]);
@@ -428,14 +424,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t file = read_csr(0x00A); // A0
 						uint32_t offset = read_csr(0x00B); // A1
 						uint32_t whence = read_csr(0x00C); // A2
-
-						UARTWrite("S:");
-						UARTWriteDecimal(file);
-						UARTWrite(":");
-						UARTWriteDecimal(offset);
-						UARTWrite(":");
-						UARTWriteDecimal(whence);
-						UARTWrite("\r\n");
 
 						// Grab current cursor
 						FSIZE_t currptr = s_filehandles[file].fptr;
@@ -467,16 +455,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t len = read_csr(0x00C); // A2
 
-						UARTWrite("R:");
-						UARTWriteDecimal(file);
-						UARTWrite(":0x");
-						UARTWriteHex(ptr);
-						UARTWrite(":");
-						UARTWriteDecimal(len);
-						UARTWrite(":");
-						UARTWrite(s_fileNames[file]);
-						UARTWrite("\r\n");
-
 						if (file == STDIN_FILENO)
 						{
 							// TODO: implement stdin
@@ -503,14 +481,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t file = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t count = read_csr(0x00C); // A2
-
-						UARTWrite("W:");
-						UARTWriteDecimal(file);
-						UARTWrite(":");
-						UARTWriteHex(ptr);
-						UARTWrite(":");
-						UARTWriteDecimal(count);
-						UARTWrite("\r\n");
 
 						if (file == STDOUT_FILENO || file == STDERR_FILENO)
 						{
@@ -549,12 +519,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t fd = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						struct stat *buf = (struct stat *)ptr;
-
-						UARTWrite("FS:");
-						UARTWriteDecimal(fd);
-						UARTWrite(":");
-						UARTWriteHex(ptr);
-						UARTWrite("\r\n");
 
 						if (fd < 0)
 						{
@@ -631,12 +595,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t addrs = read_csr(0x00A); // A0
 						uint32_t retval = core_brk(addrs);
 
-						UARTWrite("BRK:");
-						UARTWriteHex(addrs);
-						UARTWrite(":");
-						UARTWriteDecimal(retval);
-						UARTWrite("\r\n");
-
 						write_csr(0x00A, retval);
 					}
 					break;
@@ -660,16 +618,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 						// Grab lowest zero bit's index
 						int currenthandle = FindFreeFileHandle(s_handleAllocMask);
-
-						UARTWrite("O:0x");
-						UARTWriteHex(nptr);
-						UARTWrite(":");
-						UARTWriteDecimal(oflags);
-						UARTWrite(" -> 0x");
-						UARTWriteHex(s_handleAllocMask);
-						UARTWrite(":");
-						UARTWriteHex(currenthandle);
-						UARTWrite("\r\n");
 
 						if (currenthandle == 0)
 						{
