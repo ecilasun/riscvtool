@@ -20,6 +20,7 @@ SOURCES_doom := $(filter-out s_sound.c,$(SOURCES_doom))
 
 SOURCES_doom_arch := \
 	../../../../SDK/*.c \
+	mini-printf.c \
 	d_main.c \
 	i_main.c \
 	i_net.c \
@@ -28,7 +29,6 @@ SOURCES_doom_arch := \
 	i_video.c \
 	s_sound.c \
 	console.c  \
-	mini-printf.c \
 	$(NULL)
 
 all: doom.elf doom.txt

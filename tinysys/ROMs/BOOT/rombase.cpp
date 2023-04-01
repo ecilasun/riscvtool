@@ -120,12 +120,13 @@ void ListFiles(const char *path)
 	}
 }
 
-void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
+uint32_t ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
 {
+	uint32_t heap_start = 0;
 	if (fheader->m_Magic != 0x464C457F)
 	{
 		ReportError(32, "ELF header error", fheader->m_Magic, 0, 0);
-		return;
+		return heap_start;
 	}
 
 	jumptarget = fheader->m_Entry;
@@ -148,8 +149,12 @@ void ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t 
 			// Load the binary
 			f_lseek(fp, pheader.m_Offset);
 			f_read(fp, memaddr, pheader.m_FileSz, &bytesread);
+			uint32_t blockEnd = (uint32_t)memaddr + pheader.m_MemSz;
+			heap_start = heap_start < blockEnd ? blockEnd : heap_start;
 		}
 	}
+
+	return E32AlignUp(heap_start, 1024);
 }
 
 uint32_t LoadExecutable(const char *filename, const bool reportError)
@@ -162,13 +167,16 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 		UINT readsize;
 		f_read(&fp, &fheader, sizeof(fheader), &readsize);
 		uint32_t branchaddress;
-		ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
+		uint32_t heap_start = ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
 		f_close(&fp);
 
 		asm volatile(
 			".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
 			"fence.i;"          // Invalidate I$
 		);
+
+		// Set brk() to end of BSS
+		set_elf_heap(heap_start);
 
 		return branchaddress;
 	}
@@ -181,9 +189,16 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 	return 0;
 }
 
-static FIL s_filehandles[32];
-char s_fileNames[32][64];
-static int s_numhandles = 0;
+#define MAX_HANDLES 32
+
+// Handle allocation mask, positions 0,1 and 2 are reserved
+//0	Standard input	STDIN_FILENO	stdin
+//1	Standard output	STDOUT_FILENO	stdout
+//2	Standard error	STDERR_FILENO	stderr
+static uint32_t s_handleAllocMask = 0x00000007;
+
+static FIL s_filehandles[MAX_HANDLES];
+static char s_fileNames[MAX_HANDLES][64];
 
 static STaskContext g_taskctx;
 
@@ -220,6 +235,31 @@ void HandleUART()
 void TaskDebugMode(uint32_t _mode)
 {
 	g_taskctx.debugMode = _mode;
+}
+
+uint32_t FindFreeFileHandle(const uint32_t _input)
+{
+	uint32_t tmp = _input;
+	for (uint32_t i=0; i<32; ++i)
+	{
+		if ((tmp & 0x00000001) == 0)
+			return (i+1);
+		tmp = tmp >> 1;
+	}
+
+	return 0;
+}
+
+void AllocateFileHandle(const uint32_t _bitIndex, uint32_t * _input)
+{
+	uint32_t mask = 1 << (_bitIndex-1);
+	*_input = (*_input) | mask;
+}
+
+void ReleaseFileHandle(const uint32_t _bitIndex, uint32_t * _input)
+{
+	uint32_t mask = 1 << (_bitIndex-1);
+	*_input = (*_input) & (~mask);
 }
 
 //void __attribute__((aligned(16))) __attribute__((interrupt("machine"))) interrupt_service_routine() // Auto-saves registers
@@ -337,6 +377,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 				// Terminate and remove from list of running tasks
 				TaskExitCurrentTask(&g_taskctx);
+
+				// TODO: Automatically add a debug breakpoint here and halt (or jump into gdb_breakpoint)
 			}
 
 			case CAUSE_MACHINE_ECALL:
@@ -366,6 +408,13 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 57: // close()
 					{
 						uint32_t file = read_csr(0x00A); // A0
+
+						UARTWrite("C:");
+						UARTWriteDecimal(file);
+						UARTWrite("\r\n");
+
+						ReleaseFileHandle(file, &s_handleAllocMask);
+
 						f_close(&s_filehandles[file]);
 						write_csr(0x00A, 0);
 					}
@@ -373,23 +422,37 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 					case 62: // lseek()
 					{
-						uint32_t file = read_csr(0x00A); // A0
-						uint32_t ptr = read_csr(0x00B); // A1
-						uint32_t dir = read_csr(0x00C); // A2
+						// NOTE: We do not support 'holes' in files
 
+						uint32_t file = read_csr(0x00A); // A0
+						uint32_t offset = read_csr(0x00B); // A1
+						uint32_t whence = read_csr(0x00C); // A2
+
+						UARTWrite("S:");
+						UARTWriteDecimal(file);
+						UARTWrite(":");
+						UARTWriteDecimal(offset);
+						UARTWrite(":");
+						UARTWriteDecimal(whence);
+						UARTWrite("\r\n");
+
+						// Grab current cursor
 						FSIZE_t currptr = s_filehandles[file].fptr;
-						if (dir == 2 ) // SEEK_END
+
+						if (whence == 2 ) // SEEK_END
 						{
-							DWORD flen = s_filehandles[file].obj.objsize;
-							currptr = flen;
+							// Offset from end of file
+							currptr = offset + s_filehandles[file].obj.objsize;
 						}
-						else if (dir == 1) // SEEK_CUR
+						else if (whence == 1) // SEEK_CUR
 						{
-							currptr = ptr + currptr;
+							// Offset from current position
+							currptr = offset + currptr;
 						}
-						else// if (dir == 0) // SEEK_SET
+						else// if (whence == 0) // SEEK_SET
 						{
-							currptr = ptr;
+							// Direct offset
+							currptr = offset;
 						}
 						f_lseek(&s_filehandles[file], currptr);
 						write_csr(0x00A, currptr);
@@ -402,6 +465,16 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t file = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t len = read_csr(0x00C); // A2
+
+						UARTWrite("R:");
+						UARTWriteDecimal(file);
+						UARTWrite(":0x");
+						UARTWriteHex(ptr);
+						UARTWrite(":");
+						UARTWriteDecimal(len);
+						UARTWrite(":");
+						UARTWrite(s_fileNames[file]);
+						UARTWrite("\r\n");
 
 						if (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen))
 						{
@@ -420,6 +493,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t file = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						uint32_t count = read_csr(0x00C); // A2
+
+						UARTWrite("W:");
+						UARTWriteDecimal(file);
+						UARTWrite(":");
+						UARTWriteHex(ptr);
+						UARTWrite(":");
+						UARTWriteDecimal(count);
+						UARTWrite("\r\n");
 
 						if (file == STDOUT_FILENO)
 						{
@@ -453,6 +534,12 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t fd = read_csr(0x00A); // A0
 						uint32_t ptr = read_csr(0x00B); // A1
 						struct stat *buf = (struct stat *)ptr;
+
+						UARTWrite("FS:");
+						UARTWriteDecimal(fd);
+						UARTWrite(":");
+						UARTWriteHex(ptr);
+						UARTWrite("\r\n");
 
 						if (fd < 0)
 						{
@@ -528,6 +615,13 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						uint32_t addrs = read_csr(0x00A); // A0
 						uint32_t retval = core_brk(addrs);
+
+						UARTWrite("BRK:");
+						UARTWriteHex(addrs);
+						UARTWrite(":");
+						UARTWriteDecimal(retval);
+						UARTWrite("\r\n");
+
 						write_csr(0x00A, retval);
 					}
 					break;
@@ -549,17 +643,37 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						ff_flags |= (oflags&100) ? FA_CREATE_ALWAYS : 0; // O_CREAT
 						ff_flags |= (oflags&2000) ? FA_OPEN_APPEND : 0; // O_APPEND
 
-						int currenthandle = s_numhandles;
-						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
+						// Grab lowest zero bit's index
+						int currenthandle = FindFreeFileHandle(s_handleAllocMask);
+
+						UARTWrite("O:0x");
+						UARTWriteHex(nptr);
+						UARTWrite(":");
+						UARTWriteDecimal(oflags);
+						UARTWrite(" -> 0x");
+						UARTWriteHex(s_handleAllocMask);
+						UARTWrite(":");
+						UARTWriteHex(currenthandle);
+						UARTWrite("\r\n");
+
+						if (currenthandle == 0)
 						{
-							strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 64);
-							++s_numhandles;
-							write_csr(0x00A, currenthandle);
+							errno = ENFILE;
+							write_csr(0x00A, 0xFFFFFFFF);
 						}
 						else
 						{
-							errno = ENOENT;
-							write_csr(0x00A, 0xFFFFFFFF);
+							if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
+							{
+								AllocateFileHandle(currenthandle, &s_handleAllocMask);
+								write_csr(0x00A, currenthandle);
+								strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 64);
+							}
+							else
+							{
+								errno = ENOENT;
+								write_csr(0x00A, 0xFFFFFFFF);
+							}
 						}
 					}
 					break;

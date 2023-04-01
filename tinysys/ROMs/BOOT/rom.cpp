@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.992"
+#define VERSIONSTRING "v0.994"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -168,7 +168,7 @@ void ExecuteCmd(char *_cmd)
 		// even though each gets a new task slot assigned.
 		// This will cause corruption of the runtime environment.
 		if (s_startAddress != 0x0)
-			TaskAdd(GetTaskContext(), command, RunExecTask, HUNDRED_MILLISECONDS_IN_TICKS);
+			TaskAdd(GetTaskContext(), command, RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
 	}
 }
 
@@ -190,7 +190,7 @@ int main()
 	STaskContext *taskctx = CreateTaskContext();
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
-	TaskAdd(taskctx, "_stub", _stubTask, HALF_MILLISECOND_IN_TICKS);
+	TaskAdd(taskctx, "_stub", _stubTask, ONE_MILLISECOND_IN_TICKS);
 
 	// Start the timer and hardware interrupt handlers.
 	// This is where all task switching and other interrupt handling occurs

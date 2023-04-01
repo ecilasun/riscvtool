@@ -3,6 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+typedef struct
+{
+    // Should be "IWAD" or "PWAD".
+    char                identification[4];
+    int                 numlumps;
+    int                 infotableofs;
+
+} wadinfo_t;
 
 int main()
 {
@@ -37,6 +48,23 @@ int main()
 		delete [] buffer;
 
 		fclose(fp);
+
+		printf("Now the same with read() instead of fread()\r\n");
+		int handle;
+		if ( (handle = open ("sd:doom1.wad", O_RDONLY /*| O_BINARY*/)) != -1)
+		{
+			printf("Open succeeded, reading\r\n");
+			wadinfo_t header;
+        	read (handle, &header, sizeof(header));
+			printf("header: %c%c%c%c\r\n",
+			header.identification[0],
+			header.identification[1],
+			header.identification[2],
+			header.identification[3] );
+			close (handle);
+		}
+		else
+			printf("oops, can't open sd:doom1.wad\r\n");
 	}
 	else
 		printf("File's not there.\r\n");

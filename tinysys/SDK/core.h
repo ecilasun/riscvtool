@@ -9,6 +9,7 @@
 // syscall handlers for ROM
 uint32_t core_brk(uint32_t brkptr);
 uint32_t core_memavail();
+void set_elf_heap(uint32_t heaptop);
 #endif
 
 #define E32AlignUp(_x_, _align_) ((_x_ + (_align_ - 1)) & (~(_align_ - 1)))
