@@ -199,6 +199,7 @@ static FIL s_filehandles[MAX_HANDLES];
 static char s_fileNames[MAX_HANDLES][64] = {"stdin","stdout","stderr","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",};
 
 static STaskContext g_taskctx;
+static UINT tmpresult;
 
 STaskContext *CreateTaskContext()
 {
@@ -270,45 +271,45 @@ uint32_t IsFileHandleAllocated(const uint32_t _bitIndex, const uint32_t  _input)
 void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routine() // Manual register save
 {
 	// Use extra space in CSR file to store a copy of the current register set before we overwrite anything
-	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
+	// NOTE: Stores MEPC as current PC (which is saved before we get here)
 	asm volatile(" \
-		csrw 0x001, ra; \
-		csrw 0x002, sp; \
-		csrw 0x003, gp; \
-		csrw 0x004, tp; \
-		csrw 0x005, t0; \
-		csrw 0x006, t1; \
-		csrw 0x007, t2; \
-		csrw 0x008, s0; \
-		csrw 0x009, s1; \
-		csrw 0x00A, a0; \
-		csrw 0x00B, a1; \
-		csrw 0x00C, a2; \
-		csrw 0x00D, a3; \
-		csrw 0x00E, a4; \
-		csrw 0x00F, a5; \
-		csrw 0x010, a6; \
-		csrw 0x011, a7; \
-		csrw 0x012, s2; \
-		csrw 0x013, s3; \
-		csrw 0x014, s4; \
-		csrw 0x015, s5; \
-		csrw 0x016, s6; \
-		csrw 0x017, s7; \
-		csrw 0x018, s8; \
-		csrw 0x019, s9; \
-		csrw 0x01A, s10; \
-		csrw 0x01B, s11; \
-		csrw 0x01C, t3; \
-		csrw 0x01D, t4; \
-		csrw 0x01E, t5; \
-		csrw 0x01F, t6; \
+		csrw 0x8A1, ra; \
+		csrw 0x8A2, sp; \
+		csrw 0x8A3, gp; \
+		csrw 0x8A4, tp; \
+		csrw 0x8A5, t0; \
+		csrw 0x8A6, t1; \
+		csrw 0x8A7, t2; \
+		csrw 0x8A8, s0; \
+		csrw 0x8A9, s1; \
+		csrw 0x8AA, a0; \
+		csrw 0x8AB, a1; \
+		csrw 0x8AC, a2; \
+		csrw 0x8AD, a3; \
+		csrw 0x8AE, a4; \
+		csrw 0x8AF, a5; \
+		csrw 0x8B0, a6; \
+		csrw 0x8B1, a7; \
+		csrw 0x8B2, s2; \
+		csrw 0x8B3, s3; \
+		csrw 0x8B4, s4; \
+		csrw 0x8B5, s5; \
+		csrw 0x8B6, s6; \
+		csrw 0x8B7, s7; \
+		csrw 0x8B8, s8; \
+		csrw 0x8B9, s9; \
+		csrw 0x8BA, s10; \
+		csrw 0x8BB, s11; \
+		csrw 0x8BC, t3; \
+		csrw 0x8BD, t4; \
+		csrw 0x8BE, t5; \
+		csrw 0x8BF, t6; \
 		csrr a5, mepc; \
-		csrw 0x000, a5; \
+		csrw 0x8A0, a5; \
 	");
 
 	// CSR[0x011] now contains A7 (SYSCALL number)
-	uint32_t value = read_csr(0x011);	// Instruction word or hardware bit
+	uint32_t value = read_csr(0x8B1);	// Instruction word or hardware bit - A7
 	uint32_t cause = read_csr(mcause);	// Exception cause on bits [18:16] (https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
 	uint32_t PC = read_csr(mepc);		// Return address == crash PC
 	uint32_t code = cause & 0x7FFFFFFF;
@@ -317,23 +318,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 	{
 		switch (code)
 		{
-			case IRQ_M_EXT:
-			{
-				// TODO: We need to read the 'reason' for HW interrupt from mscratch
-				// For now, ignore the reason as we only have one possible IRQ generator.
-				if (g_taskctx.debugMode)
-					gdb_handler(&g_taskctx);
-				else
-					HandleUART();
-
-				// Machine External Interrupt (hardware)
-				// Route based on hardware type
-				//if (value & 0x00000001) HandleUART();
-				//if (value & 0x00000002) HandleKeyboard();
-				//if (value & 0x00000004) HandleJTAG();
-			}
-			break;
-
 			case IRQ_M_TIMER:
 			{
 				// Machine Timer Interrupt (timer)
@@ -351,9 +335,26 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			}
 			break;
 
+			case IRQ_M_EXT:
+			{
+				// TODO: We need to read the 'reason' for HW interrupt from mscratch
+				// For now, ignore the reason as we only have one possible IRQ generator.
+				if (g_taskctx.debugMode)
+					gdb_handler(&g_taskctx);
+				else
+					HandleUART();
+
+				// Machine External Interrupt (hardware)
+				// Route based on hardware type
+				//if (value & 0x00000001) HandleUART();
+				//if (value & 0x00000002) HandleKeyboard();
+				//if (value & 0x00000004) HandleJTAG();
+			}
+			break;
+
 			default:
 			{
-				ReportError(32, "Unknown hardware interrupt", cause, value, PC);
+				ReportError(32, "Unknown hardware interrupt", code, value, PC);
 
 				// Put core to endless sleep
 				while(1) {
@@ -363,28 +364,28 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			break;
 		}
 	}
-	else // Exceptions
+	else
 	{
 		switch(code)
 		{
+			case CAUSE_ILLEGAL_INSTRUCTION:
+			{
+				uint32_t instruction = *((uint32_t*)PC);
+				ReportError(32, "Illegal instruction", code, instruction, PC);
+
+				// Terminate and remove from list of running tasks
+				TaskExitCurrentTask(&g_taskctx);
+
+				// TODO: Automatically add a debug breakpoint here and halt (or jump into gdb_breakpoint)
+			}
+			break;
+
 			case CAUSE_BREAKPOINT:
 			{
 				if (g_taskctx.debugMode)
 					gdb_breakpoint(&g_taskctx);
 				else
 					; // Ignore breakpoint instruction in non-debug mode
-			}
-			break;
-		
-			case CAUSE_ILLEGAL_INSTRUCTION:
-			{
-				uint32_t instruction = *((uint32_t*)PC);
-				ReportError(32, "Illegal instruction", cause, instruction, PC);
-
-				// Terminate and remove from list of running tasks
-				TaskExitCurrentTask(&g_taskctx);
-
-				// TODO: Automatically add a debug breakpoint here and halt (or jump into gdb_breakpoint)
 			}
 			break;
 
@@ -407,21 +408,21 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					case 0: // io_setup()
 					{
 						//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
-						ReportError(32, "unimpl: io_setup()", cause, value, PC);
-						write_csr(0x00A, 0xFFFFFFFF);
+						ReportError(32, "unimpl: io_setup()", code, value, PC);
+						write_csr(0x8AA, 0xFFFFFFFF);
 					}
 					break;
 
 					case 57: // close()
 					{
-						uint32_t file = read_csr(0x00A); // A0
+						uint32_t file = read_csr(0x8AA); // A0
 
 						if (file > STDERR_FILENO) // Won't let stderr, stdout and stdin be closed
 						{
 							ReleaseFileHandle(file, &s_handleAllocMask);
 							f_close(&s_filehandles[file]);
 						}
-						write_csr(0x00A, 0);
+						write_csr(0x8AA, 0);
 					}
 					break;
 
@@ -429,9 +430,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						// NOTE: We do not support 'holes' in files
 
-						uint32_t file = read_csr(0x00A); // A0
-						uint32_t offset = read_csr(0x00B); // A1
-						uint32_t whence = read_csr(0x00C); // A2
+						uint32_t file = read_csr(0x8AA); // A0
+						uint32_t offset = read_csr(0x8AB); // A1
+						uint32_t whence = read_csr(0x8AC); // A2
 
 						// Grab current cursor
 						FSIZE_t currptr = s_filehandles[file].fptr;
@@ -452,45 +453,44 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 							currptr = offset;
 						}
 						f_lseek(&s_filehandles[file], currptr);
-						write_csr(0x00A, currptr);
+						write_csr(0x8AA, currptr);
 					}
 					break;
 
 					case 63: // read()
 					{
-						UINT readlen = 0;
-						uint32_t file = read_csr(0x00A); // A0
-						uint32_t ptr = read_csr(0x00B); // A1
-						uint32_t len = read_csr(0x00C); // A2
+						uint32_t file = read_csr(0x8AA); // A0
+						uint32_t ptr = read_csr(0x8AB); // A1
+						uint32_t len = read_csr(0x8AC); // A2
 
 						if (file == STDIN_FILENO)
 						{
 							// TODO: Maybe read one characer from UART here?
 							errno = EIO;
-							write_csr(0x00A, 0xFFFFFFFF);
+							write_csr(0x8AA, 0xFFFFFFFF);
 						}
 						else if (file == STDOUT_FILENO)
 						{
 							// Can't read from stdout
 							errno = EIO;
-							write_csr(0x00A, 0xFFFFFFFF);
+							write_csr(0x8AA, 0xFFFFFFFF);
 						}
 						else if (file == STDERR_FILENO)
 						{
 							// Can't read from stderr
 							errno = EIO;
-							write_csr(0x00A, 0xFFFFFFFF);
+							write_csr(0x8AA, 0xFFFFFFFF);
 						}
 						else // Any other ordinary file
 						{
-							if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &readlen)))
+							if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &tmpresult)))
 							{
-								write_csr(0x00A, readlen);
+								write_csr(0x8AA, tmpresult);
 							}
 							else
 							{
 								errno = EIO;
-								write_csr(0x00A, 0xFFFFFFFF);
+								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 						}
 					}
@@ -498,9 +498,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 					case 64: // write()
 					{
-						uint32_t file = read_csr(0x00A); // A0
-						uint32_t ptr = read_csr(0x00B); // A1
-						uint32_t count = read_csr(0x00C); // A2
+						uint32_t file = read_csr(0x8AA); // A0
+						uint32_t ptr = read_csr(0x8AB); // A1
+						uint32_t count = read_csr(0x8AC); // A2
 
 						if (file == STDOUT_FILENO || file == STDERR_FILENO)
 						{
@@ -513,17 +513,16 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								++i;
 								++cptr;
 							}
-							write_csr(0x00A, i);
+							write_csr(0x8AA, i);
 						}
 						else
 						{
-							UINT writtenbytes = 0;
-							if (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &writtenbytes))
-								write_csr(0x00A, writtenbytes);
+							if (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult))
+								write_csr(0x8AA, tmpresult);
 							else
 							{
 								errno = EACCES;
-								write_csr(0x00A, 0xFFFFFFFF);
+								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 						}
 					}
@@ -531,14 +530,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 					case 80: // newfstat()
 					{
-						uint32_t fd = read_csr(0x00A); // A0
-						uint32_t ptr = read_csr(0x00B); // A1
+						uint32_t fd = read_csr(0x8AA); // A0
+						uint32_t ptr = read_csr(0x8AB); // A1
 						struct stat *buf = (struct stat *)ptr;
 
 						if (fd < 0)
 						{
 							errno = EBADF;
-							write_csr(0x00A, 0xFFFFFFFF);
+							write_csr(0x8AA, 0xFFFFFFFF);
 						}
 						else
 						{
@@ -560,7 +559,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								buf->st_mtim.tv_nsec = 0;
 								buf->st_ctim.tv_sec = 0;
 								buf->st_ctim.tv_nsec = 0;
-								write_csr(0x00A, 0x0);
+								write_csr(0x8AA, 0x0);
 							}
 							else // Ordinary files
 							{
@@ -570,7 +569,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								if (fr != FR_OK)
 								{
 									errno = ENOENT;
-									write_csr(0x00A, 0xFFFFFFFF);
+									write_csr(0x8AA, 0xFFFFFFFF);
 								}
 								else
 								{
@@ -590,7 +589,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 									buf->st_mtim.tv_nsec = 0;
 									buf->st_ctim.tv_sec = 0;
 									buf->st_ctim.tv_nsec = 0;
-									write_csr(0x00A, 0x0);
+									write_csr(0x8AA, 0x0);
 								}
 							}
 						}
@@ -601,7 +600,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						// Terminate and remove from list of running tasks
 						TaskExitCurrentTask(&g_taskctx);
-						write_csr(0x00A, 0x0);
+						write_csr(0x8AA, 0x0);
 					}
 					break;
 
@@ -609,37 +608,37 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						// Wait for child process status change - unused
 						// pid_t wait(int *wstatus);
-						ReportError(32, "unimpl: wait()", cause, value, PC);
+						ReportError(32, "unimpl: wait()", code, value, PC);
 						errno = ECHILD;
-						write_csr(0x00A, 0xFFFFFFFF);
+						write_csr(0x8AA, 0xFFFFFFFF);
 					}
 					break;
 
 					case 129: // kill(pid_t pid, int sig)
 					{
 						// Signal process to terminate
-						uint32_t pid = read_csr(0x00A); // A0
-						uint32_t sig = read_csr(0x00B); // A1
+						uint32_t pid = read_csr(0x8AA); // A0
+						uint32_t sig = read_csr(0x8AB); // A1
 						TaskExitTaskWithID(&g_taskctx, pid, sig);
-						write_csr(0x00A, 0x0);
+						write_csr(0x8AA, 0x0);
 						UARTWrite("Task killed\r\n");
 					}
 					break;
 
 					case 214: // brk()
 					{
-						uint32_t addrs = read_csr(0x00A); // A0
+						uint32_t addrs = read_csr(0x8AA); // A0
 						uint32_t retval = core_brk(addrs);
 
-						write_csr(0x00A, retval);
+						write_csr(0x8AA, retval);
 					}
 					break;
 
 					case 1024: // open()
 					{
-						uint32_t nptr = read_csr(0x00A); // A0
-						uint32_t oflags = read_csr(0x00B); // A1
-						//uint32_t pmode = read_csr(0x00C); // A2 - permission mode unused for now
+						uint32_t nptr = read_csr(0x8AA); // A0
+						uint32_t oflags = read_csr(0x8AB); // A1
+						//uint32_t pmode = read_csr(0x8AC); // A2 - permission mode unused for now
 
 						BYTE ff_flags = FA_READ;
 						switch (oflags & 3)
@@ -658,20 +657,20 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						if (currenthandle == 0)
 						{
 							errno = ENFILE;
-							write_csr(0x00A, 0xFFFFFFFF);
+							write_csr(0x8AA, 0xFFFFFFFF);
 						}
 						else
 						{
 							if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
 							{
 								AllocateFileHandle(currenthandle, &s_handleAllocMask);
-								write_csr(0x00A, currenthandle);
+								write_csr(0x8AA, currenthandle);
 								strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 64);
 							}
 							else
 							{
 								errno = ENOENT;
-								write_csr(0x00A, 0xFFFFFFFF);
+								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 						}
 					}
@@ -680,9 +679,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					// Unimplemented syscalls drop here
 					default:
 					{
-						ReportError(32, "unimplemented ECALL", cause, value, PC);
+						ReportError(32, "unimplemented ECALL", code, value, PC);
 						errno = EIO;
-						write_csr(0x00A, 0xFFFFFFFF);
+						write_csr(0x8AA, 0xFFFFFFFF);
 					}
 					break;
 				}
@@ -703,7 +702,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_STORE_PAGE_FAULT:*/
 			default:
 			{
-				ReportError(32, "Guru meditation", cause, value, PC);
+				ReportError(32, "Guru meditation", code, value, PC);
 
 				// Put core to endless sleep
 				while(1) {
@@ -715,41 +714,41 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 	}
 
 	// Restore registers to next task's register set
-	// TODO: Used vectored interrupts so we don't have to do this for all kinds of interrupts
+	// NOTE: Restores PC from saved MEPC so that MRET can branch to the task
 	asm volatile(" \
-		csrr a5, 0x000; \
+		csrr a5, 0x8A0; \
 		csrw mepc, a5; \
-		csrr ra,  0x001; \
-		csrr sp,  0x002; \
-		csrr gp,  0x003; \
-		csrr tp,  0x004; \
-		csrr t0,  0x005; \
-		csrr t1,  0x006; \
-		csrr t2,  0x007; \
-		csrr s0,  0x008; \
-		csrr s1,  0x009; \
-		csrr a0,  0x00A; \
-		csrr a1,  0x00B; \
-		csrr a2,  0x00C; \
-		csrr a3,  0x00D; \
-		csrr a4,  0x00E; \
-		csrr a5,  0x00F; \
-		csrr a6,  0x010; \
-		csrr a7,  0x011; \
-		csrr s2,  0x012; \
-		csrr s3,  0x013; \
-		csrr s4,  0x014; \
-		csrr s5,  0x015; \
-		csrr s6,  0x016; \
-		csrr s7,  0x017; \
-		csrr s8,  0x018; \
-		csrr s9,  0x019; \
-		csrr s10, 0x01A; \
-		csrr s11, 0x01B; \
-		csrr t3,  0x01C; \
-		csrr t4,  0x01D; \
-		csrr t5,  0x01E; \
-		csrr t6,  0x01F; \
+		csrr ra,  0x8A1; \
+		csrr sp,  0x8A2; \
+		csrr gp,  0x8A3; \
+		csrr tp,  0x8A4; \
+		csrr t0,  0x8A5; \
+		csrr t1,  0x8A6; \
+		csrr t2,  0x8A7; \
+		csrr s0,  0x8A8; \
+		csrr s1,  0x8A9; \
+		csrr a0,  0x8AA; \
+		csrr a1,  0x8AB; \
+		csrr a2,  0x8AC; \
+		csrr a3,  0x8AD; \
+		csrr a4,  0x8AE; \
+		csrr a5,  0x8AF; \
+		csrr a6,  0x8B0; \
+		csrr a7,  0x8B1; \
+		csrr s2,  0x8B2; \
+		csrr s3,  0x8B3; \
+		csrr s4,  0x8B4; \
+		csrr s5,  0x8B5; \
+		csrr s6,  0x8B6; \
+		csrr s7,  0x8B7; \
+		csrr s8,  0x8B8; \
+		csrr s9,  0x8B9; \
+		csrr s10, 0x8BA; \
+		csrr s11, 0x8BB; \
+		csrr t3,  0x8BC; \
+		csrr t4,  0x8BD; \
+		csrr t5,  0x8BE; \
+		csrr t6,  0x8BF; \
 		mret; \
 	");
 }
