@@ -17,7 +17,7 @@ STaskContext *CreateTaskContext();
 STaskContext *GetTaskContext();
 void TaskDebugMode(uint32_t _mode);
 void InstallISR();
-void MountDrive();
+uint32_t MountDrive();
 void UnmountDrive();
 void ListFiles(const char *path);
 uint32_t LoadExecutable(const char *filename, const bool reportError);

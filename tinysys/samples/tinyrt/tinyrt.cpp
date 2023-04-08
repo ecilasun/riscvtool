@@ -1,7 +1,6 @@
 #include <math.h>
 #include "core.h"
 #include "uart.h"
-#include "leds.h"
 #include "gpu.h"
 
 /*******************************************************************/

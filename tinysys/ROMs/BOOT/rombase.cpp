@@ -50,10 +50,10 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uin
 	UARTWrite("┘\n\033[0m\n");
 }
 
-void MountDrive()
+uint32_t MountDrive()
 {
 	if (havedrive)
-		return;
+		return havedrive;
 
 	// Attempt to mount file system on micro-SD card
 	Fs = (FATFS*)malloc(sizeof(FATFS));
@@ -67,6 +67,8 @@ void MountDrive()
 	{
 		havedrive = 1;
 	}
+
+	return havedrive;
 }
 
 void UnmountDrive()

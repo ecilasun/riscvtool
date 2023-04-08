@@ -6,13 +6,14 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.994"
+#define VERSIONSTRING "v0.995"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 static int refreshConsoleOut = 1;
+static int driveMounted = 0;
 
 void _stubTask() {
 	// NOTE: This task won't actually run
@@ -50,6 +51,11 @@ void ExecuteCmd(char *_cmd)
 	const char *command = strtok(_cmd, " ");
 	if (!command)
 		return;
+
+	// Attempt to mount the FAT volume on micro sd card
+	// NOTE: Loaded executables do not have to worry about this part
+	if (driveMounted==0)
+		driveMounted = MountDrive();
 
 	if (!strcmp(command, "dir"))
 	{
@@ -175,16 +181,10 @@ void ExecuteCmd(char *_cmd)
 int main()
 {
 	// Clear terminal
-	UARTWrite("\033[H\033[0m\033[2Jtinysys " VERSIONSTRING "\nType 'help' for CLI usage info\n\n");
-
-	strncpy(s_currentPath, "sd:", 128);
+	UARTWrite("\033[H\033[0m\033[2J\033[96;40mtinysys " VERSIONSTRING "\033[0m\n\n");
 
 	// Set up internals
 	RingBufferReset();
-
-	// Attempt to mount the FAT volume on micro sd card
-	// NOTE: Loaded executables do not have to worry about this part
-	MountDrive();
 
 	// Create task context
 	STaskContext *taskctx = CreateTaskContext();
@@ -198,7 +198,22 @@ int main()
 	// and modify task memory to aid in debugging via gdb serial interface.
 	InstallISR();
 
-	while (1) {
+	strncpy(s_currentPath, "sd:", 128);
+
+	uint32_t nextledstate = 0;
+	uint64_t prevtime = E32ReadTime();
+	uint64_t curtime;
+	while (1)
+	{
+		// Heartbeat
+		curtime = E32ReadTime();
+		uint32_t elapsed = ClockToMs(curtime - prevtime);
+		if (elapsed > 250)
+		{
+			prevtime = curtime;
+			LEDSetState(nextledstate++);
+		}
+
 		// Echo all of the characters we can find back to the sender
 		uint32_t uartData = 0;
 		int execcmd = 0;
