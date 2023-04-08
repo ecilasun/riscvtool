@@ -388,169 +388,187 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			case CAUSE_MACHINE_ECALL:
 			{
-				switch(value)
+				// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
+				// 0	io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
+				// 57	close		int sys_close(unsigned int fd);
+				// 62	lseek		off_t sys_lseek(int fd, off_t offset, int whence);
+				// 63	read		ssize_t read(int fd, void *buf, size_t count);
+				// 64	write		ssize_t write(int fd, const void *buf, size_t count);
+				// 80	newfstat	long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
+				// 93	exit		noreturn void _exit(int status);
+				// 129	kill		int kill(pid_t pid, int sig);
+				// 214	brk			int brk(void *addr); / void *sbrk(intptr_t increment);
+				// 1024	open		long sys_open(const char __user * filename, int flags, umode_t mode); open/create file
+
+				if (value==0) // io_setup()
 				{
-					// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
-					// 0	io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
-					// 57	close		int sys_close(unsigned int fd);
-					// 62	lseek		off_t sys_lseek(int fd, off_t offset, int whence);
-					// 63	read		ssize_t read(int fd, void *buf, size_t count);
-					// 64	write		ssize_t write(int fd, const void *buf, size_t count);
-					// 80	newfstat	long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-					// 93	exit		noreturn void _exit(int status);
-					// 129	kill		int kill(pid_t pid, int sig);
-					// 214	brk			int brk(void *addr); / void *sbrk(intptr_t increment);
-					// 1024	open		long sys_open(const char __user * filename, int flags, umode_t mode); open/create file
+					//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
+					ReportError(32, "unimpl: io_setup()", code, value, PC);
+					write_csr(0x8AA, 0xFFFFFFFF);
+				}
+				else if (value==57) // close()
+				{
+					uint32_t file = read_csr(0x8AA); // A0
 
-					case 0: // io_setup()
+					if (file > STDERR_FILENO) // Won't let stderr, stdout and stdin be closed
 					{
-						//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
-						ReportError(32, "unimpl: io_setup()", code, value, PC);
+						ReleaseFileHandle(file, &s_handleAllocMask);
+						f_close(&s_filehandles[file]);
+					}
+					write_csr(0x8AA, 0);
+				}
+				else if (value==62) // lseek()
+				{
+					// NOTE: We do not support 'holes' in files
+
+					uint32_t file = read_csr(0x8AA); // A0
+					uint32_t offset = read_csr(0x8AB); // A1
+					uint32_t whence = read_csr(0x8AC); // A2
+
+					// Grab current cursor
+					FSIZE_t currptr = s_filehandles[file].fptr;
+
+					if (whence == 2 ) // SEEK_END
+					{
+						// Offset from end of file
+						currptr = offset + s_filehandles[file].obj.objsize;
+					}
+					else if (whence == 1) // SEEK_CUR
+					{
+						// Offset from current position
+						currptr = offset + currptr;
+					}
+					else// if (whence == 0) // SEEK_SET
+					{
+						// Direct offset
+						currptr = offset;
+					}
+					f_lseek(&s_filehandles[file], currptr);
+					write_csr(0x8AA, currptr);
+				}
+				else if (value==63) // read()
+				{
+					uint32_t file = read_csr(0x8AA); // A0
+					uint32_t ptr = read_csr(0x8AB); // A1
+					uint32_t len = read_csr(0x8AC); // A2
+
+					if (file == STDIN_FILENO)
+					{
+						// TODO: Maybe read one characer from UART here?
+						errno = EIO;
 						write_csr(0x8AA, 0xFFFFFFFF);
-						break;
 					}
-	
-					case 57: // close()
+					else if (file == STDOUT_FILENO)
 					{
-						uint32_t file = read_csr(0x8AA); // A0
-
-						if (file > STDERR_FILENO) // Won't let stderr, stdout and stdin be closed
-						{
-							ReleaseFileHandle(file, &s_handleAllocMask);
-							f_close(&s_filehandles[file]);
-						}
-						write_csr(0x8AA, 0);
-						break;
+						// Can't read from stdout
+						errno = EIO;
+						write_csr(0x8AA, 0xFFFFFFFF);
 					}
-
-					case 62: // lseek()
+					else if (file == STDERR_FILENO)
 					{
-						// NOTE: We do not support 'holes' in files
-
-						uint32_t file = read_csr(0x8AA); // A0
-						uint32_t offset = read_csr(0x8AB); // A1
-						uint32_t whence = read_csr(0x8AC); // A2
-
-						// Grab current cursor
-						FSIZE_t currptr = s_filehandles[file].fptr;
-
-						if (whence == 2 ) // SEEK_END
-						{
-							// Offset from end of file
-							currptr = offset + s_filehandles[file].obj.objsize;
-						}
-						else if (whence == 1) // SEEK_CUR
-						{
-							// Offset from current position
-							currptr = offset + currptr;
-						}
-						else// if (whence == 0) // SEEK_SET
-						{
-							// Direct offset
-							currptr = offset;
-						}
-						f_lseek(&s_filehandles[file], currptr);
-						write_csr(0x8AA, currptr);
-						break;
+						// Can't read from stderr
+						errno = EIO;
+						write_csr(0x8AA, 0xFFFFFFFF);
 					}
-
-					case 63: // read()
+					else // Any other ordinary file
 					{
-						uint32_t file = read_csr(0x8AA); // A0
-						uint32_t ptr = read_csr(0x8AB); // A1
-						uint32_t len = read_csr(0x8AC); // A2
-
-						if (file == STDIN_FILENO)
+						if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &tmpresult)))
 						{
-							// TODO: Maybe read one characer from UART here?
-							errno = EIO;
-							write_csr(0x8AA, 0xFFFFFFFF);
-						}
-						else if (file == STDOUT_FILENO)
-						{
-							// Can't read from stdout
-							errno = EIO;
-							write_csr(0x8AA, 0xFFFFFFFF);
-						}
-						else if (file == STDERR_FILENO)
-						{
-							// Can't read from stderr
-							errno = EIO;
-							write_csr(0x8AA, 0xFFFFFFFF);
-						}
-						else // Any other ordinary file
-						{
-							if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &tmpresult)))
-							{
-								write_csr(0x8AA, tmpresult);
-							}
-							else
-							{
-								errno = EIO;
-								write_csr(0x8AA, 0xFFFFFFFF);
-							}
-						}
-						break;
-					}
-
-					case 64: // write()
-					{
-						uint32_t file = read_csr(0x8AA); // A0
-						uint32_t ptr = read_csr(0x8AB); // A1
-						uint32_t count = read_csr(0x8AC); // A2
-
-						if (file == STDOUT_FILENO || file == STDERR_FILENO)
-						{
-							char *cptr = (char*)ptr;
-							const char *eptr = cptr + count;
-							int i = 0;
-							while (cptr != eptr)
-							{
-								*IO_UARTTX = *cptr;
-								++i;
-								++cptr;
-							}
-							write_csr(0x8AA, i);
+							write_csr(0x8AA, tmpresult);
 						}
 						else
 						{
-							if (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult))
-								write_csr(0x8AA, tmpresult);
-							else
-							{
-								errno = EACCES;
-								write_csr(0x8AA, 0xFFFFFFFF);
-							}
-						}
-						break;
-					}
-
-					case 80: // newfstat()
-					{
-						uint32_t fd = read_csr(0x8AA); // A0
-						uint32_t ptr = read_csr(0x8AB); // A1
-						struct stat *buf = (struct stat *)ptr;
-
-						if (fd < 0)
-						{
-							errno = EBADF;
+							errno = EIO;
 							write_csr(0x8AA, 0xFFFFFFFF);
 						}
+					}
+				}
+				else if (value==64) // write()
+				{
+					uint32_t file = read_csr(0x8AA); // A0
+					uint32_t ptr = read_csr(0x8AB); // A1
+					uint32_t count = read_csr(0x8AC); // A2
+
+					if (file == STDOUT_FILENO || file == STDERR_FILENO)
+					{
+						char *cptr = (char*)ptr;
+						const char *eptr = cptr + count;
+						int i = 0;
+						while (cptr != eptr)
+						{
+							*IO_UARTTX = *cptr;
+							++i;
+							++cptr;
+						}
+						write_csr(0x8AA, i);
+					}
+					else
+					{
+						if (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult))
+							write_csr(0x8AA, tmpresult);
 						else
 						{
-							if (fd <= STDERR_FILENO)
+							errno = EACCES;
+							write_csr(0x8AA, 0xFFFFFFFF);
+						}
+					}
+				}
+				else if (value==80) // newfstat()
+				{
+					uint32_t fd = read_csr(0x8AA); // A0
+					uint32_t ptr = read_csr(0x8AB); // A1
+					struct stat *buf = (struct stat *)ptr;
+
+					if (fd < 0)
+					{
+						errno = EBADF;
+						write_csr(0x8AA, 0xFFFFFFFF);
+					}
+					else
+					{
+						if (fd <= STDERR_FILENO)
+						{
+							buf->st_dev = 1;
+							buf->st_ino = 0;
+							buf->st_mode = S_IFCHR; // character device
+							buf->st_nlink = 0;
+							buf->st_uid = 0;
+							buf->st_gid = 0;
+							buf->st_rdev = 1;
+							buf->st_size = 0;
+							buf->st_blksize = 0;
+							buf->st_blocks = 0;
+							buf->st_atim.tv_sec = 0;
+							buf->st_atim.tv_nsec = 0;
+							buf->st_mtim.tv_sec = 0;
+							buf->st_mtim.tv_nsec = 0;
+							buf->st_ctim.tv_sec = 0;
+							buf->st_ctim.tv_nsec = 0;
+							write_csr(0x8AA, 0x0);
+						}
+						else // Ordinary files
+						{
+							FILINFO finf;
+							FRESULT fr = f_stat(s_fileNames[fd], &finf);
+
+							if (fr != FR_OK)
 							{
-								buf->st_dev = 1;
+								errno = ENOENT;
+								write_csr(0x8AA, 0xFFFFFFFF);
+							}
+							else
+							{
+								buf->st_dev = 0;
 								buf->st_ino = 0;
-								buf->st_mode = S_IFCHR; // character device
+								buf->st_mode = S_IFREG; // regular file
 								buf->st_nlink = 0;
 								buf->st_uid = 0;
 								buf->st_gid = 0;
-								buf->st_rdev = 1;
-								buf->st_size = 0;
-								buf->st_blksize = 0;
-								buf->st_blocks = 0;
-								buf->st_atim.tv_sec = 0;
+								buf->st_rdev = 0;
+								buf->st_size = finf.fsize;
+								buf->st_blksize = 512;
+								buf->st_blocks = (finf.fsize+511)/512;
+								buf->st_atim.tv_sec = finf.ftime;
 								buf->st_atim.tv_nsec = 0;
 								buf->st_mtim.tv_sec = 0;
 								buf->st_mtim.tv_nsec = 0;
@@ -558,128 +576,86 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								buf->st_ctim.tv_nsec = 0;
 								write_csr(0x8AA, 0x0);
 							}
-							else // Ordinary files
-							{
-								FILINFO finf;
-								FRESULT fr = f_stat(s_fileNames[fd], &finf);
-
-								if (fr != FR_OK)
-								{
-									errno = ENOENT;
-									write_csr(0x8AA, 0xFFFFFFFF);
-								}
-								else
-								{
-									buf->st_dev = 0;
-									buf->st_ino = 0;
-									buf->st_mode = S_IFREG; // regular file
-									buf->st_nlink = 0;
-									buf->st_uid = 0;
-									buf->st_gid = 0;
-									buf->st_rdev = 0;
-									buf->st_size = finf.fsize;
-									buf->st_blksize = 512;
-									buf->st_blocks = (finf.fsize+511)/512;
-									buf->st_atim.tv_sec = finf.ftime;
-									buf->st_atim.tv_nsec = 0;
-									buf->st_mtim.tv_sec = 0;
-									buf->st_mtim.tv_nsec = 0;
-									buf->st_ctim.tv_sec = 0;
-									buf->st_ctim.tv_nsec = 0;
-									write_csr(0x8AA, 0x0);
-								}
-							}
 						}
-						break;
 					}
+				}
+				else if (value==93) // exit()
+				{
+					// Terminate and remove from list of running tasks
+					TaskExitCurrentTask(&g_taskctx);
+					write_csr(0x8AA, 0x0);
+				}
+				else if (value==95) // wait()
+				{
+					// Wait for child process status change - unused
+					// pid_t wait(int *wstatus);
+					ReportError(32, "unimpl: wait()", code, value, PC);
+					errno = ECHILD;
+					write_csr(0x8AA, 0xFFFFFFFF);
+				}
+				else if (value==129) // kill(pid_t pid, int sig)
+				{
+					// Signal process to terminate
+					uint32_t pid = read_csr(0x8AA); // A0
+					uint32_t sig = read_csr(0x8AB); // A1
+					TaskExitTaskWithID(&g_taskctx, pid, sig);
+					write_csr(0x8AA, sig);
+				}
+				else if (value==214) // brk()
+				{
+					uint32_t addrs = read_csr(0x8AA); // A0
+					uint32_t retval = core_brk(addrs);
+					write_csr(0x8AA, retval);
+				}
+				else if (value==1024) // open()
+				{
+					uint32_t nptr = read_csr(0x8AA); // A0
+					uint32_t oflags = read_csr(0x8AB); // A1
+					//uint32_t pmode = read_csr(0x8AC); // A2 - permission mode unused for now
 
-					case 93: // exit()
+					BYTE ff_flags = FA_READ;
 					{
-						// Terminate and remove from list of running tasks
-						TaskExitCurrentTask(&g_taskctx);
-
-						write_csr(0x8AA, 0x0);
-						break;
+						uint32_t fcls = (oflags & 3);
+						if(fcls == 00)
+							ff_flags = FA_READ; // O_RDONLY
+						else if(fcls == 01)
+							ff_flags = FA_WRITE; // O_WRONLY
+						else if(fcls == 02)
+							ff_flags = FA_READ|FA_WRITE; // O_RDWR
+						else
+							ff_flags = FA_READ;
 					}
+					ff_flags |= (oflags&100) ? FA_CREATE_ALWAYS : 0; // O_CREAT
+					ff_flags |= (oflags&2000) ? FA_OPEN_APPEND : 0; // O_APPEND
 
-					case 95: // wait()
+					// Grab lowest zero bit's index
+					int currenthandle = FindFreeFileHandle(s_handleAllocMask);
+
+					if (currenthandle == 0)
 					{
-						// Wait for child process status change - unused
-						// pid_t wait(int *wstatus);
-						ReportError(32, "unimpl: wait()", code, value, PC);
-						errno = ECHILD;
+						errno = ENFILE;
 						write_csr(0x8AA, 0xFFFFFFFF);
-						break;
 					}
-
-					case 129: // kill(pid_t pid, int sig)
+					else
 					{
-						// Signal process to terminate
-						uint32_t pid = read_csr(0x8AA); // A0
-						uint32_t sig = read_csr(0x8AB); // A1
-						TaskExitTaskWithID(&g_taskctx, pid, sig);
-						write_csr(0x8AA, sig);
-						break;
-					}
-
-					case 214: // brk()
-					{
-						uint32_t addrs = read_csr(0x8AA); // A0
-						uint32_t retval = core_brk(addrs);
-						write_csr(0x8AA, retval);
-						break;
-					}
-
-					case 1024: // open()
-					{
-						uint32_t nptr = read_csr(0x8AA); // A0
-						uint32_t oflags = read_csr(0x8AB); // A1
-						//uint32_t pmode = read_csr(0x8AC); // A2 - permission mode unused for now
-
-						BYTE ff_flags = FA_READ;
-						switch (oflags & 3)
+						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
 						{
-							case 00: ff_flags = FA_READ; break; // O_RDONLY
-							case 01: ff_flags = FA_WRITE; break; // O_WRONLY
-							case 02: ff_flags = FA_READ|FA_WRITE; break; // O_RDWR
-							default: ff_flags = FA_READ; break;
-						}
-						ff_flags |= (oflags&100) ? FA_CREATE_ALWAYS : 0; // O_CREAT
-						ff_flags |= (oflags&2000) ? FA_OPEN_APPEND : 0; // O_APPEND
-
-						// Grab lowest zero bit's index
-						int currenthandle = FindFreeFileHandle(s_handleAllocMask);
-
-						if (currenthandle == 0)
-						{
-							errno = ENFILE;
-							write_csr(0x8AA, 0xFFFFFFFF);
+							AllocateFileHandle(currenthandle, &s_handleAllocMask);
+							write_csr(0x8AA, currenthandle);
+							strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 64);
 						}
 						else
 						{
-							if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
-							{
-								AllocateFileHandle(currenthandle, &s_handleAllocMask);
-								write_csr(0x8AA, currenthandle);
-								strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 64);
-							}
-							else
-							{
-								errno = ENOENT;
-								write_csr(0x8AA, 0xFFFFFFFF);
-							}
+							errno = ENOENT;
+							write_csr(0x8AA, 0xFFFFFFFF);
 						}
-						break;
 					}
-
-					// Unimplemented syscalls drop here
-					default:
-					{
-						ReportError(32, "unimplemented ECALL", code, value, PC);
-						errno = EIO;
-						write_csr(0x8AA, 0xFFFFFFFF);
-						break;
-					}
+				}
+				else // Unimplemented syscalls drop here
+				{
+					ReportError(32, "unimplemented ECALL", code, value, PC);
+					errno = EIO;
+					write_csr(0x8AA, 0xFFFFFFFF);
 				}
 				break;
 			}
