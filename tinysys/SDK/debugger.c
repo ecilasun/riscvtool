@@ -214,7 +214,7 @@ void RemoveBreakPoint(struct STask *task, uint32_t breakaddress)
             task->num_breakpoints--;
             //EchoConsole("RMV ");
             //EchoConsoleHex(breakaddress);
-            //EchoConsole("\r\n");
+            //EchoConsole("\n");
         }
     }
 }
@@ -233,7 +233,7 @@ void AddBreakPoint(struct STask *task, uint32_t breakaddress)
 
     //EchoConsole("BRK ");
     //EchoConsoleHex(breakaddress);
-    //EchoConsole("\r\n");
+    //EchoConsole("\n");
 }
 
 uint32_t gdb_breakpoint(struct STaskContext *_ctx)
@@ -376,7 +376,7 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
             if (packetbuffer[5]=='c') // Continue action
                 tasks[dbg_current_thread].ctrlc = 8;
             if (packetbuffer[5]=='s') // Step action
-                EchoConsole("step\r\n"); // TODO:
+                EchoConsole("step\n"); // TODO:
             if (packetbuffer[5]=='t') // Stop action
                 tasks[dbg_current_thread].ctrlc = 1;
 
@@ -540,7 +540,7 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
         {
             EchoConsole(">");
             EchoConsole(packetbuffer); // NOTE: Don't do this
-            EchoConsole("\r\n");
+            EchoConsole("\n");
         }*/
     }
 

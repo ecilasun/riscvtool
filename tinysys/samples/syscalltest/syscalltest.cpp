@@ -17,12 +17,12 @@ typedef struct
 
 int main()
 {
-	printf("This is fun!\r\n");
+	printf("This is fun!\n");
 
 	FILE *fp = fopen("sd:test.jpg", "rb");
 	if (fp)
 	{
-		printf("File's there, doing seek/read check.\r\n");
+		printf("File's there, doing seek/read check.\n");
 
 		// Grab a tiny memory chunk
 		uint8_t *buffer = new uint8_t[8];
@@ -33,7 +33,7 @@ int main()
 			fread(buffer, 8, 1, fp);
 			for (uint32_t j=0;j<8;++j)
 				printf("%.2X ", buffer[j]);
-			printf("\r\n");
+			printf("\n");
 		}
 		// Read non-adjacent blocks
 		for (uint32_t i=0;i<5;++i)
@@ -42,21 +42,21 @@ int main()
 			fread(buffer, 8, 1, fp);
 			for (uint32_t j=0;j<8;++j)
 				printf("%.2X ", buffer[j]);
-			printf("\r\n");
+			printf("\n");
 		}
 
 		delete [] buffer;
 
 		fclose(fp);
 
-		printf("Now the same with read() instead of fread()\r\n");
+		printf("Now the same with read() instead of fread()\n");
 		int handle;
 		if ( (handle = open ("sd:doom1.wad", O_RDONLY /*| O_BINARY*/)) != -1)
 		{
-			printf("Open succeeded, reading\r\n");
+			printf("Open succeeded, reading\n");
 			wadinfo_t header;
         	read (handle, &header, sizeof(header));
-			printf("header: %c%c%c%c\r\n",
+			printf("header: %c%c%c%c\n",
 			header.identification[0],
 			header.identification[1],
 			header.identification[2],
@@ -64,10 +64,10 @@ int main()
 			close (handle);
 		}
 		else
-			printf("oops, can't open sd:doom1.wad\r\n");
+			printf("oops, can't open sd:doom1.wad\n");
 	}
 	else
-		printf("File's not there.\r\n");
+		printf("File's not there.\n");
 
 	return 0;
 }

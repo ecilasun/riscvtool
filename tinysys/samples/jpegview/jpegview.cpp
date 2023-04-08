@@ -37,12 +37,12 @@ void DecodeJPEG(const char *fname)
 		fsetpos(fp, &pos);
 		uint32_t fsize = (uint32_t)endpos;
 
-		printf("Reading %ld bytes\r\n", fsize);
+		printf("Reading %ld bytes\n", fsize);
 		uint8_t *rawjpeg = (uint8_t *)malloc(fsize);
 		fread(rawjpeg, fsize, 1, fp);
 		fclose(fp);
 
-		printf("Decoding image\r\n");
+		printf("Decoding image\n");
 		nj_result_t jres = njDecode(rawjpeg, fsize);
 
 		if (jres == NJ_OK)
@@ -86,7 +86,7 @@ void DecodeJPEG(const char *fname)
 		}
 	}
 	else
-		printf("Could not open file %s\r\n", fname);
+		printf("Could not open file %s\n", fname);
 
 	njDone();
 }

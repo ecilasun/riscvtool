@@ -100,7 +100,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
        }
        if(x == graphics_width-1) {
 	   printf("\033[38;2;0;0;0m");	   
-	   printf("\033[48;2;0;0;0m\r\n");
+	   printf("\033[48;2;0;0;0m\n");
        }
    } else {
        prev_R = R;
@@ -170,7 +170,7 @@ static inline void stats_end_frame() {
    uint64_t kCPI       = cycles*1000/instret;
    uint64_t pixels     = graphics_width * graphics_height;
    uint64_t kRAYSTONES = (pixels*1000000000)/cycles;
-   UARTWrite("\r\n");
+   UARTWrite("\n");
    UARTWriteDecimal(graphics_width);
    UARTWrite("x");
    UARTWriteDecimal(graphics_height);
@@ -178,7 +178,7 @@ static inline void stats_end_frame() {
    UARTWrite(bench_run ? "no gfx output (measurement is accurate)" : "gfx output (measurement is NOT accurate)");
    UARTWrite("CPI="); printk(kCPI); UARTWrite("     ");
    UARTWrite("RAYSTONES="); printk(kRAYSTONES);
-   UARTWrite("\r\n");
+   UARTWrite("\n");
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -503,7 +503,7 @@ int main()
   bench_run = 1;
   graphics_width  = 40;
   graphics_height = 20;
-  UARTWrite("Running without graphic output (for accurate measurement)...\r\n");
+  UARTWrite("Running without graphic output (for accurate measurement)...\n");
   render(spheres, nb_spheres, lights, nb_lights);
 
   bench_run = 0;

@@ -25,7 +25,7 @@ void filterCommand(int buffLength, unsigned char *msgbuffer);
 
 int main()
 {
-    UARTWrite("USB serial interface test\r\n");
+    UARTWrite("USB serial interface test\n");
 
 	while(1)
 	{
@@ -60,7 +60,7 @@ int main()
 
 				if (((rxPos > 0) && (rxPos == cmdLength + 11) && (cmdType != 0)) || (rxPos > 1024))
 				{
-					UARTWrite("!\r\n");
+					UARTWrite("!\n");
 					filterCommand(cmdLength, uartRxBuff);
 					rxPos = 0;
 					cmdType = 0;

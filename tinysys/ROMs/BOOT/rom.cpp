@@ -40,9 +40,9 @@ void uget(const char *savename)
 {
 	// TODO: Load file from remote over UART
 	if (!savename)
-		UARTWrite("usage: uget targetfilename\r\n");
+		UARTWrite("usage: uget targetfilename\n");
 	else
-		UARTWrite("TODO: Add task to receive files\r\n");
+		UARTWrite("TODO: Add task to receive files\n");
 }
 
 void ExecuteCmd(char *_cmd)
@@ -67,12 +67,12 @@ void ExecuteCmd(char *_cmd)
 		if (inmbytes!=0)
 		{
 			UARTWriteDecimal(inmbytes);
-			UARTWrite(" Mbytes\r\n");
+			UARTWrite(" Mbytes\n");
 		}
 		else
 		{
 			UARTWriteDecimal(inkbytes);
-			UARTWrite(" Kbytes\r\n");
+			UARTWrite(" Kbytes\n");
 		}
 	}
 	else if (!strcmp(command, "prc"))
@@ -91,7 +91,7 @@ void ExecuteCmd(char *_cmd)
 			UARTWriteDecimal(task->state);
 			UARTWrite(" PC:");
 			UARTWriteHex(task->regs[0]);
-			UARTWrite("\r\n");
+			UARTWrite("\n");
 		}
 	}
 	else if (!strcmp(command, "del"))
@@ -99,16 +99,16 @@ void ExecuteCmd(char *_cmd)
 		const char *path = strtok(nullptr, " ");
 		// TODO: delete a file
 		if (!path)
-			UARTWrite("usage: del fname\r\n");
+			UARTWrite("usage: del fname\n");
 		else
-			UARTWrite("TODO: Delete given file\r\n");
+			UARTWrite("TODO: Delete given file\n");
 	}
 	else if (!strcmp(command, "cwd"))
 	{
 		const char *path = strtok(nullptr, " ");
 		// Change working directory
 		if (!path)
-			UARTWrite("usage: cwd path\r\n");
+			UARTWrite("usage: cwd path\n");
 		else
 			strncpy(s_currentPath, path, 128);
 	}
@@ -119,11 +119,11 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "ver"))
 	{
-		UARTWrite("tinysys " VERSIONSTRING "\r\n");
+		UARTWrite("tinysys " VERSIONSTRING "\n");
 	}
 	else if (!strcmp(command, "gdb"))
 	{
-		UARTWrite("\033[H\033[0m\033[2JEntering gdb debug server mode\r\n");
+		UARTWrite("\033[H\033[0m\033[2JEntering gdb debug server mode\n");
 		TaskDebugMode(1);
 	}
 	else if (!strcmp(command, "tmp"))
@@ -132,25 +132,25 @@ void ExecuteCmd(char *_cmd)
 		uint32_t ADCcode = *XADCTEMP;
 		float temp_centigrates = (ADCcode*503.975f)/4096.f-273.15f;
 		UARTWriteDecimal((int32_t)temp_centigrates);
-		UARTWrite("\r\n");
+		UARTWrite("\n");
 	}
 	else if (!strcmp(command, "help"))
 	{
 		// Bright blue
-		UARTWrite("\033[0m\r\n\033[94m");
-		UARTWrite("dir: Show list of files in working directory\r\n");
-		UARTWrite("cls: Clear terminal\r\n");
-		UARTWrite("mem: Show available memory\r\n");
-		UARTWrite("tmp: Show device temperature\r\n");
-		UARTWrite("del fname: Delete file\r\n");
-		UARTWrite("cwd path: Change working directory\r\n");
-		UARTWrite("get fname: Save binary from UART to micro sd card\r\n");
-		UARTWrite("prc: Show process list\r\n");
-		UARTWrite("gdb: Enter gdb server mode\r\n");
-		UARTWrite("ver: Show version info\r\n");
-		UARTWrite("Any other input will load a file from sd: with matching name\r\n");
-		UARTWrite("CTRL+C terminates current program\r\n");
-		UARTWrite("\033[0m\r\n");
+		UARTWrite("\033[0m\n\033[94m");
+		UARTWrite("dir: Show list of files in working directory\n");
+		UARTWrite("cls: Clear terminal\n");
+		UARTWrite("mem: Show available memory\n");
+		UARTWrite("tmp: Show device temperature\n");
+		UARTWrite("del fname: Delete file\n");
+		UARTWrite("cwd path: Change working directory\n");
+		UARTWrite("get fname: Save binary from UART to micro sd card\n");
+		UARTWrite("prc: Show process list\n");
+		UARTWrite("gdb: Enter gdb server mode\n");
+		UARTWrite("ver: Show version info\n");
+		UARTWrite("Any other input will load a file from sd: with matching name\n");
+		UARTWrite("CTRL+C terminates current program\n");
+		UARTWrite("\033[0m\n");
 	}
 	else // Anything else defers to being a command on storage
 	{
@@ -175,7 +175,7 @@ void ExecuteCmd(char *_cmd)
 int main()
 {
 	// Clear terminal
-	UARTWrite("\033[H\033[0m\033[2Jtinysys " VERSIONSTRING "\r\nType 'help' for CLI usage info\r\n\r\n");
+	UARTWrite("\033[H\033[0m\033[2Jtinysys " VERSIONSTRING "\nType 'help' for CLI usage info\n\n");
 
 	strncpy(s_currentPath, "sd:", 128);
 
@@ -261,7 +261,7 @@ int main()
 		if (execcmd)
 		{
 			refreshConsoleOut = 1;
-			UARTWrite("\r\n");
+			UARTWrite("\n");
 			ExecuteCmd(s_cmdString);
 			// Rewind
 			s_cmdLen = 0;

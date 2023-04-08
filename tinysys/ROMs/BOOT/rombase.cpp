@@ -11,12 +11,12 @@ FATFS *Fs = nullptr;
 
 void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uint32_t _value, uint32_t _PC)
 {
-	UARTWrite("\033[0m\r\n\r\n\033[31m\033[40m");
+	UARTWrite("\033[0m\n\n\033[31m\033[40m");
 
 	UARTWrite("┌");
 	for (uint32_t w=0;w<_width-2;++w)
 		UARTWrite("─");
-	UARTWrite("┐\r\n│");
+	UARTWrite("┐\n│");
 
 	// Message
 	int W = strlen(_error);
@@ -24,7 +24,7 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uin
 	UARTWrite(_error);
 	for (int w=0;w<W;++w)
 		UARTWrite(" ");
-	UARTWrite("│\r\n|");
+	UARTWrite("│\n|");
 
 	// Cause
 	UARTWrite("cause:");
@@ -33,21 +33,21 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uin
 		UARTWrite(" ");
 
 	// Value
-	UARTWrite("│\r\n|value:");
+	UARTWrite("│\n|value:");
 	UARTWriteHex(_value);
 	for (uint32_t w=0;w<_width-16;++w)
 		UARTWrite(" ");
 
 	// PC
-	UARTWrite("│\r\n|PC:");
+	UARTWrite("│\n|PC:");
 	UARTWriteHex(_PC);
 	for (uint32_t w=0;w<_width-13;++w)
 		UARTWrite(" ");
 
-	UARTWrite("│\r\n└");
+	UARTWrite("│\n└");
 	for (uint32_t w=0;w<_width-2;++w)
 		UARTWrite("─");
-	UARTWrite("┘\r\n\033[0m\r\n");
+	UARTWrite("┘\n\033[0m\n");
 }
 
 void MountDrive()
@@ -106,7 +106,7 @@ void ListFiles(const char *path)
 				UARTWriteDecimal((int32_t)finf.fsize);
 				UARTWrite("b");
 			}
-			UARTWrite("\033[0m\r\n");
+			UARTWrite("\033[0m\n");
 		} while(1);
 
 		f_closedir(&dir);
@@ -115,7 +115,7 @@ void ListFiles(const char *path)
 	{
 		UARTWrite("fs error: 0x");
 		UARTWriteHex(re);
-		UARTWrite("\r\n");
+		UARTWrite("\n");
 	}
 }
 
@@ -621,7 +621,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t sig = read_csr(0x8AB); // A1
 						TaskExitTaskWithID(&g_taskctx, pid, sig);
 						write_csr(0x8AA, 0x0);
-						UARTWrite("Task killed\r\n");
+						UARTWrite("Task killed\n");
 					}
 					break;
 

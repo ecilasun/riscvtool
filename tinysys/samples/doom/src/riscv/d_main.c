@@ -556,7 +556,7 @@ void IdentifyVersion (void)
     gamemode = shareware;
     D_AddFile ("sd:doom1.wad");
 #else
-    printf("Game mode indeterminate.\r\n");
+    printf("Game mode indeterminate.\n");
     gamemode = indetermined;
 #endif
 }
