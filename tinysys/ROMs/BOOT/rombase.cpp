@@ -334,8 +334,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				// TODO: Use time slice request returned from TaskSwitchToNext()
 				uint64_t future = now + runLength;
 				E32SetTimeCompare(future);
+				break;
 			}
-			break;
 
 			case IRQ_M_EXT:
 			{
@@ -346,24 +346,21 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				else
 					HandleUART();
 
-				// Machine External Interrupt (hardware)
-				// Route based on hardware type
+				// TODO: Distinguish hardware devices via mtval
 				//if (value & 0x00000001) HandleUART();
 				//if (value & 0x00000002) HandleKeyboard();
 				//if (value & 0x00000004) HandleJTAG();
+				break;
 			}
-			break;
 
 			default:
 			{
 				ReportError(32, "Unknown hardware interrupt", code, value, PC);
 
 				// Put core to endless sleep
-				while(1) {
-					asm volatile("wfi;");
-				}
+				while(1) { asm volatile("wfi;");}
+				break;
 			}
-			break;
 		}
 	}
 	else
@@ -379,17 +376,15 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				TaskExitCurrentTask(&g_taskctx);
 
 				// TODO: Automatically add a debug breakpoint here and halt (or jump into gdb_breakpoint)
+				break;
 			}
-			break;
 
 			case CAUSE_BREAKPOINT:
 			{
 				if (g_taskctx.debugMode)
-					gdb_breakpoint(&g_taskctx);
-				else
-					; // Ignore breakpoint instruction in non-debug mode
+					gdb_breakpoint(&g_taskctx); // For now we ignore breakpoint instruction in non-debug mode
+				break;
 			}
-			break;
 
 			case CAUSE_MACHINE_ECALL:
 			{
@@ -412,9 +407,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
 						ReportError(32, "unimpl: io_setup()", code, value, PC);
 						write_csr(0x8AA, 0xFFFFFFFF);
+						break;
 					}
-					break;
-
+	
 					case 57: // close()
 					{
 						uint32_t file = read_csr(0x8AA); // A0
@@ -425,8 +420,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 							f_close(&s_filehandles[file]);
 						}
 						write_csr(0x8AA, 0);
+						break;
 					}
-					break;
 
 					case 62: // lseek()
 					{
@@ -456,8 +451,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						f_lseek(&s_filehandles[file], currptr);
 						write_csr(0x8AA, currptr);
+						break;
 					}
-					break;
 
 					case 63: // read()
 					{
@@ -495,8 +490,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 						}
+						break;
 					}
-					break;
 
 					case 64: // write()
 					{
@@ -527,8 +522,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 						}
+						break;
 					}
-					break;
 
 					case 80: // newfstat()
 					{
@@ -595,16 +590,17 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								}
 							}
 						}
+						break;
 					}
-					break;
 
 					case 93: // exit()
 					{
 						// Terminate and remove from list of running tasks
 						TaskExitCurrentTask(&g_taskctx);
+
 						write_csr(0x8AA, 0x0);
+						break;
 					}
-					break;
 
 					case 95: // wait()
 					{
@@ -613,8 +609,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						ReportError(32, "unimpl: wait()", code, value, PC);
 						errno = ECHILD;
 						write_csr(0x8AA, 0xFFFFFFFF);
+						break;
 					}
-					break;
 
 					case 129: // kill(pid_t pid, int sig)
 					{
@@ -622,19 +618,17 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						uint32_t pid = read_csr(0x8AA); // A0
 						uint32_t sig = read_csr(0x8AB); // A1
 						TaskExitTaskWithID(&g_taskctx, pid, sig);
-						write_csr(0x8AA, 0x0);
-						UARTWrite("Task killed\n");
+						write_csr(0x8AA, sig);
+						break;
 					}
-					break;
 
 					case 214: // brk()
 					{
 						uint32_t addrs = read_csr(0x8AA); // A0
 						uint32_t retval = core_brk(addrs);
-
 						write_csr(0x8AA, retval);
+						break;
 					}
-					break;
 
 					case 1024: // open()
 					{
@@ -675,8 +669,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 						}
+						break;
 					}
-					break;
 
 					// Unimplemented syscalls drop here
 					default:
@@ -684,11 +678,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						ReportError(32, "unimplemented ECALL", code, value, PC);
 						errno = EIO;
 						write_csr(0x8AA, 0xFFFFFFFF);
+						break;
 					}
-					break;
 				}
+				break;
 			}
-			break;
 
 			/*case CAUSE_MISALIGNED_FETCH:
 			case CAUSE_FETCH_ACCESS:
@@ -707,11 +701,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				ReportError(32, "Guru meditation", code, value, PC);
 
 				// Put core to endless sleep
-				while(1) {
-					asm volatile("wfi;");
-				}
+				while(1) { asm volatile("wfi;"); }
+				break;
 			}
-			break;
 		}
 	}
 
