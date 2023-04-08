@@ -12,8 +12,8 @@ static char s_cmdString[128];
 static char s_currentPath[64];
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
-static int refreshConsoleOut = 1;
-static int driveMounted = 0;
+static int s_refreshConsoleOut = 1;
+static int s_driveMounted = 0;
 
 void _stubTask() {
 	// NOTE: This task won't actually run
@@ -51,11 +51,6 @@ void ExecuteCmd(char *_cmd)
 	const char *command = strtok(_cmd, " ");
 	if (!command)
 		return;
-
-	// Attempt to mount the FAT volume on micro sd card
-	// NOTE: Loaded executables do not have to worry about this part
-	if (driveMounted==0)
-		driveMounted = MountDrive();
 
 	if (!strcmp(command, "dir"))
 	{
@@ -186,6 +181,10 @@ int main()
 	// Set up internals
 	RingBufferReset();
 
+	// Attempt to mount the FAT volume on micro sd card
+	// NOTE: Loaded executables do not have to worry about this part
+	s_driveMounted = MountDrive();
+
 	// Create task context
 	STaskContext *taskctx = CreateTaskContext();
 
@@ -220,7 +219,7 @@ int main()
 		while (RingBufferRead(&uartData, sizeof(uint32_t)))
 		{
 			uint8_t asciicode = (uint8_t)(uartData&0xFF);
-			refreshConsoleOut++;
+			s_refreshConsoleOut++;
 			switch (asciicode)
 			{
 				case 10:
@@ -262,9 +261,9 @@ int main()
 			}
 		}
 
-		if (refreshConsoleOut)
+		if (s_refreshConsoleOut)
 		{
-			refreshConsoleOut = 0;
+			s_refreshConsoleOut = 0;
 			s_cmdString[s_cmdLen] = 0;
 			// Reset current line and emit the command string
 			UARTWrite("\033[2K\r");
@@ -275,7 +274,7 @@ int main()
 
 		if (execcmd)
 		{
-			refreshConsoleOut = 1;
+			s_refreshConsoleOut = 1;
 			UARTWrite("\n");
 			ExecuteCmd(s_cmdString);
 			// Rewind
