@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.995"
+#define VERSIONSTRING "v0.996"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -176,43 +176,38 @@ void ExecuteCmd(char *_cmd)
 int main()
 {
 	// Clear terminal
+	LEDSetState(0xF);
 	UARTWrite("\033[H\033[0m\033[2J\033[96;40mtinysys " VERSIONSTRING "\033[0m\n\n");
 
 	// Set up internals
+	LEDSetState(0xE);
 	RingBufferReset();
 
 	// Attempt to mount the FAT volume on micro sd card
 	// NOTE: Loaded executables do not have to worry about this part
+	LEDSetState(0xD);
 	s_driveMounted = MountDrive();
 
 	// Create task context
+	LEDSetState(0xC);
 	STaskContext *taskctx = CreateTaskContext();
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
+	LEDSetState(0xB);
 	TaskAdd(taskctx, "_stub", _stubTask, ONE_MILLISECOND_IN_TICKS);
 
 	// Start the timer and hardware interrupt handlers.
 	// This is where all task switching and other interrupt handling occurs
 	// TODO: Software debugger will run here in the UART interrupt handler
 	// and modify task memory to aid in debugging via gdb serial interface.
+	LEDSetState(0xA);
 	InstallISR();
 
 	strncpy(s_currentPath, "sd:", 128);
 
-	uint32_t nextledstate = 0;
-	uint64_t prevtime = E32ReadTime();
-	uint64_t curtime;
+	LEDSetState(0x0);
 	while (1)
 	{
-		// Heartbeat
-		curtime = E32ReadTime();
-		uint32_t elapsed = ClockToMs(curtime - prevtime);
-		if (elapsed > 250)
-		{
-			prevtime = curtime;
-			LEDSetState(nextledstate++);
-		}
-
 		// Echo all of the characters we can find back to the sender
 		uint32_t uartData = 0;
 		int execcmd = 0;

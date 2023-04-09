@@ -2,6 +2,7 @@
 #include "spi.h"
 #include "sdcard.h"
 #include "uart.h"
+#include "leds.h"
 #include <stdio.h>
 
 typedef enum {
@@ -227,6 +228,9 @@ uint8_t __attribute__ ((noinline)) SDSetBlockSize512()
 
 uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
 {
+   uint32_t oldstate = LEDGetState();
+   LEDSetState(oldstate|0x1);
+
    // Read single block
    // NOTE: sector<<9 for non SDHC cards
    SDCmd(CMD17_READ_SINGLE_BLOCK, sector);
@@ -250,6 +254,8 @@ uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *d
          checksum[1] = SPITxRx(0xFF);
       }
    }
+
+   LEDSetState(oldstate);
 
    // Error
    if (!(response&0xF0))
@@ -275,6 +281,9 @@ uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *d
 
 uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
 {
+   uint32_t oldstate = LEDGetState();
+   LEDSetState(oldstate|0x2);
+
    // TODO: CMD24_WRITE_BLOCK
    SDCmd(CMD17_READ_SINGLE_BLOCK, blockaddress);
 
@@ -303,6 +312,8 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t blockaddress, uin
 			return 0xFF;
 		}
    }
+
+   LEDSetState(oldstate);
 
    return response;
 }
