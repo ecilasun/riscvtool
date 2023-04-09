@@ -231,6 +231,13 @@ extern "C" {
 		return -1;
 	}*/
 
+#if defined(BUILDING_ROM)
+	// ROM should not be allocating memory on the fly but if it does, not via ecalls
+	int _brk(void *addr)
+	{
+		return core_brk((uint32_t)addr);
+	}
+#else
 	int _brk(void *addr)
 	{
 		register uint32_t brkaddr = (uint32_t)addr;
@@ -249,6 +256,7 @@ extern "C" {
 		);
 		return retval;
 	}
+#endif
 
 	void *_sbrk(intptr_t incr)
 	{

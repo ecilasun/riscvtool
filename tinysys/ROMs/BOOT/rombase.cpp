@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 static int havedrive = 0;
-FATFS *Fs = nullptr;
+static FATFS Fs;
 
 void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uint32_t _value, uint32_t _PC)
 {
@@ -56,8 +56,7 @@ uint32_t MountDrive()
 		return havedrive;
 
 	// Attempt to mount file system on micro-SD card
-	Fs = (FATFS*)malloc(sizeof(FATFS));
-	FRESULT mountattempt = f_mount(Fs, "sd:", 1);
+	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 	{
 		havedrive = 0;
@@ -76,7 +75,7 @@ void UnmountDrive()
 	if (havedrive)
 	{
 		f_mount(nullptr, "sd:", 1);
-		free(Fs);
+		free(&Fs);
 		havedrive = 0;
 	}
 }
@@ -238,7 +237,7 @@ void TaskDebugMode(uint32_t _mode)
 	g_taskctx.debugMode = _mode;
 }
 
-uint32_t FindFreeFileHandle(const uint32_t _input)
+inline uint32_t FindFreeFileHandle(const uint32_t _input)
 {
 	uint32_t tmp = _input;
 	for (uint32_t i=0; i<32; ++i)
@@ -251,19 +250,19 @@ uint32_t FindFreeFileHandle(const uint32_t _input)
 	return 0;
 }
 
-void AllocateFileHandle(const uint32_t _bitIndex, uint32_t * _input)
+inline void AllocateFileHandle(const uint32_t _bitIndex, uint32_t * _input)
 {
 	uint32_t mask = 1 << (_bitIndex-1);
 	*_input = (*_input) | mask;
 }
 
-void ReleaseFileHandle(const uint32_t _bitIndex, uint32_t * _input)
+inline void ReleaseFileHandle(const uint32_t _bitIndex, uint32_t * _input)
 {
 	uint32_t mask = 1 << (_bitIndex-1);
 	*_input = (*_input) & (~mask);
 }
 
-uint32_t IsFileHandleAllocated(const uint32_t _bitIndex, const uint32_t  _input)
+inline uint32_t IsFileHandleAllocated(const uint32_t _bitIndex, const uint32_t  _input)
 {
 	uint32_t mask = 1 << (_bitIndex-1);
 	return (_input & mask) ? 1 : 0;
@@ -388,6 +387,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			case CAUSE_MACHINE_ECALL:
 			{
+				/*UARTWrite("E: 0x");
+				UARTWriteHex(code);
+				UARTWrite(": 0x");
+				UARTWriteHex(value);
+				UARTWrite(": 0x");
+				UARTWriteHex(PC);
+				UARTWrite("\n");*/
+
 				// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
 				// 0	io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
 				// 57	close		int sys_close(unsigned int fd);

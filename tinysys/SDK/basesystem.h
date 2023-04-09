@@ -31,6 +31,7 @@
 #define DEVICE_CSRF (DEVICE_BASE+0x4000)
 #define DEVICE_XADC (DEVICE_BASE+0x5000)
 #define DEVICE_DMAC (DEVICE_BASE+0x6000)
+#define DEVICE_USBH (DEVICE_BASE+0x7000)
 
 uint64_t E32ReadTime();
 uint64_t E32ReadCycles();
