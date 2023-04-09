@@ -160,30 +160,42 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 		FENCE_I;																					// Make sure I$ is flushed so it can see this write
 	}
 
-	// Switch to next task
-	currentTask = (_ctx->numTasks <= 1) ? 0 : ((currentTask+1) % _ctx->numTasks);
-	_ctx->currentTask = currentTask;
-
-	// Terminate task
+	// Terminate task and visit OS task
 	// NOTE: Task #0 cannot be terminated
-	if (_ctx->tasks[currentTask].state == TS_TERMINATING && currentTask != 0)
+	if (_ctx->tasks[currentTask].state == TS_TERMINATING)
 	{
-		/*UARTWrite("\033[31m\033[40mTask '");
-		UARTWrite(_ctx->tasks[currentTask].name);
-		UARTWrite("' exited with return code 0x");
-		UARTWriteHex(regs[10]);
-		UARTWrite("\033[0m\n");*/
-		// Mark as 'terminated'
-		_ctx->tasks[currentTask].state = TS_TERMINATED;
-		// Replace with task at end of list, if we're not the end of list
-		if (currentTask != _ctx->numTasks-1)
-			__builtin_memcpy(&_ctx->tasks[currentTask], &_ctx->tasks[_ctx->numTasks-1], sizeof(struct STask));
-		// One less task to run
-		--_ctx->numTasks;
-		// Rewind back to OS Idle task (always guaranteed to be alive)
-		_ctx->currentTask = 0;
-		currentTask = 0;
+		if (currentTask != 0)
+		{
+			UARTWrite("\nTask '");
+			UARTWrite(_ctx->tasks[currentTask].name);
+			UARTWrite("' terminated. Return code 0x");
+			UARTWriteHex(regs[10]);
+			UARTWrite("\n");
+
+			// Mark as 'terminated'
+			_ctx->tasks[currentTask].state = TS_TERMINATED;
+			// Replace with task at end of list, if we're not the end of list
+			if (currentTask != _ctx->numTasks-1)
+				__builtin_memcpy(&_ctx->tasks[currentTask], &_ctx->tasks[_ctx->numTasks-1], sizeof(struct STask));
+			// One less task to run
+			--_ctx->numTasks;
+			// Rewind back to OS Idle task (always guaranteed to be alive)
+			// We will visit it briefly once and then go to the next task in queue
+			_ctx->currentTask = 0;
+			currentTask = 0;
+		}
+		else
+		{
+			UARTWrite("\nOS Task can't be termianted.\n");
+		}
 	}
+	else
+	{
+		// Switch to next task
+		currentTask = (_ctx->numTasks <= 1) ? 0 : ((currentTask+1) % _ctx->numTasks);
+	}
+
+	_ctx->currentTask = currentTask;
 
 	regs = _ctx->tasks[currentTask].regs;
 

@@ -197,7 +197,39 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 //2	Standard error	STDERR_FILENO	stderr
 static uint32_t s_handleAllocMask = 0x00000007;
 static FIL s_filehandles[MAX_HANDLES];
-static char s_fileNames[MAX_HANDLES][64] = {"stdin","stdout","stderr","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",};
+static char s_fileNames[MAX_HANDLES][64] = {
+	"stdin",
+	"stdout",
+	"stderr",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                ",
+	"                                "};
 
 static STaskContext g_taskctx;
 static UINT tmpresult;
@@ -650,7 +682,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						{
 							AllocateFileHandle(currenthandle, &s_handleAllocMask);
 							write_csr(0x8AA, currenthandle);
-							strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 64);
+							// max filename length == 32
+							strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 32);
 						}
 						else
 						{
