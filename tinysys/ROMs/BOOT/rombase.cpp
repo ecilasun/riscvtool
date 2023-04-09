@@ -633,10 +633,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 					if (currenthandle == 0)
 					{
+						// No free file handles
 						errno = ENFILE;
 						write_csr(0x8AA, 0xFFFFFFFF);
 					}
-					else
+					else if (currenthandle > STDERR_FILENO)
 					{
 						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
 						{
@@ -649,6 +650,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 							errno = ENOENT;
 							write_csr(0x8AA, 0xFFFFFFFF);
 						}
+					}
+					else
+					{
+						// STDIN/STDOUT/STDERR
+						write_csr(0x8AA, 0x0);
 					}
 				}
 				else // Unimplemented syscalls drop here
