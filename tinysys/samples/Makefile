@@ -15,6 +15,7 @@ nanojpeg_libs = ../../3rdparty/nanojpeg
 
 folders = \
 	helloworld \
+	adc \
 	memtest \
 	syscalltest \
 	dmatest \

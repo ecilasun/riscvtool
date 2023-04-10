@@ -44,13 +44,9 @@ int main()
 	int32_t dir = 2;
 	int32_t averagetime = 131072;
 	int32_t outstats = 0;
+	uint64_t starttime = E32ReadTime();
 	while (1)
 	{
-		uint64_t starttime = E32ReadTime();
-
-		// Copy at different lines to make the output appear to scroll
-		DMACopyBlocks((uint32_t)(bufferA+offset*W), (uint32_t)bufferB, blockCountInMultiplesOf16bytes);
-
 		// Wait until there are no more DMA operations in flight
 		while (DMAPending()) { asm volatile("nop;"); }
 
@@ -64,6 +60,11 @@ int main()
 			UARTWrite("\n");
 		}
 		++outstats;
+
+		starttime = E32ReadTime();
+
+		// We can now start a copy
+		DMACopyBlocks((uint32_t)(bufferA+offset*W), (uint32_t)bufferB, blockCountInMultiplesOf16bytes);
 
 		// Handle Scroll
 		offset = (offset+dir);

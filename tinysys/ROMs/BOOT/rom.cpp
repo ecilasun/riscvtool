@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.996a"
+#define VERSIONSTRING "v0.997"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -194,7 +194,7 @@ int main()
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
 	LEDSetState(0xB);
-	TaskAdd(taskctx, "_stub", _stubTask, ONE_MILLISECOND_IN_TICKS);
+	TaskAdd(taskctx, "kernelStub", _stubTask, ONE_MILLISECOND_IN_TICKS);
 
 	// Start the timer and hardware interrupt handlers.
 	// This is where all task switching and other interrupt handling occurs
@@ -203,7 +203,7 @@ int main()
 	LEDSetState(0xA);
 	InstallISR();
 
-	strncpy(s_currentPath, "sd:", 128);
+	strncpy(s_currentPath, "sd:", 64);
 
 	LEDSetState(0x0);
 	while (1)
@@ -249,11 +249,21 @@ int main()
 				default:
 				{
 					s_cmdString[s_cmdLen++] = (char)asciicode;
-					if (s_cmdLen > 511)
-						s_cmdLen = 511;
+					if (s_cmdLen > 127)
+						s_cmdLen = 127;
 				}
 				break;
 			}
+		}
+
+		if (execcmd)
+		{
+			s_refreshConsoleOut = 1;
+			UARTWrite("\n");
+			ExecuteCmd(s_cmdString);
+			// Rewind
+			s_cmdLen = 0;
+			s_cmdString[0] = 0;
 		}
 
 		if (s_refreshConsoleOut)
@@ -265,16 +275,6 @@ int main()
 			UARTWrite(s_currentPath);
 			UARTWrite(":");
 			UARTWrite(s_cmdString);
-		}
-
-		if (execcmd)
-		{
-			s_refreshConsoleOut = 1;
-			UARTWrite("\n");
-			ExecuteCmd(s_cmdString);
-			// Rewind
-			s_cmdLen = 0;
-			s_cmdString[0] = 0;
 		}
 	}
 
