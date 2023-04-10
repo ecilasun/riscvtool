@@ -190,6 +190,7 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 }
 
 #define MAX_HANDLES 32
+#define MAXFILENAMELEN 32
 
 // Handle allocation mask, positions 0,1 and 2 are reserved
 //0	Standard input	STDIN_FILENO	stdin
@@ -197,39 +198,39 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 //2	Standard error	STDERR_FILENO	stderr
 static uint32_t s_handleAllocMask = 0x00000007;
 static FIL s_filehandles[MAX_HANDLES];
-static char s_fileNames[MAX_HANDLES][64] = {
-	"stdin",
-	"stdout",
-	"stderr",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                ",
-	"                                "};
+static char s_fileNames[MAX_HANDLES][MAXFILENAMELEN+1] = {
+	{"stdin"},
+	{"stdout"},
+	{"stderr"},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "},
+	{"                                "}};
 
 static STaskContext g_taskctx;
 static UINT tmpresult;
@@ -687,10 +688,16 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						{
 							AllocateFileHandle(currenthandle, &s_handleAllocMask);
 							write_csr(0x8AA, currenthandle);
-							// max filename length == 32
-							// WARNING : This will corrupt task memory!
-							//strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 32);
-							// WARNING : 
+
+							char *trg = s_fileNames[currenthandle];
+							char *src = (char*)nptr;
+							uint32_t cntr = 0;
+							while(*src!=0 && cntr<MAXFILENAMELEN)
+							{
+								*trg++ = *src++;
+								++cntr;
+							}
+							*trg = 0;
 						}
 						else
 						{
