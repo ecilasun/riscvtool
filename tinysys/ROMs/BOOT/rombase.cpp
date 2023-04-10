@@ -406,14 +406,18 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				// Terminate and remove from list of running tasks
 				TaskExitCurrentTask(&g_taskctx);
 
-				// TODO: Automatically add a debug breakpoint here and halt (or jump into gdb_breakpoint)
 				break;
 			}
 
 			case CAUSE_BREAKPOINT:
 			{
 				if (g_taskctx.debugMode)
-					gdb_breakpoint(&g_taskctx); // For now we ignore breakpoint instruction in non-debug mode
+					gdb_breakpoint(&g_taskctx);			// For now we ignore breakpoint instruction in non-debug mode
+				else
+				{
+					UARTWrite("Breakpoint encountered\n");
+					TaskExitCurrentTask(&g_taskctx);	// Exit task in non-debug mode
+				}
 				break;
 			}
 
@@ -459,7 +463,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				else if (value==62) // lseek()
 				{
 					// NOTE: We do not support 'holes' in files
-
 					uint32_t file = read_csr(0x8AA); // A0
 					uint32_t offset = read_csr(0x8AB); // A1
 					uint32_t whence = read_csr(0x8AC); // A2
@@ -544,7 +547,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					else
 					{
 						if (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult))
+						{
 							write_csr(0x8AA, tmpresult);
+						}
 						else
 						{
 							errno = EACCES;
@@ -683,7 +688,9 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 							AllocateFileHandle(currenthandle, &s_handleAllocMask);
 							write_csr(0x8AA, currenthandle);
 							// max filename length == 32
-							strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 32);
+							// WARNING : This will corrupt task memory!
+							//strncpy(s_fileNames[currenthandle], (const TCHAR*)nptr, 32);
+							// WARNING : 
 						}
 						else
 						{
