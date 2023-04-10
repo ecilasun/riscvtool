@@ -39,6 +39,7 @@
 #include "core.h"
 #include "uart.h"
 #include "console.h"
+#include "xadc.h"
 
 void
 I_Init(void)
@@ -65,7 +66,36 @@ I_GetTime (void)
 static void
 I_GetRemoteEvent(void)
 {
+	static uint32_t latch = 0;
 	event_t event;
+
+	// Read the data on ADC port
+	// TODO: This will read individual x/y/button channels
+	uint32_t val = ANALOGINPUTS[0];
+	if (val < 0x20 && !latch) // 5V and not latched yet
+	{
+		// Once only until we release the 'key'
+		latch = 1;
+		event.data1 = KEY_RCTRL; // key_fire
+		D_PostEvent(&event);
+
+		/*{"key_right",&key_right, KEY_RIGHTARROW},
+		{"key_left",&key_left, KEY_LEFTARROW},
+		{"key_up",&key_up, KEY_UPARROW},
+		{"key_down",&key_down, KEY_DOWNARROW},
+		{"key_strafeleft",&key_strafeleft, ','},
+		{"key_straferight",&key_straferight, '.'},
+		{"key_fire",&key_fire, KEY_RCTRL},
+		{"key_use",&key_use, ' '},
+		{"key_strafe",&key_strafe, KEY_RALT},
+		{"key_speed",&key_speed, KEY_RSHIFT},*/
+	}
+
+	// Unlatch when key's released (TODO: can implement auto-repeat by also checking elapsed time)
+	if (val > 0x20)
+		latch = 0;
+
+	/*event_t event;
 
 	// Any pending keyboard events to handle?
 	// NOTE: OS feeds keyboard input to us from an ISR
@@ -112,7 +142,7 @@ I_GetRemoteEvent(void)
 		}
 
 		D_PostEvent(&event);
-	}
+	}*/
 }
 
 void
