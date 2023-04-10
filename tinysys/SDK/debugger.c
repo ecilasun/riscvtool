@@ -5,7 +5,7 @@
 #include "debugger.h"
 
 const char hexdigits[] = "0123456789ABCDEF";
-uint32_t dbg_current_thread = 1; // Never debug kernel
+uint32_t dbg_current_thread = 1; // Assume the running process
 
 char packetbuffer[1200]; // Report 1024 but allocate more space just in case
 int packetcursor = 0;
@@ -519,8 +519,7 @@ uint32_t gdb_handler(struct STaskContext *_ctx)
                     threadbuf[a++] = packetbuffer[p++];
                 threadbuf[a]=0;
                 uint32_t idx = hex2int(threadbuf);
-				// Never debug kernel
-				dbg_current_thread = idx <= 1 ? 1 : (idx-1); // Thread IDs start from one, so we have to go one down
+				dbg_current_thread = idx-1; // Thread IDs start from one, so we have to go one down (0 is kernel)
 
                 SendDebugPacket("OK");
             }
