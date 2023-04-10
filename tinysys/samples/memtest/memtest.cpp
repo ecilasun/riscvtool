@@ -12,11 +12,12 @@ int main()
 {
     UARTWrite("\nTesting DDR3 on AXI4 bus\n");
 
-    UARTWrite("Clearing extended memory\n"); // 0x00000000 - 0x0FFFFFFF
-    //int i=0;
+    uint8_t *testbuffer = (uint8_t*)malloc(0x02000000);
+
+    UARTWrite("Clearing memory\n");
     uint64_t startclock = E32ReadTime();
-    for (uint32_t m=0x0A000000; m<0x0C000000; m+=4)
-        *((volatile uint32_t*)m) = 0x00000000;
+    for (uint32_t m=0; m<0x02000000; m+=4)
+        *((volatile uint32_t*)testbuffer) = 0x00000000;
 
     uint64_t endclock = E32ReadTime();
     uint32_t deltams = ClockToMs(endclock-startclock);
@@ -33,11 +34,13 @@ int main()
     UARTWrite("Copyright (c) 2000 by Michael Barr\n");
     UARTWrite("----------------------------------\n");
 
-    UARTWrite("Data bus test (0x0A000000-0x0A03FFFF)...");
+    UARTWrite("Data bus test...");
     int failed = 0;
-    for (uint32_t i=0x0A000000; i<0x0A03FFFF; i+=4)
+    volatile datum* tbuf = (volatile datum*)testbuffer;
+    for (uint32_t i=0; i<262144; i+=4)
     {
-        failed += memTestDataBus((volatile datum*)i);
+        failed += memTestDataBus(tbuf);
+        tbuf++;
     }
     UARTWrite(failed == 0 ? "passed (" : "failed (");
     UARTWriteDecimal(failed);
@@ -45,7 +48,7 @@ int main()
 
     UARTWrite("Address bus test (0x0B000000-0x0B03FFFF)...");
     int errortype = 0;
-    datum* res = memTestAddressBus((volatile datum*)0x0B000000, 262144, &errortype);
+    datum* res = memTestAddressBus((volatile datum*)testbuffer, 262144, &errortype);
     UARTWrite(res == NULL ? "passed\n" : "failed\n");
     if (res != NULL)
     {
@@ -60,7 +63,7 @@ int main()
     }
 
     UARTWrite("Memory device test (0x0C000000-0x0C03FFFF)...");
-    datum* res2 = memTestDevice((volatile datum *)0x0C000000, 262144);
+    datum* res2 = memTestDevice((volatile datum *)testbuffer, 262144);
     UARTWrite(res2 == NULL ? "passed\n" : "failed\n");
     if (res2 != NULL)
     {
@@ -71,6 +74,8 @@ int main()
 
     if ((failed != 0) | (res != NULL) | (res2 != NULL))
       UARTWrite("Memory device does not appear to be working correctly.\n");
+
+    free(testbuffer);
 
     return 0;
 }

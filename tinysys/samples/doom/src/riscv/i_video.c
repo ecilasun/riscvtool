@@ -86,14 +86,16 @@ I_FinishUpdate (void)
 	// Complete framebuffer writes by invalidating & writing back D$
 	CFLUSH_D_L1;
 
+	// TODO: DMA seems to be broken in this hardware build
+
 	// Wait for prior DMA to avoid lock-up
-	while (DMAPending()) { asm volatile("nop;"); }
+	/*while (DMAPending()) { asm volatile("nop;"); }
 
 	// DMA controller handles the DMA operation in 128bit (16 byte) blocks.
 	// Writes go directly to memory without polluting the data cache
 	// but RAM contents have to be recent, hence the flush above.
 	uint32_t blockCount = SCREENWIDTH * SCREENHEIGHT / DMA_BLOCK_SIZE;
-	DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);
+	DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);*/
 }
 
 

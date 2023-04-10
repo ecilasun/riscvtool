@@ -38,6 +38,9 @@ int main()
 	uint8_t *framebufferA = GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
 	uint8_t *framebufferB = GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
 
+	memset(framebufferA, 0x0, FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
+	memset(framebufferB, 0x0, FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
+
 	struct EVideoContext vx;
 	GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
 	GPUSetWriteAddress(&vx, (uint32_t)framebufferA);
@@ -46,7 +49,9 @@ int main()
 
 	// Set up buffer for 32 bit imgui render output
 	// We try to align it to a cache boundary to support future DMA copies
-	uint32_t *imguiframebuffer = (uint32_t*)GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0*4);
+	uint32_t *imguiframebuffer = (uint32_t*)GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0 * 4);
+
+	memset(imguiframebuffer, 0x0, FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0 * 4);
 
 	static float temps[] = { 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f, 40.f };
 

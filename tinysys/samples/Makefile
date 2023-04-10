@@ -24,6 +24,7 @@ folders = \
 	tinyrt \
 	mandelbrot \
 	jpegview \
+	led \
 
 # Rules
 
