@@ -6,6 +6,8 @@ SOURCES := keyserver.cpp
 
 all: keyserver
 
+#NOTE: Please use sudo apt install libx11-dev to grab x11 dev libs to compile
+
 keyserver: $(addprefix source/,$(SOURCES))
 	$(CC) $(CFLAGS) -o $@ $(addprefix source/,$(SOURCES))
 

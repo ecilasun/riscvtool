@@ -65,9 +65,6 @@ I_GetTime (void)
 static void
 I_GetRemoteEvent(void)
 {
-	if (!UARTInputFifoHasData())
-		return;
-
 	event_t event;
 
 	// Any pending keyboard events to handle?
