@@ -10,10 +10,7 @@ int main( int argc, char **argv )
 {
 	uint32_t x = 0;
 
-    printf("AUX0 voltage: black\n");
-    printf("Temperature: green\n");
-
-    uint32_t ch0buffer[320];
+    uint32_t ch0buffer[8][320];
     uint32_t temperaturebuffer[320];
 
 	uint8_t *framebufferB = GPUAllocateBuffer(320*240);
@@ -29,9 +26,14 @@ int main( int argc, char **argv )
     int cycle = 0;
     while (1)
     {
-        // Values measured are 10 bits, but we often get 0...512 range
-        ch0buffer[x] = ANALOGINPUTS[0];
+        // Read analog inputs
+        for (uint32_t ch=0;ch<8;++ch)
+            ch0buffer[ch][x] = ANALOGINPUTS[ch];
+
+        // Read temperature
         temperaturebuffer[x] = *XADCTEMP;
+
+        // Next sample slot
         x++;
 
         // Flush data cache at last pixel so we can see a coherent image
@@ -51,12 +53,15 @@ int main( int argc, char **argv )
             for (uint32_t i=0;i<80*240;++i)
                 writepageword[i] = 0x0F0F0F0F;
 
-            // Show voltage value
-            for (uint32_t i=0;i<320;++i)
+            // Show analog input channels
+            for (uint32_t ch=0;ch<8;++ch)
             {
-                uint32_t y = ch0buffer[i]/2; // 0...511 -> 0..254
-                y = y>239 ? 239 : y;
-                writepage[i + y*320] = 0x00; // Black
+                for (uint32_t i=0;i<320;++i)
+                {
+                    uint32_t y = ch0buffer[ch][i]/2; // 0...511 -> 0..254
+                    y = y>239 ? 239 : y;
+                    writepage[i + y*320] = ch; // One color per channel
+                }
             }
 
             // Show temperature value
