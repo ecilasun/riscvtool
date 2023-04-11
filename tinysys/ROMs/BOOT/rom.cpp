@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.997"
+#define VERSIONSTRING "v0.998"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -102,7 +102,7 @@ void ExecuteCmd(char *_cmd)
 		if (!path)
 			UARTWrite("usage: del fname\n");
 		else
-			UARTWrite("TODO: Delete given file\n");
+			f_unlink(path);
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -146,7 +146,7 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("del fname: Delete file\n");
 		UARTWrite("cwd path: Change working directory\n");
 		UARTWrite("get fname: Save binary from UART to micro sd card\n");
-		UARTWrite("prc: Show process list\n");
+		UARTWrite("prc: Show process info\n");
 		UARTWrite("gdb: Enter gdb server mode\n");
 		UARTWrite("ver: Show version info\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\n");
