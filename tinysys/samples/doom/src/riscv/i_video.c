@@ -81,21 +81,21 @@ I_UpdateNoBlit(void)
 void
 I_FinishUpdate (void)
 {
-	// CPU handles the copy operation
-	memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
-	// Complete framebuffer writes by invalidating & writing back D$
+	// Option 1: CPU handles the copy operation
+	// memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
+
+	// In either case, write pending data to memory to ensure all writes are visible to scan-out or DMA
 	CFLUSH_D_L1;
 
-	// TODO: DMA seems to be broken in this hardware build
-
+	// Option 2: DMA unit handles the copy operation
 	// Wait for prior DMA to avoid lock-up
-	/*while (DMAPending()) { asm volatile("nop;"); }
+	while (DMAPending()) { asm volatile("nop;"); }
 
 	// DMA controller handles the DMA operation in 128bit (16 byte) blocks.
 	// Writes go directly to memory without polluting the data cache
 	// but RAM contents have to be recent, hence the flush above.
 	uint32_t blockCount = SCREENWIDTH * SCREENHEIGHT / DMA_BLOCK_SIZE;
-	DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);*/
+	DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);
 }
 
 
