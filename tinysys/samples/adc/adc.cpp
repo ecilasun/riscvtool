@@ -58,7 +58,7 @@ int main( int argc, char **argv )
             {
                 for (uint32_t i=0;i<320;++i)
                 {
-                    uint32_t y = ch0buffer[ch][i]/2; // 0...511 -> 0..254
+                    uint32_t y = (ch0buffer[ch][i]*10)/43; // Map 0...1023 to 0..238
                     y = y>239 ? 239 : y;
                     writepage[i + y*320] = ch; // One color per channel
                 }
