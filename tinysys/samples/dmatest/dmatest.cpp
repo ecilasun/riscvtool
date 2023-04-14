@@ -37,8 +37,15 @@ int main()
 	// Kick a DMA copy to move buffer A contents onto buffer B
 	const uint32_t blockCountInMultiplesOf16bytes = (W*H)/16;
 	UARTWrite("Initiating copy loop of ");
-	UARTWriteDecimal(blockCountInMultiplesOf16bytes);
-	UARTWrite(" blocks\n");
+	// Figure out how many DMAs this splits into
+	const uint32_t leftoverDMA = blockCountInMultiplesOf16bytes%256;
+	const uint32_t fullDMAs = blockCountInMultiplesOf16bytes/256;
+	UARTWriteDecimal(fullDMAs);
+	UARTWrite("*256*16byte blocks and ");
+	UARTWriteDecimal(leftoverDMA);
+	UARTWrite("*1*16byte block for a total of ");
+	UARTWriteDecimal(fullDMAs*4096+leftoverDMA*16);
+	UARTWrite("bytes\n");
 
 	int32_t offset = 0;
 	int32_t dir = 2;
@@ -63,8 +70,20 @@ int main()
 
 		starttime = E32ReadTime();
 
-		// We can now start a copy
-		DMACopyBlocks((uint32_t)(bufferA+offset*W), (uint32_t)bufferB, blockCountInMultiplesOf16bytes);
+		// Do the full DMAs first
+		uint32_t fulloffset = 0;
+		for (uint32_t full=0;full<fullDMAs;++full)
+		{
+			DMACopy4K((uint32_t)(bufferA+offset*W+fulloffset), (uint32_t)bufferB+fulloffset);
+			fulloffset += 256*16; // 16 bytes for each 256-block, total of 4K
+		}
+		
+		// Partial DMA next
+		if (leftoverDMA!=0)
+			DMACopy((uint32_t)(bufferA+offset*W+fulloffset), (uint32_t)(bufferB+fulloffset), (uint8_t)(leftoverDMA-1));
+
+		// Tag for sync (essentially an item in FIFO after last DMA so we can check if DMA is complete when this drains)
+		DMATag(0x0);
 
 		// Handle Scroll
 		offset = (offset+dir);

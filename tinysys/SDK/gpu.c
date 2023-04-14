@@ -37,10 +37,11 @@ const uint8_t residentfont[] __attribute__((aligned(4))) = {
 // NOTE: Reads from this address will return the vblank counter
 volatile uint32_t *GPUIO = (volatile uint32_t* )0x80002000;
 
+// GPU buffers are allocated aligned to 4K boundaries
 uint8_t *GPUAllocateBuffer(const uint32_t _size)
 {
-   void *buffer = (uint8_t*)malloc(_size + 64);
-   return (uint8_t*)E32AlignUp((uint32_t)buffer, 64);
+   void *buffer = (uint8_t*)malloc(_size + 4096);
+   return (uint8_t*)E32AlignUp((uint32_t)buffer, 4096);
 }
 
 void GPUSetVMode(struct EVideoContext *_context, const enum EVideoMode _mode, const enum EVideoScanoutEnable _scanEnable)

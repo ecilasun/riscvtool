@@ -95,7 +95,25 @@ I_FinishUpdate (void)
 	// Writes go directly to memory without polluting the data cache
 	// but RAM contents have to be recent, hence the flush above.
 	uint32_t blockCount = SCREENWIDTH * SCREENHEIGHT / DMA_BLOCK_SIZE;
-	DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);
+	const uint32_t leftoverDMA = blockCount%256;
+	const uint32_t fullDMAs = blockCount/256;
+
+	// Do the full DMAs first
+	uint32_t fulloffset = 0;
+	for (uint32_t full=0;full<fullDMAs;++full)
+	{
+		DMACopy4K((uint32_t)screens[0]+fulloffset, (uint32_t)framebuffer+fulloffset);
+		fulloffset += 256*16; // 16 bytes for each 256-block, total of 4K
+	}
+
+	// Partial DMA next
+	if (leftoverDMA!=0)
+		DMACopy((uint32_t)screens[0]+fulloffset, (uint32_t)framebuffer+fulloffset, (uint8_t)(leftoverDMA-1));
+
+	// Tag for sync (essentially an item in FIFO after last DMA so we can check if DMA is complete when this drains)
+	DMATag(0x0);
+
+	//DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);
 }
 
 
