@@ -406,7 +406,7 @@ void paint_triangle(
 	const ImDrawVert&  v0,
 	const ImDrawVert&  v1,
 	const ImDrawVert&  v2,
-	Stats*             stats)
+	Stats*             /*stats*/)
 {
 	const ImVec2 p0 = ImVec2(target.scale.x * v0.pos.x, target.scale.y * v0.pos.y);
 	const ImVec2 p1 = ImVec2(target.scale.x * v1.pos.x, target.scale.y * v1.pos.y);
@@ -526,7 +526,7 @@ void paint_triangle(
 			uint32_t& target_pixel = target.pixels[y * target.width + x];
 
 			if (has_uniform_color && !texture) {
-				stats->uniform_triangle_pixels += 1;
+				//stats->uniform_triangle_pixels += 1;
 				if (target_pixel == last_target_pixel) {
 					target_pixel = last_output;
 					continue;
@@ -542,12 +542,12 @@ void paint_triangle(
 			if (has_uniform_color) {
 				src_color = c0;
 			} else {
-				stats->gradient_triangle_pixels += 1;
+				//stats->gradient_triangle_pixels += 1;
 				src_color = w0 * c0 + w1 * c1 + w2 * c2;
 			}
 
 			if (texture) {
-				stats->textured_triangle_pixels += 1;
+				//stats->textured_triangle_pixels += 1;
 				const ImVec2 uv = w0 * v0.uv + w1 * v1.uv + w2 * v2.uv;
 				src_color.w *= sample_texture(*texture, uv) / 255.0f;
 			}
