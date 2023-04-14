@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#define VERSIONSTRING "v0.998"
+#define VERSIONSTRING "v0.998a"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -230,6 +230,7 @@ int main()
 					// Terminate process 1 (the current executable)
 					TaskExitTaskWithID(taskctx, 1, 0); // Sig:0
 				}
+				break;
 
 				case 8:		// Backspace
 				{
