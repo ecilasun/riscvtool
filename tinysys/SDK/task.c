@@ -78,12 +78,11 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const 
 
 void TaskExitCurrentTask(struct STaskContext *_ctx)
 {
-	uint32_t taskID = _ctx->currentTask;
-	struct STask *task = &_ctx->tasks[taskID];
-
-	int32_t currentTask = read_csr(0x8A4);
-	if (currentTask == 0) // Can not exit taskid 0
+	uint32_t taskid = _ctx->currentTask;
+	if (taskid == 0) // Can not exit taskid 0
 		return;
+
+	struct STask *task = &_ctx->tasks[taskid];
 	task->state = TS_TERMINATING;
 	write_csr(0x8AA, 0); // Return a0 = 0x0
 }
@@ -92,6 +91,7 @@ void TaskExitTaskWithID(struct STaskContext *_ctx, uint32_t _taskid, uint32_t _s
 {
 	if (_taskid == 0) // Can not exit taskid 0
 		return;
+
 	struct STask *task = &_ctx->tasks[_taskid];
 	task->state = TS_TERMINATING;
 	write_csr(0x8AA, _signal); // Return a0 = _signal
