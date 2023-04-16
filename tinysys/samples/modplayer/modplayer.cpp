@@ -10,8 +10,9 @@
 
 #include "micromod/micromod.h"
 
-//uint8_t *framebufferA = (uint8_t*)malloc(320*240*3 + 64);
-//uint8_t *framebufferB = (uint8_t*)malloc(320*240*3 + 64);
+static struct EVideoContext s_vx;
+static uint8_t *s_framebufferA;
+static uint8_t *s_framebufferB;
 
 #define SAMPLING_FREQ  48000  /* 48khz. */
 #define REVERB_BUF_LEN 1100    /* 12.5ms. */
@@ -123,14 +124,21 @@ static long read_module_length( const char *filename ) {
 
 void DrawWaveform()
 {
-	// Video scan-out page
-/*	uint8_t *readpage = (cycle%2) ? framebufferA : framebufferB;
-	// Video write page
-	uint8_t *writepage = (cycle%2) ? framebufferB : framebufferA;
-	// Show the read page while we're writing to the write page
-	GPUSetVPage((uint32_t)readpage);
+	static uint32_t cycle = 0;
 
-	GPUClearScreen(writepage, VIDEOMODE_320PALETTED, 0x0F0F0F0F); // White
+	// Video scan-out page
+	uint8_t *readpage = (cycle%2) ? s_framebufferA : s_framebufferB;
+	// Video write page
+	uint8_t *writepage = (cycle%2) ? s_framebufferB : s_framebufferA;
+
+	GPUSetWriteAddress(&s_vx, (uint32_t)writepage);
+	GPUSetScanoutAddress(&s_vx, (uint32_t)readpage);
+
+	// Clear screen to white
+	uint32_t *writepageword = (uint32_t*)writepage;
+	for (uint32_t i=0;i<80*240;++i)
+		writepageword[i] = 0x0F0F0F0F;
+
 	int16_t *src = (int16_t *)buffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
 	{
@@ -148,7 +156,7 @@ void DrawWaveform()
 
     CFLUSH_D_L1;
 
-	++cycle;*/
+	++cycle;
 }
 
 static long play_module( signed char *module )
@@ -225,10 +233,11 @@ void PlayMODFile(const char *fname)
 
 int main()
 {
-	/*framebufferA = GPUAllocateBuffer(320*240*3);
-	framebufferB = GPUAllocateBuffer(320*240*3);
-	GPUSetVPage((uint32_t)framebufferA);
-	GPUSetVMode(MAKEVMODEINFO(0, 1)); // Mode 0, video on*/
+	s_framebufferB = GPUAllocateBuffer(320*240);
+	s_framebufferA = GPUAllocateBuffer(320*240);
+	GPUSetVMode(&s_vx, EVM_320_Pal, EVS_Enable);
+	GPUSetWriteAddress(&s_vx, (uint32_t)s_framebufferA);
+	GPUSetScanoutAddress(&s_vx, (uint32_t)s_framebufferB);
 
 	printf("Loading module\n");
 
