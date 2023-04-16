@@ -179,12 +179,12 @@ static long play_module( signed char *module )
 
 			samples_remaining -= count;
 
-			// TODO: If 'buffer' is placed in AudioRAM, the APU
-			// could kick the synchronized copy so we can free the CPU
-
 			// Audio FIFO will be drained at playback rate and
 			// the CPU will stall to wait if the FIFO is full.
-			// Therefore, no need to worry about synchronization.
+			// Therefore, we do not need to worry about synchronization.
+			// Ideally we'd like to send only a memory address here
+			// and let the audio hardware burst-read from it
+			// when it needs to.
 			uint32_t *src = (uint32_t *)buffer;
 			for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
 				*IO_AUDIOOUT = src[i];
