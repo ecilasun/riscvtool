@@ -12,8 +12,6 @@
 #if !defined(DISABLE_FILESYSTEM)
 #include "sdcard.h"
 #endif
-#include "stdio.h"
-
 /* Definitions of physical drive number for each drive */
 #define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
 #define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
@@ -39,7 +37,7 @@ DSTATUS disk_status (
 		return stat;
 
 	case DEV_MMC :
-		stat = 0x0;// OK MMC_disk_status();
+		stat = 0x0;//MMC_disk_status();
 
 		// translate the result code here
 
@@ -70,13 +68,14 @@ DSTATUS disk_initialize (
 	switch (pdrv) {
 	case DEV_RAM :
 		stat = STA_NOINIT;//RAM_disk_initialize();
+
 		// translate the result code here
 
 		return stat;
 
 	case DEV_MMC :
 #if !defined(DISABLE_FILESYSTEM)
-		if (SDCardStartup() != -1)
+		if (SDCardStartup() != -1) //MMC_disk_initialize();
 			stat = 0x0;
 		else
 #endif
@@ -125,7 +124,7 @@ DRESULT disk_read (
 		// translate the arguments here
 
 #if !defined(DISABLE_FILESYSTEM)
-		if (SDReadMultipleBlocks(buff, count, sector) != -1)
+		if (SDReadMultipleBlocks(buff, count, sector) != -1) // MMC_disk_read(buff, sector, count);
 			res = RES_OK;
 		else
 #endif
@@ -173,11 +172,11 @@ DRESULT disk_write (
 		break;
 		case DEV_MMC :
 		{
-	#if !defined(DISABLE_FILESYSTEM)
-			if (SDWriteMultipleBlocks(buff, count, sector) != -1)
+		#if !defined(DISABLE_FILESYSTEM)
+			if (SDWriteMultipleBlocks(buff, count, sector) != -1) // MMC_disk_write(buff, sector, count)
 				res = RES_OK;
 			else
-	#endif
+		#endif
 				res = RES_ERROR;
 		}
 		break;
@@ -215,7 +214,6 @@ DRESULT disk_ioctl (
 
 	case DEV_MMC :
 
-		// NOTE: What are the IOCTL codes to implement?
 		// Process of the command for the MMC/SD card
 
 		return res;
