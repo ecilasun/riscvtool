@@ -23,6 +23,7 @@ int main()
 	// Set buffer B as output
 	GPUSetWriteAddress(&vx, (uint32_t)bufferA);
 	GPUSetScanoutAddress(&vx, (uint32_t)bufferB);
+	GPUSetDefaultPalette(&vx);
 
 	// Fill buffer A with some data
 	for (uint32_t y=0;y<H*3;++y)

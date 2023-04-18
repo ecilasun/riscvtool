@@ -134,10 +134,10 @@ void DrawWaveform()
 	GPUSetWriteAddress(&s_vx, (uint32_t)writepage);
 	GPUSetScanoutAddress(&s_vx, (uint32_t)readpage);
 
-	// Clear screen to white
+	// Clear screen to black
 	uint32_t *writepageword = (uint32_t*)writepage;
 	for (uint32_t i=0;i<80*240;++i)
-		writepageword[i] = 0x0F0F0F0F;
+		writepageword[i] = 0x00000000;
 
 	int16_t *src = (int16_t *)buffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
@@ -150,7 +150,7 @@ void DrawWaveform()
 		R = R/64;
 		R = R < -110 ? -110 : R;
 		R = R > 110 ? 110 : R;
-		writepage[x + (L+110)*320] = 0x01; // Blue
+		writepage[x + (L+110)*320] = 0x0F; // White
 		writepage[x + (R+110)*320] = 0x04; // Red
 	}
 
@@ -238,6 +238,7 @@ int main()
 	GPUSetVMode(&s_vx, EVM_320_Pal, EVS_Enable);
 	GPUSetWriteAddress(&s_vx, (uint32_t)s_framebufferA);
 	GPUSetScanoutAddress(&s_vx, (uint32_t)s_framebufferB);
+	GPUSetDefaultPalette(&s_vx);
 
 	printf("Loading module\n");
 

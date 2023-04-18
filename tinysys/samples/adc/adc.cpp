@@ -22,6 +22,7 @@ int main( int argc, char **argv )
 	// Set buffer B as output
 	GPUSetWriteAddress(&vx, (uint32_t)framebufferA);
 	GPUSetScanoutAddress(&vx, (uint32_t)framebufferB);
+    GPUSetDefaultPalette(&vx);
 
     int cycle = 0;
     while (1)

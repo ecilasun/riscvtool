@@ -38,6 +38,7 @@ struct EVideoContext
 uint8_t *GPUAllocateBuffer(const uint32_t _size);
 
 // GPU side
+void GPUSetDefaultPalette(struct EVideoContext *_context);
 void GPUSetVMode(struct EVideoContext *_context, const enum EVideoMode _mode, const enum EVideoScanoutEnable _scanEnable);
 void GPUSetScanoutAddress(struct EVideoContext *_context, const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetWriteAddress(struct EVideoContext *_context, const uint32_t _cpuWriteAddress64ByteAligned);
