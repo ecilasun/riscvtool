@@ -35,23 +35,23 @@ int main()
     imgui_sw::make_style_fast();
 
 	// Set up frame buffers
-	uint8_t *framebufferA = GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
-	uint8_t *framebufferB = GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
+	uint8_t *framebufferA = GPUAllocateBuffer(FRAME_WIDTH_MODE1 * FRAME_HEIGHT_MODE1);
+	uint8_t *framebufferB = GPUAllocateBuffer(FRAME_WIDTH_MODE1 * FRAME_HEIGHT_MODE1);
 
-	memset(framebufferA, 0x0, FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
-	memset(framebufferB, 0x0, FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0);
+	memset(framebufferA, 0x0, FRAME_WIDTH_MODE1 * FRAME_HEIGHT_MODE1);
+	memset(framebufferB, 0x0, FRAME_WIDTH_MODE1 * FRAME_HEIGHT_MODE1);
 
 	struct EVideoContext vx;
-	GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
+	GPUSetVMode(&vx, EVM_640_Pal, EVS_Enable);
 	GPUSetWriteAddress(&vx, (uint32_t)framebufferA);
 	GPUSetScanoutAddress(&vx, (uint32_t)framebufferB);
 	GPUClearScreen(&vx, 0x03030303);
 
 	// Set up buffer for 32 bit imgui render output
 	// We try to align it to a cache boundary to support future DMA copies
-	uint32_t *imguiframebuffer = (uint32_t*)GPUAllocateBuffer(FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0 * 4);
+	uint32_t *imguiframebuffer = (uint32_t*)GPUAllocateBuffer(FRAME_WIDTH_MODE1 * FRAME_HEIGHT_MODE1 * 4);
 
-	memset(imguiframebuffer, 0x0, FRAME_WIDTH_MODE0 * FRAME_HEIGHT_MODE0 * 4);
+	memset(imguiframebuffer, 0x0, FRAME_WIDTH_MODE1 * FRAME_HEIGHT_MODE1 * 4);
 
 	static float temps[] = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
 	static float ch0[] = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
@@ -86,17 +86,17 @@ int main()
 			uint32_t channel7data = ANALOGINPUTS[7];
 			float temp_centigrates = (ADCcode*503.975f)/4096.f-273.15f;
 
-		// Clear write buffer
+			// Clear write buffer
 			//GPUClearScreen((uint8_t*)imguiframebuffer, VIDEOMODE_640PALETTED, 0x0F0F0F0F);
 
 			// Demo
-			io.DisplaySize = ImVec2(FRAME_WIDTH_MODE0, FRAME_HEIGHT_MODE0);
+			io.DisplaySize = ImVec2(FRAME_WIDTH_MODE1, FRAME_HEIGHT_MODE1);
 			io.DeltaTime = 1.0f / 60.0f;
 			ImGui::NewFrame();
 
-			//ImGui::ShowDemoWindow(NULL);
+			ImGui::ShowDemoWindow(NULL);
 
-			ImGui::SetNextWindowPos(ImVec2(8,8), ImGuiCond_Always);
+			ImGui::SetNextWindowPos(ImVec2(320,8), ImGuiCond_Always);
 			//ImGui::SetNextWindowSize(ImVec2(160, 160));
 			ImGui::Begin("Stats");
 			ImGui::Text("Frame: %d", (int)cycle);
@@ -140,17 +140,17 @@ int main()
 			ch7[9] = float(channel7data)/1024.f;
 
 			ImGui::Render();
-			imgui_sw::paint_imgui((uint32_t*)imguiframebuffer, FRAME_WIDTH_MODE0, FRAME_HEIGHT_MODE0);
+			imgui_sw::paint_imgui((uint32_t*)imguiframebuffer, FRAME_WIDTH_MODE1, FRAME_HEIGHT_MODE1);
 
 			// Convert to a coherent image for our 8bpp display
 			// NOTE: This will not be necessary when we support RGB frame buffers
 			// or one could add a GPU function to do this in hardware
 			// TODO: Could this not be a DMA feature? (i.e. convert-blit?)
-			for (int y=0;y<FRAME_HEIGHT_MODE0;++y)
+			for (int y=0;y<FRAME_HEIGHT_MODE1;++y)
 			{
-				for (int x=0;x<FRAME_WIDTH_MODE0;++x)
+				for (int x=0;x<FRAME_WIDTH_MODE1;++x)
 				{
-					uint32_t img = imguiframebuffer[x+y*FRAME_WIDTH_MODE0];
+					uint32_t img = imguiframebuffer[x+y*FRAME_WIDTH_MODE1];
 
 					// img -> a, b, g, r
 					uint8_t B = (img>>16)&0x000000FF;
@@ -165,7 +165,7 @@ int main()
 					G = GOFF/36;
 					B = BOFF/85;
 
-					writepage[x+y*FRAME_WIDTH_MODE0] = (uint8_t)((B<<6) | (G<<3) | R);
+					writepage[x+y*FRAME_WIDTH_MODE1] = (uint8_t)((B<<6) | (G<<3) | R);
 				}
 			}
 

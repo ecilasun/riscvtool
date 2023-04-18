@@ -711,6 +711,18 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						write_csr(0x8AA, 0x0);
 					}
 				}
+				else if (value==1026) // remove() (unlink)
+				{
+					uint32_t nptr = read_csr(0x8AA); // A0
+					FRESULT fr = f_unlink((char*)nptr);
+					if (fr != FR_OK)
+					{
+						errno = ENOENT;
+						write_csr(0x8AA, 0xFFFFFFFF);
+					}
+					else
+						write_csr(0x8AA, 0x0);
+				}
 				else // Unimplemented syscalls drop here
 				{
 					ReportError(32, "unimplemented ECALL", code, value, PC);

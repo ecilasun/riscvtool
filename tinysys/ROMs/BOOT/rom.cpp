@@ -5,8 +5,9 @@
 #include "xadc.h"
 
 #include <string.h>
+#include <stdio.h>
 
-#define VERSIONSTRING "v0.998a"
+#define VERSIONSTRING "v0.999"
 
 static char s_cmdString[128];
 static char s_currentPath[64];
@@ -102,7 +103,7 @@ void ExecuteCmd(char *_cmd)
 		if (!path)
 			UARTWrite("usage: del fname\n");
 		else
-			f_unlink(path);
+			remove(path);
 	}
 	else if (!strcmp(command, "cwd"))
 	{
@@ -155,21 +156,31 @@ void ExecuteCmd(char *_cmd)
 	}
 	else // Anything else defers to being a command on storage
 	{
-		char filename[128];
-		strcpy(filename, s_currentPath);
-		strcat(filename, "\\");
-		strcat(filename, command);
-		strcat(filename, ".elf");
+		STaskContext* tctx = GetTaskContext();
+		// Temporary measure to avoid loading another executable while the first one is running
+		// until we get a virtual memory device
+		if (tctx->numTasks>1)
+		{
+			UARTWrite("Virtual memory support required to run more than one task.\n");
+		}
+		else
+		{
+			char filename[128];
+			strcpy(filename, s_currentPath);
+			strcat(filename, "\\");
+			strcat(filename, command);
+			strcat(filename, ".elf");
 
-		// First parameter is excutable name
-		s_startAddress = LoadExecutable(filename, true);
+			// First parameter is excutable name
+			s_startAddress = LoadExecutable(filename, true);
 
-		// If we succeeded in loading the executable, the trampoline task can branch into it.
-		// NOTE: Without code relocation or virtual memory, two executables will ovelap when loaded
-		// even though each gets a new task slot assigned.
-		// This will cause corruption of the runtime environment.
-		if (s_startAddress != 0x0)
-			TaskAdd(GetTaskContext(), command, RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
+			// If we succeeded in loading the executable, the trampoline task can branch into it.
+			// NOTE: Without code relocation or virtual memory, two executables will ovelap when loaded
+			// even though each gets a new task slot assigned.
+			// This will cause corruption of the runtime environment.
+			if (s_startAddress != 0x0)
+				TaskAdd(tctx, command, RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
+		}
 	}
 }
 

@@ -84,6 +84,7 @@ void TaskExitCurrentTask(struct STaskContext *_ctx)
 
 	struct STask *task = &_ctx->tasks[taskid];
 	task->state = TS_TERMINATING;
+	task->exitCode = 0;
 	write_csr(0x8AA, 0); // Return a0 = 0x0
 }
 
@@ -94,6 +95,7 @@ void TaskExitTaskWithID(struct STaskContext *_ctx, uint32_t _taskid, uint32_t _s
 
 	struct STask *task = &_ctx->tasks[_taskid];
 	task->state = TS_TERMINATING;
+	task->exitCode = _signal;
 	write_csr(0x8AA, _signal); // Return a0 = _signal
 }
 
@@ -168,8 +170,8 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 		{
 			UARTWrite("\nTask '");
 			UARTWrite(_ctx->tasks[currentTask].name);
-			UARTWrite("' terminated. Return code 0x");
-			UARTWriteHex(regs[10]);
+			UARTWrite("' terminated with return code 0x");
+			UARTWriteHex(_ctx->tasks[currentTask].exitCode);	// a0 contains the exit code
 			UARTWrite("\n");
 
 			// Mark as 'terminated'
@@ -186,7 +188,7 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 		}
 		else
 		{
-			UARTWrite("\nOS Task can't be termianted.\n");
+			UARTWrite("\nKernel stub can't be terminated.\n");
 		}
 	}
 	else
