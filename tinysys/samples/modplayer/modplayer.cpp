@@ -14,7 +14,7 @@ static struct EVideoContext s_vx;
 static uint8_t *s_framebufferA;
 static uint8_t *s_framebufferB;
 
-#define SAMPLING_FREQ  48000  /* 48khz. */
+#define SAMPLING_FREQ  44100  /* 44.1khz. */
 #define REVERB_BUF_LEN 1100    /* 12.5ms. */
 #define OVERSAMPLE     2      /* 2x oversampling. */
 #define NUM_CHANNELS   2      /* Stereo. */
