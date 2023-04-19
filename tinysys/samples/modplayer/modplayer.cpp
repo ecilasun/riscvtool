@@ -144,10 +144,10 @@ void DrawWaveform()
 	{
 		int16_t L = src[x*2+0];
 		int16_t R = src[x*2+1];
-		L = L/64;
+		L = L/256;
 		L = L < -110 ? -110 : L;
 		L = L > 110 ? 110 : L;
-		R = R/64;
+		R = R/256;
 		R = R < -110 ? -110 : R;
 		R = R > 110 ? 110 : R;
 		writepage[x + (L+110)*320] = 0x0F; // White
