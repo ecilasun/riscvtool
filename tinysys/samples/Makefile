@@ -25,6 +25,7 @@ folders = \
 	mandelbrot \
 	jpegview \
 	led \
+	audio \
 
 # Rules
 

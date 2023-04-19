@@ -2,4 +2,4 @@
 
 #include <inttypes.h>
 
-extern volatile uint8_t *IO_AUDIOOUT;
+extern volatile uint32_t *IO_AUDIOOUT;

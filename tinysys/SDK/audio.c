@@ -1,3 +1,3 @@
 #include "audio.h"
 
-volatile uint8_t *IO_AUDIOOUT = (volatile uint8_t* )0x80008000;
+volatile uint32_t *IO_AUDIOOUT = (volatile uint32_t* )0x80008000;
