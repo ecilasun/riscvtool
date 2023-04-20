@@ -1,2 +1,0 @@
-make upload
-../../../keyserver/keyserver

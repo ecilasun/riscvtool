@@ -5,19 +5,19 @@ OBJDUMP ?= $(CROSS)objdump
 SIZE = $(CROSS)size
 
 # CFLAGS=-mcmodel=medany -std=gnu99 --param l1-cache-line-size=64 --param l1-cache-size=16 -Wall -ggdb -Og -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../../SDK/
-CFLAGS=-mcmodel=medany -std=gnu99 --param l1-cache-line-size=64 --param l1-cache-size=16 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -lgcc -lm -I.. -I../../../../SDK/
+
+CFLAGS = -mcmodel=medany -std=gnu99 --param l1-cache-line-size=64 --param l1-cache-size=16 -Wall -O1 -flto -march=rv32im -mabi=ilp32 -ffunction-sections -fdata-sections -Wl,-gc-sections -I.. -I../../../../SDK/
 
 CFLAGS += \
 	-DNORMALUNIX \
 	$(NULL)
 
+CLIBS = -lgcc -lm
+
 include ../sources.mk
 
 # Filter out d_main, we provide our own simplified one
 SOURCES_doom := $(filter-out d_main.c,$(SOURCES_doom))
-
-# Filter out s_sound, we provide a dummy one
-SOURCES_doom := $(filter-out s_sound.c,$(SOURCES_doom))
 
 SOURCES_doom_arch := \
 	../../../../SDK/core.c \
@@ -26,6 +26,7 @@ SOURCES_doom_arch := \
 	../../../../SDK/gpu.c \
 	../../../../SDK/dma.c \
 	../../../../SDK/xadc.c \
+	../../../../SDK/audio.c \
 	mini-printf.c \
 	d_main.c \
 	i_main.c \
@@ -33,14 +34,13 @@ SOURCES_doom_arch := \
 	i_sound.c \
 	i_system.c \
 	i_video.c \
-	s_sound.c \
 	console.c  \
 	$(NULL)
 
 all: doom.elf doom.txt
 
 doom.elf: $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
-	$(CC) $(CFLAGS) -o $@ $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch)
+	$(CC) $(CFLAGS) -o $@ $(addprefix ../,$(SOURCES_doom)) $(SOURCES_doom_arch) $(CLIBS)
 	$(SIZE) $@
 
 clean:

@@ -44,6 +44,7 @@
 void
 I_Init(void)
 {
+	I_InitSound();
 }
 
 
@@ -169,6 +170,7 @@ void
 I_Quit(void)
 {
 	D_QuitNetGame();
+	I_ShutdownSound();
 	M_SaveDefaults();
 	I_ShutdownGraphics();
 	exit(0); // NOTE: The environment we're going to return to has been destroyed
