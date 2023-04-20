@@ -670,16 +670,8 @@ I_SubmitSound(void)
 {
   // Write it to DSP device.
   //write(audio_fd, mixbuffer, SAMPLECOUNT*BUFMUL);
-  // Since our hardware runs at 44.1KHz
-  // we need to repeat each sample 4 times
   for(int i=0;i<SAMPLECOUNT;++i)
-  {
-    uint32_t V = (mixbuffer[i*2+1]<<16) | mixbuffer[i*2+0];
-    *IO_AUDIOOUT = V;
-    *IO_AUDIOOUT = V;
-    *IO_AUDIOOUT = V;
-    *IO_AUDIOOUT = V;
-  }
+    *IO_AUDIOOUT = (mixbuffer[i*2+1]<<16) | mixbuffer[i*2+0];
 }
 
 
