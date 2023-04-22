@@ -10,6 +10,9 @@
 
 extern volatile uint32_t *IO_AUDIOOUT;
 
+// Utilities
+uint8_t *APUAllocateBuffer(const uint32_t _size);
+
 void APUSetBufferSize(uint32_t audioBufferSize);
 void APUStartDMA(uint32_t audioBufferAddress16byteAligned);
 void APUStop();

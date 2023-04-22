@@ -30,7 +30,7 @@ rcsid[] = "$Id: i_unix.c,v 1.5 1997/02/03 22:45:10 b1 Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "audio.h"
+#include "apu.h"
 
 #include <math.h>
 
@@ -115,7 +115,7 @@ int             lengths[NUMSFX];
 // Basically, samples from all active internal channels
 //  are modifed and added, and stored in the buffer
 //  that is submitted to the audio device.
-signed short    mixbuffer[MIXBUFFERSIZE];
+signed short    *mixbuffer;
 
 
 // The channel step amount...
@@ -833,6 +833,8 @@ I_InitSound()
   }
 
   fprintf( stderr, " pre-cached all sound data\n");
+
+  mixbuffer = (short*)APUAllocateBuffer(MIXBUFFERSIZE*sizeof(short));
 
   // Now initialize mixbuffer with zero.
   for ( i = 0; i< MIXBUFFERSIZE; i++ )

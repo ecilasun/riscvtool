@@ -1,6 +1,15 @@
-#include "audio.h"
+#include "apu.h"
+#include "core.h"
+#include <stdlib.h>
 
 volatile uint32_t *IO_AUDIOOUT = (volatile uint32_t* )0x80008000;
+
+// APU buffers are allocated aligned to 64byte boundaries
+uint8_t *APUAllocateBuffer(const uint32_t _size)
+{
+   void *buffer = (uint8_t*)malloc(_size + 64);
+   return (uint8_t*)E32AlignUp((uint32_t)buffer, 64);
+}
 
 void APUSetBufferSize(uint32_t audioBufferSize)
 {

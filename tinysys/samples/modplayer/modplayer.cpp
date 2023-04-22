@@ -4,9 +4,9 @@
 #include <math.h>
 
 #include "core.h"
+#include "apu.h"
 #include "gpu.h"
 #include "leds.h"
-#include "audio.h"
 
 #include "micromod/micromod.h"
 
@@ -14,15 +14,15 @@ static struct EVideoContext s_vx;
 static uint8_t *s_framebufferA;
 static uint8_t *s_framebufferB;
 
-#define SAMPLING_FREQ  44100  /* 44.1khz. */
-#define REVERB_BUF_LEN 1100    /* 12.5ms. */
-#define OVERSAMPLE     2      /* 2x oversampling. */
-#define NUM_CHANNELS   2      /* Stereo. */
-#define BUFFER_SAMPLES 512  /* buffer size */
+#define SAMPLING_FREQ  44100	// 44.1khz
+#define REVERB_BUF_LEN 1100		// 12.5ms
+#define OVERSAMPLE     2		// 2x oversampling
+#define NUM_CHANNELS   2		// Stereo
+#define BUFFER_SAMPLES 512		// buffer size
 
 static short mix_buffer[ BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE ];
 static short reverb_buffer[ REVERB_BUF_LEN ];
-short buffer[BUFFER_SAMPLES*NUM_CHANNELS];
+short *apubuffer;
 static long reverb_len, reverb_idx, filt_l, filt_r;
 static long samples_remaining;
 
@@ -134,12 +134,12 @@ void DrawWaveform()
 	GPUSetWriteAddress(&s_vx, (uint32_t)writepage);
 	GPUSetScanoutAddress(&s_vx, (uint32_t)readpage);
 
-	// Clear screen to gray
+	// Clear screen to light magenta
 	uint32_t *writepageword = (uint32_t*)writepage;
 	for (uint32_t i=0;i<80*240;++i)
-		writepageword[i] = 0x17171717;
+		writepageword[i] = 0x50505050;
 
-	int16_t *src = (int16_t *)buffer;
+	int16_t *src = (int16_t *)apubuffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
 	{
 		int16_t L = src[x*2+0];
@@ -173,7 +173,7 @@ static long play_module( signed char *module )
 
 		// Set up buffer size for all future transfers
 		APUSetBufferSize(BUFFER_SAMPLES);
-		uint32_t pbuf = APUCurrentOutputBuffer();
+		uint32_t prevframe = APUFrame();
 
 		int playing = 1;
 		while( playing )
@@ -185,9 +185,9 @@ static long play_module( signed char *module )
 			// Anything above 19ms stalls this
 			__builtin_memset( mix_buffer, 0, BUFFER_SAMPLES * NUM_CHANNELS * OVERSAMPLE * sizeof( short ) );
 			micromod_get_audio( mix_buffer, count );
-			downsample( mix_buffer, buffer, BUFFER_SAMPLES * OVERSAMPLE );
-			crossfeed( buffer, BUFFER_SAMPLES );
-			reverb( buffer, BUFFER_SAMPLES );
+			downsample( mix_buffer, apubuffer, BUFFER_SAMPLES * OVERSAMPLE );
+			crossfeed( apubuffer, BUFFER_SAMPLES );
+			reverb( apubuffer, BUFFER_SAMPLES );
 
 			samples_remaining -= count;
 
@@ -199,14 +199,14 @@ static long play_module( signed char *module )
 			CFLUSH_D_L1;
 
 			// Fill current write buffer with new mix data
-			APUStartDMA((uint32_t)buffer);
+			APUStartDMA((uint32_t)apubuffer);
 			// Wait for the APU to finish playing back current read buffer
-			uint32_t cbuf;
+			uint32_t currframe;
 			do
 			{
-				cbuf = APUFrame();
-			} while (cbuf == pbuf);
-			pbuf = cbuf;
+				currframe = APUFrame();
+			} while (currframe == prevframe);
+			prevframe = currframe;
 			// Read buffer drained, swap to new read buffer
 			APUSwapBuffers();
 
@@ -255,11 +255,19 @@ int main()
 	GPUSetScanoutAddress(&s_vx, (uint32_t)s_framebufferB);
 	GPUSetDefaultPalette(&s_vx);
 
-	printf("Loading module\n");
+	apubuffer = (short*)APUAllocateBuffer(BUFFER_SAMPLES*NUM_CHANNELS*sizeof(short));
+	printf("Allocated APU mix buffer at 0x%.8x\n", (unsigned int)apubuffer);
 
+	printf("Loading and playing module test.mod\n");
 	PlayMODFile("sd:test.mod");
 
 	printf("Playback complete\n");
+
+	// Stop output
+	memset(apubuffer, 0, BUFFER_SAMPLES*NUM_CHANNELS*sizeof(short));
+	APUStartDMA((uint32_t)apubuffer);
+	APUSwapBuffers();
+	APUStartDMA((uint32_t)apubuffer);
 
 	return 0;
 }

@@ -23,10 +23,10 @@ SOURCES_doom_arch := \
 	../../../../SDK/core.c \
 	../../../../SDK/basesystem.c \
 	../../../../SDK/uart.c \
+	../../../../SDK/apu.c \
 	../../../../SDK/gpu.c \
 	../../../../SDK/dma.c \
 	../../../../SDK/xadc.c \
-	../../../../SDK/audio.c \
 	mini-printf.c \
 	d_main.c \
 	i_main.c \
