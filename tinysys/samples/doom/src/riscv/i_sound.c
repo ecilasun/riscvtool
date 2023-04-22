@@ -62,6 +62,8 @@ rcsid[] = "$Id: i_unix.c,v 1.5 1997/02/03 22:45:10 b1 Exp $";
 
 #include "doomdef.h"
 
+#include "core.h"
+
 // UNIX hack, to be removed.
 #ifdef SNDSERV
 // Separate sound server process.
@@ -680,6 +682,9 @@ I_SubmitSound(void)
     cbuf = APUCurrentOutputBuffer();
   } while (cbuf == pbuf);
   pbuf = cbuf;
+
+	// Make sure the writes are visible by the DMA
+	CFLUSH_D_L1;
 
   // We're currently playing the 'read' page, DMA writes data into the 'write' page...
   APUStartDMA((uint32_t)mixbuffer);

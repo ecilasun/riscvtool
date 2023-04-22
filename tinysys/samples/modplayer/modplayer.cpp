@@ -179,7 +179,7 @@ static long play_module( signed char *module )
 		int playing = 1;
 		while( playing )
 		{
-			const int count = BUFFER_SAMPLES * OVERSAMPLE;
+			int count = BUFFER_SAMPLES * OVERSAMPLE;
 			if( count > samples_remaining )
 				count = samples_remaining;
 
@@ -203,6 +203,9 @@ static long play_module( signed char *module )
 				cbuf = APUCurrentOutputBuffer();
 			} while (cbuf == pbuf);
 			pbuf = cbuf;
+
+			// Make sure the writes are visible by the DMA
+			CFLUSH_D_L1;
 
 			// We're currently playing the 'read' page, DMA writes data into the 'write' page...
 			APUStartDMA((uint32_t)buffer);
