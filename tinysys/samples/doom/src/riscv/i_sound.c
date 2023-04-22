@@ -676,20 +676,17 @@ I_SubmitSound(void)
   /*for(int i=0;i<SAMPLECOUNT;++i)
     *IO_AUDIOOUT = (mixbuffer[i*2+1]<<16) | mixbuffer[i*2+0];*/
 
+  // Fill current write buffer with new mix data
+  APUStartDMA((uint32_t)mixbuffer);
+  // Wait for the APU to finish playing back current read buffer
   uint32_t cbuf;
   do
   {
-    cbuf = APUCurrentOutputBuffer();
+    cbuf = APUFrame();
   } while (cbuf == pbuf);
   pbuf = cbuf;
-
-	// Make sure the writes are visible by the DMA
-	CFLUSH_D_L1;
-
-  // We're currently playing the 'read' page, DMA writes data into the 'write' page...
-  APUStartDMA((uint32_t)mixbuffer);
-  // ... and then we swap to the new 'read' page when playback reaches the last sample
-  APUSwapBuffers(SAMPLECOUNT-1);
+  // Read buffer drained, swap to new read buffer
+  APUSwapBuffers();
 }
 
 

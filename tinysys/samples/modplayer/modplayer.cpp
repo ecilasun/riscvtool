@@ -159,8 +159,6 @@ void DrawWaveform()
 	++cycle;
 }
 
-static uint32_t pbuf = 0xFFFFFFFF;
-
 static long play_module( signed char *module )
 {
 	long result;
@@ -175,6 +173,7 @@ static long play_module( signed char *module )
 
 		// Set up buffer size for all future transfers
 		APUSetBufferSize(BUFFER_SAMPLES);
+		uint32_t pbuf = APUCurrentOutputBuffer();
 
 		int playing = 1;
 		while( playing )
@@ -196,21 +195,20 @@ static long play_module( signed char *module )
 			// h/w loops over (wordcount/4)-1 sample addresses and reads blocks of 16 bytes each time
 			// There are two audio pages; every call to APUSwapBuffers() switches the read/write pages
 
-			// Wait for a page-flip to occur
-			uint32_t cbuf;
-			do
-			{
-				cbuf = APUCurrentOutputBuffer();
-			} while (cbuf == pbuf);
-			pbuf = cbuf;
-
 			// Make sure the writes are visible by the DMA
 			CFLUSH_D_L1;
 
-			// We're currently playing the 'read' page, DMA writes data into the 'write' page...
+			// Fill current write buffer with new mix data
 			APUStartDMA((uint32_t)buffer);
-			// ... and then we swap to the new 'read' page when playback reaches the last sample
-			APUSwapBuffers(BUFFER_SAMPLES-1);
+			// Wait for the APU to finish playing back current read buffer
+			uint32_t cbuf;
+			do
+			{
+				cbuf = APUFrame();
+			} while (cbuf == pbuf);
+			pbuf = cbuf;
+			// Read buffer drained, swap to new read buffer
+			APUSwapBuffers();
 
 			if( samples_remaining <= 0 || result != 0 )
 				playing = 0;
