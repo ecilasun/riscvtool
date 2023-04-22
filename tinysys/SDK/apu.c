@@ -14,7 +14,10 @@ uint8_t *APUAllocateBuffer(const uint32_t _size)
 void APUSetBufferSize(uint32_t audioBufferSize)
 {
     *IO_AUDIOOUT = APUCMD_BUFFERSIZE;
-    *IO_AUDIOOUT = audioBufferSize;
+    // NOTE: Hardware requires this to be in words, minus one
+    // 16byte DMA count is therefore (audioBufferSize-1)>>2
+    // e.g. for a 512 byte buffer, length would be sent as 511 and burst count would be 127
+    *IO_AUDIOOUT = audioBufferSize-1;
 }
 
 void APUStartDMA(uint32_t audioBufferAddress16byteAligned)
