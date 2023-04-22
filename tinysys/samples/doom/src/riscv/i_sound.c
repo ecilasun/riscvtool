@@ -665,13 +665,26 @@ void I_UpdateSound( void )
 // Mixing now done synchronous, and
 //  only output be done asynchronous?
 //
+static uint32_t pbuf = 0xFFFFFFFF;
 void
 I_SubmitSound(void)
 {
   // Write it to DSP device.
   //write(audio_fd, mixbuffer, SAMPLECOUNT*BUFMUL);
-  for(int i=0;i<SAMPLECOUNT;++i)
-    *IO_AUDIOOUT = (mixbuffer[i*2+1]<<16) | mixbuffer[i*2+0];
+  /*for(int i=0;i<SAMPLECOUNT;++i)
+    *IO_AUDIOOUT = (mixbuffer[i*2+1]<<16) | mixbuffer[i*2+0];*/
+
+  uint32_t cbuf;
+  do
+  {
+    cbuf = APUCurrentOutputBuffer();
+  } while (cbuf == pbuf);
+  pbuf = cbuf;
+
+  // We're currently playing the 'read' page, DMA writes data into the 'write' page...
+  APUStartDMA((uint32_t)mixbuffer);
+  // ... and then we swap to the new 'read' page when playback reaches the last sample
+  APUSwapBuffers(SAMPLECOUNT-1);
 }
 
 
@@ -822,6 +835,8 @@ I_InitSound()
   // Now initialize mixbuffer with zero.
   for ( i = 0; i< MIXBUFFERSIZE; i++ )
     mixbuffer[i] = 0;
+
+  APUSetBufferSize(SAMPLECOUNT);
 
   // Finished initialization.
   fprintf(stderr, "I_InitSound: sound module ready\n");

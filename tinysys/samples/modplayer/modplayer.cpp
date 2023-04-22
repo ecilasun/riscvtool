@@ -134,10 +134,10 @@ void DrawWaveform()
 	GPUSetWriteAddress(&s_vx, (uint32_t)writepage);
 	GPUSetScanoutAddress(&s_vx, (uint32_t)readpage);
 
-	// Clear screen to black
+	// Clear screen to gray
 	uint32_t *writepageword = (uint32_t*)writepage;
 	for (uint32_t i=0;i<80*240;++i)
-		writepageword[i] = 0x00000000;
+		writepageword[i] = 0x17171717;
 
 	int16_t *src = (int16_t *)buffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
@@ -150,14 +150,16 @@ void DrawWaveform()
 		R = R/256;
 		R = R < -110 ? -110 : R;
 		R = R > 110 ? 110 : R;
-		writepage[x + (L+110)*320] = 0x0F; // White
-		writepage[x + (R+110)*320] = 0x04; // Red
+		writepage[x + (L+110)*320] = 0x37; // Blue
+		writepage[x + (R+110)*320] = 0x28; // Red
 	}
 
     CFLUSH_D_L1;
 
 	++cycle;
 }
+
+static uint32_t pbuf = 0xFFFFFFFF;
 
 static long play_module( signed char *module )
 {
@@ -171,10 +173,13 @@ static long play_module( signed char *module )
 		printf( "Song Duration: %li seconds.\n", samples_remaining / ( SAMPLING_FREQ * OVERSAMPLE ) );
 		fflush( NULL );
 
+		// Set up buffer size for all future transfers
+		APUSetBufferSize(BUFFER_SAMPLES);
+
 		int playing = 1;
 		while( playing )
 		{
-			int count = BUFFER_SAMPLES * OVERSAMPLE;
+			const int count = BUFFER_SAMPLES * OVERSAMPLE;
 			if( count > samples_remaining )
 				count = samples_remaining;
 
@@ -187,15 +192,22 @@ static long play_module( signed char *module )
 
 			samples_remaining -= count;
 
-			// Audio FIFO will be drained at playback rate and
-			// the CPU will stall to wait if the FIFO is full.
-			// Therefore, we do not need to worry about synchronization.
-			// Ideally we'd like to send only a memory address here
-			// and let the audio hardware burst-read from it
-			// when it needs to.
-			uint32_t *src = (uint32_t *)buffer;
-			for (uint32_t i=0; i<BUFFER_SAMPLES; ++i)
-				*IO_AUDIOOUT = src[i];
+			// NOTE: Buffer size is in multiples of 32bit words
+			// h/w loops over (wordcount/4)-1 sample addresses and reads blocks of 16 bytes each time
+			// There are two audio pages; every call to APUSwapBuffers() switches the read/write pages
+
+			// Wait for a page-flip to occur
+			uint32_t cbuf;
+			do
+			{
+				cbuf = APUCurrentOutputBuffer();
+			} while (cbuf == pbuf);
+			pbuf = cbuf;
+
+			// We're currently playing the 'read' page, DMA writes data into the 'write' page...
+			APUStartDMA((uint32_t)buffer);
+			// ... and then we swap to the new 'read' page when playback reaches the last sample
+			APUSwapBuffers(BUFFER_SAMPLES-1);
 
 			if( samples_remaining <= 0 || result != 0 )
 				playing = 0;
@@ -205,6 +217,8 @@ static long play_module( signed char *module )
 	}
 	else
 		printf("micromod_initialise failed\n");
+
+	APUStop();
 
 	return result;
 }

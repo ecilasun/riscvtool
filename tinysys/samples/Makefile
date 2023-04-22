@@ -26,6 +26,7 @@ folders = \
 	jpegview \
 	led \
 	audio \
+	tasks \
 
 # Rules
 
