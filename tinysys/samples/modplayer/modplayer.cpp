@@ -220,8 +220,6 @@ static long play_module( signed char *module )
 	else
 		printf("micromod_initialise failed\n");
 
-	APUStop();
-
 	return result;
 }
 
@@ -264,11 +262,15 @@ int main()
 
 	printf("Playback complete\n");
 
-	// Stop output
+	// Stop audio output
+	APUStop();
+
+	// NOTE: Use this until APUStop() is implemented
 	memset(apubuffer, 0, BUFFER_SAMPLES*NUM_CHANNELS*sizeof(short));
 	APUStartDMA((uint32_t)apubuffer);
 	APUSwapBuffers();
 	APUStartDMA((uint32_t)apubuffer);
+	APUSwapBuffers();
 
 	return 0;
 }
