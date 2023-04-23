@@ -8,6 +8,13 @@
 #define APUCMD_SWAP        0x00000003
 #define APUCMD_SETRATE     0x00000004
 
+enum EAPUSampleRate
+{
+	ASR_44100_Hz = 0,	// 44.1 KHz
+	ASR_22050_Hz = 1,	// 22.05 KHz
+	ASR_11025_Hz = 2	// 11.025 KHz
+};
+
 extern volatile uint32_t *IO_AUDIOOUT;
 
 // Utilities
@@ -17,6 +24,6 @@ void APUSetBufferSize(uint32_t audioBufferSize);
 void APUStartDMA(uint32_t audioBufferAddress16byteAligned);
 void APUStop();
 void APUSwapBuffers();
-void APUSetRate(uint32_t repeatSampleCount);
+void APUSetSampleRate(enum EAPUSampleRate sampleRate);
 
 inline uint32_t APUFrame() { return *IO_AUDIOOUT; }

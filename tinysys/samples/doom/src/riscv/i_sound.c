@@ -841,7 +841,7 @@ I_InitSound()
     mixbuffer[i] = 0;
 
   APUSetBufferSize(SAMPLECOUNT);
-  APUSetRate(4); // 44KHz->11KHz
+  APUSetSampleRate(ASR_11025_Hz);
 
   // Finished initialization.
   fprintf(stderr, "I_InitSound: sound module ready\n");

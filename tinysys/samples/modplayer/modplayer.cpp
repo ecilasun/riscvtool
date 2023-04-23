@@ -173,6 +173,7 @@ static long play_module( signed char *module )
 
 		// Set up buffer size for all future transfers
 		APUSetBufferSize(BUFFER_SAMPLES);
+		APUSetSampleRate(ASR_44100_Hz);
 		uint32_t prevframe = APUFrame();
 
 		int playing = 1;

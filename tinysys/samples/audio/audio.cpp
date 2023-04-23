@@ -20,15 +20,16 @@ int main()
 	UARTWrite("\n");
 
 	APUSetBufferSize(BUFFER_SAMPLES);
+	APUSetSampleRate(ASR_22050_Hz);
 	uint32_t prevframe = APUFrame();
 
 	float offset = 0.f;
 	do{
-		// Generate a sin and cos wave for each side
+		// Generate individual waves for each channel
 		for (uint32_t i=0;i<BUFFER_SAMPLES;++i)
 		{
-			apubuffer[i*NUM_CHANNELS+0] = short(16384.f*sinf(offset+3.1415927f*float(i)/512.f));
-			apubuffer[i*NUM_CHANNELS+1] = short(16384.f*cosf(offset+3.1415927f*float(i)/512.f));
+			apubuffer[i*NUM_CHANNELS+0] = short(16384.f*sinf(offset+3.1415927f*float(i)/128.f));
+			apubuffer[i*NUM_CHANNELS+1] = short(16384.f*cosf(offset+3.1415927f*float(i*2)/384.f));
 		}
 
 		// Make sure the writes are visible by the DMA

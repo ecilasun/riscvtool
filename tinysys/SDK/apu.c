@@ -36,8 +36,8 @@ void APUSwapBuffers()
     *IO_AUDIOOUT = APUCMD_SWAP;
 }
 
-void APUSetRate(uint32_t repeatSampleCount)
+void APUSetSampleRate(enum EAPUSampleRate sampleRate)
 {
     *IO_AUDIOOUT = APUCMD_SETRATE;
-    *IO_AUDIOOUT = repeatSampleCount;
+    *IO_AUDIOOUT = (uint32_t)sampleRate;
 }
