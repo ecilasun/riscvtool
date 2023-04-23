@@ -678,15 +678,15 @@ I_SubmitSound(void)
 
   // Fill current write buffer with new mix data
   APUStartDMA((uint32_t)mixbuffer);
-  // Wait for the APU to finish playing back current read buffer
-  uint32_t cbuf;
-  do
+
+  // This is a tad different; if APU's not done we do a roundabout and
+  // come back next time with fresh samples instead of waiting
+  uint32_t cbuf = APUFrame();
+  if (cbuf != pbuf)
   {
-    cbuf = APUFrame();
-  } while (cbuf == pbuf);
-  pbuf = cbuf;
-  // Read buffer drained, swap to new read buffer
-  APUSwapBuffers();
+    pbuf = cbuf;
+    APUSwapBuffers();
+  }
 }
 
 
@@ -810,6 +810,10 @@ I_InitSound()
   else
     fprintf(stderr, "Could not play signed 16 data\n");*/
 
+  mixbuffer = (short*)APUAllocateBuffer(MIXBUFFERSIZE);
+  APUSetBufferSize((SAMPLECOUNT*BUFMUL) / sizeof(uint32_t));
+  APUSetSampleRate(ASR_11025_Hz);
+
   fprintf(stderr, " configured audio device\n" );
 
 
@@ -834,14 +838,9 @@ I_InitSound()
 
   fprintf( stderr, " pre-cached all sound data\n");
 
-  mixbuffer = (short*)APUAllocateBuffer(MIXBUFFERSIZE*sizeof(short));
-
   // Now initialize mixbuffer with zero.
   for ( i = 0; i< MIXBUFFERSIZE; i++ )
     mixbuffer[i] = 0;
-
-  APUSetBufferSize(SAMPLECOUNT);
-  APUSetSampleRate(ASR_11025_Hz);
 
   // Finished initialization.
   fprintf(stderr, "I_InitSound: sound module ready\n");
