@@ -811,7 +811,7 @@ I_InitSound()
     fprintf(stderr, "Could not play signed 16 data\n");*/
 
   mixbuffer = (short*)APUAllocateBuffer(MIXBUFFERSIZE);
-  APUSetBufferSize((SAMPLECOUNT*BUFMUL) / sizeof(uint32_t));
+  APUSetBufferSize(MIXBUFFERSIZE / sizeof(uint32_t));
   APUSetSampleRate(ASR_11025_Hz);
 
   fprintf(stderr, " configured audio device\n" );
@@ -839,7 +839,7 @@ I_InitSound()
   fprintf( stderr, " pre-cached all sound data\n");
 
   // Now initialize mixbuffer with zero.
-  for ( i = 0; i< MIXBUFFERSIZE; i++ )
+  for ( i = 0; i< SAMPLECOUNT; i++ )
     mixbuffer[i] = 0;
 
   // Finished initialization.
