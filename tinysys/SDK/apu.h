@@ -7,6 +7,7 @@
 #define APUCMD_STOP        0x00000002
 #define APUCMD_SWAP        0x00000003
 #define APUCMD_SETRATE     0x00000004
+#define APUCMD_OPL2CMD     0x00000005
 
 enum EAPUSampleRate
 {
@@ -25,5 +26,6 @@ void APUStartDMA(uint32_t audioBufferAddress16byteAligned);
 void APUStop();
 void APUSwapBuffers();
 void APUSetSampleRate(enum EAPUSampleRate sampleRate);
+void APUSendOPL2Cmd(uint8_t reg, uint8_t val);
 
 inline uint32_t APUFrame() { return *IO_AUDIOOUT; }
