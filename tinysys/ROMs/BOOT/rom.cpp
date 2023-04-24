@@ -10,8 +10,10 @@
 #define VERSIONSTRING "v1.000"
 
 static char s_execName[64];
+static char s_execParam[64];
 static char s_cmdString[128];
 static char s_currentPath[64];
+static uint32_t s_execParamCount = 1;
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 static int s_refreshConsoleOut = 1;
@@ -29,18 +31,18 @@ void RunExecTask()
 {
 	// Start the loaded executable
 	asm volatile(
-		"li a5, 1;"
-		"addi sp, sp, -12;"
-		"sw a5, 0(sp);"		// Store argc (1)
+		"addi sp, sp, -16;"
+		"sw %3, 0(sp);"		// Store argc
 		"sw %1, 4(sp);"		// Store argv[1] (path to exec)
-		"sw zero, 8(sp);"	// Store argv[2] (nullptr)
+		"sw %2, 8(sp);"		// Store argv[2] (exec params)
+		"sw zero, 12(sp);"	// Store argv[3] (nullptr)
 		"lw s0, %0;"        // Target branch address
 		"jalr s0;"          // Branch to the entry point
-		"addi sp, sp, 12;"	// We most likely won't return here
+		"addi sp, sp, 16;"	// We most likely won't return here
 		: "=m" (s_startAddress)
-		: "r" (s_execName)
+		: "r" (s_execName), "r" (s_execParam), "r" (s_execParamCount)
 		// Clobber list
-		: "a5", "s0"
+		: "s0"
 	);
 
 	// NOTE: Execution should never reach here since the ELF will invoke ECALL(0x5D) to quit
@@ -184,6 +186,16 @@ void ExecuteCmd(char *_cmd)
 			// First parameter is excutable name
 			s_startAddress = LoadExecutable(filename, true);
 			strcpy(s_execName, filename);
+
+			const char *param = strtok(nullptr, " ");
+			// Change working directory
+			if (!param)
+				s_execParamCount = 1;
+			else
+			{
+				strncpy(s_execParam, param, 64);
+				s_execParamCount = 2;
+			}
 
 			// TODO: Push argc/argv onto stack
 
