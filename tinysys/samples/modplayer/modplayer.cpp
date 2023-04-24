@@ -245,7 +245,7 @@ void PlayMODFile(const char *fname)
 	}
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	s_framebufferB = GPUAllocateBuffer(320*240);
 	s_framebufferA = GPUAllocateBuffer(320*240);
@@ -257,8 +257,19 @@ int main()
 	apubuffer = (short*)APUAllocateBuffer(BUFFER_SAMPLES*NUM_CHANNELS*sizeof(short));
 	printf("Allocated APU mix buffer at 0x%.8x\n", (unsigned int)apubuffer);
 
-	printf("Loading and playing module test.mod\n");
-	PlayMODFile("sd:test.mod");
+	printf("debug: argc:%d\n", argc);
+	for (int i=0;i<argc;++i)
+		printf("debug: argv[%d]:%s\n", i, argv[i]);
+	if (argc<=1)
+	{
+		printf("Loading and playing module test.mod\n");
+		PlayMODFile("sd:test.mod");
+	}
+	else
+	{
+		printf("Loading and playing module %s\n", argv[1]);
+		PlayMODFile(argv[1]);
+	}
 
 	printf("Playback complete\n");
 

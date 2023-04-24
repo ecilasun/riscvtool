@@ -7,8 +7,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v0.999"
+#define VERSIONSTRING "v1.000"
 
+static char s_execName[64];
 static char s_cmdString[128];
 static char s_currentPath[64];
 static int32_t s_cmdLen = 0;
@@ -28,9 +29,18 @@ void RunExecTask()
 {
 	// Start the loaded executable
 	asm volatile(
+		"li a5, 1;"
+		"addi sp, sp, -12;"
+		"sw a5, 0(sp);"		// Store argc (1)
+		"sw %1, 4(sp);"		// Store argv[1] (path to exec)
+		"sw zero, 8(sp);"	// Store argv[2] (nullptr)
 		"lw s0, %0;"        // Target branch address
 		"jalr s0;"          // Branch to the entry point
-		: "=m" (s_startAddress) : : 
+		"addi sp, sp, 12;"	// We most likely won't return here
+		: "=m" (s_startAddress)
+		: "r" (s_execName)
+		// Clobber list
+		: "a5", "s0"
 	);
 
 	// NOTE: Execution should never reach here since the ELF will invoke ECALL(0x5D) to quit
@@ -173,13 +183,16 @@ void ExecuteCmd(char *_cmd)
 
 			// First parameter is excutable name
 			s_startAddress = LoadExecutable(filename, true);
+			strcpy(s_execName, filename);
+
+			// TODO: Push argc/argv onto stack
 
 			// If we succeeded in loading the executable, the trampoline task can branch into it.
 			// NOTE: Without code relocation or virtual memory, two executables will ovelap when loaded
 			// even though each gets a new task slot assigned.
 			// This will cause corruption of the runtime environment.
 			if (s_startAddress != 0x0)
-				TaskAdd(tctx, command, RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
+				TaskAdd(tctx, command, RunExecTask, HALF_SECOND_IN_TICKS);
 		}
 	}
 }
@@ -205,18 +218,25 @@ int main()
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
 	LEDSetState(0xB);
-	TaskAdd(taskctx, "kernelStub", _stubTask, ONE_MILLISECOND_IN_TICKS);
+	TaskAdd(taskctx, "kernelStub", _stubTask, HALF_MILLISECOND_IN_TICKS);
+
+	LEDSetState(0xA);
 
 	// Start the timer and hardware interrupt handlers.
 	// This is where all task switching and other interrupt handling occurs
-	// TODO: Software debugger will run here in the UART interrupt handler
-	// and modify task memory to aid in debugging via gdb serial interface.
-	LEDSetState(0xA);
+
+	// NOTE: Software debugger will run in the UART interrupt handler
+	// and modify task memory via commands received from gdb remote protocol.
+
 	InstallISR();
 
+	// Default path
 	strncpy(s_currentPath, "sd:", 64);
 
+	// Ready to start, silence LEDs
 	LEDSetState(0x0);
+
+	// Main CLI loop
 	while (1)
 	{
 		// Echo all of the characters we can find back to the sender
