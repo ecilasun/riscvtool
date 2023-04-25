@@ -44,6 +44,12 @@ void APUSetSampleRate(enum EAPUSampleRate sampleRate)
 
 void APUSendOPL2Cmd(uint8_t reg, uint8_t val)
 {
-    *IO_AUDIOOUT = APUCMD_OPL2CMD;;
+    *IO_AUDIOOUT = APUCMD_OPL2CMD;
     *IO_AUDIOOUT = (reg << 8) | val;
+}
+
+void APUSendOPL2Wait(uint16_t wait)
+{
+    *IO_AUDIOOUT = APUCMD_OPL2WAIT;
+    *IO_AUDIOOUT = wait;
 }
