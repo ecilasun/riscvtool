@@ -35,12 +35,12 @@ uint64_t E32ReadCycles()
    return now;
 }
 
-void E32Sleep(uint64_t ms)
+void E32Sleep(uint64_t ticks)
 {
    // Start time is now in ticks
    uint64_t tstart = E32ReadTime();
    // End time is now plus ms in ticks
-   uint64_t tend = tstart + ms*ONE_MILLISECOND_IN_TICKS;
+   uint64_t tend = tstart + ticks;
    while (E32ReadTime() < tend) { }
 }
 
