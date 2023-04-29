@@ -27,6 +27,7 @@ folders = \
 	led \
 	audio \
 	tasks \
+	vgm \
 
 # Rules
 
