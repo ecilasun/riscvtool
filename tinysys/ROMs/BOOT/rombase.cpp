@@ -1,4 +1,5 @@
 #include "rombase.h"
+#include "spi.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -6,7 +7,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static int havedrive = 0;
 static FATFS Fs;
 
 void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uint32_t _value, uint32_t _PC)
@@ -52,32 +52,25 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uin
 
 uint32_t MountDrive()
 {
-	if (havedrive)
-		return havedrive;
-
 	// Attempt to mount file system on micro-SD card
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt!=FR_OK)
 	{
-		havedrive = 0;
 		ReportError(32, "File system error", mountattempt, 0, 0);
-	}
-	else
-	{
-		havedrive = 1;
+		return 0;
 	}
 
-	return havedrive;
+	UARTWrite("sd: mounted\n");
+
+	return 1;
 }
 
 void UnmountDrive()
 {
-	if (havedrive)
-	{
-		f_mount(nullptr, "sd:", 1);
-		free(&Fs);
-		havedrive = 0;
-	}
+	f_mount(nullptr, "sd:", 1);
+	free(&Fs);
+
+	UARTWrite("sd: unmounted\n");
 }
 
 void ListFiles(const char *path)
@@ -265,6 +258,18 @@ void HandleUART()
 	// *IO_UARTTX = 0x11;
 }
 
+void HandleSDCardDetect()
+{
+	uint32_t cardState = *IO_CARDDETECT;
+	/*UARTWriteHex(cardState);
+	UARTWrite("\n");*/
+
+	if (cardState == 0x0)	// Removed
+		UnmountDrive();
+	else					// Inserted
+		MountDrive();
+}
+
 void TaskDebugMode(uint32_t _mode)
 {
 	g_taskctx.debugMode = _mode;
@@ -381,10 +386,16 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					// Handle in any arbitrary priority here
 					uint32_t hwid = read_csr(0xFFF);
 
+					// TODO: USB host, DMA completion, push button input etc
+
 					if (hwid&1)
 						HandleUART();
-					/*else if (hwid&2)
-						HandleUSBHost();*/
+					else if (hwid&2)
+						HandleSDCardDetect();
+					/*else if (hwid&4)
+						Handle...();*/
+					/*else if (hwid&8)
+						Handle...();*/
 					else
 						ReportError(32, "Unknown hardware device", code, hwid, PC);
 				}

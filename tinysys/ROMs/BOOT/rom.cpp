@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.001"
+#define VERSIONSTRING "v1.002"
 
 static char s_execName[64];
 static char s_execParam[64];
@@ -17,7 +17,6 @@ static uint32_t s_execParamCount = 1;
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 static int s_refreshConsoleOut = 1;
-static int s_driveMounted = 0;
 
 void _stubTask() {
 	// NOTE: This task won't actually run
@@ -68,6 +67,14 @@ void ExecuteCmd(char *_cmd)
 	if (!strcmp(command, "dir"))
 	{
 		ListFiles(s_currentPath);
+	}
+	else if (!strcmp(command, "mount"))
+	{
+		MountDrive();
+	}
+	else if (!strcmp(command, "umount"))
+	{
+		UnmountDrive();
 	}
 	else if (!strcmp(command, "cls"))
 	{
@@ -162,6 +169,8 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("prc: Show process info\n");
 		UARTWrite("gdb: Enter gdb server mode\n");
 		UARTWrite("ver: Show version info\n");
+		UARTWrite("mount: mount drive sd:\n");
+		UARTWrite("umount: unmount drive sd:\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\n");
 		UARTWrite("CTRL+C terminates current program\n");
 		UARTWrite("\033[0m\n");
@@ -222,7 +231,7 @@ int main()
 	// Attempt to mount the FAT volume on micro sd card
 	// NOTE: Loaded executables do not have to worry about this part
 	LEDSetState(0xD);
-	s_driveMounted = MountDrive();
+	MountDrive();
 
 	// Create task context
 	LEDSetState(0xC);

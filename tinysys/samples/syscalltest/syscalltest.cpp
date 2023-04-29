@@ -64,10 +64,20 @@ int main()
 			close (handle);
 		}
 		else
-			printf("oops, can't open sd:doom1.wad\n");
+			printf("Oops, can't open sd:doom1.wad\n");
 	}
 	else
 		printf("File's not there.\n");
+
+	printf("Let's see how writing files go\n");
+	fp = fopen("testout.txt", "w");
+	if (fp)
+	{
+		fprintf(fp, "Hello, world!\n");
+		fclose(fp);
+	}
+	else
+		printf("Failed to open file for write.\n");
 
 	return 0;
 }
