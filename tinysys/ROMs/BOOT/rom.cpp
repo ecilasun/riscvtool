@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.000"
+#define VERSIONSTRING "v1.001"
 
 static char s_execName[64];
 static char s_execParam[64];

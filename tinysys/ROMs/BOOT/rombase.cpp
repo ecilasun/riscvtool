@@ -376,7 +376,18 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				if (g_taskctx.debugMode)
 					gdb_handler(&g_taskctx);
 				else
-					HandleUART();
+				{
+					// Bit mask of devices causing the current interrupt
+					// Handle in any arbitrary priority here
+					uint32_t hwid = read_csr(0xFFF);
+
+					if (hwid&1)
+						HandleUART();
+					/*else if (hwid&2)
+						HandleUSBHost();*/
+					else
+						ReportError(32, "Unknown hardware device", code, hwid, PC);
+				}
 
 				// TODO: Distinguish hardware devices via mtval
 				//if (value & 0x00000001) HandleUART();
@@ -387,7 +398,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			default:
 			{
-				ReportError(32, "Unknown hardware interrupt", code, value, PC);
+				ReportError(32, "Unknown interrupt", code, 0, PC);
 
 				// Put core to endless sleep
 				while(1) { asm volatile("wfi;");}
