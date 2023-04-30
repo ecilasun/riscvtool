@@ -1,5 +1,9 @@
+#define _GNU_SOURCE 1
+
 #include <inttypes.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -17,7 +21,9 @@ typedef struct
 
 int main()
 {
-	printf("This is fun!\n");
+	/*char *pathbuf = getcwd(nullptr, PATH_MAX);
+	if (pathbuf)
+		printf("Current work directory:%s\n", pathbuf);*/
 
 	FILE *fp = fopen("sd:test.jpg", "rb");
 	if (fp)
@@ -70,7 +76,7 @@ int main()
 		printf("File's not there.\n");
 
 	printf("Let's see how writing files go\n");
-	fp = fopen("testout.txt", "w");
+	fp = fopen("sd:\testout.txt", "w");
 	if (fp)
 	{
 		fprintf(fp, "Hello, world!\n");

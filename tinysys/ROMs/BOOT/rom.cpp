@@ -252,7 +252,7 @@ int main()
 	InstallISR();
 
 	// Default path
-	strncpy(s_currentPath, "sd:", 64);
+	strncpy(s_currentPath, "sd:\\", 64);
 
 	// Ready to start, silence LEDs
 	LEDSetState(0x0);
