@@ -19,7 +19,6 @@ folders = \
 	memtest \
 	syscalltest \
 	dmatest \
-	usbhost \
 	tinyrtty \
 	tinyrt \
 	mandelbrot \
@@ -28,6 +27,7 @@ folders = \
 	audio \
 	tasks \
 	vgm \
+	usbc \
 
 # Rules
 

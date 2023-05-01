@@ -1,5 +1,5 @@
 #include "rombase.h"
-#include "spi.h"
+#include "sdcard.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -270,6 +270,11 @@ void HandleSDCardDetect()
 		MountDrive();
 }
 
+void HandleUSBC()
+{
+	UARTWrite(".");
+}
+
 void TaskDebugMode(uint32_t _mode)
 {
 	g_taskctx.debugMode = _mode;
@@ -392,12 +397,17 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						HandleUART();
 					else if (hwid&2)
 						HandleSDCardDetect();
-					/*else if (hwid&4)
-						Handle...();*/
+					else if (hwid&4)
+						HandleUSBC();
 					/*else if (hwid&8)
 						Handle...();*/
 					else
+					{
 						ReportError(32, "Unknown hardware device", code, hwid, PC);
+						// Put core to endless sleep
+						while(1) { asm volatile("wfi;");}
+						break;
+					}
 				}
 
 				// TODO: Distinguish hardware devices via mtval
@@ -409,7 +419,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			default:
 			{
-				ReportError(32, "Unknown interrupt", code, 0, PC);
+				ReportError(32, "Unknown interrupt type", code, 0, PC);
 
 				// Put core to endless sleep
 				while(1) { asm volatile("wfi;");}

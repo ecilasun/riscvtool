@@ -1,9 +1,11 @@
 #include "basesystem.h"
-#include "spi.h"
 #include "sdcard.h"
 #include "uart.h"
 #include "leds.h"
 #include <stdio.h>
+
+volatile uint8_t *IO_SPIRXTX = (volatile uint8_t* )0x80003000; // SPI read/write port
+volatile uint8_t *IO_CARDDETECT = (volatile uint8_t* )0x80003004; // SDCard insert/remove detect
 
 typedef enum {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */
