@@ -1,5 +1,6 @@
 #include "rombase.h"
 #include "sdcard.h"
+#include "usbc.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -272,7 +273,44 @@ void HandleSDCardDetect()
 
 void HandleUSBC()
 {
-	UARTWrite(".");
+	uint32_t currLED = LEDGetState();
+
+	uint32_t itest1 = USBReadByte(rEPIRQ);
+	uint32_t itest2 = USBReadByte(rUSBIRQ);
+
+	if (itest1 & bmSUDAVIRQ)
+	{
+		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clead SUDAV irq
+		// do_setup();
+	}
+
+	if (itest1 & bmIN3BAVIRQ)
+	{
+		currLED |= 0x4;
+		// do_in3();
+	}
+
+	if (itest2 & bmSUSPIRQ) // hold suspend for 3ms
+	{
+		USBWriteByte(rUSBIRQ, bmSUDAVIRQ|bmBUSACTIRQ);
+		// suspended = 1;
+	}
+
+	if (itest2 & bmURESIRQ) // bus reset
+	{
+		currLED |= 0x8;
+		USBWriteByte(rUSBIRQ, bmURESIRQ);
+	}
+
+	if (itest2 & bmURESDNIRQ) // bus reset light off
+	{
+		currLED &= ~0x8;
+		USBWriteByte(rUSBIRQ, bmURESDNIRQ);
+		// suspended = 0;
+		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE); // enable irqs
+	}
+
+	LEDSetState(currLED);
 }
 
 void TaskDebugMode(uint32_t _mode)
