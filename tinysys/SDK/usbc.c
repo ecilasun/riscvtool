@@ -2,74 +2,38 @@
 #include "basesystem.h"
 
 volatile uint32_t *IO_USBCTRX = (volatile uint32_t* ) 0x80007000; // Receive fifo
-volatile uint32_t *IO_USBCCSn = (volatile uint32_t* ) 0x80007004; // CSn wire
+volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) 0x80007004; // Output FIFO state
 
 uint8_t USBWriteByte(uint8_t command, uint8_t data)
 {
-    uint32_t readresA = 0;
-    uint32_t readresB = 0;
+    command |= 0x02; // set write bit
 
-    command |= 0x02;                         // set write bit
-
-    //UARTWrite("W");
-    *IO_USBCCSn = 0x0;
-    //MAX_ASSERT_CS;
-
-    //MAX_USART.STATUS = USART_TXCIF_bm;     // clear TX-complete flag
-    //UARTWrite("C");
-    *IO_USBCTRX = command;                   // send command byte
-    //UARTWrite("D");
-    *IO_USBCTRX = data;                      // send data
+    // Hardware sets CSn low for two bytes and brings it back high
+    *IO_USBCTRX = command;
+    *IO_USBCTRX = data;
 
     //waitForTxComplete();
+    while (*IO_USBCSTA!=0) {}
     E32Sleep(1);
 
-    //MAX_RELEASE_CS;
-    *IO_USBCCSn = 0x1;
-
-    //UARTWrite("e");
-
-    //UARTWrite("H:");
-    uint32_t cntr = 0;
-    uint32_t R = 0xFF;
-    while(R==0xFF && (cntr++<255)) { R=*IO_USBCTRX; }
-
-    readresA = R;           // status byte
-    readresB = *IO_USBCTRX; // discard dummy byte
-
-    //UARTWriteHexByte(readresA);
-    //UARTWrite("\n");
+    volatile uint32_t readresA = *IO_USBCTRX; // status byte - R
+    volatile uint32_t readresB = *IO_USBCTRX; // discard dummy byte
 
     return readresA;
 }
 
 uint8_t USBReadByte(uint8_t command)
 {
-    volatile uint32_t readresA = 0;
-    volatile uint32_t readresB = 0;
-
-    //MAX_ASSERT_CS;
-    //UARTWrite("R:");
-    *IO_USBCCSn = 0x0;
-    //MAX_USART.DATA = command;                   // send command byte
-    //MAX_USART.DATA = 0;                         // dummy value for clocking in received data
+    // Hardware sets CSn low for two bytes and brings it back high
     *IO_USBCTRX = command;
     *IO_USBCTRX = 0;
 
-    /*UARTWrite("H:");
-    uint32_t cntr = 0;
-    while(*IO_USBCTRX==0xFF && (cntr++<255)) { }*/
     //waitForTxComplete();
+    while (*IO_USBCSTA!=0) {}
+    E32Sleep(1);
 
-    //MAX_RELEASE_CS;
-    *IO_USBCCSn = 0x1;
-    //statusF = MAX_USART.DATA;                   // update status byte
-
-    readresA = *IO_USBCTRX; // status
-    readresB = *IO_USBCTRX; // return value
-
-    //UARTWriteHexByte(readresB);
-    //UARTWrite("\n");
+    volatile uint32_t readresA = *IO_USBCTRX; // status unused
+    volatile uint32_t readresB = *IO_USBCTRX; // return value
 
     return readresB;
 }

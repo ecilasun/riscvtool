@@ -2,38 +2,51 @@
 #include "uart.h"
 #include "usbc.h"
 
-int main()
+int main(int argc, char *argv[])
 {
     UARTWrite("USB-C test\n");
 
-    USBInit();
-
-    UARTWrite("Something should happen now...\n");
-
-    /*while (1)
+    if (argc>1)
     {
-        //...;
-    }*/
-
-    /*UARTWriteHexByte(USBCTxRx(rPINCTL));
-    UARTWriteHexByte(USBCTxRx(bmFDUPSPI | bmINTLEVEL)); // Full duplex
-
-    UARTWriteHexByte(USBCTxRx(rUSBCTL)); // Chip reset
-    UARTWriteHexByte(USBCTxRx(bmCHIPRES));
-
-    UARTWriteHexByte(USBCTxRx(rUSBCTL)); // Chip idle
-    UARTWriteHexByte(USBCTxRx(0));
-
-    USBCTxRx(rUSBCTL); // Connect
-    USBCTxRx(bmCONNECT);
-
-    uint32_t wr = 0x1;
-    for (uint32_t i=0;i<8;++i)
+        UARTWrite("Bringing up USB-C\n");
+        USBInit();
+    }
+    else
     {
-        UARTWriteHexByte(USBCTxRx(rUSBIEN));
-        UARTWriteHexByte(USBCTxRx(wr));
-        wr <<= 1;
-    }*/
+        UARTWrite("USB-C SPI r/w diagnosis\n");
+
+        // Half duplex without this
+        USBWriteByte(rPINCTL, bmFDUPSPI); // MAX3420: SPI=full-duplex 
+
+        USBWriteByte(rUSBCTL, bmCHIPRES); // reset the MAX3420E 
+        USBWriteByte(rUSBCTL, 0); // remove the reset 
+
+        // Wait for oscillator OK interrupt
+        while ((USBReadByte(rUSBIRQ) & bmOSCOKIRQ) == 0)
+        {
+            E32Sleep(3);
+        }
+        USBWriteByte(rUSBIRQ, bmOSCOKIRQ);
+        UARTWrite("Oscillator OK\n");
+
+        UARTWrite("Testing IEN\nShould see: 01 02 04 08 10 20 40 80\n");
+        uint8_t wr = 0x01; // initial register write value 
+        for(int j=0; j<8; j++) 
+        { 
+            USBWriteByte(rUSBIEN, wr);
+
+            uint32_t count = 0;
+            uint8_t rd = 0xFF;
+            while (rd == 0xFF && count++ < 255)
+                rd = USBReadByte(rUSBIEN);
+
+            UARTWriteHex(rd);
+            UARTWrite(" ");
+
+            wr <<= 1; // Put a breakpoint here. Values of 'rd' should be 01,02,04,08,10,20,40,80 
+        }
+        UARTWrite("\n");
+    }
 
     return 0;
 }

@@ -2,7 +2,7 @@
 #include <inttypes.h>
 
 extern volatile uint32_t *IO_USBCTRX;
-extern volatile uint32_t *IO_USBCCSn;
+extern volatile uint32_t *IO_USBCSTA;
 
 uint8_t USBWriteByte(uint8_t command, uint8_t data);
 uint8_t USBReadByte(uint8_t command);
