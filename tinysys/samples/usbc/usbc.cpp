@@ -35,10 +35,7 @@ int main(int argc, char *argv[])
         { 
             USBWriteByte(rUSBIEN, wr);
 
-            uint32_t count = 0;
-            uint8_t rd = 0xFF;
-            while (rd == 0xFF && count++ < 255)
-                rd = USBReadByte(rUSBIEN);
+            uint8_t rd = USBReadByte(rUSBIEN);
 
             UARTWriteHex(rd);
             UARTWrite(" ");
