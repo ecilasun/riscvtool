@@ -26,6 +26,7 @@ void TaskInitSystem(struct STaskContext *_ctx)
 		task->regs[8] = 0x0;			// Frame pointer
 		task->ctrlc = 0;
 		task->breakhit = 0;
+		task->state = TS_UNKNOWN;
 		task->name[0] = 0; // No name
 		task->num_breakpoints = 0;
 		for (int j=0; j<TASK_MAX_BREAKPOINTS; ++j)

@@ -233,7 +233,7 @@ void ExecuteCmd(char *_cmd)
 			// even though each gets a new task slot assigned.
 			// This will cause corruption of the runtime environment.
 			if (s_startAddress != 0x0)
-				TaskAdd(tctx, command, RunExecTask, HALF_SECOND_IN_TICKS);
+				TaskAdd(tctx, command, RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
 		}
 	}
 }
@@ -301,14 +301,6 @@ int main()
 					execcmd++;
 					// Terminate process 1 (the current executable)
 					TaskExitTaskWithID(taskctx, 1, 0); // Sig:0
-					// Wait until this task's stopped
-					struct STask *task = &taskctx->tasks[1];
-					while (task->state != TS_TERMINATED) { asm volatile("nop"); }
-					UARTWrite(task->name);
-					UARTWrite("' terminated\n");
-					//UARTWriteHex(_ctx->tasks[currentTask].exitCode);	// a0 contains the exit code
-					// Go to console device states (stop sound, video etc)
-					DeviceDefaultState();
 				}
 				break;
 
@@ -335,6 +327,19 @@ int main()
 				}
 				break;
 			}
+		}
+
+		// Report task termination
+		struct STask *task = &taskctx->tasks[1];
+		if (task->state == TS_TERMINATED)
+		{
+			task->state = TS_UNKNOWN;
+			UARTWrite(task->name);
+			UARTWrite("' terminated (0x");
+			UARTWriteHex(task->exitCode);
+			UARTWrite(")\n");
+			++s_refreshConsoleOut;
+			DeviceDefaultState();
 		}
 
 		if (execcmd)

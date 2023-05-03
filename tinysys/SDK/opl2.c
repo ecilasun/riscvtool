@@ -18,5 +18,9 @@ void OPL2WriteVal(uint8_t val)
 
 void OPL2Stop()
 {
-	// TODO: Determine the series of OPL2 commands to write to stop all channels from playing
+	for (int channel = 0x0; channel <= 0x8; ++channel)
+	{
+		OPL2WriteReg(0xB0 + channel);
+		OPL2WriteVal(0x00);
+	}
 }
