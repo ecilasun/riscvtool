@@ -286,7 +286,7 @@ int main()
 		while (RingBufferRead(&uartData, sizeof(uint32_t)))
 		{
 			uint8_t asciicode = (uint8_t)(uartData&0xFF);
-			s_refreshConsoleOut++;
+			++s_refreshConsoleOut;
 			switch (asciicode)
 			{
 				case 10:
@@ -334,6 +334,7 @@ int main()
 		if (task->state == TS_TERMINATED)
 		{
 			task->state = TS_UNKNOWN;
+			UARTWrite("\n");
 			UARTWrite(task->name);
 			UARTWrite("' terminated (0x");
 			UARTWriteHex(task->exitCode);
@@ -344,7 +345,7 @@ int main()
 
 		if (execcmd)
 		{
-			s_refreshConsoleOut = 1;
+			++s_refreshConsoleOut;
 			UARTWrite("\n");
 			ExecuteCmd(s_cmdString);
 			// Rewind
