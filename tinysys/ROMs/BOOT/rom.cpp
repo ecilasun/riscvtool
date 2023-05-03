@@ -3,11 +3,16 @@
 #include "rvcrt0.h"
 #include "rombase.h"
 #include "xadc.h"
+#include "apu.h"
+#include "gpu.h"
+#include "opl2.h"
 
 #include <string.h>
 #include <stdio.h>
 
 #define VERSIONSTRING "v1.002"
+
+static EVideoContext s_gpuContext;
 
 static char s_execName[64];
 static char s_execParam[64];
@@ -47,6 +52,21 @@ void RunExecTask()
 	// NOTE: Execution should never reach here since the ELF will invoke ECALL(0x5D) to quit
 	// and will be removed from the task list, thus removing this function from the
 	// execution pool.
+}
+
+void DeviceDefaultState()
+{
+	// Clear both audio output buffers to stop raw sound output
+	APUStop();
+	APUSwapBuffers();
+	APUStop();
+	APUSwapBuffers();
+
+	// Stop any pending OPL2 audio output by sending a series commands
+	OPL2Stop();
+
+	// Shut down display
+	GPUSetVMode(&s_gpuContext, EVM_320_Pal, EVS_Disable);
 }
 
 void uget(const char *savename)
@@ -224,6 +244,10 @@ int main()
 	LEDSetState(0xF);
 	UARTWrite("\033[H\033[0m\033[2J\033[96;40mtinysys " VERSIONSTRING "\033[0m\n\n");
 
+	// NOTE: Since we'll loop around here again if we receive a soft reset,
+	// we need to make sure all things are stopped and reset to default states
+	DeviceDefaultState();
+
 	// Set up internals
 	LEDSetState(0xE);
 	RingBufferReset();
@@ -243,19 +267,15 @@ int main()
 
 	LEDSetState(0xA);
 
-	// Start the timer and hardware interrupt handlers.
-	// This is where all task switching and other interrupt handling occurs
-
-	// NOTE: Software debugger will run in the UART interrupt handler
-	// and modify task memory via commands received from gdb remote protocol.
-
-	InstallISR();
-
-	// Default path
+	// Set default path before we mount any storage devices
 	strncpy(s_currentPath, "sd:\\", 64);
 
 	// Ready to start, silence LEDs
 	LEDSetState(0x0);
+
+	// Start the timer and hardware interrupt handlers.
+	// This is where all task switching and other interrupt handling occurs
+	InstallISR();
 
 	// Main CLI loop
 	while (1)
@@ -281,6 +301,14 @@ int main()
 					execcmd++;
 					// Terminate process 1 (the current executable)
 					TaskExitTaskWithID(taskctx, 1, 0); // Sig:0
+					// Wait until this task's stopped
+					struct STask *task = &taskctx->tasks[1];
+					while (task->state != TS_TERMINATED) { asm volatile("nop"); }
+					UARTWrite(task->name);
+					UARTWrite("' terminated\n");
+					//UARTWriteHex(_ctx->tasks[currentTask].exitCode);	// a0 contains the exit code
+					// Go to console device states (stop sound, video etc)
+					DeviceDefaultState();
 				}
 				break;
 

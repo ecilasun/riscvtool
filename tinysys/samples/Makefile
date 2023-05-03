@@ -24,9 +24,7 @@ folders = \
 	mandelbrot \
 	jpegview \
 	led \
-	audio \
-	tasks \
-	vgm \
+	vgmplayer \
 	usbc \
 
 # Rules

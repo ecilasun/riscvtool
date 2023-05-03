@@ -15,3 +15,8 @@ void OPL2WriteVal(uint8_t val)
 	*IO_OPL2VAL = val;
 	E32Sleep(200);	// Need to give time for internal processing
 }
+
+void OPL2Stop()
+{
+	// TODO: Determine the series of OPL2 commands to write to stop all channels from playing
+}
