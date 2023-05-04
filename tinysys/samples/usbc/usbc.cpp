@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
             uint8_t rd = USBReadByte(rUSBIEN);
 
-            UARTWriteHex(rd);
+            UARTWriteHexByte(rd);
             UARTWrite(" ");
 
             wr <<= 1; // Put a breakpoint here. Values of 'rd' should be 01,02,04,08,10,20,40,80 

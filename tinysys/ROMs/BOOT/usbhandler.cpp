@@ -1,5 +1,6 @@
 #include "usbhandler.h"
 #include "leds.h"
+#include "uart.h"
 
 static uint32_t RWU_enabled = 0;
 static uint32_t ep3stall = 0;
@@ -120,6 +121,7 @@ const unsigned char RepD[]=   // Report descriptor
 
 void DoInhibit3()
 {
+	UARTWrite("DoInhibit3\n");
 	/*if (usbc_inhibit_send==0x01)
 	{
 		USBWriteByte(rEP3INFIFO,0); // send the "keys up" code
@@ -180,6 +182,7 @@ void DoInhibit3()
 
 void send_descriptor(void)
 {
+	UARTWrite("send_descriptor\n");
 	uint32_t reqlen, sendlen, desclen;
 	uint8_t *pDdata; // pointer to ROM Descriptor data to send
 	//
@@ -226,6 +229,7 @@ void send_descriptor(void)
 
 void feature(uint8_t sc)
 {
+	UARTWrite("feature\n");
 	uint8_t mask;
 	if((SUD[bmRequestType]==0x02)	// dir=h->p, recipient = ENDPOINT
   		&& (SUD[wValueL]==0x00)		// wValueL is feature selector, 00 is EP Halt
@@ -257,6 +261,7 @@ void feature(uint8_t sc)
 
 void get_status(void)
 {
+	UARTWrite("get_status\n");
 	uint8_t testbyte;
 	testbyte = SUD[bmRequestType];
 	switch(testbyte)	
@@ -305,6 +310,7 @@ void set_interface(void)	// All we accept are Interface=0 and AlternateSetting=0
 
 void get_interface(void)	// Check for Interface=0, always report AlternateSetting=0
 {
+	UARTWrite("get_interface\n");
 	if(SUD[wIndexL]==0)		// wIndexL=Interface index
 	{
 		USBWriteByte(rEP0FIFO, 0);		// AS=0
@@ -317,14 +323,16 @@ void get_interface(void)	// Check for Interface=0, always report AlternateSettin
 
 void get_configuration(void)
 {
-	USBWriteByte(rEP0FIFO,usbc_configval);         // Send the config value
+	UARTWrite("get_configuration\n");
+	USBWriteByte(rEP0FIFO, usbc_configval);         // Send the config value
 	//wregAS(rEP0BC,1);   
 	USBWriteByte(rEP0BC | 0x1, 1);
 }
 
 void set_configuration(void)
 {
-	usbc_configval=SUD[wValueL];           // Store the config value
+	UARTWrite("set_configuration\n");
+	usbc_configval =SUD[wValueL];           // Store the config value
 	if(usbc_configval != 0)                // If we are configured, 
 	{
   		//SETBIT(rUSBIEN,bmSUSPIE);       // start looking for SUSPEND interrupts
@@ -336,6 +344,7 @@ void set_configuration(void)
 
 void std_request()
 {
+	UARTWrite("std_request\n");
 	switch(SUD[bRequest])
 	{
 		case SR_GET_DESCRIPTOR: send_descriptor(); break;
@@ -353,72 +362,86 @@ void std_request()
 
 void class_request()
 {
+	UARTWrite("class_request\n");
 	STALL_EP0
 }
 
 void vendor_request()
 {
+	UARTWrite("vendor_request\n");
 	STALL_EP0
 }
 
 void DoSetup()
 {
-	//USBReadBytes(rSUDFIFO, 8, SUD);
-	SUD[0] = USBReadByte(rSUDFIFO);
-	SUD[1] = USBReadByte(rSUDFIFO);
-	SUD[2] = USBReadByte(rSUDFIFO);
-	SUD[3] = USBReadByte(rSUDFIFO);
-	SUD[4] = USBReadByte(rSUDFIFO);
-	SUD[5] = USBReadByte(rSUDFIFO);
-	SUD[6] = USBReadByte(rSUDFIFO);
-	SUD[7] = USBReadByte(rSUDFIFO);
+	UARTWrite("DoSetup:");
+	USBReadBytes(rSUDFIFO, 8, SUD, 0xFF);
+
+	// if no packet, STALL_EP0
+
+	UARTWriteHexByte(SUD[0]);
+	UARTWriteHexByte(SUD[1]);
+	UARTWriteHexByte(SUD[2]);
+	UARTWriteHexByte(SUD[3]);
+	UARTWriteHexByte(SUD[4]);
+	UARTWriteHexByte(SUD[5]);
+	UARTWriteHexByte(SUD[6]);
+	UARTWriteHexByte(SUD[7]);
+	UARTWrite("\n");
 
 	switch(SUD[bmRequestType]&0x60)
 	{
-		case 0x00: std_request();
-		case 0x20: class_request();
-		case 0x40: vendor_request();
-		default: STALL_EP0
+		case 0x00: std_request(); break;
+		case 0x20: class_request(); break;
+		case 0x40: vendor_request(); break;
+		default: STALL_EP0 break;
 	}
 }
 
 void HandleUSBC()
 {
 	uint32_t currLED = LEDGetState();
+	currLED &= ~0x4;
 
-	uint32_t itest1 = USBReadByte(rEPIRQ);
-	uint32_t itest2 = USBReadByte(rUSBIRQ);
+	uint32_t epIrq = USBReadByte(rEPIRQ);
+	uint32_t usbIrq = USBReadByte(rUSBIRQ);
+	if (epIrq == 0xFF && usbIrq == 0xFF)
+		return;
 
-	if (itest1 & bmSUDAVIRQ)
+	UARTWriteHexByte(epIrq);
+	UARTWrite(":");
+	UARTWriteHexByte(usbIrq);
+	UARTWrite(" ");
+
+	if (usbIrq & bmURESDNIRQ)
 	{
-		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
-		DoSetup();
-	}
-
-	if (itest1 & bmIN3BAVIRQ)
-	{
-		currLED |= 0x4;
-		DoInhibit3();
-	}
-
-	if ((usbc_configval != 0) && itest2 & bmSUSPIRQ) // host suspend bus for 3ms
-	{
-		USBWriteByte(rUSBIRQ, bmSUDAVIRQ|bmBUSACTIRQ);
-		usbc_suspended = 1;
-	}
-
-	if (itest2 & bmURESIRQ) // bus reset
-	{
-		currLED |= 0x8;
-		USBWriteByte(rUSBIRQ, bmURESIRQ);
-	}
-
-	if (itest2 & bmURESDNIRQ) // bus reset light off
-	{
+		UARTWrite("resetoff\n");
 		currLED &= ~0x8;
 		USBWriteByte(rUSBIRQ, bmURESDNIRQ);
 		usbc_suspended = 0;
 		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE); // enable irqs
+	}
+	else if (epIrq & bmSUDAVIRQ)
+	{
+		DoSetup();
+		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
+	}
+	else if (usbIrq & bmURESIRQ)
+	{
+		UARTWrite("busreset\n");
+		currLED |= 0x8;
+		USBWriteByte(rUSBIRQ, bmURESIRQ);
+	}
+	else if (epIrq & bmIN3BAVIRQ)
+	{
+		currLED |= 0x4;
+		DoInhibit3();
+	}
+	else if ((usbc_configval != 0) && usbIrq & bmSUSPIRQ) // host suspend bus for 3ms
+	{
+		UARTWrite("suspend3ms\n");
+		USBWriteByte(rUSBIRQ, bmSUDAVIRQ|bmBUSACTIRQ);
+		usbc_suspended = 1;
 	}
 
 	LEDSetState(currLED);

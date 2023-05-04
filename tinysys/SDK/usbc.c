@@ -4,47 +4,86 @@
 volatile uint32_t *IO_USBCTRX = (volatile uint32_t* ) 0x80007000; // Receive fifo
 volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) 0x80007004; // Output FIFO state
 
-uint8_t USBWriteByte(uint8_t command, uint8_t data)
-{
-    command |= 0x02; // set write bit
-
-    // Hardware sets CSn low for two bytes and brings it back high
-    *IO_USBCTRX = command;
-    *IO_USBCTRX = data;
-
-    //waitForTxComplete();
-    while (*IO_USBCSTA!=0) {}
-    E32Sleep(1);
-
-    volatile uint32_t readresA = *IO_USBCTRX; // status byte - R
-    volatile uint32_t readresB = *IO_USBCTRX; // discard dummy byte
-
-    return readresA;
-}
+static uint32_t statusF = 0;
+static uint32_t sparebyte = 0;
 
 uint8_t USBReadByte(uint8_t command)
 {
-    // Hardware sets CSn low for two bytes and brings it back high
+    *IO_USBCTRX = 0x100; // CS low
     *IO_USBCTRX = command;
     *IO_USBCTRX = 0;
 
-    //waitForTxComplete();
-    while (*IO_USBCSTA!=0) {}
-    E32Sleep(1);
+    statusF = *IO_USBCTRX; // status unused
+    sparebyte = *IO_USBCTRX;
+    *IO_USBCTRX = 0x101; // CS high
 
-    volatile uint32_t readresA = *IO_USBCTRX; // status unused
-    volatile uint32_t readresB = *IO_USBCTRX; // return value
+    return sparebyte;
+}
 
-    return readresB;
+void USBWriteByte(uint8_t command, uint8_t data)
+{
+    *IO_USBCTRX = 0x100; // CS low
+    *IO_USBCTRX = command | 0x02; // set write bit
+    *IO_USBCTRX = data;
+
+    statusF = *IO_USBCTRX; // status byte - R
+    sparebyte = *IO_USBCTRX; // discard dummy byte
+    *IO_USBCTRX = 0x101; // CS high
+}
+
+int USBReadBytes(uint8_t command, uint8_t length, uint8_t *buffer, uint8_t mask)
+{
+    uint8_t i;
+
+    if (length == 0)
+        return 0;
+
+    *IO_USBCTRX = 0x100; // CS low
+    *IO_USBCTRX = command;                   // send command byte
+    while (*IO_USBCSTA!=0) {}                // wait until commands to fly across
+    //E32Sleep(1);
+    uint8_t statusF = *IO_USBCTRX;           // store status byte
+    if ((statusF & mask) == 0)               // check mask, return error if status bits not set
+    {
+        *IO_USBCTRX = 0x101; // CS high
+        return 1;
+    }
+    
+    *IO_USBCTRX = 0;
+    /* receive data */
+    for (i=0; i<length-1; i++)
+    {
+        *IO_USBCTRX = 0;                     // send dummy byte
+        buffer[i] = *IO_USBCTRX;             // store data byte
+    }
+    buffer[i] = *IO_USBCTRX;                 // store last data byte
+    *IO_USBCTRX = 0x101; // CS high
+ 
+    return 0;
 }
 
 void USBInit()
 {
-    USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF);
+    // Half duplex without this
+    USBWriteByte(rPINCTL, bmFDUPSPI); // MAX3420: SPI=full-duplex 
+
+    USBWriteByte(rUSBCTL, bmCHIPRES); // reset the MAX3420E 
+    USBWriteByte(rUSBCTL, 0); // remove the reset 
+
+    // Wait for oscillator OK interrupt
+    while ((USBReadByte(rUSBIRQ) & bmOSCOKIRQ) == 0)
+    {
+        E32Sleep(3);
+    }
+    USBWriteByte(rUSBIRQ, bmOSCOKIRQ);
+    //UARTWrite("Oscillator OK\n");
+
+    USBWriteByte(rPINCTL, bmINTLEVEL | gpxSOF);
     USBWriteByte(rGPIO, 0x0);
-    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE);
-    USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
+
     USBWriteByte(rCPUCTL, bmIE);
+    USBWriteByte(rUSBIEN, bmURESDNIE);
+    USBWriteByte(rUSBCTL, bmVBGATE | bmCONNECT | bmHOSCSTEN);
 }
 
 /*void maxPowerDown(void)
