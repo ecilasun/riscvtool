@@ -4,6 +4,7 @@
 extern volatile uint32_t *IO_USBCTRX;
 extern volatile uint32_t *IO_USBCSTA;
 
+void USBFlushOutputFIFO();
 uint8_t USBReadByte(uint8_t command);
 void USBWriteByte(uint8_t command, uint8_t data);
 int USBReadBytes(uint8_t command, uint8_t length, uint8_t *buffer, uint8_t mask);
