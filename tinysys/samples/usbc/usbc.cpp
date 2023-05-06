@@ -202,8 +202,8 @@ int main(int argc, char *argv[])
                 switch(SUD[bmRequestType] & 0x60)
                 {
                     case 0x00: std_request(SUD); break;
-                    case 0x20: UARTWrite("class_req\n"); STALL_EP0 break;
-                    case 0x40: UARTWrite("vendor_req\n"); STALL_EP0 break;
+                    case 0x20: STALL_EP0 break; // class_req
+                    case 0x40: STALL_EP0 break; // vendor_req
                     default: STALL_EP0 break;
                 }
             }
