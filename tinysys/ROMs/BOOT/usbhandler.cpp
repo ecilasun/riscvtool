@@ -94,14 +94,15 @@ void HandleUSBC()
 	// Clear top 2 bits
 	currLED &= 0x3;
 
+	// Initial value of rEPIRQ should be 0x19
 	uint8_t epIrq = USBReadByte(rEPIRQ);
 	uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
 	if (usbIrq & bmURESDNIRQ)
 	{
-		currLED |= 0x8;
-		USBWriteByte(rUSBIRQ, bmURESDNIRQ);
+		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
 		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
+		currLED |= 0x8;
 	}
 
 	if (epIrq & bmSUDAVIRQ)
@@ -141,11 +142,25 @@ void HandleUSBC()
 
 	if (epIrq & bmIN3BAVIRQ)
 	{
-		// TODO:
+		USBWriteByte(rUSBIRQ, bmIN3BAVIRQ);
+		// TODO: asserts out of reset
+	}
+
+	if (epIrq & bmIN2BAVIRQ)
+	{
+		USBWriteByte(rUSBIRQ, bmIN2BAVIRQ);
+		// TODO: asserts out of reset
+	}
+
+	if (epIrq & bmIN0BAVIRQ)
+	{
+		USBWriteByte(rUSBIRQ, bmIN0BAVIRQ);
+		// TODO: asserts out of reset
 	}
 
 	if (usbIrq & bmSUSPIRQ)
 	{
+		// Should arrive here out of reset
 		USBWriteByte(rUSBIRQ, bmSUDAVIRQ | bmBUSACTIRQ);
 	}
 

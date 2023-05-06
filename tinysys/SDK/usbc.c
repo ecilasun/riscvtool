@@ -98,6 +98,7 @@ void USBInit()
     USBWriteByte(rGPIO, 0x0);                    // set all GPIO out to zero
     USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE); // connect, | bmHOSCSTEN ?
 
-    USBWriteByte(rUSBIEN, bmURESDNIE);
+    USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
+    USBWriteByte(rEPIEN, bmSUDAVIE);
     USBWriteByte(rCPUCTL, bmIE);
 }

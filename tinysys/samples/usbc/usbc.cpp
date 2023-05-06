@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
         uint8_t rd = 0;
         while ((rd & bmOSCOKIRQ) == 0)
         {
-            rd = USBReadByte(rUSBIRQ);
+            rd = USBReadByte(rUSBIRQ); // Initial value should be 0x01
             UARTWriteHexByte(rd);
             E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
         }
@@ -168,6 +168,7 @@ int main(int argc, char *argv[])
             // Clear top 2 bits
             currLED &= 0x3;
 
+            // Initial value of rEPIRQ should be 0x19
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
@@ -216,13 +217,26 @@ int main(int argc, char *argv[])
 
             if (epIrq & bmIN3BAVIRQ)
             {
-                // TODO:
+                USBWriteByte(rUSBIRQ, bmIN3BAVIRQ);
+                // TODO: asserts out of reset
+            }
+
+            if (epIrq & bmIN2BAVIRQ)
+            {
+                USBWriteByte(rUSBIRQ, bmIN2BAVIRQ);
+                // TODO: asserts out of reset
+            }
+
+            if (epIrq & bmIN0BAVIRQ)
+            {
+                USBWriteByte(rUSBIRQ, bmIN0BAVIRQ);
+                // TODO: asserts out of reset
             }
 
             if (usbIrq & bmSUSPIRQ)
             {
-                // Suspend
-                USBWriteByte(rUSBIRQ, bmSUDAVIRQ | bmBUSACTIRQ);  // clear SUDAV/BUSACT irqs
+                // Should arrive here out of reset
+                USBWriteByte(rUSBIRQ, bmSUDAVIRQ | bmBUSACTIRQ); // clear SUDAV/BUSACT irqs
             }
 
             LEDSetState(currLED);
