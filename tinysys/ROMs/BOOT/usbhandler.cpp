@@ -6,9 +6,9 @@ static uint32_t RWU_enabled = 0;
 static uint32_t ep3stall = 0;
 static uint32_t usbc_suspended = 0;
 static uint32_t usbc_configval = 0;
-static uint32_t usbc_inhibit_send = 0;
-static uint32_t usbc_send3zeros = 0;
-static uint32_t usbc_msgidx = 0;
+//static uint32_t usbc_inhibit_send = 0;
+//static uint32_t usbc_send3zeros = 0;
+//static uint32_t usbc_msgidx = 0;
 static uint8_t SUD[8];
 
 const unsigned char strDesc[][64]= { // STRING descriptor 0--Language string
@@ -299,10 +299,10 @@ void get_status(void)
 
 void set_interface(void)	// All we accept are Interface=0 and AlternateSetting=0, otherwise send STALL
 {
-	uint8_t dumval;
+	//uint8_t dumval;
 	if((SUD[wValueL]==0)					// wValueL=Alternate Setting index
   		&&(SUD[wIndexL]==0))				// wIndexL=Interface index
-  		dumval = USBReadByte(rFNADDR | 0x1);	// dummy read to set the ACKSTAT bit
+  		/*dumval =*/ USBReadByte(rFNADDR | 0x1);	// dummy read to set the ACKSTAT bit
 	else
 		STALL_EP0
 }
