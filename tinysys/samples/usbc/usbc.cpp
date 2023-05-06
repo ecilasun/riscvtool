@@ -1,6 +1,7 @@
 #include "basesystem.h"
 #include "uart.h"
 #include "usbc.h"
+#include "leds.h"
 #include "usbcdata.h"
 
 #define STALL_EP0 USBWriteByte(rEPSTALLS, 0x23); 
@@ -117,7 +118,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        UARTWrite("USB-C SPI r/w diagnosis\n");
+        UARTWrite("USB-C SPI r/w development test\n");
 
         // Half duplex without this
         USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex 
@@ -146,7 +147,7 @@ int main(int argc, char *argv[])
 
         //USBWriteByte(rCPUCTL, bmIE); // NOTE: DO NOT enable interrupts yet, this would redirect all to ROM
 
-        UARTWrite("Testing IEN\nShould see: 01 02 04 08 10 20 40 80\n");
+        /*UARTWrite("Testing IEN\nShould see: 01 02 04 08 10 20 40 80\n");
         uint8_t wr = 0x01; // initial register write value 
         for(int j=0; j<8; j++) 
         { 
@@ -159,15 +160,20 @@ int main(int argc, char *argv[])
 
             wr <<= 1; // Put a breakpoint here. Values of 'rd' should be 01,02,04,08,10,20,40,80 
         }
-        UARTWrite("\n");
+        UARTWrite("\n");*/
 
         while (1)
         {
+            uint32_t currLED = LEDGetState();
+            // Clear top 2 bits
+            currLED &= 0x3;
+
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-        	if (usbIrq & bmURESDNIRQ)
+        	if (usbIrq & bmURESDNIRQ) // Woke up?
             {
+                currLED |= 0x8;
                 USBWriteByte(rUSBIRQ, bmURESDNIRQ);
                 USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
             }
@@ -177,15 +183,8 @@ int main(int argc, char *argv[])
     		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
 
                 uint8_t SUD[8];
-                /*SUD[0] = USBReadByte(rSUDFIFO);
-                SUD[1] = USBReadByte(rSUDFIFO);
-                SUD[2] = USBReadByte(rSUDFIFO);
-                SUD[3] = USBReadByte(rSUDFIFO);
-                SUD[4] = USBReadByte(rSUDFIFO);
-                SUD[5] = USBReadByte(rSUDFIFO);
-                SUD[6] = USBReadByte(rSUDFIFO);
-                SUD[7] = USBReadByte(rSUDFIFO);*/
             	USBReadBytes(rSUDFIFO, 8, SUD);
+
                 if (SUD[0] != 0xFF)
                 {
                     UARTWriteHexByte(SUD[0]);
@@ -206,11 +205,13 @@ int main(int argc, char *argv[])
                     case 0x40: STALL_EP0 break; // vendor_req
                     default: STALL_EP0 break;
                 }
+                currLED |= 0x4;
             }
 
             if (usbIrq & bmURESIRQ)
             {
-                USBWriteByte(rUSBIRQ, bmURESIRQ);
+                // Post-reset
+                USBWriteByte(rUSBIRQ, bmURESIRQ); // clear URES irq
             }
 
             if (epIrq & bmIN3BAVIRQ)
@@ -220,45 +221,11 @@ int main(int argc, char *argv[])
 
             if (usbIrq & bmSUSPIRQ)
             {
-                USBWriteByte(rUSBIRQ, bmSUDAVIRQ | bmBUSACTIRQ);
+                // Suspend
+                USBWriteByte(rUSBIRQ, bmSUDAVIRQ | bmBUSACTIRQ);  // clear SUDAV/BUSACT irqs
             }
 
-            /*if (rd&bmIN0BAVIRQ)
-                UARTWrite(":bmIN0BAVIRQ");
-            if (rd&bmOUT0DAVIRQ)
-                UARTWrite(":bmOUT0DAVIRQ");
-            if (rd&bmOUT1DAVIRQ)
-                UARTWrite(":bmOUT1DAVIRQ");
-            if (rd&bmIN2BAVIRQ)
-                UARTWrite(":bmIN2BAVIRQ");
-            if (rd&bmIN3BAVIRQ)
-                UARTWrite(":bmIN3BAVIRQ");
-            if (rd&bmSUDAVIRQ)
-                UARTWrite(":bmSUDAVIRQ");
-            if (rd&bmOSCOKIRQ)
-                UARTWrite(":bmOSCOKIRQ");
-            if (rd&bmRWUDNIRQ)
-                UARTWrite(":bmRWUDNIRQ");
-            if (rd&bmBUSACTIRQ && busState == 0)
-            {
-                busState = 1;
-                UARTWrite(":bmBUSACTIRQ");
-            }
-            else
-                busState = 0;
-            if (rd&bmURESIRQ)
-                UARTWrite(":bmURESIRQ");
-            if (rd&bmSUSPIRQ)
-                UARTWrite(":bmSUSPIRQ");
-            if (rd&bmNOVBUSIRQ)
-                UARTWrite(":bmNOVBUSIRQ");
-            if (rd&bmVBUSIRQ)
-                UARTWrite(":bmVBUSIRQ");
-            if (rd&bmURESDNIRQ)
-                UARTWrite(":bmURESDNIRQ");
-
-            if (rd)
-                UARTWrite("\n");*/
+            LEDSetState(currLED);
         }
     }
 

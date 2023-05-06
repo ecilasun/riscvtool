@@ -99,7 +99,7 @@ void HandleUSBC()
 
 	if (usbIrq & bmURESDNIRQ)
 	{
-		currLED |= ~0x8;
+		currLED |= 0x8;
 		USBWriteByte(rUSBIRQ, bmURESDNIRQ);
 		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
 	}
@@ -111,7 +111,7 @@ void HandleUSBC()
 		uint8_t SUD[8];
 		USBReadBytes(rSUDFIFO, 8, SUD);
 
-		/*if (SUD[0] != 0xFF)
+		if (SUD[0] != 0xFF)
 		{
 			UARTWriteHexByte(SUD[0]);
 			UARTWriteHexByte(SUD[1]);
@@ -122,7 +122,7 @@ void HandleUSBC()
 			UARTWriteHexByte(SUD[6]);
 			UARTWriteHexByte(SUD[7]);
 			UARTWrite("\n");
-		}*/
+		}
 
 		switch(SUD[bmRequestType] & 0x60)
 		{
@@ -131,7 +131,7 @@ void HandleUSBC()
 			case 0x40: vendor_request(SUD); break;
 			default: STALL_EP0 break;
 		}
-		currLED |= ~0x4;
+		currLED |= 0x4;
 	}
 
 	if (usbIrq & bmURESIRQ)
