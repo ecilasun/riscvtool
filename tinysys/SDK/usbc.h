@@ -105,7 +105,7 @@ void USBInit();
 #define bmINTLEVEL  0x08
 #define bmPOSINT    0x04
 #define bmGPOB      0x02
-#define  bmGPOA      0x01
+#define bmGPOA      0x01
 
 //
 // GPX[B:A] settings (PINCTL register)
@@ -116,17 +116,17 @@ void USBInit();
 
 // ************************
 // Standard USB Requests
-#define SR_GET_STATUS 0x00 // Get Status
-#define SR_CLEAR_FEATURE 0x01 // Clear Feature
-#define SR_RESERVED 0x02 // Reserved
-#define SR_SET_FEATURE 0x03 // Set Feature
-#define SR_SET_ADDRESS 0x05 // Set Address
-#define SR_GET_DESCRIPTOR 0x06 // Get Descriptor
-#define SR_SET_DESCRIPTOR 0x07 // Set Descriptor
-#define SR_GET_CONFIGURATION 0x08 // Get Configuration
-#define SR_SET_CONFIGURATION 0x09 // Set Configuration
-#define SR_GET_INTERFACE 0x0a // Get Interface
-#define SR_SET_INTERFACE 0x0b // Set Interface
+#define SR_GET_STATUS 0x00			// Get Status
+#define SR_CLEAR_FEATURE 0x01		// Clear Feature
+#define SR_RESERVED 0x02			// Reserved
+#define SR_SET_FEATURE 0x03			// Set Feature
+#define SR_SET_ADDRESS 0x05			// Set Address
+#define SR_GET_DESCRIPTOR 0x06		// Get Descriptor
+#define SR_SET_DESCRIPTOR 0x07		// Set Descriptor
+#define SR_GET_CONFIGURATION 0x08	// Get Configuration
+#define SR_SET_CONFIGURATION 0x09	// Set Configuration
+#define SR_GET_INTERFACE 0x0a		// Get Interface
+#define SR_SET_INTERFACE 0x0b		// Set Interface
 
 // Get Descriptor codes
 #define GD_DEVICE			0x01	// Get device descriptor: Device

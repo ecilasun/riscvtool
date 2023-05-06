@@ -17,6 +17,12 @@ void set_configuration(uint8_t *SUD)
     USBReadByte(rFNADDR | 0x1);     // dummy read to set the ACKSTAT bit
 }
 
+void get_configuration(void)
+{
+	USBWriteByte(rEP0FIFO, configval);	// Send the config value
+	USBWriteByte(rEP0BC | 0x10, 1);
+}
+
 void send_descriptor(uint8_t *SUD)
 {
     uint16_t reqlen, sendlen, desclen;
@@ -71,7 +77,7 @@ void std_request(uint8_t *SUD)
 	    case	SR_GET_STATUS:		    UARTWrite("get_status()");         break;
 	    case	SR_SET_INTERFACE:	    UARTWrite("set_interface()");      break;
 	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()");      break;
-	    case	SR_GET_CONFIGURATION:   UARTWrite("get_configuration()");  break;
+	    case	SR_GET_CONFIGURATION:   get_configuration();               break;
 	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);            break;
 	    case	SR_SET_ADDRESS:         USBReadByte(rFNADDR | 0x1);        break;  // discard return value
 	    default:  STALL_EP0
@@ -97,13 +103,6 @@ void HandleUSBC()
 	// Initial value of rEPIRQ should be 0x19
 	uint8_t epIrq = USBReadByte(rEPIRQ);
 	uint8_t usbIrq = USBReadByte(rUSBIRQ);
-
-	if (usbIrq & bmURESDNIRQ)
-	{
-		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
-		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
-		currLED |= 0x8;
-	}
 
 	if (epIrq & bmSUDAVIRQ)
 	{
@@ -135,33 +134,40 @@ void HandleUSBC()
 		currLED |= 0x4;
 	}
 
-	if (usbIrq & bmURESIRQ)
-	{
-		USBWriteByte(rUSBIRQ, bmURESIRQ);
-	}
-
 	if (epIrq & bmIN3BAVIRQ)
 	{
-		USBWriteByte(rUSBIRQ, bmIN3BAVIRQ);
+		USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
 		// TODO: asserts out of reset
+	}
+
+	if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+	{
+		// Should arrive here out of reset
+		USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
+	}
+
+	if (usbIrq & bmURESIRQ) // Bus reset
+	{
+		USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
+	}
+
+	if (usbIrq & bmURESDNIRQ) // Resume
+	{
+		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
+		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
+		currLED |= 0x8;
 	}
 
 	if (epIrq & bmIN2BAVIRQ)
 	{
-		USBWriteByte(rUSBIRQ, bmIN2BAVIRQ);
+		USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
 		// TODO: asserts out of reset
 	}
 
 	if (epIrq & bmIN0BAVIRQ)
 	{
-		USBWriteByte(rUSBIRQ, bmIN0BAVIRQ);
+		USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
 		// TODO: asserts out of reset
-	}
-
-	if (usbIrq & bmSUSPIRQ)
-	{
-		// Should arrive here out of reset
-		USBWriteByte(rUSBIRQ, bmSUDAVIRQ | bmBUSACTIRQ);
 	}
 
 	LEDSetState(currLED);

@@ -395,8 +395,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						HandleSDCardDetect();
 					else if (hwid&4)
 						HandleUSBC();
-					/*else if (hwid&8)
-						Handle...();*/
 					else
 					{
 						ReportError(32, "Unknown hardware device", code, hwid, PC);

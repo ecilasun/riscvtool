@@ -10,40 +10,18 @@
 
 uint8_t configval;
 
-/*void get_status(void)
-{
-    switch(SUD[bmRequestType])	
-	{
-	    case 0x80: 			// directed to DEVICE
-            USBWriteByte(rEP0FIFO, (RWU_enabled+1)); // first byte is 000000rs where r=enabled for RWU and s=self-powered.
-            USBWriteByte(rEP0FIFO, 0x00);		     // second byte is always 0
-            USBWriteByte(rEP0BC | 0x01, 2);		     // load byte count, arm the IN transfer, ACK the status stage of the CTL transfer
-		break; 				
-	    case 0x81: 			// directed to INTERFACE
-            wreg(rEP0FIFO,0x00);		// this one is easy--two zero bytes
-            wreg(rEP0FIFO,0x00);		
-            wregAS(rEP0BC,2); 		// load byte count, arm the IN transfer, ACK the status stage of the CTL transfer
-		break; 				
-	    case 0x82: 			// directed to ENDPOINT
-            if(SUD[wIndexL]==0x83)		// We only reported ep3, so it's the only one the host can stall IN3=83
-            {
-                wreg(rEP0FIFO,ep3stall);	// first byte is 0000000h where h is the halt (stall) bit
-                wreg(rEP0FIFO,0x00);		// second byte is always 0
-                wregAS(rEP0BC,2); 		// load byte count, arm the IN transfer, ACK the status stage of the CTL transfer
-                break;
-            }
-		else
-        STALL_EP0		// Host tried to stall an invalid endpoint (not 3)				
-	    default:      STALL_EP0		// don't recognize the request
-	}
-}*/
-
 void set_configuration(uint8_t *SUD)
 {
     configval = SUD[wValueL];       // Store the config value
     if(configval != 0)              // If we are configured, 
         SETBIT(rUSBIEN, bmSUSPIE);  // start looking for SUSPEND interrupts
     USBReadByte(rFNADDR | 0x1);     // dummy read to set the ACKSTAT bit
+}
+
+void get_configuration(void)
+{
+	USBWriteByte(rEP0FIFO, configval);	// Send the config value
+	USBWriteByte(rEP0BC | 0x10, 1);
 }
 
 void send_descriptor(uint8_t *SUD)
@@ -100,7 +78,7 @@ void std_request(uint8_t *SUD)
 	    case	SR_GET_STATUS:		    UARTWrite("get_status()");         break;
 	    case	SR_SET_INTERFACE:	    UARTWrite("set_interface()");      break;
 	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()");      break;
-	    case	SR_GET_CONFIGURATION:   UARTWrite("get_configuration()");  break;
+	    case	SR_GET_CONFIGURATION:   get_configuration();               break;
 	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);            break;
 	    case	SR_SET_ADDRESS:         USBReadByte(rFNADDR | 0x1);        break;  // discard return value
 	    default:  STALL_EP0
@@ -172,13 +150,6 @@ int main(int argc, char *argv[])
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-        	if (usbIrq & bmURESDNIRQ) // Woke up?
-            {
-                currLED |= 0x8;
-                USBWriteByte(rUSBIRQ, bmURESDNIRQ);
-                USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
-            }
-
             if (epIrq & bmSUDAVIRQ)
             {
     		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
@@ -209,34 +180,40 @@ int main(int argc, char *argv[])
                 currLED |= 0x4;
             }
 
-            if (usbIrq & bmURESIRQ)
-            {
-                // Post-reset
-                USBWriteByte(rUSBIRQ, bmURESIRQ); // clear URES irq
-            }
-
             if (epIrq & bmIN3BAVIRQ)
             {
-                USBWriteByte(rUSBIRQ, bmIN3BAVIRQ);
+                USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
                 // TODO: asserts out of reset
+            }
+
+            if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+            {
+                // Should arrive here out of reset
+                USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
+            }
+
+            if (usbIrq & bmURESIRQ) // Bus reset
+            {
+                USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
+            }
+
+            if (usbIrq & bmURESDNIRQ) // Resume
+            {
+                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
+                USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
+                currLED |= 0x8;
             }
 
             if (epIrq & bmIN2BAVIRQ)
             {
-                USBWriteByte(rUSBIRQ, bmIN2BAVIRQ);
+                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
                 // TODO: asserts out of reset
             }
 
             if (epIrq & bmIN0BAVIRQ)
             {
-                USBWriteByte(rUSBIRQ, bmIN0BAVIRQ);
+                USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
                 // TODO: asserts out of reset
-            }
-
-            if (usbIrq & bmSUSPIRQ)
-            {
-                // Should arrive here out of reset
-                USBWriteByte(rUSBIRQ, bmSUDAVIRQ | bmBUSACTIRQ); // clear SUDAV/BUSACT irqs
             }
 
             LEDSetState(currLED);
