@@ -11,17 +11,6 @@ static uint32_t sparebyte = 0;
 #define ASSERT_CS *IO_USBCTRX = 0x100;
 #define RESET_CS *IO_USBCTRX = 0x101;
 
-/*
-MAX3420E
-For an SPI write cycle, any bytes following the
-command byte are clocked into the MAX3420E on MOSI,
-and zeros are clocked out on MISO.
-For an SPI read cycle, any bytes following the command
-byte are clocked out of the MAX3420E on MISO and the data
-on MOSI is ignored.
-At the conclusion of the SPI cycle (SS = 1), the MISO
-outputs high impedance.*/
-
 void USBFlushOutputFIFO()
 {
     while (*IO_USBCSTA!=0) {}
@@ -86,26 +75,29 @@ void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer)
 void USBInit()
 {
     // Half duplex without this
-    UARTWrite("MAX3420e: full duplex mode\n");
-    USBWriteByte(rPINCTL, bmFDUPSPI); // MAX3420: SPI=full-duplex 
+    USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
+    USBWriteByte(rUSBCTL, bmCHIPRES);                       // reset the MAX3420E 
+    USBWriteByte(rUSBCTL, 0);                               // remove the reset
 
-    UARTWrite("MAX3420e: resetting...\n");
-    USBWriteByte(rUSBCTL, bmCHIPRES); // reset the MAX3420E 
-    USBWriteByte(rUSBCTL, 0); // remove the reset
+    USBFlushOutputFIFO();
+    E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
 
     // Wait for oscillator OK interrupt
-    while ((USBReadByte(rUSBIRQ) & bmOSCOKIRQ) == 0)
+    UARTWrite("Waiting for oscillator...");
+    uint8_t rd = 0;
+    while ((rd & bmOSCOKIRQ) == 0)
     {
-        E32Sleep(3);
+        rd = USBReadByte(rUSBIRQ);
+        E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
     }
     USBWriteByte(rUSBIRQ, bmOSCOKIRQ);
-    UARTWrite("MAX3420e: oscillator OK\n");
+    UARTWrite("OK\n");
+    if (rd&bmBUSACTIRQ)
+        UARTWrite("usb bus active\n");
 
-    USBWriteByte(rPINCTL, bmINTLEVEL | gpxSOF);
-    USBWriteByte(rGPIO, 0x0);
+    USBWriteByte(rGPIO, 0x0);                    // set all GPIO out to zero
+    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE); // connect, | bmHOSCSTEN ?
 
-    USBWriteByte(rCPUCTL, bmIE);
     USBWriteByte(rUSBIEN, bmURESDNIE);
-    USBWriteByte(rUSBCTL, bmVBGATE | bmCONNECT | bmHOSCSTEN);
-    UARTWrite("MAX3420e: interrupts enabled\n");
+    USBWriteByte(rCPUCTL, bmIE);
 }
