@@ -95,8 +95,8 @@ void USBInit()
     if (rd&bmBUSACTIRQ)
         UARTWrite("usb bus active\n");
 
-    USBWriteByte(rGPIO, 0x0);                    // set all GPIO out to zero
-    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE); // connect, | bmHOSCSTEN ?
+    USBWriteByte(rGPIO, 0x0);
+    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE /*| bmSIGRWU*/);
 
     USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
     USBWriteByte(rEPIEN, bmSUDAVIE);

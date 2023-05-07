@@ -18,8 +18,8 @@ unsigned char CD[]=	// CONFIGURATION Descriptor
 	0x01,		// bNumInterfaces
 	0x01,		// bConfigValue
 	0x00,		// iConfiguration
-	0xE0,		// bmAttributes. b7=1 b6=self-powered b5=RWU supported
-	0x01,		// MaxPower is 2 ma
+	0x80,		// bmAttributes. b7=bus-powered
+	0xFA,		// MaxPower is 500 ma
 // INTERFACE Descriptor
 	0x09,		// length = 9
 	0x04,		// type = IF
