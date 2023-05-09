@@ -26,6 +26,7 @@ folders = \
 	led \
 	vgmplayer \
 	usbc \
+	dump \
 
 # Rules
 

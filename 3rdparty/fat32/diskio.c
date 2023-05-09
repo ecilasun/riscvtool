@@ -215,7 +215,10 @@ DRESULT disk_ioctl (
 	case DEV_MMC :
 
 		// Process of the command for the MMC/SD card
-
+		if (SDIOControl(cmd, buff) != -1)
+			res = RES_OK;
+		else
+			res = RES_ERROR;
 		return res;
 
 	case DEV_USB :

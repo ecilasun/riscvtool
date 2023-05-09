@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.003"
+#define VERSIONSTRING "v1.004"
 
 static EVideoContext s_gpuContext;
 
@@ -86,7 +86,11 @@ void ExecuteCmd(char *_cmd)
 
 	if (!strcmp(command, "dir"))
 	{
-		ListFiles(s_currentPath);
+		const char *path = strtok(nullptr, " ");
+		if (!path)
+			ListFiles(s_currentPath);
+		else
+			ListFiles(path);
 	}
 	else if (!strcmp(command, "mount"))
 	{
@@ -99,6 +103,11 @@ void ExecuteCmd(char *_cmd)
 	else if (!strcmp(command, "cls"))
 	{
 		UARTWrite("\033[H\033[0m\033[2J");
+	}
+	else if (!strcmp(command, "mon"))
+	{
+		UARTWrite("\033[H\033[0m\033[2J");
+		UARTWrite("TODO: implement monitor mode\n");
 	}
 	else if (!strcmp(command, "mem"))
 	{
@@ -138,7 +147,6 @@ void ExecuteCmd(char *_cmd)
 	else if (!strcmp(command, "del"))
 	{
 		const char *path = strtok(nullptr, " ");
-		// TODO: delete a file
 		if (!path)
 			UARTWrite("usage: del fname\n");
 		else
@@ -179,7 +187,7 @@ void ExecuteCmd(char *_cmd)
 	{
 		// Bright blue
 		UARTWrite("\033[0m\n\033[94m");
-		UARTWrite("dir: Show list of files in working directory\n");
+		UARTWrite("dir [path]: Show list of files in cwd or path\n");
 		UARTWrite("cls: Clear terminal\n");
 		UARTWrite("mem: Show available memory\n");
 		UARTWrite("tmp: Show device temperature\n");
@@ -188,6 +196,7 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("get fname: Save binary from UART to micro sd card\n");
 		UARTWrite("prc: Show process info\n");
 		UARTWrite("gdb: Enter gdb server mode\n");
+		UARTWrite("mon: Go into monitor mode\n");
 		UARTWrite("ver: Show version info\n");
 		UARTWrite("mount: mount drive sd:\n");
 		UARTWrite("umount: unmount drive sd:\n");
@@ -207,8 +216,7 @@ void ExecuteCmd(char *_cmd)
 		else
 		{
 			char filename[128];
-			strcpy(filename, s_currentPath);
-			strcat(filename, "\\");
+			strcpy(filename, s_currentPath); // current path already contains trailing slash
 			strcat(filename, command);
 			strcat(filename, ".elf");
 

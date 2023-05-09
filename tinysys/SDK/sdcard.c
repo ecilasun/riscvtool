@@ -4,6 +4,8 @@
 #include "leds.h"
 #include <stdio.h>
 
+#define MAX_SDCARD_WRITE_ATTEMPTS 512
+
 volatile uint8_t *IO_SPIRXTX = (volatile uint8_t* )0x80003000; // SPI read/write port
 volatile uint8_t *IO_CARDDETECT = (volatile uint8_t* )0x80003004; // SDCard insert/remove detect
 
@@ -249,6 +251,7 @@ uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *d
          int x=0;
          do {
             datablock[x++] = SPITxRx(0xFF);
+            datablock[x++] = SPITxRx(0xFF);
          } while(x<512);
 
          // Checksum
@@ -281,45 +284,6 @@ uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *d
    return response;
 }
 
-uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t blockaddress, uint8_t *datablock, uint8_t checksum[2])
-{
-   uint32_t oldstate = LEDGetState();
-   LEDSetState(oldstate|0x2);
-
-   // TODO: CMD24_WRITE_BLOCK
-   SDCmd(CMD17_READ_SINGLE_BLOCK, blockaddress);
-
-   uint8_t response = SDResponse1(); // R1: expect 0x00
-
-   if (response == 0x00) // SD_READY
-   {
-		// Send start token
-		response = SPITxRx(0xFE);
-
-         int x=0;
-         do {
-            response = SPITxRx(datablock[x++]);
-         } while(x<512);
-
-		response = SDResponse1(); // R1: status, expected status&x1F==0x05
-
-		if ((response&0x1F) == 0x05) // 010:accepted, 101:rejected-crcerror, 110:rejected-writeerror
-		{
-			// Wait for write to finish
-			response = SDResponse1();
-		}
-		else
-		{
-			UARTWrite("SDWriteSingleBlock: write error\n");
-			return 0xFF;
-		}
-   }
-
-   LEDSetState(oldstate);
-
-   return response;
-}
-
 int __attribute__ ((noinline)) SDReadMultipleBlocks(uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
 {
 	if (numblocks == 0)
@@ -339,6 +303,90 @@ int __attribute__ ((noinline)) SDReadMultipleBlocks(uint8_t *datablock, uint32_t
 	}
 
 	return cursor;
+}
+
+uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
+{
+   uint32_t oldstate = LEDGetState();
+   LEDSetState(oldstate|0x2);
+
+   SDCmd(CMD24_WRITE_BLOCK, sector);
+   uint8_t response = SDResponse1(); // R1: expect 0x00
+
+   if (response == 0x00) // SD_READY
+   {
+		// Send start token
+		response = SPITxRx(0xFE);
+
+      int x=0;
+      do {
+         response = SPITxRx(datablock[x++]);
+      } while(x<512);
+
+      // Send a pseudo-checksum
+      SPITxRx(0xFF);
+      SPITxRx(0xFF);
+
+      int i = 0;
+      while (i++ < 64)
+      {
+		   response = SDResponse1(); // R1: status, expected status&x1F==0x05
+		   if ((response&0x1F) == 0x05) // 010:accepted, 101:rejected-crcerror, 110:rejected-writeerror
+         {
+		      response = SDResponse1();
+            break;
+         }
+      }
+
+      while (SPITxRx(0xFF) == 0x00) { };
+   }
+
+   LEDSetState(oldstate);
+
+   // Error
+   if ((response&0x1F) != 0x05)
+   	UARTWrite("SDWriteSingleBlock: write error\n");
+
+   return response;
+}
+
+int __attribute__ ((noinline)) SDIOControl(const uint8_t cmd, void *buffer)
+{
+//CTRL_SYNC			   0	/* Complete pending write process (needed at FF_FS_READONLY == 0) */
+//GET_SECTOR_COUNT	1	/* Get media size (needed at FF_USE_MKFS == 1) */
+//GET_SECTOR_SIZE		2	/* Get sector size (needed at FF_MAX_SS != FF_MIN_SS) */
+//GET_BLOCK_SIZE		3	/* Get erase block size (needed at FF_USE_MKFS == 1) */
+//CTRL_TRIM			   4	/* Inform device that the data on the block of sectors is no longer used (needed at FF_USE_TRIM == 1) */
+//CTRL_POWER			5	/* Get/Set power status */
+//CTRL_LOCK			   6	/* Lock/Unlock media removal */
+//CTRL_EJECT			7	/* Eject media */
+//CTRL_FORMAT			8	/* Create physical format on the media */
+//MMC_GET_TYPE	   	10	/* Get card type */
+//MMC_GET_CSD			11	/* Get CSD */
+//MMC_GET_CID			12	/* Get CID */
+//MMC_GET_OCR			13	/* Get OCR */
+//MMC_GET_SDSTAT		14	/* Get SD status */
+//ISDIO_READ			55	/* Read data form SD iSDIO register */
+//ISDIO_WRITE			56	/* Write data to SD iSDIO register */
+//ISDIO_MRITE			57	/* Masked write data to SD iSDIO register */
+//ATA_GET_REV			20	/* Get F/W revision */
+//ATA_GET_MODEL		21	/* Get model name */
+//ATA_GET_SN			22	/* Get serial number */
+
+   switch (cmd)
+   {
+      case 0: /*CTRL_SYNC*/
+      {
+         E32Sleep(HALF_MILLISECOND_IN_TICKS);
+      }
+      break;
+      default:
+      {
+         UARTWrite("SDIOControl: unknown ctrl\n");
+      }
+      break;
+   }
+   return 0;
 }
 
 int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, uint32_t numblocks, uint32_t blockaddress)
@@ -361,11 +409,6 @@ int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, u
 
 	return cursor;
 }
-
-/*void __attribute__ ((noinline)) SDCardControl(int power_cs_n)
-{
-   *IO_SPICTL = power_cs_n;
-}*/
 
 int __attribute__ ((noinline)) SDCardStartup()
 {
