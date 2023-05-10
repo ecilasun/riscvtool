@@ -96,8 +96,8 @@ void I_SoundDelTimer( void );
 
 
 // Needed for calling the actual sound output.
-#define SAMPLECOUNT             512
-#define NUM_CHANNELS            8
+#define SAMPLECOUNT             1024
+#define NUM_CHANNELS            6
 // It is 2 for 16bit, and 2 for two channels.
 #define BUFMUL                  4
 #define MIXBUFFERSIZE           (SAMPLECOUNT*BUFMUL)
@@ -116,6 +116,11 @@ int             lengths[NUMSFX];
 //  are modifed and added, and stored in the buffer
 //  that is submitted to the audio device.
 signed short    *mixbuffer;
+signed short    *playbackbuffer;
+// Double-buffered
+int currentmixbuffer = 0;
+signed short    *mixbufferA;
+signed short    *mixbufferB;
 
 
 // The channel step amount...
@@ -565,6 +570,10 @@ void I_UpdateSound( void )
   // Mixing channel index.
   int                           chan;
 
+    mixbuffer = (currentmixbuffer%2)==0 ?  mixbufferA : mixbufferB;
+    playbackbuffer = (currentmixbuffer%2)==0 ?  mixbufferB : mixbufferA;
+    ++currentmixbuffer;
+
     // Left and right channel
     //  are in global mixbuffer, alternating.
     leftout = mixbuffer;
@@ -676,15 +685,14 @@ I_SubmitSound(void)
   /*for(int i=0;i<SAMPLECOUNT;++i)
     *IO_AUDIOOUT = (mixbuffer[i*2+1]<<16) | mixbuffer[i*2+0];*/
 
-  // Fill current write buffer with new mix data
-  APUStartDMA((uint32_t)mixbuffer);
-
-  // This is a tad different; if APU's not done we do a roundabout and
-  // come back next time with fresh samples instead of waiting
   uint32_t cbuf = APUFrame();
   if (cbuf != pbuf)
   {
     pbuf = cbuf;
+    // Ensure writes are visible by audio DMA
+    CFLUSH_D_L1;
+    // Fill current write buffer with new mix data
+    APUStartDMA((uint32_t)playbackbuffer);
     APUSwapBuffers();
   }
 }
@@ -810,8 +818,12 @@ I_InitSound()
   else
     fprintf(stderr, "Could not play signed 16 data\n");*/
 
-  mixbuffer = (short*)APUAllocateBuffer(MIXBUFFERSIZE*sizeof(signed short));
-  APUSetBufferSize(SAMPLECOUNT);
+  // swap: mixbuffer = (currentmixbuffer%2)==0 ?  mixbufferA : mixbufferB;
+  mixbufferA = (short*)APUAllocateBuffer(MIXBUFFERSIZE*SAMPLESIZE);
+  mixbufferB = (short*)APUAllocateBuffer(MIXBUFFERSIZE*SAMPLESIZE);
+  mixbuffer = mixbufferA;
+  playbackbuffer = mixbufferB;
+  APUSetBufferSize(MIXBUFFERSIZE*SAMPLESIZE);
   APUSetSampleRate(ASR_11025_Hz);
 
   fprintf(stderr, " configured audio device\n" );
@@ -840,7 +852,10 @@ I_InitSound()
 
   // Now initialize mixbuffer with zero.
   for ( i = 0; i< MIXBUFFERSIZE; i++ )
-    mixbuffer[i] = 0;
+  {
+    mixbufferA[i] = 0;
+    mixbufferB[i] = 0;
+  }
 
   // Finished initialization.
   fprintf(stderr, "I_InitSound: sound module ready\n");

@@ -225,6 +225,7 @@ static char s_fileNames[MAX_HANDLES][MAXFILENAMELEN+1] = {
 	{"                                "},
 	{"                                "},
 	{"                                "}};
+static char s_currentPath[MAXFILENAMELEN+1] = "                                ";
 
 static STaskContext g_taskctx;
 static UINT tmpresult;
@@ -460,6 +461,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 				// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
 				// 0	io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
+				// 17	getcwd		char *getcwd(char *buf, size_t size);
 				// 57	close		int sys_close(unsigned int fd);
 				// 62	lseek		off_t sys_lseek(int fd, off_t offset, int whence);
 				// 63	read		ssize_t read(int fd, void *buf, size_t count);
@@ -475,6 +477,22 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					//sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
 					ReportError(32, "unimpl: io_setup()", code, value, PC);
 					write_csr(0x8AA, 0xFFFFFFFF);
+				}
+				else if (value==17) // getcwd()
+				{
+					//char *getcwd(char *buf, size_t size);
+					char* targetbuffer = (char*)read_csr(0x8AA); // A0
+					uint32_t targetsize = read_csr(0x8AB); // A1
+					int L = strlen(s_currentPath);
+					L = L < targetsize  ? L : targetsize;
+					if (L > 0 && targetbuffer)
+					{
+						strncpy(targetbuffer, s_currentPath, L);
+						targetbuffer[L] = 0;
+						write_csr(0x8AA, targetbuffer);
+					}
+					else
+						write_csr(0x8AA, s_currentPath);
 				}
 				else if (value==57) // close()
 				{
