@@ -21,9 +21,10 @@ typedef struct
 
 int main()
 {
-	/*char *pathbuf = getcwd(nullptr, PATH_MAX);
+	char *pathbuf = getcwd(nullptr, PATH_MAX);
 	if (pathbuf)
-		printf("Current work directory:%s\n", pathbuf);*/
+		printf("Current work directory:%s\n", pathbuf);
+	chdir("sd:\\");
 
 	FILE *fp = fopen("sd:test.jpg", "rb");
 	if (fp)

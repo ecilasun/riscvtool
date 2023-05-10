@@ -313,6 +313,7 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
    SDCmd(CMD24_WRITE_BLOCK, sector);
    uint8_t response = SDResponse1(); // R1: expect 0x00
 
+   int haserror = 1;
    if (response == 0x00) // SD_READY
    {
 		// Send start token
@@ -333,6 +334,7 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
 		   response = SDResponse1(); // R1: status, expected status&x1F==0x05
 		   if ((response&0x1F) == 0x05) // 010:accepted, 101:rejected-crcerror, 110:rejected-writeerror
          {
+            haserror = 0; // accepted
 		      response = SDResponse1();
             break;
          }
@@ -344,7 +346,7 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
    LEDSetState(oldstate);
 
    // Error
-   if ((response&0x1F) != 0x05)
+   if (haserror)
    	UARTWrite("SDWriteSingleBlock: write error\n");
 
    return response;

@@ -26,10 +26,10 @@ int main(int argc, char *argv[])
 			{
 				readsize = fread(buffer, 1, 16, fp);
 
-				for (uint32_t i=0; i<readsize; ++i)
+				for (int i=0; i<readsize; ++i)
 					printf("%.2X ", buffer[i]);
 
-				for (uint32_t i=0; i<readsize; ++i)
+				for (int i=0; i<readsize; ++i)
 					if (buffer[i]>=32)
 						printf("%c", buffer[i]);
 					else

@@ -57,6 +57,46 @@ uint32_t core_brk(uint32_t brkptr)
 extern "C" {
 #endif
 
+	char *getcwd(char *buf, size_t size)
+	{
+		register uint32_t fdsc = (uint32_t)buf;
+		register uint32_t fsta = (uint32_t)size;
+		register char* retval = 0;
+		asm (
+			"li a7, 17;"
+			"mv a0, %1;"
+			"mv a1, %2;"
+			"ecall;"
+			"mv %0, a0;" :
+			// Return values
+			"=r" (retval) :
+			// Input parameters
+			"r" (fdsc), "r" (fsta) :
+			// Clobber list
+			"a0", "a1", "a7"
+		);
+		return retval;
+	}
+
+	int chdir(const char *path)
+	{
+		register uint32_t fdsc = (uint32_t)path;
+		register int retval = 0;
+		asm (
+			"li a7, 50;"
+			"mv a0, %1;"
+			"ecall;"
+			"mv %0, a0;" :
+			// Return values
+			"=r" (retval) :
+			// Input parameters
+			"r" (fdsc) :
+			// Clobber list
+			"a0", "a7"
+		);
+		return retval;
+	}
+
 	/*int _chdir(const char *path)
 	{
 		errno = ENOSYS;

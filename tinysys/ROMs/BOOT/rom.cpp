@@ -17,7 +17,7 @@ static EVideoContext s_gpuContext;
 static char s_execName[64];
 static char s_execParam[64];
 static char s_cmdString[128];
-static char s_currentPath[64];
+static char s_workdir[64];
 static uint32_t s_execParamCount = 1;
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
@@ -88,7 +88,7 @@ void ExecuteCmd(char *_cmd)
 	{
 		const char *path = strtok(nullptr, " ");
 		if (!path)
-			ListFiles(s_currentPath);
+			ListFiles(s_workdir);
 		else
 			ListFiles(path);
 	}
@@ -159,7 +159,10 @@ void ExecuteCmd(char *_cmd)
 		if (!path)
 			UARTWrite("usage: cwd path\n");
 		else
-			strncpy(s_currentPath, path, 128);
+		{
+			f_chdir(path);
+			strncpy(s_workdir, path, 64);
+		}
 	}
 	else if (!strcmp(command, "get"))
 	{
@@ -216,7 +219,7 @@ void ExecuteCmd(char *_cmd)
 		else
 		{
 			char filename[128];
-			strcpy(filename, s_currentPath); // current path already contains trailing slash
+			strcpy(filename, s_workdir); // current path already contains trailing slash
 			strcat(filename, command);
 			strcat(filename, ".elf");
 
@@ -276,7 +279,8 @@ int main()
 	LEDSetState(0xA);
 
 	// Set default path before we mount any storage devices
-	strncpy(s_currentPath, "sd:\\", 64);
+	f_chdir("sd:\\");
+	strncpy(s_workdir, "sd:\\", 64);
 
 	// Ready to start, silence LEDs
 	LEDSetState(0x0);
@@ -367,7 +371,7 @@ int main()
 			s_cmdString[s_cmdLen] = 0;
 			// Reset current line and emit the command string
 			UARTWrite("\033[2K\r");
-			UARTWrite(s_currentPath);
+			UARTWrite(s_workdir);
 			UARTWrite(":");
 			UARTWrite(s_cmdString);
 		}
