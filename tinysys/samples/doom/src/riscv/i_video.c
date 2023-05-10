@@ -108,7 +108,7 @@ I_FinishUpdate (void)
 
 	// Partial DMA next
 	if (leftoverDMA!=0)
-		DMACopy((uint32_t)screens[0]+fulloffset, (uint32_t)framebuffer+fulloffset, (uint8_t)(leftoverDMA-1));
+		DMACopy((uint32_t)screens[0]+fulloffset, (uint32_t)framebuffer+fulloffset, leftoverDMA);
 
 	// Tag for sync (essentially an item in FIFO after last DMA so we can check if DMA is complete when this drains)
 	DMATag(0x0);

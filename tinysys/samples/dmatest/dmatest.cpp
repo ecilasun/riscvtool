@@ -4,7 +4,7 @@
 #include "dma.h"
 #include "uart.h"
 
-int main()
+int main(int argc, char *argv[])
 {
 	UARTWrite("DMA test\n");
 
@@ -82,18 +82,21 @@ int main()
 		
 		// Partial DMA next
 		if (leftoverDMA!=0)
-			DMACopy((uint32_t)(bufferA+offset*W+fulloffset), (uint32_t)(bufferB+fulloffset), (uint8_t)(leftoverDMA-1));
+			DMACopy((uint32_t)(bufferA+offset*W+fulloffset), (uint32_t)(bufferB+fulloffset), leftoverDMA);
 
 		// Tag for DMA sync (essentially an item in FIFO after last DMA so we can check if DMA is complete when this drains)
 		DMATag(0x0);
 
 		// Wait for vsync on the CPU side
 		// Ideally one would install a vsync handler and swap pages based on that instead of stalling like this
-		uint32_t currentvsync;
-		do {
-			currentvsync = GPUReadVBlankCounter();
-		} while (currentvsync == prevvsync);
-		prevvsync = currentvsync;
+		if (argc<=1)
+		{
+			uint32_t currentvsync;
+			do {
+				currentvsync = GPUReadVBlankCounter();
+			} while (currentvsync == prevvsync);
+			prevvsync = currentvsync;
+		}
 
 		// Handle Scroll
 		offset = (offset+dir);
