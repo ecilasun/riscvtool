@@ -557,14 +557,14 @@ void IdentifyVersion (void)
 #elif 0
     gamemode = retail;
     D_AddFile ("sd:doomu.wad");
-#elif 0
+#elif 1
     gamemode = registered;
     D_AddFile ("sd:doom.wad");
 #elif 0
     gamemode = shareware;
     // https://github.com/fragglet/miniwad
     D_AddFile ("sd:miniwad.wad");
-#elif 1
+#elif 0
     gamemode = shareware;
     D_AddFile ("sd:doom1.wad");
 #else
@@ -596,10 +596,10 @@ void D_DoomMain (void)
     autostart    = false;
 
     /* Custom title */
-    printf ( "----------------------------\n"
+    printf ( "\n----------------------------\n"
              "RISC-V DOOM Startup v%i.%i\n"
              "----------------------------\n",
-             VERSION/100,VERSION%100);
+             VERSION/100, VERSION%100);
 
     // init subsystems
     printf ("V_Init: allocate screens.\n");

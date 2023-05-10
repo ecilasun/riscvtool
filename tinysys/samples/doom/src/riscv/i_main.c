@@ -20,14 +20,18 @@
 // Modified to work on E32E by Engin Cilasun
 
 #include "../doomdef.h"
+#include "../m_argv.h"
 #include "../d_main.h"
 #include <stdlib.h>
 
 #include "basesystem.h"
 #include "uart.h"
 
-int main()
+int main(int argc, char *argv[])
 {
+    myargc = argc;
+    myargv = argv;
+
 	D_DoomMain();
 	return 0;
 }
