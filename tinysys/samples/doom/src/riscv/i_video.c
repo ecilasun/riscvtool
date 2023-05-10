@@ -84,12 +84,10 @@ I_FinishUpdate (void)
 	// Option 1: CPU handles the copy operation
 	// memcpy(framebuffer, screens[0], SCREENWIDTH*SCREENHEIGHT);
 
-	// In either case, write pending data to memory to ensure all writes are visible to scan-out or DMA
-	CFLUSH_D_L1;
-
 	// Option 2: DMA unit handles the copy operation
+
 	// Wait for prior DMA to avoid lock-up
-	while (DMAPending()) { asm volatile("nop;"); }
+	//while (DMAPending()) { }
 
 	// DMA controller handles the DMA operation in 128bit (16 byte) blocks.
 	// Writes go directly to memory without polluting the data cache
@@ -97,6 +95,9 @@ I_FinishUpdate (void)
 	uint32_t blockCount = SCREENWIDTH * SCREENHEIGHT / DMA_BLOCK_SIZE;
 	const uint32_t leftoverDMA = blockCount%256;
 	const uint32_t fullDMAs = blockCount/256;
+
+	// In either case, write pending data to memory to ensure all writes are visible to scan-out or DMA
+	CFLUSH_D_L1;
 
 	// Do the full DMAs first
 	uint32_t fulloffset = 0;
@@ -112,8 +113,6 @@ I_FinishUpdate (void)
 
 	// Tag for sync (essentially an item in FIFO after last DMA so we can check if DMA is complete when this drains)
 	DMATag(0x0);
-
-	//DMACopyBlocks((uint32_t)screens[0], (uint32_t)framebuffer, blockCount);
 }
 
 
@@ -121,7 +120,7 @@ void
 I_WaitVBL(int count)
 {
 	// Wait until we exit current frame's vbcounter and enter the next one
-	while (prevvblankcount == GPUReadVBlankCounter()) { asm volatile ("nop;"); }
+	while (prevvblankcount == GPUReadVBlankCounter()) { }
 	prevvblankcount = GPUReadVBlankCounter();
 }
 
