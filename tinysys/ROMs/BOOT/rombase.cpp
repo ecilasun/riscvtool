@@ -10,6 +10,27 @@
 
 static FATFS Fs;
 
+void ReportErrorShort(const uint32_t _width, const char *_error)
+{
+	UARTWrite("\033[0m\n\n\033[31m\033[40m");
+	UARTWrite("┌");
+	for (uint32_t w=0;w<_width-2;++w)
+		UARTWrite("─");
+	UARTWrite("┐\n│");
+
+	// Message
+	int W = strlen(_error);
+	W = (_width-2) - W;
+	UARTWrite(_error);
+	for (int w=0;w<W;++w)
+		UARTWrite(" ");
+
+	UARTWrite("│\n└");
+	for (uint32_t w=0;w<_width-2;++w)
+		UARTWrite("─");
+	UARTWrite("┘\n\033[0m\n");
+}
+
 void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uint32_t _value, uint32_t _PC)
 {
 	UARTWrite("\033[0m\n\n\033[31m\033[40m");
@@ -55,7 +76,7 @@ uint32_t MountDrive()
 {
 	// Attempt to mount file system on micro-SD card
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-	if (mountattempt!=FR_OK)
+	if (mountattempt != FR_OK)
 	{
 		ReportError(32, "File system error", mountattempt, 0, 0);
 		return 0;
@@ -177,7 +198,7 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 	else
 	{
 		if (reportError)
-			ReportError(32, "Executable not found", fr, 0, 0);
+			ReportErrorShort(32, "Executable not found");
 	}
 
 	return 0;
@@ -227,7 +248,7 @@ static char s_fileNames[MAX_HANDLES][MAXFILENAMELEN+1] = {
 	{"                                "}};
 
 static STaskContext g_taskctx;
-static UINT tmpresult;
+static UINT tmpresult = 0;
 
 STaskContext *CreateTaskContext()
 {
@@ -602,7 +623,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					}
 					else
 					{
-						if (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult))
+						if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult)))
 						{
 							write_csr(0x8AA, tmpresult);
 						}

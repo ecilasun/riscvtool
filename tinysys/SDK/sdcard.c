@@ -66,6 +66,22 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
   return (crc << 1) | 1;
 }
 
+static uint16_t CRC16(const uint8_t *pData, int len, uint16_t seed)
+{
+	uint8_t  s, t;
+	uint16_t crc;
+
+	crc = seed;
+	for (int i = 0; i < len; i++)
+	{
+		s = pData[i] ^ (crc >> 8);
+		t = s ^ (s >> 4);
+		crc = (crc << 8) ^ t ^ (t << 5) ^ (t << 12);
+	}
+
+	return crc;
+}
+
 // A single SPI transaction is a write from master followed by a read from slave's output
 uint8_t __attribute__ ((noinline)) SPITxRx(const uint8_t outbyte)
 {
@@ -313,10 +329,10 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
    SDCmd(CMD24_WRITE_BLOCK, sector);
    uint8_t response = SDResponse1(); // R1: expect 0x00
 
-   int haserror = 1;
+   int haserror = 0;
    if (response == 0x00) // SD_READY
    {
-		// Send start token
+		// Send start token - single block (0xFD->multiblock)
 		response = SPITxRx(0xFE);
 
       int x=0;
@@ -324,30 +340,40 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
          response = SPITxRx(datablock[x++]);
       } while(x<512);
 
-      // Send a pseudo-checksum
-      SPITxRx(0xFF);
-      SPITxRx(0xFF);
+      uint16_t crc = CRC16(datablock, 512, 0);
+      SPITxRx(crc >> 8);
+      SPITxRx(crc & 0xff);
 
-      int i = 0;
-      while (i++ < 64)
+	   // Expected status&x1F==0x05
+	   // 010:accepted, 101:rejected-crcerror, 110:rejected-writeerror
+      response = SDResponse1();
+      if((response & 0x1F) != 0x05)
       {
-		   response = SDResponse1(); // R1: status, expected status&x1F==0x05
-		   if ((response&0x1F) == 0x05) // 010:accepted, 101:rejected-crcerror, 110:rejected-writeerror
-         {
-            haserror = 0; // accepted
-		      response = SDResponse1();
-            break;
-         }
+         SDCmd(CMD13_SEND_STATUS, 0);
+         response = SDResponse1();
       }
 
-      while (SPITxRx(0xFF) == 0x00) { };
+      // Wait until data programming is done
+      {
+         int timeout = 0;
+         while(SPITxRx(0xFF) == 0x00)
+         {
+            ++timeout;
+            if (timeout > G_SPI_TIMEOUT)
+               break;
+         };
+      }
    }
 
    LEDSetState(oldstate);
 
    // Error
    if (haserror)
-   	UARTWrite("SDWriteSingleBlock: write error\n");
+   {
+   	UARTWrite("SDWriteSingleBlock: write response: 0x");
+      UARTWriteHexByte(response);
+      UARTWrite("\n");
+   }
 
    return response;
 }

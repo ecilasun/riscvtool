@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.004"
+#define VERSIONSTRING "v1.005"
 
 static EVideoContext s_gpuContext;
 
@@ -128,20 +128,25 @@ void ExecuteCmd(char *_cmd)
 	else if (!strcmp(command, "prc"))
 	{
 		STaskContext *ctx = GetTaskContext();
-		for (int i=1;i<ctx->numTasks;++i)
+		if (ctx->numTasks==1)
+			UARTWrite("No tasks running\n");
+		else
 		{
-			STask *task = &ctx->tasks[i];
-			// UARTWrite("#");
-			// UARTWriteDecimal(i);
-			UARTWrite(" task:");
-			UARTWrite(task->name);
-			UARTWrite(" len:");
-			UARTWriteDecimal(task->runLength);
-			UARTWrite(" state:");
-			UARTWriteDecimal(task->state);
-			UARTWrite(" PC:");
-			UARTWriteHex(task->regs[0]);
-			UARTWrite("\n");
+			for (int i=1;i<ctx->numTasks;++i)
+			{
+				STask *task = &ctx->tasks[i];
+				// UARTWrite("#");
+				// UARTWriteDecimal(i);
+				UARTWrite(" task:");
+				UARTWrite(task->name);
+				UARTWrite(" len:");
+				UARTWriteDecimal(task->runLength);
+				UARTWrite(" state:");
+				UARTWriteDecimal(task->state);
+				UARTWrite(" PC:");
+				UARTWriteHex(task->regs[0]);
+				UARTWrite("\n");
+			}
 		}
 	}
 	else if (!strcmp(command, "del"))
@@ -244,7 +249,7 @@ void ExecuteCmd(char *_cmd)
 			// even though each gets a new task slot assigned.
 			// This will cause corruption of the runtime environment.
 			if (s_startAddress != 0x0)
-				TaskAdd(tctx, command, RunExecTask, TWO_HUNDRED_FIFTY_MILLISECONDS_IN_TICKS);
+				TaskAdd(tctx, command, RunExecTask, HUNDRED_MILLISECONDS_IN_TICKS);
 		}
 	}
 }
@@ -274,7 +279,7 @@ int main()
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
 	LEDSetState(0xB);
-	TaskAdd(taskctx, "kernelStub", _stubTask, HALF_MILLISECOND_IN_TICKS);
+	TaskAdd(taskctx, "kernelStub", _stubTask, QUARTER_MILLISECOND_IN_TICKS);
 
 	LEDSetState(0xA);
 
