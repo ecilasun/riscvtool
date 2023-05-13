@@ -6,8 +6,8 @@
 
 #define MAX_SDCARD_WRITE_ATTEMPTS 512
 
-volatile uint8_t *IO_SPIRXTX = (volatile uint8_t* )0x80003000; // SPI read/write port
-volatile uint8_t *IO_CARDDETECT = (volatile uint8_t* )0x80003004; // SDCard insert/remove detect
+volatile uint8_t *IO_SPIRXTX = (volatile uint8_t* ) DEVICE_SPIC; // SPI read/write port
+volatile uint8_t *IO_CARDDETECT = (volatile uint8_t* ) (DEVICE_SPIC+4); // SDCard insert/remove detect
 
 typedef enum {
     CMD_NOT_SUPPORTED = -1,             /**< Command not supported error */

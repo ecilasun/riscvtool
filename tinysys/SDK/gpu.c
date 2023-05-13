@@ -1,3 +1,4 @@
+#include "basesystem.h"
 #include "gpu.h"
 #include "core.h"
 #include <stdlib.h>
@@ -102,7 +103,7 @@ const uint32_t vgapalette[] __attribute__((aligned(16))) = {
 
 // NOTE: Writes to this address will end up in the GPU command FIFO
 // NOTE: Reads from this address will return the vblank counter
-volatile uint32_t *GPUIO = (volatile uint32_t* )0x80002000;
+volatile uint32_t *GPUIO = (volatile uint32_t* ) DEVICE_GPUC;
 
 // GPU buffers are allocated aligned to 4K boundaries
 uint8_t *GPUAllocateBuffer(const uint32_t _size)

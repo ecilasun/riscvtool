@@ -1,9 +1,10 @@
+#include "basesystem.h"
 #include "dma.h"
 #include "core.h"
 
 // NOTE: Writes to this address will end up in the DMA command FIFO
 // NOTE: Reads from this address will return DMA operation status
-volatile uint32_t *DMAIO = (volatile uint32_t* )0x80006000;
+volatile uint32_t *DMAIO = (volatile uint32_t* ) DEVICE_DMAC;
 
 // Simple DMA with aligned start and target addresses, does _16byteBlockCount x 128bit copies (no masking, no byte aligned copies)
 void DMACopy4K(const uint32_t _sourceAddress16ByteAligned, const uint32_t _targetAddress16ByteAligned)

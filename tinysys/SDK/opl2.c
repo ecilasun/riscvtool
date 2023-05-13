@@ -1,8 +1,8 @@
 #include "opl2.h"
 #include "basesystem.h"
 
-volatile uint8_t *IO_OPL2REG = (volatile uint8_t*)0x80009000;
-volatile uint8_t *IO_OPL2VAL = (volatile uint8_t*)0x80009004;
+volatile uint8_t *IO_OPL2REG = (volatile uint8_t*) DEVICE_OPL2;
+volatile uint8_t *IO_OPL2VAL = (volatile uint8_t*) (DEVICE_OPL2+4);
 
 void OPL2WriteReg(uint8_t reg)
 {

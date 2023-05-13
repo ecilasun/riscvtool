@@ -2,8 +2,8 @@
 #include "basesystem.h"
 #include "uart.h"
 
-volatile uint32_t *IO_USBCTRX = (volatile uint32_t* ) 0x80007000; // Receive fifo
-volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) 0x80007004; // Output FIFO state
+volatile uint32_t *IO_USBCTRX = (volatile uint32_t* ) DEVICE_USBC; // Receive fifo
+volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) (DEVICE_USBC+4); // Output FIFO state
 
 static uint32_t statusF = 0;
 static uint32_t sparebyte = 0;

@@ -1,3 +1,4 @@
+#include "basesystem.h"
 #include "uart.h"
 
 #include <math.h> // For abs()
@@ -5,10 +6,10 @@
 // Status register bits
 // uartstateregister: {30'd0, fifoFull, inFifohasData};
 
-volatile uint32_t *IO_UARTRX     = (volatile uint32_t* ) 0x80000000; // Receive fifo
-volatile uint32_t *IO_UARTTX     = (volatile uint32_t* ) 0x80000004; // Transmit fifo
-volatile uint32_t *IO_UARTStatus = (volatile uint32_t* ) 0x80000008; // Status register
-volatile uint32_t *IO_UARTCtl    = (volatile uint32_t* ) 0x8000000C; // Control register
+volatile uint32_t *IO_UARTRX     = (volatile uint32_t* ) DEVICE_UART; // Receive fifo
+volatile uint32_t *IO_UARTTX     = (volatile uint32_t* ) (DEVICE_UART+0x4); // Transmit fifo
+volatile uint32_t *IO_UARTStatus = (volatile uint32_t* ) (DEVICE_UART+0x8); // Status register
+volatile uint32_t *IO_UARTCtl    = (volatile uint32_t* ) (DEVICE_UART+0xC); // Control register
 
 void UARTEnableInterrupt(int enable)
 {

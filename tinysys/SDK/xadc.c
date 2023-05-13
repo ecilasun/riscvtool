@@ -1,11 +1,12 @@
+#include "basesystem.h"
 #include "xadc.h"
 
 // Sampled data for analog CH0..CH7 (channel addresses are word aligned)
 // Read as ANALOGINPUTS[0] to ANALOGINPUTS[7]
-volatile uint32_t *ANALOGINPUTS = (volatile uint32_t* )0x80005000;
+volatile uint32_t *ANALOGINPUTS = (volatile uint32_t* ) DEVICE_XADC;
 
 // Device temperature from the on-chip ADC
-volatile uint32_t *XADCTEMP = (volatile uint32_t* )0x80005020;
+volatile uint32_t *XADCTEMP = (volatile uint32_t* ) (DEVICE_XADC+0x20);
 
 // Individual inputs
 /*

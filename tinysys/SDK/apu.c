@@ -1,8 +1,9 @@
+#include "basesystem.h"
 #include "apu.h"
 #include "core.h"
 #include <stdlib.h>
 
-volatile uint32_t *IO_AUDIOOUT = (volatile uint32_t* )0x80008000;
+volatile uint32_t *IO_AUDIOOUT = (volatile uint32_t* ) DEVICE_APUC;
 
 // APU buffers are allocated aligned to 64byte boundaries
 uint8_t *APUAllocateBuffer(const uint32_t _size)

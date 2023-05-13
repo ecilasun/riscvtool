@@ -15,17 +15,19 @@
 #define QUARTER_MILLISECOND_IN_TICKS		    2500
 #define ONE_MICROSECOND_IN_TICKS		        10
 
+// Physical address map (when there's no MMU)
 #define APPMEM_START                0x00000000 // Top of RAM
-#define HEAP_START_APPMEM_END       0x02000000 // 32Mbytes application space above this
-#define HEAP_END_TASKMEM_START      0x0FFD0000 // 223Mbytes Heap space above this
-#define TASKMEM_END_STACK_END       0x0FFDE000 // 56Kbyte space for tasks above this
-#define STACK_BASE                  0x0FFDFFFC // Stack above this
-#define ROMSHADOW_START             0x0FFE0000 // 4byte gap above this
+#define HEAP_START_APPMEM_END       0x02000000 // 32 Mbytes of executable space above this
+#define HEAP_END_TASKMEM_START      0x0FFD0000 // (255-32) Mbytes of heap space above this
+#define TASKMEM_END_STACK_END       0x0FFDE000 // 56Kbytes of tasks stack space above this
+#define STACK_BASE                  0x0FFDFFFC // 8188 bytes of stack above this
+#define ROMSHADOW_START             0x0FFE0000 // 4byte gap above this (128K ROM image below this)
 #define ROMSHADOW_END_MEM_END       0x0FFFFFFF // 64Kbyte ROM shadow copy above this
 
-// Device addresses
-// Each device has a 4Kbyte region mapped to i
+// Device address base
 #define DEVICE_BASE 0x80000000
+
+// Each device has 4 Kbytes of continous, uncached memory region mapped to it
 #define DEVICE_UART (DEVICE_BASE+0x0000)
 #define DEVICE_LEDS (DEVICE_BASE+0x1000)
 #define DEVICE_GPUC (DEVICE_BASE+0x2000)
@@ -33,7 +35,10 @@
 #define DEVICE_CSRF (DEVICE_BASE+0x4000)
 #define DEVICE_XADC (DEVICE_BASE+0x5000)
 #define DEVICE_DMAC (DEVICE_BASE+0x6000)
-#define DEVICE_USBH (DEVICE_BASE+0x7000)
+#define DEVICE_USBC (DEVICE_BASE+0x7000)
+#define DEVICE_APUC (DEVICE_BASE+0x8000)
+#define DEVICE_OPL2 (DEVICE_BASE+0x9000)
+// NOTE: Add more devices after this point
 
 uint64_t E32ReadTime();
 uint64_t E32ReadCycles();

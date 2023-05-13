@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.005"
+#define VERSIONSTRING "v1.006"
 
 static EVideoContext s_gpuContext;
 
