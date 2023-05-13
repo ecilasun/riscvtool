@@ -134,10 +134,11 @@ void DrawWaveform()
 	GPUSetWriteAddress(&s_vx, (uint32_t)writepage);
 	GPUSetScanoutAddress(&s_vx, (uint32_t)readpage);
 
-	// Clear screen to light magenta
+	// Clear middle portion of screen
 	uint32_t *writepageword = (uint32_t*)writepage;
-	for (uint32_t i=0;i<80*240;++i)
-		writepageword[i] = 0x50505050;
+	for (uint32_t y=0;y<240;++y)
+		for (uint32_t x=8;x<72;++x)
+			writepageword[x+y*80] = 0x15151515;
 
 	int16_t *src = (int16_t *)apubuffer;
 	for (uint32_t x=0; x<BUFFER_SAMPLES/2; ++x)
@@ -150,8 +151,8 @@ void DrawWaveform()
 		R = R/256;
 		R = R < -110 ? -110 : R;
 		R = R > 110 ? 110 : R;
-		writepage[x + (L+110)*320] = 0x37; // Blue
-		writepage[x + (R+110)*320] = 0x28; // Red
+		writepage[32+x + (L+110)*320] = 0x37; // Blue
+		writepage[32+x + (R+110)*320] = 0x28; // Red
 	}
 
     CFLUSH_D_L1;
@@ -249,6 +250,8 @@ int main(int argc, char *argv[])
 {
 	s_framebufferB = GPUAllocateBuffer(320*240);
 	s_framebufferA = GPUAllocateBuffer(320*240);
+	memset(s_framebufferA, 0, 320*240);
+	memset(s_framebufferB, 0, 320*240);
 	GPUSetVMode(&s_vx, EVM_320_Pal, EVS_Enable);
 	GPUSetWriteAddress(&s_vx, (uint32_t)s_framebufferA);
 	GPUSetScanoutAddress(&s_vx, (uint32_t)s_framebufferB);
