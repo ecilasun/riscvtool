@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.006"
+#define VERSIONSTRING "v1.007"
 
 static EVideoContext s_gpuContext;
 
@@ -83,6 +83,8 @@ void ExecuteCmd(char *_cmd)
 	const char *command = strtok(_cmd, " ");
 	if (!command)
 		return;
+
+	uint32_t loadELF = 0;
 
 	if (!strcmp(command, "dir"))
 	{
@@ -180,15 +182,17 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "gdb"))
 	{
-		UARTWrite("\033[H\033[0m\033[2JEntering gdb debug server mode\n");
-		TaskDebugMode(1);
+		// load ELF and enter GDB server mode, while also halting the ELF
+		command = strtok(nullptr, " ");
+		loadELF = 2;
 	}
 	else if (!strcmp(command, "tmp"))
 	{
 		UARTWrite("Temperature:");
 		uint32_t ADCcode = *XADCTEMP;
-		float temp_centigrates = (ADCcode*503.975f)/4096.f-273.15f;
-		UARTWriteDecimal((int32_t)temp_centigrates);
+		//float temp_centigrates = (ADCcode*503.975f)/4096.f-273.15f;
+		uint32_t temp_centigrates = (ADCcode*503975)/4096000-273;
+		UARTWriteDecimal(temp_centigrates);
 		UARTWrite("\n");
 	}
 	else if (!strcmp(command, "help"))
@@ -213,6 +217,9 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("\033[0m\n");
 	}
 	else // Anything else defers to being a command on storage
+		loadELF = 1;
+
+	if (loadELF)
 	{
 		STaskContext* tctx = GetTaskContext();
 		// Temporary measure to avoid loading another executable while the first one is running
@@ -249,7 +256,14 @@ void ExecuteCmd(char *_cmd)
 			// even though each gets a new task slot assigned.
 			// This will cause corruption of the runtime environment.
 			if (s_startAddress != 0x0)
-				TaskAdd(tctx, command, RunExecTask, HUNDRED_MILLISECONDS_IN_TICKS);
+			{
+				if (loadELF == 2) // GDB
+				{
+					UARTWrite("\033[H\033[0m\033[2JEntering gdb server mode and halting\n");
+					TaskDebugMode(1);
+				}
+				TaskAdd(tctx, command, RunExecTask, loadELF == 2 ? TS_PAUSED : TS_RUNNING, HUNDRED_MILLISECONDS_IN_TICKS);
+			}
 		}
 	}
 }
@@ -279,7 +293,7 @@ int main()
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
 	LEDSetState(0xB);
-	TaskAdd(taskctx, "kernelStub", _stubTask, QUARTER_MILLISECOND_IN_TICKS);
+	TaskAdd(taskctx, "kernelStub", _stubTask, TS_RUNNING, QUARTER_MILLISECOND_IN_TICKS);
 
 	LEDSetState(0xA);
 

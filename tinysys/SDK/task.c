@@ -37,7 +37,7 @@ void TaskInitSystem(struct STaskContext *_ctx)
 	}
 }
 
-int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const uint32_t _runLength)
+int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, enum ETaskState _initialState, const uint32_t _runLength)
 {
 	int32_t prevcount = _ctx->numTasks;
 	if (prevcount >= TASK_MAX)
@@ -69,7 +69,7 @@ int TaskAdd(struct STaskContext *_ctx, const char *_name, taskfunc _task, const 
 	task->name[idx] = 0;
 
 	// We assume running state as soon as we start
-	task->state = TS_RUNNING;
+	task->state = _initialState;
 
 	// Resume timer interrupts on this core
 	//write_csr(mie, MIP_MSIP | MIP_MEIP | MIP_MTIP);
@@ -142,12 +142,20 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	regs[30] = read_csr(0x8BE);	// t5
 	regs[31] = read_csr(0x8BF);	// t6
 
+	// We're in paused state, auto-enter an EBREAK
+	if (_ctx->tasks[currentTask].state == TS_PAUSED)
+	{
+		_ctx->tasks[currentTask].ctrlc = 1;
+		_ctx->tasks[currentTask].state = TS_RUNNING;
+	}
+
 	// Break
 	if (_ctx->tasks[currentTask].ctrlc == 1)
 	{
 		_ctx->tasks[currentTask].ctrlc = 2;
 		_ctx->tasks[currentTask].ctrlcaddress = regs[0];				// Save PC of the instruction on which we stopped
 		_ctx->tasks[currentTask].ctrlcbackup = *(uint32_t*)(regs[0]);	// Save the instruction at this address
+		// TODO: Insert C.EBREAK If previous instruction was compressed
 		*(uint32_t*)(regs[0]) = 0x00100073;								// Replace it with EBREAK instruction
 		CFLUSH_D_L1;													// Make sure the write makes it to RAM
 		FENCE_I;														// Make sure I$ is flushed so it can see this write
@@ -158,6 +166,7 @@ uint32_t TaskSwitchToNext(struct STaskContext *_ctx)
 	{
 		_ctx->tasks[currentTask].breakhit = 0;
 		_ctx->tasks[currentTask].ctrlc = 0;
+		// TODO: If we have a C.EBREAK here replace with old compressed instruction (i.e. write to uint16_t* instead)
 		*(uint32_t*)(_ctx->tasks[currentTask].ctrlcaddress) = _ctx->tasks[currentTask].ctrlcbackup;	// Restore old instruction
 		CFLUSH_D_L1;																				// Make sure the write makes it to RAM
 		FENCE_I;																					// Make sure I$ is flushed so it can see this write
