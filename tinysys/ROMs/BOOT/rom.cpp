@@ -180,12 +180,6 @@ void ExecuteCmd(char *_cmd)
 	{
 		UARTWrite("tinysys " VERSIONSTRING "\n");
 	}
-	else if (!strcmp(command, "gdb"))
-	{
-		// load ELF and enter GDB server mode, while also halting the ELF
-		command = strtok(nullptr, " ");
-		loadELF = 2;
-	}
 	else if (!strcmp(command, "tmp"))
 	{
 		UARTWrite("Temperature:");
@@ -207,7 +201,6 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("cwd path: Change working directory\n");
 		UARTWrite("get fname: Save binary from UART to micro sd card\n");
 		UARTWrite("prc: Show process info\n");
-		UARTWrite("gdb: Enter gdb server mode\n");
 		UARTWrite("mon: Go into monitor mode\n");
 		UARTWrite("ver: Show version info\n");
 		UARTWrite("mount: mount drive sd:\n");
@@ -256,14 +249,7 @@ void ExecuteCmd(char *_cmd)
 			// even though each gets a new task slot assigned.
 			// This will cause corruption of the runtime environment.
 			if (s_startAddress != 0x0)
-			{
-				if (loadELF == 2) // GDB
-				{
-					UARTWrite("\033[H\033[0m\033[2JEntering gdb server mode and halting\n");
-					TaskDebugMode(1);
-				}
-				TaskAdd(tctx, command, RunExecTask, loadELF == 2 ? TS_PAUSED : TS_RUNNING, HUNDRED_MILLISECONDS_IN_TICKS);
-			}
+				TaskAdd(tctx, command, RunExecTask, TS_RUNNING, HUNDRED_MILLISECONDS_IN_TICKS);
 		}
 	}
 }
@@ -314,6 +300,8 @@ int main()
 		// Echo all of the characters we can find back to the sender
 		uint32_t uartData = 0;
 		int execcmd = 0;
+
+		// NOTE: In debug mode none of the following UART dependent code will work
 		while (RingBufferRead(&uartData, sizeof(uint32_t)))
 		{
 			uint8_t asciicode = (uint8_t)(uartData&0xFF);
@@ -330,8 +318,7 @@ int main()
 				case 3:		// EXT (Ctrl+C)
 				{
 					execcmd++;
-					// Terminate process 1 (the current executable)
-					TaskExitTaskWithID(taskctx, 1, 0); // Sig:0
+					TaskExitTaskWithID(taskctx, 1, 0); // Sig:0, terminate process if no debugger is attached
 				}
 				break;
 

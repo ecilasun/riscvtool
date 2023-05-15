@@ -1,7 +1,3 @@
-#if defined(__riscv_compressed)
-#error ("HALT! The target SoC does not support compressed instruction set!")
-#endif
-
 // This unit has more than one HART
 // Defined this to allow for auto-setup of per-HART stacks
 //#define MULTIHART_SUPPORT

@@ -1,9 +1,5 @@
 // Boot ROM
 
-#if defined(__riscv_compressed)
-#error ("HALT! The target SoC does not support compressed instruction set!")
-#endif
-
 // This module contains instruction sequences for certain operations that will be inserted by the FETCH unit
 // For instance, when an interrupt is encountered, enter*ISR() will be invoked and PC will be set to MTRAP
 

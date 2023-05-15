@@ -292,11 +292,6 @@ void HandleSDCardDetect()
 		MountDrive();
 }
 
-void TaskDebugMode(uint32_t _mode)
-{
-	g_taskctx.debugMode = _mode;
-}
-
 inline uint32_t FindFreeFileHandle(const uint32_t _input)
 {
 	uint32_t tmp = _input;
@@ -398,31 +393,21 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			case IRQ_M_EXT:
 			{
-				// TODO: We need to read the 'reason' for HW interrupt from mscratch
-				// For now, ignore the reason as we only have one possible IRQ generator.
-				if (g_taskctx.debugMode)
-					gdb_handler(&g_taskctx);
+				// Bit mask of devices causing the current interrupt
+				// Handle in any arbitrary priority here
+				uint32_t hwid = read_csr(0xFFF);
+				if (hwid&1)
+					HandleUART();
+				else if (hwid&2)
+					HandleSDCardDetect();
+				else if (hwid&4)
+					HandleUSBC();
 				else
 				{
-					// Bit mask of devices causing the current interrupt
-					// Handle in any arbitrary priority here
-					uint32_t hwid = read_csr(0xFFF);
-
-					// TODO: USB host, DMA completion, push button input etc
-
-					if (hwid&1)
-						HandleUART();
-					else if (hwid&2)
-						HandleSDCardDetect();
-					else if (hwid&4)
-						HandleUSBC();
-					else
-					{
-						ReportError(32, "Unknown hardware device", code, hwid, PC);
-						// Put core to endless sleep
-						while(1) { asm volatile("wfi;");}
-						break;
-					}
+					ReportError(32, "Unknown hardware device", code, hwid, PC);
+					// Put core to endless sleep
+					while(1) { asm volatile("wfi;");}
+					break;
 				}
 
 				// TODO: Distinguish hardware devices via mtval
@@ -459,13 +444,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			case CAUSE_BREAKPOINT:
 			{
-				if (g_taskctx.debugMode)
-					gdb_breakpoint(&g_taskctx);			// For now we ignore breakpoint instruction in non-debug mode
-				else
-				{
-					UARTWrite("Breakpoint encountered\n");
-					TaskExitCurrentTask(&g_taskctx);	// Exit task in non-debug mode
-				}
+				// TODO: call debugger breakpoint handler if one's loaded and stop the task
+
+				// Where there's no debugger loaded, simply exit since we're not supposed to run past ebreak commands
+				ReportError(32, "Breakpoint without debugger", code, 0x0, PC);
+
+				// Exit task in non-debug mode
+				TaskExitCurrentTask(&g_taskctx);
+
 				break;
 			}
 
@@ -480,18 +466,21 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				UARTWrite("\n");*/
 
 				// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
-				// 0	io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
-				// 17	getcwd		char *getcwd(char *buf, size_t size);
-				// 50	chdir		chdir(const char *path);
-				// 57	close		int sys_close(unsigned int fd);
-				// 62	lseek		off_t sys_lseek(int fd, off_t offset, int whence);
-				// 63	read		ssize_t read(int fd, void *buf, size_t count);
-				// 64	write		ssize_t write(int fd, const void *buf, size_t count);
-				// 80	newfstat	long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-				// 93	exit		noreturn void _exit(int status);
-				// 129	kill		int kill(pid_t pid, int sig);
-				// 214	brk			int brk(void *addr); / void *sbrk(intptr_t increment);
-				// 1024	open		long sys_open(const char __user * filename, int flags, umode_t mode); open/create file
+				// 0			io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
+				// 17			getcwd		char *getcwd(char *buf, size_t size);
+				// 50			chdir		chdir(const char *path);
+				// 57			close		int sys_close(unsigned int fd);
+				// 62			lseek		off_t sys_lseek(int fd, off_t offset, int whence);
+				// 63			read		ssize_t read(int fd, void *buf, size_t count);
+				// 64			write		ssize_t write(int fd, const void *buf, size_t count);
+				// 80			newfstat	long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
+				// 93			exit		noreturn void _exit(int status);
+				// 129			kill		int kill(pid_t pid, int sig);
+				// 214			brk			int brk(void *addr); / void *sbrk(intptr_t increment);
+				// 1024			open		long sys_open(const char __user * filename, int flags, umode_t mode); open/create file
+
+				// NOTE: this is a custom ecall to allow external debugger to access the OS task structures
+				// 0xFFFFFFFF	debugsetup	void *debugsetup(unsigned int flags); // flags: connect/disconnect
 
 				if (value==0) // io_setup()
 				{
@@ -798,6 +787,11 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					}
 					else
 						write_csr(0x8AA, 0x0);
+				}
+				else if (value==0xFFFFFFFF) // debugsetup()
+				{
+					ReportError(32, "Debuggers are not supported yet", code, value, PC);
+					write_csr(0x8AA, 0xFFFFFFFF);
 				}
 				else // Unimplemented syscalls drop here
 				{
