@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.007"
+#define VERSIONSTRING "v1.008"
 
 static EVideoContext s_gpuContext;
 
@@ -106,11 +106,6 @@ void ExecuteCmd(char *_cmd)
 	{
 		UARTWrite("\033[H\033[0m\033[2J");
 	}
-	else if (!strcmp(command, "mon"))
-	{
-		UARTWrite("\033[H\033[0m\033[2J");
-		UARTWrite("TODO: implement monitor mode\n");
-	}
 	else if (!strcmp(command, "mem"))
 	{
 		UARTWrite("Available memory:");
@@ -201,7 +196,6 @@ void ExecuteCmd(char *_cmd)
 		UARTWrite("cwd path: Change working directory\n");
 		UARTWrite("get fname: Save binary from UART to micro sd card\n");
 		UARTWrite("prc: Show process info\n");
-		UARTWrite("mon: Go into monitor mode\n");
 		UARTWrite("ver: Show version info\n");
 		UARTWrite("mount: mount drive sd:\n");
 		UARTWrite("umount: unmount drive sd:\n");

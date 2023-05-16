@@ -268,6 +268,8 @@ uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *d
          do {
             datablock[x++] = SPITxRx(0xFF);
             datablock[x++] = SPITxRx(0xFF);
+            datablock[x++] = SPITxRx(0xFF);
+            datablock[x++] = SPITxRx(0xFF);
          } while(x<512);
 
          // Checksum
@@ -337,6 +339,9 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
 
       int x=0;
       do {
+         response = SPITxRx(datablock[x++]);
+         response = SPITxRx(datablock[x++]);
+         response = SPITxRx(datablock[x++]);
          response = SPITxRx(datablock[x++]);
       } while(x<512);
 
