@@ -256,7 +256,7 @@ int main (int argc, char** argv)
 
   printf("\nMicroseconds for one run through Dhrystone: %ld\n", Microseconds);
   printf("Dhrystones per Second:                      %ld\n", Dhrystones_Per_Second);
-  printf("DMIPS:                                      %ld\n", Dhrystones_Per_Second/1757);
+  printf("DMIPS (Dhrystones_Per_Second/1757):         %f\n", Dhrystones_Per_Second/(1757.f));
 
   return 0;
 }
