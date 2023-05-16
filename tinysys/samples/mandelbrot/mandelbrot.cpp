@@ -77,7 +77,9 @@ int main()
    // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
    framebuffer = GPUAllocateBuffer(320*240);
    struct EVideoContext vx;
-   GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
+   vx.m_vmode = EVM_320_Wide;
+   vx.m_cmode = ECM_8bit_Indexed;
+   GPUSetVMode(&vx, EVS_Enable);
    GPUSetWriteAddress(&vx, (uint32_t)framebuffer);
    GPUSetScanoutAddress(&vx, (uint32_t)framebuffer);
    GPUClearScreen(&vx, 0x03030303);

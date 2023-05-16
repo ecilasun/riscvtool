@@ -110,7 +110,9 @@ int main()
 	image = GPUAllocateBuffer(640*480);
 
 	struct EVideoContext vx;
-	GPUSetVMode(&vx, EVM_640_Pal, EVS_Enable);
+    vx.m_vmode = EVM_640_Wide;
+    vx.m_cmode = ECM_8bit_Indexed;
+	GPUSetVMode(&vx, EVS_Enable);
 	GPUSetWriteAddress(&vx, (uint32_t)image);
 	GPUSetScanoutAddress(&vx, (uint32_t)image);
 	GPUClearScreen(&vx, 0x03030303);

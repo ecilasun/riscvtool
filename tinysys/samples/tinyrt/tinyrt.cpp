@@ -15,14 +15,6 @@ typedef int BOOL;
 static inline float max(float x, float y) { return x>y?x:y; }
 static inline float min(float x, float y) { return x<y?x:y; }
 
-// The Bayer matrix for ordered dithering
-const uint8_t dither[4][4] = {
-  { 0, 8, 2,10},
-  {12, 4,14, 6},
-  { 3,11, 1, 9},
-  {15, 7,13, 5}
-};
-
 /*******************************************************************/
 
 // Replace with your own code.
@@ -31,20 +23,12 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
 	g = max(0.0f, min(1.0f, g));
 	b = max(0.0f, min(1.0f, b));
 
-	uint16_t R = (uint16_t)(r*255.0f);
-	uint16_t G = (uint16_t)(g*255.0f);
-	uint16_t B = (uint16_t)(b*255.0f);
+	uint16_t G = (uint16_t)(g*255.0f)>>2;
+	uint16_t R = (uint16_t)(r*255.0f)>>3;
+	uint16_t B = (uint16_t)(b*255.0f)>>3;
 
-	uint16_t ROFF = min(dither[x&3][y&3] + R, 255);
-	uint16_t GOFF = min(dither[x&3][y&3] + G, 255);
-	uint16_t BOFF = min(dither[x&3][y&3] + B, 255);
-
-	R = ROFF/32;
-	G = GOFF/32;
-	B = BOFF/64;
-	uint32_t RGB = (uint8_t)((B<<6) | (G<<3) | R);
-
-	framebuffer[x+y*320] = RGB;
+  uint16_t *pixel = (uint16_t*)(framebuffer + (x+y*FRAME_WIDTH_MODE0)*2);
+	*pixel = MAKECOLORRGB16(R,G,B);
 }
 
 // Normally you will not need to modify anything beyond that point.
@@ -356,18 +340,14 @@ void init_scene() {
 int main()
 {
   // Enable video output
-  framebuffer = GPUAllocateBuffer(320*240);
+  framebuffer = (uint8_t*)GPUAllocateBuffer(FRAME_WIDTH_MODE0*FRAME_HEIGHT_MODE0*2);
   struct EVideoContext vx;
-  GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
+  vx.m_vmode = EVM_320_Wide;
+  vx.m_cmode = ECM_16bit_RGB;
+  GPUSetVMode(&vx, EVS_Enable);
   GPUSetWriteAddress(&vx, (uint32_t)framebuffer);
   GPUSetScanoutAddress(&vx, (uint32_t)framebuffer);
   GPUClearScreen(&vx, 0x03030303);
-
-  int target = 0;
-  for (int b=0;b<4;++b)
-    for (int g=0;g<8;++g)
-      for (int r=0;r<8;++r)
-          GPUSetPal(target++, r*36, g*36, b*85);
 
   init_scene();
   render(spheres, nb_spheres, lights, nb_lights);

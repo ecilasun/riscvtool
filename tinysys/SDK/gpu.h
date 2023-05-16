@@ -11,11 +11,21 @@
 #define GPUCMD_SETPAL      0x00000001
 #define GPUCMD_SETVMODE    0x00000002
 
+// Scanout hardware format is: 16bit B:R:G
+#define MAKECOLORRGB16(_r, _g, _b) ((_b<<12) | (_r<<6) | _g)
+
 enum EVideoMode
 {
-    EVM_320_Pal,
-    EVM_640_Pal,
+    EVM_320_Wide,
+    EVM_640_Wide,
     EVM_Count
+};
+
+enum EColorMode
+{
+    ECM_8bit_Indexed,
+    ECM_16bit_RGB,
+    ECM_Count
 };
 
 enum EVideoScanoutEnable
@@ -27,7 +37,8 @@ enum EVideoScanoutEnable
 
 struct EVideoContext
 {
-    enum EVideoMode m_mode;
+    enum EVideoMode m_vmode;
+    enum EColorMode m_cmode;
     enum EVideoScanoutEnable m_scanEnable;
     uint32_t m_strideInWords;
     uint32_t m_scanoutAddressCacheAligned;
@@ -39,7 +50,7 @@ uint8_t *GPUAllocateBuffer(const uint32_t _size);
 
 // GPU side
 void GPUSetDefaultPalette(struct EVideoContext *_context);
-void GPUSetVMode(struct EVideoContext *_context, const enum EVideoMode _mode, const enum EVideoScanoutEnable _scanEnable);
+void GPUSetVMode(struct EVideoContext *_context, const enum EVideoScanoutEnable _scanEnable);
 void GPUSetScanoutAddress(struct EVideoContext *_context, const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetWriteAddress(struct EVideoContext *_context, const uint32_t _cpuWriteAddress64ByteAligned);
 void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _red, const uint32_t _green, const uint32_t _blue);

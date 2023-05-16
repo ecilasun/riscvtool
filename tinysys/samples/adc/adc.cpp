@@ -17,7 +17,9 @@ int main( int argc, char **argv )
 	uint8_t *framebufferA = GPUAllocateBuffer(320*240);
 
 	struct EVideoContext vx;
-	GPUSetVMode(&vx, EVM_320_Pal, EVS_Enable);
+    vx.m_vmode = EVM_320_Wide;
+    vx.m_cmode = ECM_8bit_Indexed;
+	GPUSetVMode(&vx, EVS_Enable);
 
 	// Set buffer B as output
 	GPUSetWriteAddress(&vx, (uint32_t)framebufferA);

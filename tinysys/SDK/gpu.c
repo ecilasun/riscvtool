@@ -3,8 +3,11 @@
 #include "core.h"
 #include <stdlib.h>
 
+// Palette hardware format is: 24bit G:R:B
 #define MAKECOLORRGB24(_r, _g, _b) (((_g&0xFF)<<16) | ((_r&0xFF)<<8) | (_b&0xFF))
-#define MAKEVMODEINFO(_mode, _scanEnable) ((_mode&0x3)<<1) | (_scanEnable&0x1)
+
+// Video mode control word
+#define MAKEVMODEINFO(_cmode, _vmode, _scanEnable) ((_cmode&0x1)<<2) | ((_vmode&0x1)<<1) | (_scanEnable&0x1)
 
 // 256x24 (3 rows, 32 characters on each row)
 const uint8_t residentfont[] __attribute__((aligned(16))) = {
@@ -121,15 +124,14 @@ void GPUSetDefaultPalette(struct EVideoContext *_context)
     }
 }
 
-void GPUSetVMode(struct EVideoContext *_context, const enum EVideoMode _mode, const enum EVideoScanoutEnable _scanEnable)
+void GPUSetVMode(struct EVideoContext *_context, const enum EVideoScanoutEnable _scanEnable)
 {
-    _context->m_mode = _mode;
+    // NOTE: Caller sets vmode/cmode fields
     _context->m_scanEnable = _scanEnable;
-    _context->m_strideInWords = _mode == EVM_640_Pal ? 160 : 80;
-    //_context->m_scanoutAddressCacheAligned = ?;
+    _context->m_strideInWords = (_context->m_vmode == EVM_640_Wide || _context->m_cmode == ECM_16bit_RGB) ? 160 : 80;
 
     *GPUIO = GPUCMD_SETVMODE;
-    *GPUIO = MAKEVMODEINFO((uint32_t)_mode, (uint32_t)_scanEnable);
+    *GPUIO = MAKEVMODEINFO((uint32_t)_context->m_cmode, (uint32_t)_context->m_vmode, (uint32_t)_scanEnable);
 }
 
 void GPUSetScanoutAddress(struct EVideoContext *_context, const uint32_t _scanOutAddress64ByteAligned)
@@ -182,7 +184,7 @@ void GPUPrintString(struct EVideoContext *_context, const int _col, const int _r
 void GPUClearScreen(struct EVideoContext *_context, const uint32_t _colorWord)
 {
     uint32_t *vramBaseAsWord = (uint32_t*)_context->m_cpuWriteAddressCacheAligned;
-    uint32_t W = (_context->m_mode == EVM_640_Pal ? 480 : 240) * _context->m_strideInWords;
+    uint32_t W = ((_context->m_vmode == EVM_640_Wide || _context->m_cmode == ECM_16bit_RGB) ? 480 : 240) * _context->m_strideInWords;
     for (uint32_t i=0; i<W; ++i)
         vramBaseAsWord[i] = _colorWord;
 }
