@@ -9,7 +9,7 @@
 
 #include "nanojpeg.h"
 
-uint8_t *image;
+uint16_t *image;
 
 #define min(_x_,_y_) (_x_) < (_y_) ? (_x_) : (_y_)
 #define max(_x_,_y_) (_x_) > (_y_) ? (_x_) : (_y_)
@@ -50,8 +50,8 @@ void DecodeJPEG(const char *fname)
 			int W = njGetWidth();
 			int H = njGetHeight();
 
-			int iW = W>640 ? 640 : W;
-			int iH = H>479 ? 479 : H;
+			int iW = W>=320 ? 319 : W;
+			int iH = H>=240 ? 239 : H;
 			uint8_t *img = njGetImage();
 			if (njIsColor())
 			{
@@ -60,19 +60,10 @@ void DecodeJPEG(const char *fname)
 				{
 					for (int x=0;x<iW;++x)
 					{
-						uint8_t R = img[(x+y*W)*3+0];
-						uint8_t G = img[(x+y*W)*3+1];
-						uint8_t B = img[(x+y*W)*3+2];
-
-						uint8_t ROFF = min(dither[x&3][y&3] + R, 255);
-						uint8_t GOFF = min(dither[x&3][y&3] + G, 255);
-						uint8_t BOFF = min(dither[x&3][y&3] + B, 255);
-
-						R = ROFF/32;
-						G = GOFF/32;
-						B = BOFF/64;
-
-						image[x+y*640] = (uint8_t)((B<<6) | (G<<3) | R);
+						uint8_t R = img[(x+y*W)*3+0]>>3;
+						uint8_t G = img[(x+y*W)*3+1]>>2;
+						uint8_t B = img[(x+y*W)*3+2]>>3;
+						image[x+y*320] = MAKECOLORRGB16(R,G,B);
 					}
 				}
 			}
@@ -81,8 +72,13 @@ void DecodeJPEG(const char *fname)
 				// Grayscale
 				for (int j=0;j<iH;++j)
 					for (int i=0;i<iW;++i)
-						image[i+j*640] = img[i+j*W];
+					{
+						uint8_t V = img[i+j*W];
+						image[i+j*320] = MAKECOLORRGB16(V,V,V);
+					}
 			}
+			// Finish memory writes to display buffer
+			CFLUSH_D_L1;
 		}
 	}
 	else
@@ -101,27 +97,32 @@ void Setup()
 				GPUSetPal(target++, r*36, g*36, b*85);
 }
 
-int main()
+int main(int argc, char** argv )
 {
 	Setup();
 
 	// Set aside space for the decompressed image
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
-	image = GPUAllocateBuffer(640*480);
+	image = (uint16_t*)GPUAllocateBuffer(320*240*2);
 
 	struct EVideoContext vx;
-    vx.m_vmode = EVM_640_Wide;
-    vx.m_cmode = ECM_8bit_Indexed;
+    vx.m_vmode = EVM_320_Wide;
+    vx.m_cmode = ECM_16bit_RGB;
 	GPUSetVMode(&vx, EVS_Enable);
 	GPUSetWriteAddress(&vx, (uint32_t)image);
 	GPUSetScanoutAddress(&vx, (uint32_t)image);
 	GPUClearScreen(&vx, 0x03030303);
 
-    GPUPrintString(&vx, 0, 16, "loading test.jpg", 0x7FFFFFFF);
+    GPUPrintString(&vx, 0, 16, "loading...", 0x7FFFFFFF);
     CFLUSH_D_L1;
 
-	DecodeJPEG("sd:test.jpg");
-    CFLUSH_D_L1;
+	if (argc<=1)
+		DecodeJPEG("sd:test.jpg");
+	else
+		DecodeJPEG(argv[1]);
+
+	// Hold while we view the image
+	while(1){}
 
 	return 0;
 }
