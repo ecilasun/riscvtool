@@ -9,15 +9,35 @@
 
 #pragma GCC optimize ("no-inline")
 
-#include "basesystem.h"
 #include "core.h"
 #include "dhrystone.h"
+#include "basesystem.h"
 
 void debug_printf(const char* str, ...);
 
 #include "util.h"
 
 #include <alloca.h>
+
+#define NUM_COUNTERS 2
+static uintptr_t counters[NUM_COUNTERS];
+static char* counter_names[NUM_COUNTERS];
+
+void setStats(int enable)
+{
+  int i = 0;
+#define READ_CTR(name) do { \
+    while (i >= NUM_COUNTERS) ; \
+    uintptr_t csr = read_csr(name); \
+    if (!enable) { csr -= counters[i]; counter_names[i] = #name; } \
+    counters[i++] = csr; \
+  } while (0)
+
+  READ_CTR(mcycle);
+  READ_CTR(minstret);
+
+#undef READ_CTR
+}
 
 /* Global Variables: */
 
@@ -234,8 +254,9 @@ int main (int argc, char** argv)
   Microseconds = ((User_Time / Number_Of_Runs) * Mic_secs_Per_Second) / HZ;
   Dhrystones_Per_Second = (HZ * Number_Of_Runs) / User_Time;
 
-  printf("Microseconds for one run through Dhrystone: %ld\n", Microseconds);
+  printf("\nMicroseconds for one run through Dhrystone: %ld\n", Microseconds);
   printf("Dhrystones per Second:                      %ld\n", Dhrystones_Per_Second);
+  printf("DMIPS:                                      %ld\n", Dhrystones_Per_Second/1757);
 
   return 0;
 }

@@ -3,6 +3,8 @@
 #ifndef _DHRYSTONE_H
 #define _DHRYSTONE_H
 
+#include "basesystem.h"
+
 /****************** "DHRYSTONE" Benchmark Program ***************************/
 #define Version "C, Version 2.2"
 /*  File:       dhry_1.c (part 2 of 3)
@@ -383,9 +385,9 @@ extern clock_t	clock();
 
 #define HZ 1000000
 #define Too_Small_Time 1
-#define CLOCK_TYPE "rdcycle()"
-#define Start_Timer() Begin_Time = read_csr(mcycle)
-#define Stop_Timer() End_Time = read_csr(mcycle)
+#define CLOCK_TYPE "E32Time()"
+#define Start_Timer() Begin_Time = E32ReadTime()
+#define Stop_Timer() End_Time = E32ReadTime()
 
 #else
                 /* Use times(2) time function unless    */
