@@ -12,7 +12,7 @@
 #define GPUCMD_SETVMODE    0x00000002
 
 // Scanout hardware format is: 16bit B:R:G
-#define MAKECOLORRGB16(_r, _g, _b) ((_b<<12) | (_r<<6) | _g)
+#define MAKECOLORRGB16(_r, _g, _b) ((_b<<11) | (_r<<6) | _g)
 
 enum EVideoMode
 {
