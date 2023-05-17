@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
     if (argc>1)
     {
-        UARTWrite("Bringing up USB-C\n");
+        UARTWrite("Bringing up USB-C ISR in ROM\n");
         USBInit();
     }
     else
@@ -150,17 +150,15 @@ int main(int argc, char *argv[])
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-            UARTWriteHexByte(epIrq);
+            /*UARTWriteHexByte(epIrq);
             UARTWrite(":");
             UARTWriteHexByte(usbIrq);
             UARTWrite(":");
             UARTWriteHexByte(USBGetGPX());
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             if (epIrq & bmSUDAVIRQ)
             {
-    		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
-
                 uint8_t SUD[8];
             	USBReadBytes(rSUDFIFO, 8, SUD);
 
@@ -185,12 +183,14 @@ int main(int argc, char *argv[])
                     default: STALL_EP0 break;
                 }
                 currLED |= 0x4;
+
+    		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
             }
 
             if (epIrq & bmIN3BAVIRQ)
             {
-                USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
                 // TODO: asserts out of reset
+                USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
             }
 
             if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
@@ -206,21 +206,21 @@ int main(int argc, char *argv[])
 
             if (usbIrq & bmURESDNIRQ) // Resume
             {
-                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
                 USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
                 currLED |= 0x8;
+                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
             }
 
             if (epIrq & bmIN2BAVIRQ)
             {
-                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
                 // TODO: asserts out of reset
+                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
             }
 
             if (epIrq & bmIN0BAVIRQ)
             {
-                USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
                 // TODO: asserts out of reset
+                USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
             }
 
             LEDSetState(currLED);
