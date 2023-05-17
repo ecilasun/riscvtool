@@ -66,7 +66,9 @@ void DeviceDefaultState()
 	OPL2Stop();
 
 	// Shut down display
-	GPUSetVMode(&s_gpuContext, EVM_320_Pal, EVS_Disable);
+	s_gpuContext.m_vmode = EVM_320_Wide;
+	s_gpuContext.m_cmode = ECM_8bit_Indexed;
+	GPUSetVMode(&s_gpuContext, EVS_Disable);
 }
 
 void uget(const char *savename)

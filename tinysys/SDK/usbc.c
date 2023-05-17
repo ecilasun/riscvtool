@@ -13,7 +13,12 @@ static uint32_t sparebyte = 0;
 
 void USBFlushOutputFIFO()
 {
-    while (*IO_USBCSTA!=0) {}
+    while ((*IO_USBCSTA)&0x1) {}
+}
+
+uint8_t USBGetGPX()
+{
+    return (*IO_USBCSTA)&0x2;
 }
 
 uint8_t USBReadByte(uint8_t command)
@@ -72,33 +77,45 @@ void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer)
     RESET_CS
 }
 
-void USBInit()
+void USBCtlReset()
 {
-    // Half duplex without this
-    USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
-    USBWriteByte(rUSBCTL, bmCHIPRES);                       // reset the MAX3420E 
-    USBWriteByte(rUSBCTL, 0);                               // remove the reset
+    // Reset
+    USBWriteByte(rUSBCTL, bmCHIPRES);    // reset the MAX3420E 
+    USBWriteByte(rUSBCTL, 0);            // remove the reset
+
+    USBWriteByte(rGPIO, 0x0);            // No GPIO output
 
     USBFlushOutputFIFO();
     E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
 
     // Wait for oscillator OK interrupt
-    UARTWrite("Waiting for oscillator...");
+    UARTWrite("Waiting for 12MHz oscillator...");
     uint8_t rd = 0;
     while ((rd & bmOSCOKIRQ) == 0)
     {
         rd = USBReadByte(rUSBIRQ);
+        UARTWriteHexByte(rd);
         E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
     }
     USBWriteByte(rUSBIRQ, bmOSCOKIRQ);
     UARTWrite("OK\n");
+
     if (rd&bmBUSACTIRQ)
         UARTWrite("usb bus active\n");
+}
 
-    USBWriteByte(rGPIO, 0x0);
-    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE /*| bmSIGRWU*/);
+void USBInit()
+{
+    USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
 
-    USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
+    USBCtlReset();
+
+    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE);
+
+    // Enable IRQs
     USBWriteByte(rEPIEN, bmSUDAVIE);
+    USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
+
+    // Enable interrupt generation via INT pin
     USBWriteByte(rCPUCTL, bmIE);
 }

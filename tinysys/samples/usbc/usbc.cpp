@@ -21,7 +21,7 @@ void set_configuration(uint8_t *SUD)
 void get_configuration(void)
 {
 	USBWriteByte(rEP0FIFO, configval);	// Send the config value
-	USBWriteByte(rEP0BC | 0x10, 1);
+	USBWriteByte(rEP0BC | 0x1, 1);
 }
 
 void send_descriptor(uint8_t *SUD)
@@ -149,6 +149,13 @@ int main(int argc, char *argv[])
             // Initial value of rEPIRQ should be 0x19
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
+
+            UARTWriteHexByte(epIrq);
+            UARTWrite(":");
+            UARTWriteHexByte(usbIrq);
+            UARTWrite(":");
+            UARTWriteHexByte(USBGetGPX());
+            UARTWrite("\n");
 
             if (epIrq & bmSUDAVIRQ)
             {

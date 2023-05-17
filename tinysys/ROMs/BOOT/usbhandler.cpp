@@ -7,7 +7,9 @@
 #define SETBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)|val));
 #define CLRBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)&~val));
 
+static uint8_t s_suspended = 0;
 static uint8_t configval = 0;
+//static uint8_t inhibit_send = 0;
 
 void set_configuration(uint8_t *SUD)
 {
@@ -20,7 +22,7 @@ void set_configuration(uint8_t *SUD)
 void get_configuration(void)
 {
 	USBWriteByte(rEP0FIFO, configval);	// Send the config value
-	USBWriteByte(rEP0BC | 0x10, 1);
+	USBWriteByte(rEP0BC | 0x1, 1);
 }
 
 void send_descriptor(uint8_t *SUD)
@@ -94,80 +96,104 @@ void vendor_request(uint8_t *SUD)
     STALL_EP0
 }
 
+void DoSetup()
+{
+	uint8_t SUD[8];
+	USBReadBytes(rSUDFIFO, 8, SUD);
+
+	// Debug dump
+	if (SUD[0] != 0xFF)
+	{
+		UARTWriteHexByte(SUD[0]);
+		UARTWriteHexByte(SUD[1]);
+		UARTWriteHexByte(SUD[2]);
+		UARTWriteHexByte(SUD[3]);
+		UARTWriteHexByte(SUD[4]);
+		UARTWriteHexByte(SUD[5]);
+		UARTWriteHexByte(SUD[6]);
+		UARTWriteHexByte(SUD[7]);
+		UARTWrite("\n");
+	}
+
+	switch(SUD[bmRequestType] & 0x60)
+	{
+		case 0x00: std_request(SUD); break;
+		case 0x20: class_request(SUD); break;
+		case 0x40: vendor_request(SUD); break;
+		default: STALL_EP0 break;
+	}
+}
+
+void DoIN3()
+{
+	/*if (inhibit_send == 0x01) {
+		USBWriteByte(rEP3INFIFO, 0); // send the "keys up" code
+		USBWriteByte(rEP3INFIFO, 0);
+		USBWriteByte(rEP3INFIFO, 0);
+	} else if (send3zeros == 0x01) { // precede every keycode with the "no keys" code
+		USBWriteByte(rEP3INFIFO, 0); // send the "keys up" code
+		USBWriteByte(rEP3INFIFO, 0);
+		USBWriteByte(rEP3INFIFO, 0);
+		send3zeros = 0; // next time through this function send the keycode
+	} else {
+		send3zeros=1;
+		USBWriteByte(rEP3INFIFO,Message[msgidx++]);	// load the next keystroke (3 bytes)
+		USBWriteByte(rEP3INFIFO,Message[msgidx++]);
+		USBWriteByte(rEP3INFIFO,Message[msgidx++]);
+	if(msgidx >= msglen)                    // check for message wrap
+			{
+			msgidx=0;
+			inhibit_send=1;                 // send the string once per pushbutton press
+			}
+	}
+	USBWriteByte(rEP3INBC, 3); // arm it*/
+}
+
 void HandleUSBC()
 {
 	uint32_t currLED = LEDGetState();
-	// Clear top 2 bits
-	currLED &= 0x3;
 
 	// Initial value of rEPIRQ should be 0x19
 	uint8_t epIrq = USBReadByte(rEPIRQ);
 	uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
+	// Debug
+	/*UARTWriteHexByte(epIrq);
+	UARTWrite(":");
+	UARTWriteHexByte(usbIrq);
+	UARTWrite(":");
+	UARTWriteHexByte(USBGetGPX());
+	UARTWrite("\n");*/
+
 	if (epIrq & bmSUDAVIRQ)
 	{
+		// Setup data available, 8 bytes data to follow
+		DoSetup();
 		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
-
-		uint8_t SUD[8];
-		USBReadBytes(rSUDFIFO, 8, SUD);
-
-		if (SUD[0] != 0xFF)
-		{
-			UARTWriteHexByte(SUD[0]);
-			UARTWriteHexByte(SUD[1]);
-			UARTWriteHexByte(SUD[2]);
-			UARTWriteHexByte(SUD[3]);
-			UARTWriteHexByte(SUD[4]);
-			UARTWriteHexByte(SUD[5]);
-			UARTWriteHexByte(SUD[6]);
-			UARTWriteHexByte(SUD[7]);
-			UARTWrite("\n");
-		}
-
-		switch(SUD[bmRequestType] & 0x60)
-		{
-			case 0x00: std_request(SUD); break;
-			case 0x20: class_request(SUD); break;
-			case 0x40: vendor_request(SUD); break;
-			default: STALL_EP0 break;
-		}
-		currLED |= 0x4;
 	}
-
-	if (epIrq & bmIN3BAVIRQ)
+	else if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
 	{
-		USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
-		// TODO: asserts out of reset
-	}
-
-	if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
-	{
+		currLED |= 0x8;
+		s_suspended = 1;
 		// Should arrive here out of reset
 		USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
 	}
-
-	if (usbIrq & bmURESIRQ) // Bus reset
+	else if (usbIrq & bmURESDNIRQ) // Resume
+	{
+		s_suspended = 0;
+		currLED &= ~0x8;
+		// Re-enable interrupts since bus reset clears them
+		USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
+		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
+	}
+	else if (usbIrq & bmURESIRQ) // Bus reset
 	{
 		USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
 	}
-
-	if (usbIrq & bmURESDNIRQ) // Resume
+	else if (epIrq & bmIN3BAVIRQ)
 	{
-		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
-		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
-		currLED |= 0x8;
-	}
-
-	if (epIrq & bmIN2BAVIRQ)
-	{
-		USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-		// TODO: asserts out of reset
-	}
-
-	if (epIrq & bmIN0BAVIRQ)
-	{
-		USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
-		// TODO: asserts out of reset
+		DoIN3();
+		USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
 	}
 
 	LEDSetState(currLED);
