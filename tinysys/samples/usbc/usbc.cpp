@@ -91,60 +91,19 @@ int main(int argc, char *argv[])
 
     if (argc>1)
     {
-        UARTWrite("Bringing up USB-C ISR in ROM\n");
-        USBInit();
+        UARTWrite("Bringing up USB-C\nUsing ISR in ROM\n");
+        USBInit(1);
     }
     else
     {
-        UARTWrite("USB-C SPI r/w development test\n");
+        UARTWrite("Bringing up USB-C\nUsing polling\n");
+        USBInit(0);
 
-        // Half duplex without this
-        USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex 
-        USBWriteByte(rUSBCTL, bmCHIPRES);                       // reset the MAX3420E 
-        USBWriteByte(rUSBCTL, 0);                               // remove the reset
-
-        USBFlushOutputFIFO();
-        E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
-
-        // Wait for oscillator OK interrupt
-        UARTWrite("Waiting for oscillator...\n");
-        uint8_t rd = 0;
-        while ((rd & bmOSCOKIRQ) == 0)
-        {
-            rd = USBReadByte(rUSBIRQ); // Initial value should be 0x01
-            UARTWriteHexByte(rd);
-            E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
-        }
-        USBWriteByte(rUSBIRQ, bmOSCOKIRQ);
-        UARTWrite("\nMAX3420e: oscillator OK\n");
-        if (rd&bmBUSACTIRQ)
-            UARTWrite("MAX3420e: bus active\n");
-
-        USBWriteByte(rGPIO, 0x0);                    // set all GPIO out to zero
-        USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE); // connect
-
-        //USBWriteByte(rCPUCTL, bmIE); // NOTE: DO NOT enable interrupts yet, this would redirect all to ROM
-
-        /*UARTWrite("Testing IEN\nShould see: 01 02 04 08 10 20 40 80\n");
-        uint8_t wr = 0x01; // initial register write value 
-        for(int j=0; j<8; j++) 
-        { 
-            USBWriteByte(rUSBIEN, wr);
-
-            uint8_t rd = USBReadByte(rUSBIEN);
-
-            UARTWriteHexByte(rd);
-            UARTWrite(" ");
-
-            wr <<= 1; // Put a breakpoint here. Values of 'rd' should be 01,02,04,08,10,20,40,80 
-        }
-        UARTWrite("\n");*/
-
+        // Ordinarily ROM listens to this
         while (1)
         {
             uint32_t currLED = LEDGetState();
-            // Clear top 2 bits
-            currLED &= 0x3;
+            LEDSetState(currLED | 0x8);
 
             // Initial value of rEPIRQ should be 0x19
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
@@ -182,7 +141,6 @@ int main(int argc, char *argv[])
                     case 0x40: STALL_EP0 break; // vendor_req
                     default: STALL_EP0 break;
                 }
-                currLED |= 0x4;
 
     		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
             }
@@ -207,7 +165,6 @@ int main(int argc, char *argv[])
             if (usbIrq & bmURESDNIRQ) // Resume
             {
                 USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
-                currLED |= 0x8;
                 USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
             }
 
@@ -229,3 +186,20 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+
+// From Bringing up USB using MAX3420
+/*UARTWrite("Testing IEN\nShould see: 01 02 04 08 10 20 40 80\n");
+uint8_t wr = 0x01; // initial register write value 
+for(int j=0; j<8; j++) 
+{ 
+    USBWriteByte(rUSBIEN, wr);
+
+    uint8_t rd = USBReadByte(rUSBIEN);
+
+    UARTWriteHexByte(rd);
+    UARTWrite(" ");
+
+    wr <<= 1; // Put a breakpoint here. Values of 'rd' should be 01,02,04,08,10,20,40,80 
+}
+UARTWrite("\n");*/

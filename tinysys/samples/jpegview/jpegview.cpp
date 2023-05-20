@@ -50,8 +50,9 @@ void DecodeJPEG(const char *fname)
 			int W = njGetWidth();
 			int H = njGetHeight();
 
-			int iW = W>=320 ? 319 : W;
-			int iH = H>=240 ? 239 : H;
+			int iW = W>=640 ? 639 : W;
+			int iH = H>=480 ? 479 : H;
+
 			uint8_t *img = njGetImage();
 			if (njIsColor())
 			{
@@ -63,7 +64,7 @@ void DecodeJPEG(const char *fname)
 						uint8_t R = img[(x+y*W)*3+0]>>3;
 						uint8_t G = img[(x+y*W)*3+1]>>2;
 						uint8_t B = img[(x+y*W)*3+2]>>3;
-						image[x+y*320] = MAKECOLORRGB16(R,G,B);
+						image[x+y*640] = MAKECOLORRGB16(R,G,B);
 					}
 				}
 			}
@@ -74,7 +75,7 @@ void DecodeJPEG(const char *fname)
 					for (int i=0;i<iW;++i)
 					{
 						uint8_t V = img[i+j*W];
-						image[i+j*320] = MAKECOLORRGB16(V,V,V);
+						image[i+j*640] = MAKECOLORRGB16(V,V,V);
 					}
 			}
 			// Finish memory writes to display buffer
@@ -86,27 +87,14 @@ void DecodeJPEG(const char *fname)
 
 	njDone();
 }
-
-void Setup()
-{
-	// Make RGB palette
-	int target = 0;
-	for (int b=0;b<4;++b)
-		for (int g=0;g<8;++g)
-			for (int r=0;r<8;++r)
-				GPUSetPal(target++, r*36, g*36, b*85);
-}
-
 int main(int argc, char** argv )
 {
-	Setup();
-
 	// Set aside space for the decompressed image
     // NOTE: Video scanout buffer has to be aligned at 64 byte boundary
-	image = (uint16_t*)GPUAllocateBuffer(320*240*2);
+	image = (uint16_t*)GPUAllocateBuffer(640*480*2);
 
 	struct EVideoContext vx;
-    vx.m_vmode = EVM_320_Wide;
+    vx.m_vmode = EVM_640_Wide;
     vx.m_cmode = ECM_16bit_RGB;
 	GPUSetVMode(&vx, EVS_Enable);
 	GPUSetWriteAddress(&vx, (uint32_t)image);

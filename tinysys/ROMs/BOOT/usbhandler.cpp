@@ -152,6 +152,7 @@ void DoIN3()
 void HandleUSBC()
 {
 	uint32_t currLED = LEDGetState();
+	LEDSetState(currLED | 0x08);
 
 	// Initial value of rEPIRQ should be 0x19
 	uint8_t epIrq = USBReadByte(rEPIRQ);
@@ -173,7 +174,6 @@ void HandleUSBC()
 	}
 	else if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
 	{
-		currLED |= 0x8;
 		s_suspended = 1;
 		// Should arrive here out of reset
 		USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
@@ -181,7 +181,6 @@ void HandleUSBC()
 	else if (usbIrq & bmURESDNIRQ) // Resume
 	{
 		s_suspended = 0;
-		currLED &= ~0x8;
 		// Re-enable interrupts since bus reset clears them
 		USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
 		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq

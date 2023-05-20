@@ -104,7 +104,7 @@ void USBCtlReset()
         UARTWrite("usb bus active\n");
 }
 
-void USBInit()
+void USBInit(uint32_t enableInterrupts)
 {
     USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
 
@@ -112,10 +112,13 @@ void USBInit()
 
     USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE);
 
-    // Enable IRQs
-    USBWriteByte(rEPIEN, bmSUDAVIE);
-    USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
+    if (enableInterrupts)
+    {
+        // Enable IRQs
+        USBWriteByte(rEPIEN, bmSUDAVIE);
+        USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
 
-    // Enable interrupt generation via INT pin
-    USBWriteByte(rCPUCTL, bmIE);
+        // Enable interrupt generation via INT pin
+        USBWriteByte(rCPUCTL, bmIE);
+    }
 }
