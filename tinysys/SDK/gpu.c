@@ -124,11 +124,24 @@ void GPUSetDefaultPalette(struct EVideoContext *_context)
     }
 }
 
+void GPUGetDimensions(const enum EVideoMode _mode, uint32_t *_width, uint32_t *_height)
+{
+    *_width = _mode == EVM_640_Wide ? 640 : 320;
+    *_height = _mode == EVM_640_Wide ? 480 : 240;
+}
+
 void GPUSetVMode(struct EVideoContext *_context, const enum EVideoScanoutEnable _scanEnable)
 {
     // NOTE: Caller sets vmode/cmode fields
     _context->m_scanEnable = _scanEnable;
     _context->m_strideInWords = (_context->m_vmode == EVM_640_Wide || _context->m_cmode == ECM_16bit_RGB) ? 160 : 80;
+    _context->m_strideInWords *= _context->m_cmode == ECM_16bit_RGB ? 2 : 1;
+
+    GPUGetDimensions(_context->m_vmode, &_context->m_graphicsWidth, &_context->m_graphicsHeight);
+
+    // NOTE: For the time being console is always running at 640x480 mode
+    _context->m_consoleWidth = 80;//(uint16_t)(_context->m_graphicsWidth/8);
+    _context->m_consoleHeight = 60;//(uint16_t)(_context->m_graphicsHeight/8);
 
     *GPUIO = GPUCMD_SETVMODE;
     *GPUIO = MAKEVMODEINFO((uint32_t)_context->m_cmode, (uint32_t)_context->m_vmode, (uint32_t)_scanEnable);
@@ -153,6 +166,33 @@ void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _red, const uint32_t 
 {
     *GPUIO = GPUCMD_SETPAL;
     *GPUIO = (_paletteIndex<<24) | (MAKECOLORRGB24(_red, _green, _blue)&0x00FFFFFFFF);
+}
+
+void GPUTerminalOut(struct EVideoContext *_context, const uint16_t _col, const uint16_t _row, const char *_message, int _length)
+{
+    int i=0;
+    uint32_t cx = _col;
+    uint32_t cy = _row;
+    uint8_t V = _message[i++];
+    while (V != 0 && i<_length)
+    {
+        uint32_t address = (cx+cy*80) & 0x00001FFF; // Max 13 bits
+        *GPUIO = GPUCMD_PUTCHAR;
+        *GPUIO = (address<<8) | (V-32);
+        V = _message[i++];
+        cx++;
+        if (cx>=_context->m_consoleWidth)
+        {
+            cx = 0;
+            cy++;
+        }
+        if (cy>=_context->m_consoleHeight)
+        {
+            // TODO: Scroll up
+            cy = _context->m_consoleHeight-1;
+            cx = 0;
+        }
+    }
 }
 
 void GPUPrintString(struct EVideoContext *_context, const int _col, const int _row, const char *_message, int _length)
@@ -184,7 +224,7 @@ void GPUPrintString(struct EVideoContext *_context, const int _col, const int _r
 void GPUClearScreen(struct EVideoContext *_context, const uint32_t _colorWord)
 {
     uint32_t *vramBaseAsWord = (uint32_t*)_context->m_cpuWriteAddressCacheAligned;
-    uint32_t W = ((_context->m_vmode == EVM_640_Wide || _context->m_cmode == ECM_16bit_RGB) ? 480 : 240) * _context->m_strideInWords;
+    uint32_t W = _context->m_graphicsHeight * _context->m_strideInWords;
     for (uint32_t i=0; i<W; ++i)
         vramBaseAsWord[i] = _colorWord;
 }

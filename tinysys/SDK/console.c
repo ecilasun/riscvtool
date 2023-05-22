@@ -156,7 +156,7 @@ void EchoConsoleHexByte(const int32_t i)
 void DrawConsole(struct EVideoContext *_context)
 {
     for (int cy=0;cy<CONSOLE_ROWS;++cy)
-        GPUPrintString(_context, 0, cy*8, &consoleText[cy*CONSOLE_COLUMNS], CONSOLE_COLUMNS);
+        GPUTerminalOut(_context, 0, cy*8, &consoleText[cy*CONSOLE_COLUMNS], CONSOLE_COLUMNS);
 }
 
 void ConsoleStringAtRow(char *target)
