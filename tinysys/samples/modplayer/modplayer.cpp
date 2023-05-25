@@ -252,7 +252,9 @@ int main(int argc, char *argv[])
 	s_framebufferA = GPUAllocateBuffer(320*240);
 	memset(s_framebufferA, 0, 320*240);
 	memset(s_framebufferB, 0, 320*240);
-	GPUSetVMode(&s_vx, EVM_320_Pal, EVS_Enable);
+	s_vx.m_cmode = ECM_8bit_Indexed;
+	s_vx.m_vmode = EVM_320_Wide;
+	GPUSetVMode(&s_vx, EVS_Enable);
 	GPUSetWriteAddress(&s_vx, (uint32_t)s_framebufferA);
 	GPUSetScanoutAddress(&s_vx, (uint32_t)s_framebufferB);
 	GPUSetDefaultPalette(&s_vx);
@@ -260,9 +262,11 @@ int main(int argc, char *argv[])
 	apubuffer = (short*)APUAllocateBuffer(BUFFER_SAMPLES*NUM_CHANNELS*sizeof(short));
 	printf("Allocated APU mix buffer at 0x%.8x\n", (unsigned int)apubuffer);
 
+	char currpath[32];
+	getcwd(currpath, 32);
+
 	printf("debug: argc:%d\n", argc);
-	for (int i=0;i<argc;++i)
-		printf("debug: argv[%d]:%s\n", i, argv[i]);
+
 	if (argc<=1)
 	{
 		printf("Loading and playing module test.mod\n");
@@ -270,7 +274,10 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		printf("Loading and playing module %s\n", argv[1]);
+		char fullpath[128];
+		strcpy(fullpath, currpath);
+		strcat(fullpath, argv[1]);
+		printf("Loading and playing module %s\n", fullpath);
 		PlayMODFile(argv[1]);
 	}
 

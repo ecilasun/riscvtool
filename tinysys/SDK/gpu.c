@@ -168,31 +168,11 @@ void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _red, const uint32_t 
     *GPUIO = (_paletteIndex<<24) | (MAKECOLORRGB24(_red, _green, _blue)&0x00FFFFFFFF);
 }
 
-void GPUTerminalOut(struct EVideoContext *_context, const uint16_t _col, const uint16_t _row, const char *_message, int _length)
+void GPUCharOut(struct EVideoContext *_context, const uint16_t _col, const uint16_t _row, const char _character)
 {
-    int i=0;
-    uint32_t cx = _col;
-    uint32_t cy = _row;
-    uint8_t V = _message[i++];
-    while (V != 0 && i<_length)
-    {
-        uint32_t address = (cx+cy*80) & 0x00001FFF; // Max 13 bits
-        *GPUIO = GPUCMD_PUTCHAR;
-        *GPUIO = (address<<8) | (V-32);
-        V = _message[i++];
-        cx++;
-        if (cx>=_context->m_consoleWidth)
-        {
-            cx = 0;
-            cy++;
-        }
-        if (cy>=_context->m_consoleHeight)
-        {
-            // TODO: Scroll up
-            cy = _context->m_consoleHeight-1;
-            cx = 0;
-        }
-    }
+    uint32_t address = (_col+_row*_context->m_consoleWidth) & 0x00001FFF; // Max 13 bits
+    *GPUIO = GPUCMD_PUTCHAR;
+    *GPUIO = (address<<8) | (_character-32);
 }
 
 void GPUPrintString(struct EVideoContext *_context, const int _col, const int _row, const char *_message, int _length)

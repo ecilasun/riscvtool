@@ -3,33 +3,54 @@
 #include "console.h"
 #include "gpu.h"
 
-static char *consoleText;
+static char *s_consoleText = NULL;
 static int cursorx = 0;
 static int cursory = 0;
 
-void InitConsole()
+void ConsoleInit()
 {
-	consoleText = (char*)malloc(CONSOLE_COLUMNS*CONSOLE_ROWS*sizeof(char));
+#if (BUILDING_ROM)
+    s_consoleText = (char*)kalloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
+#else
+    s_consoleText = (char*)malloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
+#endif
+    ConsoleClear();
 }
 
-void ClearConsole()
+void ConsoleShutdown()
 {
+#if (BUILDING_ROM)
+    //kfree(s_consoleText);
+#else
+    free(s_consoleText);
+#endif
+    s_consoleText = NULL;
+}
+
+void ConsoleClear()
+{
+    if (!s_consoleText) return;
+
     cursorx = 0;
     cursory = 0;
     for (int cy=0;cy<CONSOLE_ROWS;++cy)
         for (int cx=0;cx<CONSOLE_COLUMNS;++cx)
-            consoleText[cx+cy*CONSOLE_COLUMNS] = ' ';
+            s_consoleText[cx+cy*CONSOLE_COLUMNS] = ' ';
 }
 
-void ClearConsoleRow()
+void ConsoleClearRow()
 {
+    if (!s_consoleText) return;
+
     // Clear the last row
     for (int cx=0;cx<CONSOLE_COLUMNS;++cx)
-        consoleText[cx+cursory*CONSOLE_COLUMNS] = ' ';
+        s_consoleText[cx+cursory*CONSOLE_COLUMNS] = ' ';
 }
 
-void SetConsoleCursor(const int x, const int y)
+void ConsoleSetCursor(const int x, const int y)
 {
+    if (!s_consoleText) return;
+
     cursorx = x;
     cursory = y;
 
@@ -39,16 +60,18 @@ void SetConsoleCursor(const int x, const int y)
     cursory = cursory>CONSOLE_ROWS-1 ? CONSOLE_ROWS-1:cursory;
 }
 
-void ScrollConsole()
+void ConsoleScroll()
 {
+    if (!s_consoleText) return;
+
     for (int cy=0;cy<CONSOLE_ROWS-1;++cy)
         for (int cx=0;cx<CONSOLE_COLUMNS;++cx)
-            consoleText[cx+cy*CONSOLE_COLUMNS] = consoleText[cx+(cy+1)*CONSOLE_COLUMNS];
-    SetConsoleCursor(cursorx, CONSOLE_ROWS-1);
-    ClearConsoleRow();
+            s_consoleText[cx+cy*CONSOLE_COLUMNS] = s_consoleText[cx+(cy+1)*CONSOLE_COLUMNS];
+    ConsoleSetCursor(cursorx, CONSOLE_ROWS-1);
+    ConsoleClearRow();
 }
 
-void GetConsoleCursor(int *x, int *y)
+void ConsoleGetCursor(int *x, int *y)
 {
     *x = cursorx;
     *y = cursory;
@@ -56,6 +79,8 @@ void GetConsoleCursor(int *x, int *y)
 
 void ConsoleCursorStepBack()
 {
+    if (!s_consoleText) return;
+
     --cursorx;
     if (cursorx<0)
     {
@@ -69,22 +94,21 @@ void ConsoleCursorStepBack()
     }
 }
 
-void EchoConsole(const char *echostring)
+void ConsoleWrite(const char *outstring)
 {
-    char *str = (char*)echostring;
+    if (!s_consoleText) return;
+
+    char *str = (char*)outstring;
     while (*str != 0)
     {
-        if (*str == '\r')
+        if (*str == '\r' || *str == '\n')
         {
             cursorx = 0;
-        }
-        else if (*str == '\n')
-        {
 			++cursory;
         }
         else
         {
-            consoleText[cursorx+cursory*CONSOLE_COLUMNS] = *str;
+            s_consoleText[cursorx+cursory*CONSOLE_COLUMNS] = *str;
             ++cursorx;
         }
 
@@ -97,14 +121,16 @@ void EchoConsole(const char *echostring)
         {
             cursory=CONSOLE_ROWS-1;
             cursorx=0;
-            ScrollConsole();
+            ConsoleScroll();
         }
         ++str;
     }
 }
 
-void EchoConsoleDecimal(const int32_t i)
+void ConsoleWriteDecimal(const int32_t i)
 {
+    if (!s_consoleText) return;
+
     const char digits[] = "0123456789";
     char msg[] = "                   ";
 
@@ -126,11 +152,13 @@ void EchoConsoleDecimal(const int32_t i)
     }
     msg[m] = 0;
 
-    EchoConsole(msg);
+    ConsoleWrite(msg);
 }
 
-void EchoConsoleHex(const int32_t i)
+void ConsoleWriteHex(const int32_t i)
 {
+    if (!s_consoleText) return;
+
     const char hexdigits[] = "0123456789ABCDEF";
     char msg[] = "        ";
     msg[0] = hexdigits[((i>>28)%16)];
@@ -141,29 +169,37 @@ void EchoConsoleHex(const int32_t i)
     msg[5] = hexdigits[((i>>8)%16)];
     msg[6] = hexdigits[((i>>4)%16)];
     msg[7] = hexdigits[(i%16)];
-    EchoConsole(msg);
+    ConsoleWrite(msg);
 }
 
-void EchoConsoleHexByte(const int32_t i)
+void ConsoleWriteHexByte(const int32_t i)
 {
+    if (!s_consoleText) return;
+
     const char hexdigits[] = "0123456789ABCDEF";
     char msg[] = "  ";
     msg[0] = hexdigits[((i>>4)%16)];
     msg[1] = hexdigits[(i%16)];
-    EchoConsole(msg);
+    ConsoleWrite(msg);
 }
 
-void DrawConsole(struct EVideoContext *_context)
+void ConsoleDraw(struct EVideoContext *_context)
 {
+    if (!s_consoleText) return;
+
+    // Dump all to the terminal
     for (int cy=0;cy<CONSOLE_ROWS;++cy)
-        GPUTerminalOut(_context, 0, cy*8, &consoleText[cy*CONSOLE_COLUMNS], CONSOLE_COLUMNS);
+        for (int cx=0;cx<CONSOLE_COLUMNS;++cx)
+            GPUCharOut(_context, cx, cy, s_consoleText[cx+cy*CONSOLE_COLUMNS]);
 }
 
 void ConsoleStringAtRow(char *target)
 {
+    if (!s_consoleText) return;
+
     // NOTE: Input string must be >CONSOLE_COLUMNS bytes long to accomodate the null terminator
     int cx;
     for (cx=0; cx<cursorx; ++cx)
-        target[cx] = consoleText[cursory*CONSOLE_COLUMNS+cx];
+        target[cx] = s_consoleText[cursory*CONSOLE_COLUMNS+cx];
     target[cx] = 0;
 }

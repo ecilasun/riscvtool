@@ -58,7 +58,7 @@ void GPUSetVMode(struct EVideoContext *_context, const enum EVideoScanoutEnable 
 void GPUSetScanoutAddress(struct EVideoContext *_context, const uint32_t _scanOutAddress64ByteAligned);
 void GPUSetWriteAddress(struct EVideoContext *_context, const uint32_t _cpuWriteAddress64ByteAligned);
 void GPUSetPal(const uint8_t _paletteIndex, const uint32_t _red, const uint32_t _green, const uint32_t _blue);
-void GPUTerminalOut(struct EVideoContext *_context, const uint16_t _col, const uint16_t _row, const char *_message, int _length);
+void GPUCharOut(struct EVideoContext *_context, const uint16_t _col, const uint16_t _row, const char _char);
 uint32_t GPUReadVBlankCounter();
 
 // Software emulated

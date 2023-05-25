@@ -17,6 +17,7 @@
 
 // Physical address map (when there's no MMU)
 #define APPMEM_START                0x00000000 // Top of RAM
+#define KERNEL_VRAM_TOP       		0x01FED000 // VRAM used by kernel
 #define HEAP_START_APPMEM_END       0x02000000 // 32 Mbytes of executable space above this
 #define HEAP_END_TASKMEM_START      0x0FFD0000 // (255-32) Mbytes of heap space above this
 #define TASKMEM_END_STACK_END       0x0FFDE000 // 56Kbytes of tasks stack space above this
