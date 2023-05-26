@@ -25,8 +25,8 @@ int main()
 	getcwd(pathbuffer, 512);
 	printf("Current work directory:%s\n", pathbuffer);
 
-	printf("Changing it to sd:\\\n");
-	chdir("sd:\\");
+	printf("Changing it to sd:/\n");
+	chdir("sd:/");
 
 	FILE *fp = fopen("sd:test.jpg", "rb");
 	if (fp)
@@ -60,7 +60,7 @@ int main()
 
 		printf("Now the same with read() instead of fread()\n");
 		int handle;
-		if ( (handle = open ("sd:\\doom1.wad", O_RDONLY /*| O_BINARY*/)) != -1)
+		if ( (handle = open ("sd:/doom1.wad", O_RDONLY /*| O_BINARY*/)) != -1)
 		{
 			printf("Open succeeded, reading\n");
 			wadinfo_t header;
@@ -79,7 +79,7 @@ int main()
 		printf("File's not there.\n");
 
 	printf("Let's see how writing files go\n");
-	fp = fopen("sd:\\testout.txt", "w");
+	fp = fopen("sd:/testout.txt", "w");
 	if (fp)
 	{
 		fprintf(fp, "Hello, world!\n");

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.008"
+#define VERSIONSTRING "v1.009"
 
 static EVideoContext s_gpuContext;
 
@@ -280,8 +280,8 @@ int main()
 	LEDSetState(0xA);
 
 	// Set default path before we mount any storage devices
-	f_chdir("sd:\\");
-	strncpy(s_workdir, "sd:\\", 64);
+	f_chdir("sd:/");
+	strncpy(s_workdir, "sd:/", 64);
 
 	// Ready to start, silence LEDs
 	LEDSetState(0x0);

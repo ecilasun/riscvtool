@@ -267,14 +267,14 @@ int main(int argc, char *argv[])
 		printf("Working directory:%s\n", currpath);
 	else
 	{
-		strcpy(currpath, "sd:\\");
+		strcpy(currpath, "sd:/");
 		printf("Using default working directory\n");
 	}
 
 	if (argc<=1)
 	{
 		printf("Loading and playing module test.mod\n");
-		PlayMODFile("sd:\\test.mod");
+		PlayMODFile("sd:/test.mod");
 	}
 	else
 	{

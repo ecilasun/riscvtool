@@ -45,7 +45,9 @@ I_InitGraphics(void)
 	framebuffer = GPUAllocateBuffer(SCREENWIDTH*(SCREENHEIGHT+40));
 	memset(framebuffer, 0x0, SCREENWIDTH*(SCREENHEIGHT+40));
 
-	GPUSetVMode(&g_vctx, EVM_320_Pal, EVS_Enable);
+	g_vctx.m_cmode = ECM_8bit_Indexed;
+	g_vctx.m_vmode = EVM_320_Wide;
+	GPUSetVMode(&g_vctx, EVS_Enable);
 	GPUSetWriteAddress(&g_vctx, (uint32_t)framebuffer);
 	GPUSetScanoutAddress(&g_vctx, (uint32_t)framebuffer);
 
@@ -55,7 +57,7 @@ I_InitGraphics(void)
 void
 I_ShutdownGraphics(void)
 {
-	GPUSetVMode(&g_vctx, EVM_320_Pal, EVS_Disable);
+	GPUSetVMode(&g_vctx, EVS_Disable);
 }
 
 void

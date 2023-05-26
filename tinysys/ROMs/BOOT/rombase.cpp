@@ -559,8 +559,16 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						// Direct offset
 						currptr = offset;
 					}
-					f_lseek(&s_filehandles[file], currptr);
-					write_csr(0x8AA, currptr);
+
+					FRESULT seekattempt = f_lseek(&s_filehandles[file], currptr);
+					if (seekattempt == FR_OK)
+						write_csr(0x8AA, currptr);
+					else
+					{
+						ReportError(32, "File system error (seek)", seekattempt, 0, 0);
+						errno = EIO;
+						write_csr(0x8AA, 0xFFFFFFFF);
+					}
 				}
 				else if (value==63) // read()
 				{
@@ -588,13 +596,22 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					}
 					else // Any other ordinary file
 					{
-						if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_read(&s_filehandles[file], (void*)ptr, len, &tmpresult)))
+						FRESULT readattempt = f_read(&s_filehandles[file], (void*)ptr, len, &tmpresult);
+						if (IsFileHandleAllocated(file, s_handleAllocMask))
 						{
-							write_csr(0x8AA, tmpresult);
+							if (readattempt == FR_OK)
+								write_csr(0x8AA, tmpresult);
+							else
+							{
+								ReportError(32, "File system error (read:1)", readattempt, 0, 0);
+								errno = EIO;
+								write_csr(0x8AA, 0xFFFFFFFF);
+							}
 						}
 						else
 						{
-							errno = EIO;
+							ReportError(32, "File system error (read:2)", 0, 0, 0);
+							errno = EBADF;
 							write_csr(0x8AA, 0xFFFFFFFF);
 						}
 					}
@@ -620,9 +637,17 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					}
 					else
 					{
-						if (IsFileHandleAllocated(file, s_handleAllocMask) && (FR_OK == f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult)))
+						if (IsFileHandleAllocated(file, s_handleAllocMask))
 						{
-							write_csr(0x8AA, tmpresult);
+							FRESULT writeattempt = f_write(&s_filehandles[file], (const void*)ptr, count, &tmpresult);
+							if (writeattempt == FR_OK)
+								write_csr(0x8AA, tmpresult);
+							else
+							{
+								ReportError(32, "File system error (write)", writeattempt, 0, 0);
+								errno = EIO;
+								write_csr(0x8AA, 0xFFFFFFFF);
+							}
 						}
 						else
 						{
@@ -646,7 +671,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					{
 						if (fd <= STDERR_FILENO)
 						{
-							buf->st_dev = 1;
+							buf->st_dev = 0;
 							buf->st_ino = 0;
 							buf->st_mode = S_IFCHR; // character device
 							buf->st_nlink = 0;
@@ -671,12 +696,13 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 							if (fr != FR_OK)
 							{
+								ReportError(32, "File system error (fstat)", fr, 0, 0);
 								errno = ENOENT;
 								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 							else
 							{
-								buf->st_dev = 0;
+								buf->st_dev = 1;
 								buf->st_ino = 0;
 								buf->st_mode = S_IFREG; // regular file
 								buf->st_nlink = 0;
@@ -757,7 +783,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 					}
 					else if (currenthandle > STDERR_FILENO)
 					{
-						if (FR_OK == f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags))
+						FRESULT openattempt = f_open(&s_filehandles[currenthandle], (const TCHAR*)nptr, ff_flags);
+						if (openattempt == FR_OK)
 						{
 							AllocateFileHandle(currenthandle, &s_handleAllocMask);
 							write_csr(0x8AA, currenthandle);
@@ -774,6 +801,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						else
 						{
+							ReportError(32, "File system error (open)", openattempt, 0, 0);
 							errno = ENOENT;
 							write_csr(0x8AA, 0xFFFFFFFF);
 						}
@@ -788,13 +816,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				{
 					uint32_t nptr = read_csr(0x8AA); // A0
 					FRESULT fr = f_unlink((char*)nptr);
-					if (fr != FR_OK)
+					if (fr == FR_OK)
+						write_csr(0x8AA, 0x0);
+					else
 					{
+						ReportError(32, "File system error (remove)", fr, 0, 0);
 						errno = ENOENT;
 						write_csr(0x8AA, 0xFFFFFFFF);
 					}
-					else
-						write_csr(0x8AA, 0x0);
 				}
 				else if (value==0xFFFFFFFF) // debugsetup()
 				{
