@@ -7,6 +7,7 @@
 #define CONSOLE_ROWS 60
 
 void ConsoleInit();
+void ConsoleSetAttr(uint8_t _textColor);
 void ConsoleShutdown();
 void ConsoleClear();
 void ConsoleScroll();

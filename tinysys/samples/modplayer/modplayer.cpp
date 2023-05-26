@@ -260,17 +260,21 @@ int main(int argc, char *argv[])
 	GPUSetDefaultPalette(&s_vx);
 
 	apubuffer = (short*)APUAllocateBuffer(BUFFER_SAMPLES*NUM_CHANNELS*sizeof(short));
-	printf("Allocated APU mix buffer at 0x%.8x\n", (unsigned int)apubuffer);
+	printf("\nAPU mix buffer: 0x%.8x\n", (unsigned int)apubuffer);
 
-	char currpath[32];
-	getcwd(currpath, 32);
-
-	printf("debug: argc:%d\n", argc);
+	char currpath[30] = "sd:";
+	if (getcwd(currpath, 30))
+		printf("Working directory:%s\n", currpath);
+	else
+	{
+		strcpy(currpath, "sd:\\");
+		printf("Using default working directory\n");
+	}
 
 	if (argc<=1)
 	{
 		printf("Loading and playing module test.mod\n");
-		PlayMODFile("sd:test.mod");
+		PlayMODFile("sd:\\test.mod");
 	}
 	else
 	{
@@ -278,7 +282,7 @@ int main(int argc, char *argv[])
 		strcpy(fullpath, currpath);
 		strcat(fullpath, argv[1]);
 		printf("Loading and playing module %s\n", fullpath);
-		PlayMODFile(argv[1]);
+		PlayMODFile(fullpath);
 	}
 
 	printf("Playback complete\n");

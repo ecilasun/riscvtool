@@ -78,21 +78,25 @@ uint32_t MountDrive()
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
 	if (mountattempt != FR_OK)
 	{
-		ReportError(32, "File system error", mountattempt, 0, 0);
+		ReportError(32, "File system error (mount)", mountattempt, 0, 0);
 		return 0;
 	}
 
-	UARTWrite("sd: mounted\n");
+	FRESULT cdattempt = f_chdrive("sd:");
+	if (cdattempt != FR_OK)
+	{
+		ReportError(32, "File system error (chdrive)", cdattempt, 0, 0);
+		write_csr(0x8AA, 0x0); // nullptr
+	}
 
 	return 1;
 }
 
 void UnmountDrive()
 {
-	f_mount(nullptr, "sd:", 1);
-	free(&Fs);
-
-	UARTWrite("sd: unmounted\n");
+	FRESULT unmountattempt = f_mount(nullptr, "sd:", 1);
+	if (unmountattempt != FR_OK)
+		ReportError(32, "File system error (unmount)", unmountattempt, 0, 0);
 }
 
 void ListFiles(const char *path)
@@ -497,10 +501,14 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						write_csr(0x8AA, 0x0); // nullptr
 					else
 					{
-						if (f_getcwd(targetbuffer, targetsize) == FR_OK)
+						FRESULT cwdattempt = f_getcwd(targetbuffer, targetsize);
+						if (cwdattempt == FR_OK)
 							write_csr(0x8AA, targetbuffer);
 						else
+						{
+							ReportError(32, "File system error (getcwd)", cwdattempt, 0, 0);
 							write_csr(0x8AA, 0x0); // nullptr
+						}
 					}
 				}
 				else if (value==50) // chdir

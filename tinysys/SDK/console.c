@@ -3,18 +3,24 @@
 #include "console.h"
 #include "gpu.h"
 
-static char *s_consoleText = NULL;
+static uint16_t *s_consoleText = NULL;
 static int cursorx = 0;
 static int cursory = 0;
+static uint16_t currattr = 0x0200; // Green
 
 void ConsoleInit()
 {
 #if (BUILDING_ROM)
-    s_consoleText = (char*)kalloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
+    s_consoleText = (uint16_t*)kalloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
 #else
-    s_consoleText = (char*)malloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
+    s_consoleText = (uint16_t*)malloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
 #endif
     ConsoleClear();
+}
+
+void ConsoleSetAttr(uint8_t _textColor)
+{
+    currattr = _textColor<<8;
 }
 
 void ConsoleShutdown()
@@ -44,7 +50,7 @@ void ConsoleClearRow()
 
     // Clear the last row
     for (int cx=0;cx<CONSOLE_COLUMNS;++cx)
-        s_consoleText[cx+cursory*CONSOLE_COLUMNS] = ' ';
+        s_consoleText[cx+cursory*CONSOLE_COLUMNS] = 0x0220;
 }
 
 void ConsoleSetCursor(const int x, const int y)
@@ -108,7 +114,7 @@ void ConsoleWrite(const char *outstring)
         }
         else
         {
-            s_consoleText[cursorx+cursory*CONSOLE_COLUMNS] = *str;
+            s_consoleText[cursorx+cursory*CONSOLE_COLUMNS] = currattr | (*str);
             ++cursorx;
         }
 
@@ -200,6 +206,6 @@ void ConsoleStringAtRow(char *target)
     // NOTE: Input string must be >CONSOLE_COLUMNS bytes long to accomodate the null terminator
     int cx;
     for (cx=0; cx<cursorx; ++cx)
-        target[cx] = s_consoleText[cursory*CONSOLE_COLUMNS+cx];
+        target[cx] = s_consoleText[cursory*CONSOLE_COLUMNS+cx]&0xFF;
     target[cx] = 0;
 }
