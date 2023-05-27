@@ -13,6 +13,7 @@ void ConsoleClear();
 void ConsoleScroll();
 void ConsoleSetCursor(const int x, const int y);
 void ConsoleWrite(const char *outstring);
+void ConsoleWriteN(const char *outstring, const uint32_t count);
 void ConsoleWriteDecimal(const int32_t i);
 void ConsoleWriteHex(const int32_t i);
 void ConsoleWriteHexByte(const int32_t i);

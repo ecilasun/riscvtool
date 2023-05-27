@@ -1,10 +1,10 @@
 #include "basesystem.h"
-#include "uart.h"
+#include <stdio.h>
 
 int main()
 {
 	// Output to UART port
-    UARTWrite("Hello, world!\n");
+    printf("Hello, world!\n");
 
     return 0;
 }

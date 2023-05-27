@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "basesystem.h"
 #include "core.h"
 #include "console.h"
 #include "gpu.h"
@@ -10,11 +11,7 @@ static uint16_t currattr = 0x0200; // Green
 
 void ConsoleInit()
 {
-#if (BUILDING_ROM)
-    s_consoleText = (uint16_t*)kalloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
-#else
-    s_consoleText = (uint16_t*)malloc(CONSOLE_COLUMNS*CONSOLE_ROWS+16);
-#endif
+    s_consoleText = (uint16_t*)HEAP_END_CONSOLEMEM_START;
     ConsoleClear();
 }
 
@@ -25,11 +22,6 @@ void ConsoleSetAttr(uint8_t _textColor)
 
 void ConsoleShutdown()
 {
-#if (BUILDING_ROM)
-    //kfree(s_consoleText);
-#else
-    free(s_consoleText);
-#endif
     s_consoleText = NULL;
 }
 
@@ -41,7 +33,7 @@ void ConsoleClear()
     cursory = 0;
     for (int cy=0;cy<CONSOLE_ROWS;++cy)
         for (int cx=0;cx<CONSOLE_COLUMNS;++cx)
-            s_consoleText[cx+cy*CONSOLE_COLUMNS] = ' ';
+            s_consoleText[cx+cy*CONSOLE_COLUMNS] = 0x0220;
 }
 
 void ConsoleClearRow()
@@ -130,6 +122,41 @@ void ConsoleWrite(const char *outstring)
             ConsoleScroll();
         }
         ++str;
+    }
+}
+
+void ConsoleWriteN(const char *outstring, const uint32_t count)
+{
+    if (!s_consoleText) return;
+
+    char *str = (char*)outstring;
+    uint32_t i=0;
+    while (*str != 0 && i!=count)
+    {
+        if (*str == '\r' || *str == '\n')
+        {
+            cursorx = 0;
+			++cursory;
+        }
+        else
+        {
+            s_consoleText[cursorx+cursory*CONSOLE_COLUMNS] = currattr | (*str);
+            ++cursorx;
+        }
+
+        if (cursorx>CONSOLE_COLUMNS-1)
+        {
+            cursorx=0;
+            cursory++;
+        }
+        if (cursory>CONSOLE_ROWS-1)
+        {
+            cursory=CONSOLE_ROWS-1;
+            cursorx=0;
+            ConsoleScroll();
+        }
+        ++str;
+        ++i;
     }
 }
 

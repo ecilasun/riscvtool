@@ -162,14 +162,23 @@ uint32_t ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint3
 		if (pheader.m_MemSz != 0)
 		{
 			uint8_t *memaddr = (uint8_t *)pheader.m_PAddr;
-			// Initialize the memory range at target physical address
-			// This can be larger than the loaded size
-			memset(memaddr, 0x0, pheader.m_MemSz);
-			// Load the binary
-			f_lseek(fp, pheader.m_Offset);
-			f_read(fp, memaddr, pheader.m_FileSz, &bytesread);
-			uint32_t blockEnd = (uint32_t)memaddr + pheader.m_MemSz;
-			heap_start = heap_start < blockEnd ? blockEnd : heap_start;
+			// Check illegal range
+			if ((uint32_t)memaddr>=HEAP_END_CONSOLEMEM_START || ((uint32_t)memaddr)+pheader.m_MemSz>=HEAP_END_CONSOLEMEM_START)
+			{
+				ReportError(32, "ELF section in illegal memory", (uint32_t)memaddr, pheader.m_MemSz, 0);
+				return 0;
+			}
+			else
+			{
+				// Initialize the memory range at target physical address
+				// This can be larger than the loaded size
+				memset(memaddr, 0x0, pheader.m_MemSz);
+				// Load the binary
+				f_lseek(fp, pheader.m_Offset);
+				f_read(fp, memaddr, pheader.m_FileSz, &bytesread);
+				uint32_t blockEnd = (uint32_t)memaddr + pheader.m_MemSz;
+				heap_start = heap_start < blockEnd ? blockEnd : heap_start;
+			}
 		}
 	}
 
@@ -189,15 +198,21 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 		uint32_t heap_start = ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
 		f_close(&fp);
 
-		asm volatile(
-			".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
-			"fence.i;"          // Invalidate I$
-		);
+		// Success
+		if (heap_start != 0)
+		{
+			asm volatile(
+				".word 0xFC000073;" // Invalidate & Write Back D$ (CFLUSH.D.L1)
+				"fence.i;"          // Invalidate I$
+			);
 
-		// Set brk() to end of BSS
-		set_elf_heap(heap_start);
+			// Set brk() to end of BSS
+			set_elf_heap(heap_start);
 
-		return branchaddress;
+			return branchaddress;
+		}
+		else
+			return 0;
 	}
 	else
 	{
@@ -461,14 +476,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 			case CAUSE_MACHINE_ECALL:
 			{
-				/*UARTWrite("E: 0x");
-				UARTWriteHex(code);
-				UARTWrite(": 0x");
-				UARTWriteHex(value);
-				UARTWrite(": 0x");
-				UARTWriteHex(PC);
-				UARTWrite("\n");*/
-
 				// See: https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
 				// 0			io_setup	long io_setup(unsigned int nr_events, aio_context_t *ctx_idp);
 				// 17			getcwd		char *getcwd(char *buf, size_t size);
@@ -578,7 +585,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 					if (file == STDIN_FILENO)
 					{
-						// TODO: Maybe read one characer from UART here?
+						// TODO: Maybe read one character from UART here?
 						errno = EIO;
 						write_csr(0x8AA, 0xFFFFFFFF);
 					}
