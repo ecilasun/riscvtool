@@ -151,6 +151,10 @@ void DoIN3()
 
 void HandleUSBC()
 {
+	// Silently ignore this if we haven't initialized USB device yet
+	if (!USBInitialized())
+		return;
+
 	uint32_t currLED = LEDGetState();
 	LEDSetState(currLED | 0x08);
 

@@ -5,6 +5,7 @@
 volatile uint32_t *IO_USBCTRX = (volatile uint32_t* ) DEVICE_USBC; // Receive fifo
 volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) (DEVICE_USBC+4); // Output FIFO state
 
+static uint32_t s_initialized = 0;
 static uint32_t statusF = 0;
 static uint32_t sparebyte = 0;
 
@@ -106,6 +107,8 @@ void USBCtlReset()
 
 void USBInit(uint32_t enableInterrupts)
 {
+    s_initialized = 0;
+
     USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
 
     USBCtlReset();
@@ -121,4 +124,11 @@ void USBInit(uint32_t enableInterrupts)
         // Enable interrupt generation via INT pin
         USBWriteByte(rCPUCTL, bmIE);
     }
+
+    s_initialized = 1;
+}
+
+uint32_t USBInitialized()
+{
+    return s_initialized;
 }
