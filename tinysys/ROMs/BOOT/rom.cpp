@@ -10,14 +10,14 @@
 #include <string.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.009"
+#define VERSIONSTRING "v1.010"
 
 static EVideoContext s_gpuContext;
 
-static char s_execName[64];
-static char s_execParam[64];
-static char s_cmdString[128];
-static char s_workdir[64];
+static char s_execName[64] = "ROM";
+static char s_execParam[64] = "auto";
+static char s_cmdString[128] = "";
+static char s_workdir[64] = "sd:/";
 static uint32_t s_execParamCount = 1;
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
@@ -190,6 +190,7 @@ void ExecuteCmd(char *_cmd)
 	{
 		// Bright blue
 		UARTWrite("\033[0m\n\033[94m");
+		UARTWrite("tinysys ROM OS\n");
 		UARTWrite("dir [path]: Show list of files in cwd or path\n");
 		UARTWrite("cls: Clear terminal\n");
 		UARTWrite("mem: Show available memory\n");
@@ -252,39 +253,55 @@ void ExecuteCmd(char *_cmd)
 
 int main()
 {
-	// Clear terminal
 	LEDSetState(0xF);
-	UARTWrite("\033[H\033[0m\033[2J\033[96;40mtinysys " VERSIONSTRING "\033[0m\n\n");
-
-	// NOTE: Since we'll loop around here again if we receive a soft reset,
-	// we need to make sure all things are stopped and reset to default states
-	DeviceDefaultState();
-
-	// Set up internals
-	LEDSetState(0xE);
-	RingBufferReset();
-
-	// Attempt to mount the FAT volume on micro sd card
-	// NOTE: Loaded executables do not have to worry about this part
-	LEDSetState(0xD);
-	MountDrive();
-
-	// Create task context
-	LEDSetState(0xC);
-	STaskContext *taskctx = CreateTaskContext();
-
-	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
-	LEDSetState(0xB);
-	TaskAdd(taskctx, "kernelStub", _stubTask, TS_RUNNING, QUARTER_MILLISECOND_IN_TICKS);
-
-	LEDSetState(0xA);
-
 	// Set default path before we mount any storage devices
 	f_chdir("sd:/");
 	strncpy(s_workdir, "sd:/", 64);
 
+	// Attempt to mount the FAT volume on micro sd card
+	// NOTE: Loaded executables do not have to worry about this part
+	LEDSetState(0xE);
+	MountDrive();
+
+	// Attempt to load ROM overlay, if it exists
+	LEDSetState(0xD);
+	s_startAddress = LoadExecutable("sd:/boot.elf", false);
+	if (s_startAddress != 0x0)
+	{
+		// The boot executable is responsible for
+		// setting the entire hardware up including
+		// copying itself to the ROM shadow address
+		// at ROMSHADOW_START (0x0FFE0000 by default)
+		// This is easiest done by having main()
+		// copy a payload embedded in the binary itself
+		// and branch to _start() of the payload.
+		RunExecTask();
+		// Do not let rest of the code run on return
+		while(1) {}
+	}
+
+	// NOTE: Since we'll loop around here again if we receive a soft reset,
+	// we need to make sure all things are stopped and reset to default states
+	LEDSetState(0xC);
+	DeviceDefaultState();
+
+	// Set up internals
+	LEDSetState(0xB);
+	RingBufferReset();
+
+	// Create task context
+	LEDSetState(0xA);
+	STaskContext *taskctx = CreateTaskContext();
+
+	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
+	LEDSetState(0x9);
+	TaskAdd(taskctx, "kernelStub", _stubTask, TS_RUNNING, QUARTER_MILLISECOND_IN_TICKS);
+
 	// Ready to start, silence LEDs
 	LEDSetState(0x0);
+
+	// Splash - we drop to embedded OS if there's no boot image (boot.elf)
+	UARTWrite("\033[H\033[0m\033[2J\033[96;40mtinysys embedded OS " VERSIONSTRING "\033[0m\n\n");
 
 	// Start the timer and hardware interrupt handlers.
 	// This is where all task switching and other interrupt handling occurs

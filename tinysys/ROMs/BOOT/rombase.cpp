@@ -76,17 +76,11 @@ uint32_t MountDrive()
 {
 	// Attempt to mount file system on micro-SD card
 	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
-	if (mountattempt != FR_OK)
+	if (mountattempt == FR_OK)
 	{
-		ReportError(32, "File system error (mount)", mountattempt, 0, 0);
-		return 0;
-	}
-
-	FRESULT cdattempt = f_chdrive("sd:");
-	if (cdattempt != FR_OK)
-	{
-		ReportError(32, "File system error (chdrive)", cdattempt, 0, 0);
-		write_csr(0x8AA, 0x0); // nullptr
+		FRESULT cdattempt = f_chdrive("sd:");
+		if (cdattempt != FR_OK)
+			return 0;
 	}
 
 	return 1;
@@ -94,9 +88,9 @@ uint32_t MountDrive()
 
 void UnmountDrive()
 {
-	FRESULT unmountattempt = f_mount(nullptr, "sd:", 1);
-	if (unmountattempt != FR_OK)
-		ReportError(32, "File system error (unmount)", unmountattempt, 0, 0);
+	/*FRESULT unmountattempt =*/ f_mount(nullptr, "sd:", 1);
+	/*if (unmountattempt != FR_OK)
+		ReportError(32, "File system error (unmount)", unmountattempt, 0, 0);*/
 }
 
 void ListFiles(const char *path)
