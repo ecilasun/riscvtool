@@ -20,7 +20,7 @@ int main()
 
     uint32_t state = read_csr(mie);
 
-    if (state & (MIP_MSIP | MIP_MEIP | MIP_MTIP) != 0)
+    if ((state & (MIP_MSIP | MIP_MEIP | MIP_MTIP)) != 0)
     {
         UARTWrite("Launched from ROM, aborting...\n");
         return 0;
