@@ -9,6 +9,7 @@
 /* Original tinyraytracer: https://github.com/ssloy/tinyraytracer  */
 /*******************************************************************/
 
+static struct EVideoContext vx;
 static uint8_t *framebuffer = 0;
 typedef int BOOL;
 
@@ -27,7 +28,7 @@ void graphics_set_pixel(int x, int y, float r, float g, float b) {
 	uint16_t R = (uint16_t)(r*255.0f)>>3;
 	uint16_t B = (uint16_t)(b*255.0f)>>3;
 
-  uint16_t *pixel = (uint16_t*)(framebuffer + (x+y*FRAME_WIDTH_MODE0)*2);
+  uint16_t *pixel = (uint16_t*)(framebuffer + (x+y*vx.m_graphicsWidth)*2);
 	*pixel = MAKECOLORRGB16(R,G,B);
 }
 
@@ -285,18 +286,18 @@ vec3 cast_ray(
 void render(Sphere* spheres, int nb_spheres, Light* lights, int nb_lights)
 {
 	const float fov  = M_PI/3.f;
-	float dir_z = -FRAME_HEIGHT_MODE0/(2.*tan(fov/2.f));
-  for (int tiley = 0;tiley<FRAME_HEIGHT_MODE0/16;++tiley)
-    for (int tilex = 0;tilex<FRAME_WIDTH_MODE0/16;++tilex)
+	float dir_z = -vx.m_graphicsHeight/(2.*tan(fov/2.f));
+  for (uint32_t tiley = 0;tiley<vx.m_graphicsHeight/16;++tiley)
+    for (uint32_t tilex = 0;tilex<vx.m_graphicsWidth/16;++tilex)
     {
       for (int y = 0; y<16; y++)// actual rendering loop
       {
         int j = tiley*16 + y;
-        float dir_y = -(j + 0.5f) + FRAME_HEIGHT_MODE0/2.f; // this flips the image.
+        float dir_y = -(j + 0.5f) + vx.m_graphicsHeight/2.f; // this flips the image.
         for (int x = 0; x<16; x++)
         {
           int i = tilex*16 + x;
-          float dir_x =  (i + 0.5f) - FRAME_WIDTH_MODE0/2.f;
+          float dir_x =  (i + 0.5f) - vx.m_graphicsWidth/2.f;
           vec3 C = cast_ray( make_vec3(0,0,0), vec3_normalize(make_vec3(dir_x, dir_y, dir_z)), spheres, nb_spheres, lights, nb_lights, 0 );
           graphics_set_pixel(i,j,C.x,C.y,C.z);
         }
@@ -340,11 +341,10 @@ void init_scene() {
 int main()
 {
   // Enable video output
-  framebuffer = (uint8_t*)GPUAllocateBuffer(FRAME_WIDTH_MODE0*FRAME_HEIGHT_MODE0*2);
-  struct EVideoContext vx;
   vx.m_vmode = EVM_320_Wide;
   vx.m_cmode = ECM_16bit_RGB;
   GPUSetVMode(&vx, EVS_Enable);
+  framebuffer = (uint8_t*)GPUAllocateBuffer(vx.m_graphicsWidth * vx.m_graphicsHeight * 2);
   GPUSetWriteAddress(&vx, (uint32_t)framebuffer);
   GPUSetScanoutAddress(&vx, (uint32_t)framebuffer);
   GPUClearScreen(&vx, 0x03030303);

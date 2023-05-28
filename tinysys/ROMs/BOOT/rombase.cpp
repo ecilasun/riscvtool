@@ -83,6 +83,7 @@ uint32_t MountDrive()
 			return 0;
 	}
 
+	UARTWrite("Device sd: mounted\n");
 	return 1;
 }
 
@@ -90,7 +91,9 @@ void UnmountDrive()
 {
 	/*FRESULT unmountattempt =*/ f_mount(nullptr, "sd:", 1);
 	/*if (unmountattempt != FR_OK)
-		ReportError(32, "File system error (unmount)", unmountattempt, 0, 0);*/
+		ReportError(32, "File system error (unmount)", unmountattempt, 0, 0);
+	else*/
+		UARTWrite("Device sd: unmounted\n");
 }
 
 void ListFiles(const char *path)
@@ -108,15 +111,15 @@ void ListFiles(const char *path)
 			char *isexe = strstr(finf.fname, ".elf");
 			int isdir = finf.fattrib&AM_DIR;
 			if (isdir)
-				UARTWrite("\033[32m"); // Green
-			if (isexe!=nullptr)
 				UARTWrite("\033[33m"); // Yellow
+			if (isexe!=nullptr)
+				UARTWrite("\033[32m"); // Green
 			UARTWrite(finf.fname);
 			if (isdir)
-				UARTWrite(" <dir>");
+				UARTWrite("\t<dir>");
 			else
 			{
-				UARTWrite(" ");
+				UARTWrite("\t");
 				UARTWriteDecimal((int32_t)finf.fsize);
 				UARTWrite("b");
 			}
@@ -126,11 +129,7 @@ void ListFiles(const char *path)
 		f_closedir(&dir);
 	}
 	else
-	{
-		UARTWrite("fs error: 0x");
-		UARTWriteHex(re);
-		UARTWrite("\n");
-	}
+		ReportError(32, "File system error (unmount)", re, 0, 0);
 }
 
 uint32_t ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
@@ -407,35 +406,28 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case IRQ_M_EXT:
 			{
 				// Bit mask of devices causing the current interrupt
-				// Handle in any arbitrary priority here
 				uint32_t hwid = read_csr(0xFFF);
-				if (hwid&1)
-					HandleUART();
-				else if (hwid&2)
-					HandleSDCardDetect();
-				else if (hwid&4)
-					HandleUSBC();
-				else
+
+				if (hwid&1) HandleUART();
+				else if (hwid&2) HandleSDCardDetect();
+				else if (hwid&4) HandleUSBC();
+				else // No familiar bit set, unknown device
 				{
-					ReportError(32, "Unknown hardware device", code, hwid, PC);
+					ReportError(32, "Unknown hardware device, core halted", code, hwid, PC);
 					// Put core to endless sleep
-					while(1) { asm volatile("wfi;");}
+					while(1) { asm volatile("wfi;"); }
 					break;
 				}
 
-				// TODO: Distinguish hardware devices via mtval
-				//if (value & 0x00000001) HandleUART();
-				//if (value & 0x00000002) HandleKeyboard();
-				//if (value & 0x00000004) HandleJTAG();
 				break;
 			}
 
 			default:
 			{
-				ReportError(32, "Unknown interrupt type", code, 0, PC);
+				ReportError(32, "Unknown interrupt type, core halted", code, 0, PC);
 
 				// Put core to endless sleep
-				while(1) { asm volatile("wfi;");}
+				while(1) { asm volatile("wfi;"); }
 				break;
 			}
 		}
@@ -449,8 +441,10 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				uint32_t instruction = *((uint32_t*)PC);
 				ReportError(32, "Illegal instruction", code, instruction, PC);
 
-				// Terminate and remove from list of running tasks
+				// Terminate task on first chance and remove from list of running tasks
 				TaskExitCurrentTask(&g_taskctx);
+
+				// TODO: Drop into debugger if one's loaded
 
 				break;
 			}
@@ -460,10 +454,12 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				// TODO: call debugger breakpoint handler if one's loaded and stop the task
 
 				// Where there's no debugger loaded, simply exit since we're not supposed to run past ebreak commands
-				ReportError(32, "Breakpoint without debugger", code, 0x0, PC);
+				ReportError(32, "No debugger present, ignoring breakpoint", code, 0x0, PC);
 
 				// Exit task in non-debug mode
 				TaskExitCurrentTask(&g_taskctx);
+
+				// TODO: Drop into debugger if one's loaded
 
 				break;
 			}
@@ -854,7 +850,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 			case CAUSE_STORE_PAGE_FAULT:*/
 			default:
 			{
-				ReportError(32, "Guru meditation", code, value, PC);
+				ReportError(32, "Guru meditation, core halted", code, value, PC);
 
 				// Put core to endless sleep
 				while(1) { asm volatile("wfi;"); }

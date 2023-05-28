@@ -11,7 +11,6 @@ void USBWriteByte(uint8_t command, uint8_t data);
 int USBReadBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBInit(uint32_t enableInterrupts);
-uint32_t USBInitialized();
 
 // MAX3420E Registers
 #define rEP0FIFO    0<<3

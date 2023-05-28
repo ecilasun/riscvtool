@@ -5,7 +5,6 @@
 volatile uint32_t *IO_USBCTRX = (volatile uint32_t* ) DEVICE_USBC; // Receive fifo
 volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) (DEVICE_USBC+4); // Output FIFO state
 
-static uint32_t s_initialized = 0;
 static uint32_t statusF = 0;
 static uint32_t sparebyte = 0;
 
@@ -84,8 +83,6 @@ void USBCtlReset()
     USBWriteByte(rUSBCTL, bmCHIPRES);    // reset the MAX3420E 
     USBWriteByte(rUSBCTL, 0);            // remove the reset
 
-    USBWriteByte(rGPIO, 0x0);            // No GPIO output
-
     USBFlushOutputFIFO();
     E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
 
@@ -95,20 +92,19 @@ void USBCtlReset()
     while ((rd & bmOSCOKIRQ) == 0)
     {
         rd = USBReadByte(rUSBIRQ);
-        UARTWriteHexByte(rd);
         E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
     }
     USBWriteByte(rUSBIRQ, bmOSCOKIRQ);
-    UARTWrite("OK\n");
+
+    USBWriteByte(rGPIO, 0x0);            // No GPIO output
 
     if (rd&bmBUSACTIRQ)
-        UARTWrite("usb bus active\n");
+        UARTWrite("usb bus active,\n");
+    UARTWrite("OK\n");
 }
 
 void USBInit(uint32_t enableInterrupts)
 {
-    s_initialized = 0;
-
     USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
 
     USBCtlReset();
@@ -118,17 +114,11 @@ void USBInit(uint32_t enableInterrupts)
     if (enableInterrupts)
     {
         // Enable IRQs
-        USBWriteByte(rEPIEN, bmSUDAVIE);
-        USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
+        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
+        // bmSUSPIE is to be enabled after the device initializes
+        USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE /*| bmSUSPIE*/);
 
         // Enable interrupt generation via INT pin
         USBWriteByte(rCPUCTL, bmIE);
     }
-
-    s_initialized = 1;
-}
-
-uint32_t USBInitialized()
-{
-    return s_initialized;
 }
