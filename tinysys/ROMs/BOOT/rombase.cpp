@@ -502,10 +502,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						if (cwdattempt == FR_OK)
 							write_csr(0x8AA, targetbuffer);
 						else
-						{
-							ReportError(32, "File system error (getcwd)", cwdattempt, 0, 0);
 							write_csr(0x8AA, 0x0); // nullptr
-						}
 					}
 				}
 				else if (value==50) // chdir
@@ -562,7 +559,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						write_csr(0x8AA, currptr);
 					else
 					{
-						ReportError(32, "File system error (seek)", seekattempt, 0, 0);
 						errno = EIO;
 						write_csr(0x8AA, 0xFFFFFFFF);
 					}
@@ -600,14 +596,12 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								write_csr(0x8AA, tmpresult);
 							else
 							{
-								ReportError(32, "File system error (read:1)", readattempt, 0, 0);
 								errno = EIO;
 								write_csr(0x8AA, 0xFFFFFFFF);
 							}
 						}
 						else
 						{
-							ReportError(32, "File system error (read:2)", 0, 0, 0);
 							errno = EBADF;
 							write_csr(0x8AA, 0xFFFFFFFF);
 						}
@@ -641,7 +635,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 								write_csr(0x8AA, tmpresult);
 							else
 							{
-								ReportError(32, "File system error (write)", writeattempt, 0, 0);
 								errno = EIO;
 								write_csr(0x8AA, 0xFFFFFFFF);
 							}
@@ -693,7 +686,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 							if (fr != FR_OK)
 							{
-								ReportError(32, "File system error (fstat)", fr, 0, 0);
 								errno = ENOENT;
 								write_csr(0x8AA, 0xFFFFFFFF);
 							}
@@ -798,7 +790,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						}
 						else
 						{
-							ReportError(32, "File system error (open)", openattempt, 0, 0);
 							errno = ENOENT;
 							write_csr(0x8AA, 0xFFFFFFFF);
 						}
@@ -817,7 +808,6 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 						write_csr(0x8AA, 0x0);
 					else
 					{
-						ReportError(32, "File system error (remove)", fr, 0, 0);
 						errno = ENOENT;
 						write_csr(0x8AA, 0xFFFFFFFF);
 					}

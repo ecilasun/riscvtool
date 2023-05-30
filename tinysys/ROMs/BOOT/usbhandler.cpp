@@ -152,47 +152,59 @@ void DoIN3()
 void HandleUSBC()
 {
 	uint32_t currLED = LEDGetState();
-	LEDSetState(currLED | 0x08);
+	LEDSetState(currLED | 0x8);
 
 	// Initial value of rEPIRQ should be 0x19
 	uint8_t epIrq = USBReadByte(rEPIRQ);
 	uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
 	// Debug
-	/*UARTWriteHexByte(epIrq);
-	UARTWrite(":");
-	UARTWriteHexByte(usbIrq);
-	UARTWrite(":");
-	UARTWriteHexByte(USBGetGPX());
-	UARTWrite("\n");*/
+	if (epIrq != 0xFF && usbIrq != 0xFF)
+	{
+		UARTWriteHexByte(epIrq);
+		UARTWrite(":");
+		UARTWriteHexByte(usbIrq);
+		UARTWrite(":");
+		UARTWriteHexByte(USBGetGPX());
+		UARTWrite("\n");
+	}
 
 	if (epIrq & bmSUDAVIRQ)
 	{
+		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
+
 		// Setup data available, 8 bytes data to follow
 		DoSetup();
-		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
 	}
-	else if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+
+	if (epIrq & bmIN3BAVIRQ)
 	{
-		s_suspended = 1;
+		// According to app notes we can't directly clear BAV bits
+		USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
+
+		DoIN3();
+	}
+
+	if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+	{
 		// Should arrive here out of reset
 		USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
+
+		s_suspended = 1;
 	}
-	else if (usbIrq & bmURESDNIRQ) // Resume
-	{
-		s_suspended = 0;
-		// Re-enable interrupts since bus reset clears them
-		USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
-		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
-	}
-	else if (usbIrq & bmURESIRQ) // Bus reset
+
+	if (usbIrq & bmURESIRQ) // Bus reset
 	{
 		USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
 	}
-	else if (epIrq & bmIN3BAVIRQ)
+
+	if (usbIrq & bmURESDNIRQ) // Resume
 	{
-		DoIN3();
-		USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
+		USBWriteByte(rUSBIRQ, bmURESDNIRQ);
+
+		s_suspended = 0;
+		// Re-enable interrupts since bus reset clears them
+		USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
 	}
 
 	LEDSetState(currLED);

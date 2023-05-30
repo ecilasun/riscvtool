@@ -85,6 +85,34 @@ void std_request(uint8_t *SUD)
 	}
 }
 
+void DoSetup()
+{
+    uint8_t SUD[8];
+    USBReadBytes(rSUDFIFO, 8, SUD);
+
+    if (SUD[0] != 0xFF)
+    {
+        UARTWriteHexByte(SUD[0]);
+        UARTWriteHexByte(SUD[1]);
+        UARTWriteHexByte(SUD[2]);
+        UARTWriteHexByte(SUD[3]);
+        UARTWriteHexByte(SUD[4]);
+        UARTWriteHexByte(SUD[5]);
+        UARTWriteHexByte(SUD[6]);
+        UARTWriteHexByte(SUD[7]);
+        UARTWrite("\n");
+    }
+
+    switch(SUD[bmRequestType] & 0x60)
+    {
+        case 0x00: std_request(SUD); break;
+        case 0x20: STALL_EP0 break; // class_req
+        case 0x40: STALL_EP0 break; // vendor_req
+        default: STALL_EP0 break;
+    }
+
+}
+
 int main(int argc, char *argv[])
 {
     UARTWrite("USB-C test\n");
@@ -115,45 +143,27 @@ int main(int argc, char *argv[])
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-            /*UARTWriteHexByte(epIrq);
-            UARTWrite(":");
-            UARTWriteHexByte(usbIrq);
-            UARTWrite(":");
-            UARTWriteHexByte(USBGetGPX());
-            UARTWrite("\n");*/
+            if (epIrq != 0xFF && usbIrq != 0xFF)
+            {
+                UARTWriteHexByte(epIrq);
+                UARTWrite(":");
+                UARTWriteHexByte(usbIrq);
+                UARTWrite(":");
+                UARTWriteHexByte(USBGetGPX());
+                UARTWrite("\n");
+            }
 
             if (epIrq & bmSUDAVIRQ)
             {
     		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
-
-                uint8_t SUD[8];
-            	USBReadBytes(rSUDFIFO, 8, SUD);
-
-                if (SUD[0] != 0xFF)
-                {
-                    UARTWriteHexByte(SUD[0]);
-                    UARTWriteHexByte(SUD[1]);
-                    UARTWriteHexByte(SUD[2]);
-                    UARTWriteHexByte(SUD[3]);
-                    UARTWriteHexByte(SUD[4]);
-                    UARTWriteHexByte(SUD[5]);
-                    UARTWriteHexByte(SUD[6]);
-                    UARTWriteHexByte(SUD[7]);
-                    UARTWrite("\n");
-                }
-
-                switch(SUD[bmRequestType] & 0x60)
-                {
-                    case 0x00: std_request(SUD); break;
-                    case 0x20: STALL_EP0 break; // class_req
-                    case 0x40: STALL_EP0 break; // vendor_req
-                    default: STALL_EP0 break;
-                }
+        		// Setup data available, 8 bytes data to follow
+		        DoSetup();
             }
 
             if (epIrq & bmIN3BAVIRQ)
             {
                 // TODO: asserts out of reset
+                // According to app notes we can't directly clear BAV bits
                 USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
                 // do_IN3();
             }
