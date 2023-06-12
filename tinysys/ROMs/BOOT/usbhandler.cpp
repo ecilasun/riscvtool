@@ -205,6 +205,7 @@ void HandleUSBC()
 		s_suspended = 0;
 		// Re-enable interrupts since bus reset clears them
 		USBWriteByte(rUSBIEN, bmURESDNIE | bmURESIE | bmSUSPIE);
+		USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
 	}
 
 	LEDSetState(currLED);

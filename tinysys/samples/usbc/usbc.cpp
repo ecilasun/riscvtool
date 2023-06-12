@@ -121,6 +121,11 @@ int main(int argc, char *argv[])
     {
         UARTWrite("Bringing up USB-C\nUsing ISR in ROM\n");
         USBInit(1);
+
+        while(1)
+        {
+            // ISR will handle the rest
+        }
     }
     else
     {

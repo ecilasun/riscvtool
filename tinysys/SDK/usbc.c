@@ -109,16 +109,16 @@ void USBInit(uint32_t enableInterrupts)
 
     USBCtlReset();
 
-    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE);
-
     if (enableInterrupts)
     {
         // Enable IRQs
         USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
         // bmSUSPIE is to be enabled after the device initializes
-        USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE /*| bmSUSPIE*/);
+        USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
 
         // Enable interrupt generation via INT pin
         USBWriteByte(rCPUCTL, bmIE);
     }
+
+    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE);
 }
