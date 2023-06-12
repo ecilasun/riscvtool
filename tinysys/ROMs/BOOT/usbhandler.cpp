@@ -74,11 +74,11 @@ void std_request(uint8_t *SUD)
     switch(SUD[bRequest])
 	{
 	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);              break;
-	    case	SR_SET_FEATURE:		    UARTWrite("feature(1)");           break;
-	    case	SR_CLEAR_FEATURE:	    UARTWrite("feature(0)");           break;
-	    case	SR_GET_STATUS:		    UARTWrite("get_status()");         break;
-	    case	SR_SET_INTERFACE:	    UARTWrite("set_interface()");      break;
-	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()");      break;
+	    case	SR_SET_FEATURE:		    UARTWrite("feature(1)\n");         break;
+	    case	SR_CLEAR_FEATURE:	    UARTWrite("feature(0)\n");         break;
+	    case	SR_GET_STATUS:		    UARTWrite("get_status()\n");       break;
+	    case	SR_SET_INTERFACE:	    UARTWrite("set_interface()\n");    break;
+	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()\n");    break;
 	    case	SR_GET_CONFIGURATION:   get_configuration();               break;
 	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);            break;
 	    case	SR_SET_ADDRESS:         USBReadByte(rFNADDR | 0x1);        break;  // discard return value
@@ -101,8 +101,8 @@ void DoSetup()
 	uint8_t SUD[8];
 	USBReadBytes(rSUDFIFO, 8, SUD);
 
-	// Debug dump
-	if (SUD[0] != 0xFF)
+	// Debug dump - not in ISR mode
+	/*if (SUD[0] != 0xFF)
 	{
 		UARTWriteHexByte(SUD[0]);
 		UARTWriteHexByte(SUD[1]);
@@ -113,7 +113,7 @@ void DoSetup()
 		UARTWriteHexByte(SUD[6]);
 		UARTWriteHexByte(SUD[7]);
 		UARTWrite("\n");
-	}
+	}*/
 
 	switch(SUD[bmRequestType] & 0x60)
 	{
@@ -158,8 +158,8 @@ void HandleUSBC()
 	uint8_t epIrq = USBReadByte(rEPIRQ);
 	uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-	// Debug
-	if (epIrq != 0xFF && usbIrq != 0xFF)
+	// Debug - We don't do this in ROM mode since it'll be called from an ISR
+	/*if (epIrq != 0xFF && usbIrq != 0xFF)
 	{
 		UARTWriteHexByte(epIrq);
 		UARTWrite(":");
@@ -167,7 +167,7 @@ void HandleUSBC()
 		UARTWrite(":");
 		UARTWriteHexByte(USBGetGPX());
 		UARTWrite("\n");
-	}
+	}*/
 
 	if (epIrq & bmSUDAVIRQ)
 	{
