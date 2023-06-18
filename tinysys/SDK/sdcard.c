@@ -114,7 +114,7 @@ uint8_t __attribute__ ((noinline)) SDCmd(const SDCardCommand cmd, uint32_t args)
    return incoming;
 }
 
-uint8_t __attribute__ ((noinline)) SDResponse0()
+uint8_t __attribute__ ((noinline)) SDWaitNotBusy()
 {
    uint8_t res1 = 0xFF;
 
@@ -365,9 +365,11 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
 
       // Read response token
       uint8_t token = SPITxRx(0xFF) & 0x1F;
-      if (token != 0x05)
+      if (token != 0x05) // 0x0b==crc error, 0x0d==data rejected
       {
          // Error
+         if (token == 0x0b) UARTWrite("CRC error\n");
+         if (token == 0x0d) UARTWrite("Data rejected\n");
          // Expected status&x1F==0x05
          // 010:accepted, 101:rejected-crcerror, 110:rejected-writeerror
          SDCmd(CMD13_SEND_STATUS, 0);
@@ -376,13 +378,13 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
       }
       else
       {
-         // Wait for write to finish
-         response = SDResponse0();
+         // Wait for writes to finish
+         response = SDWaitNotBusy();
       }
    }
    else
    {
-      UARTWrite("SDWriteSingleBlock didn't get 0xFE response\n");
+      UARTWrite("Expected 0x00, ");
       haserror = 1;
    }
 
@@ -450,7 +452,7 @@ int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, u
 	for(uint32_t b=0; b<numblocks; ++b)
 	{
       uint8_t* source = (uint8_t*)(datablock+cursor);
-		uint8_t response = SDWriteSingleBlock(b+blockaddress, source, checksum);
+		/*uint8_t response =*/ SDWriteSingleBlock(b+blockaddress, source, checksum);
 		/*if (response != SD_READY)
       {
          UARTWrite("SDWriteMultipleBlocks: 0x");
