@@ -114,6 +114,20 @@ uint8_t __attribute__ ((noinline)) SDCmd(const SDCardCommand cmd, uint32_t args)
    return incoming;
 }
 
+uint8_t __attribute__ ((noinline)) SDResponse0()
+{
+   uint8_t res1 = 0xFF;
+
+   int timeout = 0;
+   while((res1 = SPITxRx(0xFF)) == 0x00) {
+      ++timeout;
+      if (timeout > G_SPI_TIMEOUT)
+         break;
+   };
+
+   return res1;
+}
+
 uint8_t __attribute__ ((noinline)) SDResponse1()
 {
    uint8_t res1 = 0xFF;
@@ -271,9 +285,6 @@ uint8_t __attribute__ ((noinline)) SDReadSingleBlock(uint32_t sector, uint8_t *d
          int x=0;
          do {
             datablock[x++] = SPITxRx(0xFF);
-            datablock[x++] = SPITxRx(0xFF);
-            datablock[x++] = SPITxRx(0xFF);
-            datablock[x++] = SPITxRx(0xFF);
          } while(x<512);
 
          // Checksum
@@ -324,7 +335,7 @@ int __attribute__ ((noinline)) SDReadMultipleBlocks(uint8_t *datablock, uint32_t
 		cursor += 512;
 	}
 
-	return cursor;
+	return 0;
 }
 
 uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *datablock, uint8_t checksum[2])
@@ -346,9 +357,6 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
       int x=0;
       do {
          response = SPITxRx(datablock[x++]);
-         response = SPITxRx(datablock[x++]);
-         response = SPITxRx(datablock[x++]);
-         response = SPITxRx(datablock[x++]);
       } while(x<512);
 
       // This seems to be unused in most samples
@@ -369,18 +377,13 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
       else
       {
          // Wait for write to finish
-         token = 0xFF;
-         uint32_t timeout = 0;
-         while((token = SPITxRx(0xFF)) == SD_READY)
-         {
-            ++timeout;
-            if (timeout > G_SPI_TIMEOUT)
-               break;
-         }
+         response = SDResponse0();
       }
-
-      // One extra clock
-      SPITxRx(0xFF);
+   }
+   else
+   {
+      UARTWrite("SDWriteSingleBlock didn't get 0xFE response\n");
+      haserror = 1;
    }
 
    LEDSetState(oldstate);
@@ -448,12 +451,17 @@ int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, u
 	{
       uint8_t* source = (uint8_t*)(datablock+cursor);
 		uint8_t response = SDWriteSingleBlock(b+blockaddress, source, checksum);
-		if (response != SD_START_TOKEN)
+		/*if (response != SD_READY)
+      {
+         UARTWrite("SDWriteMultipleBlocks: 0x");
+         UARTWriteHexByte(response);
+         UARTWrite("\n");
 			return -1;
+      }*/
 		cursor += 512;
 	}
 
-	return cursor;
+	return 0;
 }
 
 int __attribute__ ((noinline)) SDCardStartup()

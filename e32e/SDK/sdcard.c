@@ -289,10 +289,10 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t blockaddress, uin
 		// Send start token
 		response = SPITxRx(0xFE);
 
-         int x=0;
-         do {
-            response = SPITxRx(datablock[x++]);
-         } while(x<512);
+      int x=0;
+      do {
+         response = SPITxRx(datablock[x++]);
+      } while(x<512);
 
 		response = SDResponse1(); // R1: status, expected status&x1F==0x05
 
@@ -347,7 +347,7 @@ int __attribute__ ((noinline)) SDWriteMultipleBlocks(const uint8_t *datablock, u
    {
       __builtin_memcpy(tmp, datablock+cursor, 512);
       uint8_t response = SDWriteSingleBlock(b+blockaddress, tmp, checksum);
-      if (response != 0xFE)
+      if (response == 0xFF)
          return -1;
       cursor += 512;
    }

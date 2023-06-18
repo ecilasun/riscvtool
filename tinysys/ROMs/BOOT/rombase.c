@@ -74,8 +74,8 @@ void ReportError(const uint32_t _width, const char *_error, uint32_t _cause, uin
 
 uint32_t MountDrive()
 {
-	// Attempt to mount file system on micro-SD card
-	FRESULT mountattempt = f_mount(&Fs, "sd:", 1);
+	// Delayed mount the volume
+	FRESULT mountattempt = f_mount(&Fs, "sd:", 0);
 	if (mountattempt == FR_OK)
 	{
 		FRESULT cdattempt = f_chdrive("sd:");
