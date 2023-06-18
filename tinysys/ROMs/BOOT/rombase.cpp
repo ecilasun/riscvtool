@@ -116,10 +116,10 @@ void ListFiles(const char *path)
 				UARTWrite("\033[32m"); // Green
 			UARTWrite(finf.fname);
 			if (isdir)
-				UARTWrite("\t<dir>");
+				UARTWrite("\t\t<dir>");
 			else
 			{
-				UARTWrite("\t");
+				UARTWrite("\t\t");
 				UARTWriteDecimal((int32_t)finf.fsize);
 				UARTWrite("b");
 			}
