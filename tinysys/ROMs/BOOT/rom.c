@@ -8,11 +8,12 @@
 #include "opl2.h"
 
 #include <string.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #define VERSIONSTRING "v1.013"
 
-static EVideoContext s_gpuContext;
+static struct EVideoContext s_gpuContext;
 
 static char s_execName[64] = "ROM";
 static char s_execParam[64] = "auto";
@@ -90,7 +91,7 @@ void ExecuteCmd(char *_cmd)
 
 	if (!strcmp(command, "dir"))
 	{
-		const char *path = strtok(nullptr, " ");
+		const char *path = strtok(NULL, " ");
 		if (!path)
 			ListFiles(s_workdir);
 		else
@@ -126,14 +127,14 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "prc"))
 	{
-		STaskContext *ctx = GetTaskContext();
+		struct STaskContext *ctx = GetTaskContext();
 		if (ctx->numTasks==1)
 			UARTWrite("No tasks running\n");
 		else
 		{
 			for (int i=1;i<ctx->numTasks;++i)
 			{
-				STask *task = &ctx->tasks[i];
+				struct STask *task = &ctx->tasks[i];
 				// UARTWrite("#");
 				// UARTWriteDecimal(i);
 				UARTWrite(" task:");
@@ -150,7 +151,7 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "del"))
 	{
-		const char *path = strtok(nullptr, " ");
+		const char *path = strtok(NULL, " ");
 		if (!path)
 			UARTWrite("usage: del fname\n");
 		else
@@ -158,7 +159,7 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "cwd"))
 	{
-		const char *path = strtok(nullptr, " ");
+		const char *path = strtok(NULL, " ");
 		// Change working directory
 		if (!path)
 			UARTWrite("usage: cwd path\n");
@@ -170,7 +171,7 @@ void ExecuteCmd(char *_cmd)
 	}
 	else if (!strcmp(command, "get"))
 	{
-		const char *savename = strtok(nullptr, " ");
+		const char *savename = strtok(NULL, " ");
 		uget(savename);
 	}
 	else if (!strcmp(command, "ver"))
@@ -211,7 +212,7 @@ void ExecuteCmd(char *_cmd)
 
 	if (loadELF)
 	{
-		STaskContext* tctx = GetTaskContext();
+		struct STaskContext* tctx = GetTaskContext();
 		// Temporary measure to avoid loading another executable while the first one is running
 		// until we get a virtual memory device
 		if (tctx->numTasks>1)
@@ -229,7 +230,7 @@ void ExecuteCmd(char *_cmd)
 			s_startAddress = LoadExecutable(filename, true);
 			strcpy(s_execName, filename);
 
-			const char *param = strtok(nullptr, " ");
+			const char *param = strtok(NULL, " ");
 			// Change working directory
 			if (!param)
 				s_execParamCount = 1;
@@ -291,7 +292,7 @@ int main()
 
 	// Create task context
 	LEDSetState(0xA);
-	STaskContext *taskctx = CreateTaskContext();
+	struct STaskContext *taskctx = CreateTaskContext();
 
 	// With current layout, OS takes up a very small slices out of whatever is left from other tasks
 	LEDSetState(0x9);

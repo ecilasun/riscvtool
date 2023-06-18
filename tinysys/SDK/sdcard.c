@@ -66,18 +66,22 @@ static uint8_t CRC7(const uint8_t* data, uint8_t n) {
   return (crc << 1) | 1;
 }
 
-static uint16_t CRC16(const uint8_t *pData, int len, uint16_t seed)
+uint16_t CRC16_one(uint16_t crcIn, uint8_t data)
 {
-	uint8_t  s, t;
-	uint16_t crc;
+	crcIn  = (uint8_t)(crcIn >> 8)|(crcIn << 8);
+	crcIn ^=  data;
+	crcIn ^= (uint8_t)(crcIn & 0xff) >> 4;
+	crcIn ^= (crcIn << 8) << 4;
+	crcIn ^= ((crcIn & 0xff) << 4) << 1;
 
-	crc = seed;
-	for (int i = 0; i < len; i++)
-	{
-		s = pData[i] ^ (crc >> 8);
-		t = s ^ (s >> 4);
-		crc = (crc << 8) ^ t ^ (t << 5) ^ (t << 12);
-	}
+	return crcIn;
+}
+
+static uint16_t CRC16(const uint8_t *pData, uint16_t len)
+{
+	uint16_t crc = 0;
+
+	while (len--) crc = CRC16_one(crc,*pData++);
 
 	return crc;
 }
@@ -328,7 +332,7 @@ uint8_t __attribute__ ((noinline)) SDWriteSingleBlock(uint32_t sector, uint8_t *
    uint32_t oldstate = LEDGetState();
    LEDSetState(oldstate|0x2);
 
-   uint16_t crc = CRC16(datablock, 512, 0);
+   uint16_t crc = CRC16(datablock, 512);
 
    SDCmd(CMD24_WRITE_BLOCK, sector);
    uint8_t response = SDResponse1(); // R1: expect 0x00

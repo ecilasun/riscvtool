@@ -89,7 +89,7 @@ uint32_t MountDrive()
 
 void UnmountDrive()
 {
-	/*FRESULT unmountattempt =*/ f_mount(nullptr, "sd:", 1);
+	/*FRESULT unmountattempt =*/ f_mount(NULL, "sd:", 1);
 	/*if (unmountattempt != FR_OK)
 		ReportError(32, "File system error (unmount)", unmountattempt, 0, 0);
 	else*/
@@ -112,7 +112,7 @@ void ListFiles(const char *path)
 			int isdir = finf.fattrib&AM_DIR;
 			if (isdir)
 				UARTWrite("\033[33m"); // Yellow
-			if (isexe!=nullptr)
+			if (isexe!=NULL)
 				UARTWrite("\033[32m"); // Green
 			UARTWrite(finf.fname);
 			if (isdir)
@@ -132,7 +132,7 @@ void ListFiles(const char *path)
 		ReportError(32, "File system error (unmount)", re, 0, 0);
 }
 
-uint32_t ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint32_t &jumptarget)
+uint32_t ParseELFHeaderAndLoadSections(FIL *fp, struct SElfFileHeader32 *fheader, uint32_t* jumptarget)
 {
 	uint32_t heap_start = 0;
 	if (fheader->m_Magic != 0x464C457F)
@@ -141,15 +141,15 @@ uint32_t ParseELFHeaderAndLoadSections(FIL *fp, SElfFileHeader32 *fheader, uint3
 		return heap_start;
 	}
 
-	jumptarget = fheader->m_Entry;
+	*jumptarget = fheader->m_Entry;
 	UINT bytesread = 0;
 
 	// Read program headers
 	for (uint32_t i=0; i<fheader->m_PHNum; ++i)
 	{
-		SElfProgramHeader32 pheader;
+		struct SElfProgramHeader32 pheader;
 		f_lseek(fp, fheader->m_PHOff + fheader->m_PHEntSize*i);
-		f_read(fp, &pheader, sizeof(SElfProgramHeader32), &bytesread);
+		f_read(fp, &pheader, sizeof(struct SElfProgramHeader32), &bytesread);
 
 		// Something here
 		if (pheader.m_MemSz != 0)
@@ -184,11 +184,11 @@ uint32_t LoadExecutable(const char *filename, const bool reportError)
 	FRESULT fr = f_open(&fp, filename, FA_READ);
 	if (fr == FR_OK)
 	{
-		SElfFileHeader32 fheader;
+		struct SElfFileHeader32 fheader;
 		UINT readsize;
 		f_read(&fp, &fheader, sizeof(fheader), &readsize);
 		uint32_t branchaddress;
-		uint32_t heap_start = ParseELFHeaderAndLoadSections(&fp, &fheader, branchaddress);
+		uint32_t heap_start = ParseELFHeaderAndLoadSections(&fp, &fheader, &branchaddress);
 		f_close(&fp);
 
 		// Success
@@ -259,10 +259,10 @@ static char s_fileNames[MAX_HANDLES][MAXFILENAMELEN+1] = {
 	{"                                "},
 	{"                                "}};
 
-static STaskContext g_taskctx;
+static struct STaskContext g_taskctx;
 static UINT tmpresult = 0;
 
-STaskContext *CreateTaskContext()
+struct STaskContext *CreateTaskContext()
 {
 	// Initialize task context memory
 	TaskInitSystem(&g_taskctx);
@@ -270,7 +270,7 @@ STaskContext *CreateTaskContext()
 	return &g_taskctx;
 }
 
-STaskContext *GetTaskContext()
+struct STaskContext *GetTaskContext()
 {
 	return &g_taskctx;
 }
@@ -304,7 +304,7 @@ void HandleSDCardDetect()
 		MountDrive();
 }
 
-inline uint32_t FindFreeFileHandle(const uint32_t _input)
+uint32_t FindFreeFileHandle(const uint32_t _input)
 {
 	uint32_t tmp = _input;
 	for (uint32_t i=0; i<32; ++i)
@@ -317,19 +317,19 @@ inline uint32_t FindFreeFileHandle(const uint32_t _input)
 	return 0;
 }
 
-inline void AllocateFileHandle(const uint32_t _bitIndex, uint32_t * _input)
+void AllocateFileHandle(const uint32_t _bitIndex, uint32_t * _input)
 {
 	uint32_t mask = 1 << (_bitIndex-1);
 	*_input = (*_input) | mask;
 }
 
-inline void ReleaseFileHandle(const uint32_t _bitIndex, uint32_t * _input)
+void ReleaseFileHandle(const uint32_t _bitIndex, uint32_t * _input)
 {
 	uint32_t mask = 1 << (_bitIndex-1);
 	*_input = (*_input) & (~mask);
 }
 
-inline uint32_t IsFileHandleAllocated(const uint32_t _bitIndex, const uint32_t  _input)
+uint32_t IsFileHandleAllocated(const uint32_t _bitIndex, const uint32_t  _input)
 {
 	uint32_t mask = 1 << (_bitIndex-1);
 	return (_input & mask) ? 1 : 0;

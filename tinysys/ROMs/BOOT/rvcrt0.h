@@ -2,8 +2,11 @@
 // Defined this to allow for auto-setup of per-HART stacks
 //#define MULTIHART_SUPPORT
 
+#ifdef __cplusplus
 extern "C"
 {
+#endif
+
    void __attribute__((naked, section (".boot"))) _start()
    {
       asm volatile (
@@ -87,4 +90,7 @@ extern "C"
          "j _romfreeze;"
       );
    }
+
+#ifdef __cplusplus
 };
+#endif

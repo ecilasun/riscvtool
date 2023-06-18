@@ -15,7 +15,7 @@
 // This also means we have to get rid of any addresses between bss and heap as they might get overwritten
 static uint8_t* __heap_start = (uint8_t*)HEAP_START_APPMEM_END;
 static uint8_t* __heap_end = (uint8_t*)HEAP_END_CONSOLEMEM_START;
-static uint8_t* __breakpos = __heap_start;
+static uint8_t* __breakpos = (uint8_t*)HEAP_START_APPMEM_END;
 
 void set_elf_heap(uint32_t heaptop)
 {
@@ -52,7 +52,7 @@ uint32_t core_brk(uint32_t brkptr)
 void *kalloc(uint32_t size)
 {
 	uint8_t *old_heapstart = (uint8_t *)core_brk(0);
-	uint32_t res = core_brk(uint32_t(old_heapstart + size));
+	uint32_t res = core_brk((uint32_t)(old_heapstart + size));
 	return res != 0xFFFFFFFF ? old_heapstart : NULL;
 }
 

@@ -11,9 +11,10 @@
 #include "ringbuffer.h"
 
 #include <inttypes.h>
+#include <stdbool.h>
 
-STaskContext *CreateTaskContext();
-STaskContext *GetTaskContext();
+struct STaskContext *CreateTaskContext();
+struct STaskContext *GetTaskContext();
 void TaskDebugMode(uint32_t _mode);
 void InstallISR();
 uint32_t MountDrive();
