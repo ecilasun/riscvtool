@@ -8,11 +8,16 @@
 #define SETBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)|val));
 #define CLRBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)&~val));
 
-uint8_t configval;
+uint8_t configval = 0;
 
 void set_configuration(uint8_t *SUD)
 {
     configval = SUD[wValueL];       // Store the config value
+
+    UARTWrite("set_configuration: 0x");
+    UARTWriteHexByte(configval);
+    UARTWrite("\n");
+
     if(configval != 0)              // If we are configured, 
         SETBIT(rUSBIEN, bmSUSPIE);  // start looking for SUSPEND interrupts
     USBReadByte(rFNADDR | 0x1);     // dummy read to set the ACKSTAT bit
@@ -33,6 +38,11 @@ void send_descriptor(uint8_t *SUD)
     //
     desclen = 0;					// check for zero as error condition (no case statements satisfied)
     reqlen = SUD[wLengthL] + 256*SUD[wLengthH];	// 16-bit
+
+    UARTWrite("send_descriptor: 0x");
+    UARTWriteHexByte(SUD[wValueH]);
+    UARTWrite("\n");
+
 	switch (SUD[wValueH])			// wValueH is descriptor type
 	{
 	    case  GD_DEVICE:
@@ -47,14 +57,6 @@ void send_descriptor(uint8_t *SUD)
               desclen = strDesc[SUD[wValueL]][0];   // wValueL=string index, array[0] is the length
               pDdata = strDesc[SUD[wValueL]];       // point to first array element
               break;
-	    case  GD_HID:
-              desclen = CD[18];
-              pDdata = &CD[18];
-              break;
-	    case  GD_REPORT:
-              desclen = CD[25];
-              pDdata = RepD;
-        break;
 	}	// end switch on descriptor type
 
     if (desclen!=0) // one of the case statements above filled in a value
@@ -70,6 +72,10 @@ void send_descriptor(uint8_t *SUD)
 
 void std_request(uint8_t *SUD)
 {
+    UARTWrite("std_request: 0x");
+    UARTWriteHexByte(SUD[bRequest]);
+    UARTWrite("\n");
+
     switch(SUD[bRequest])
 	{
 	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);              break;
@@ -80,8 +86,15 @@ void std_request(uint8_t *SUD)
 	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()");      break;
 	    case	SR_GET_CONFIGURATION:   get_configuration();               break;
 	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);            break;
-	    case	SR_SET_ADDRESS:         USBReadByte(rFNADDR | 0x1);        break;  // discard return value
-	    default:  STALL_EP0
+	    case	SR_SET_ADDRESS:
+        {
+            UARTWrite("setaddress: 0x");
+            uint32_t addr = USBReadByte(rFNADDR | 0x1);
+            UARTWriteHexByte(addr);
+            UARTWrite("\n");
+            break;
+        }
+	    default: STALL_EP0 break;
 	}
 }
 
@@ -106,9 +119,16 @@ void DoSetup()
     switch(SUD[bmRequestType] & 0x60)
     {
         case 0x00: std_request(SUD); break;
-        case 0x20: STALL_EP0 break; // class_req
-        case 0x40: STALL_EP0 break; // vendor_req
-        default: STALL_EP0 break;
+        case 0x20: UARTWrite("class_req()\n"); STALL_EP0 break; // class_req
+        case 0x40: UARTWrite("vendor_req()\n"); STALL_EP0 break; // vendor_req
+        default:
+        {
+            UARTWrite("unknown_req(): 0x");
+            UARTWriteHexByte(SUD[bmRequestType] & 0x60);
+            UARTWrite("\n");
+            STALL_EP0
+            break;
+        }
     }
 
 }
@@ -148,7 +168,7 @@ int main(int argc, char *argv[])
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-            if (epIrq != 0xFF && usbIrq != 0xFF)
+            /*if (epIrq != 0xFF && usbIrq != 0xFF)
             {
                 UARTWriteHexByte(epIrq);
                 UARTWrite(":");
@@ -156,13 +176,21 @@ int main(int argc, char *argv[])
                 UARTWrite(":");
                 UARTWriteHexByte(USBGetGPX());
                 UARTWrite("\n");
-            }
+            }*/
 
             if (epIrq & bmSUDAVIRQ)
             {
     		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
         		// Setup data available, 8 bytes data to follow
 		        DoSetup();
+            }
+
+            if (epIrq & bmIN2BAVIRQ)
+            {
+                // TODO: asserts out of reset
+                // According to app notes we can't directly clear BAV bits
+                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
+                // do_IN2();
             }
 
             if (epIrq & bmIN3BAVIRQ)
