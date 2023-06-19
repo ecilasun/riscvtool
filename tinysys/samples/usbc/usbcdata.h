@@ -1,5 +1,6 @@
 // https://learn.microsoft.com/en-us/windows-hardware/drivers/network/device-descriptor
 // https://www.usb.org/sites/default/files/CDC_EEM10.pdf
+// https://beyondlogic.org/usbnutshell/usb6.shtml
 
 // Device descriptor
 unsigned char DD[]=
