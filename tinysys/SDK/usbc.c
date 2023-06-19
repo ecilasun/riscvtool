@@ -1,15 +1,22 @@
 #include "usbc.h"
 #include "basesystem.h"
 #include "uart.h"
+#include <string.h>
 
 volatile uint32_t *IO_USBCTRX = (volatile uint32_t* ) DEVICE_USBC; // Receive fifo
 volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) (DEVICE_USBC+4); // Output FIFO state
 
 static uint32_t statusF = 0;
 static uint32_t sparebyte = 0;
+static struct SUSBContext s_usb;
 
 #define ASSERT_CS *IO_USBCTRX = 0x100;
 #define RESET_CS *IO_USBCTRX = 0x101;
+
+struct SUSBContext *USBGetContext()
+{
+    return &s_usb;
+}
 
 void USBFlushOutputFIFO()
 {
@@ -103,8 +110,108 @@ void USBCtlReset()
     UARTWrite("OK\n");
 }
 
+char16_t vendorname[] = u"ENGIN";
+char16_t devicename[] = u"tinysys usb serial";
+char16_t deviceserial[] = u"S/N 00001";
+
+void USBMakeCDCDescriptors(struct SUSBContext *ctx)
+{
+    // https://learn.microsoft.com/en-us/windows-hardware/drivers/network/device-descriptor
+    // https://www.usb.org/sites/default/files/CDC_EEM10.pdf
+    // https://beyondlogic.org/usbnutshell/usb6.shtml
+
+    // Device
+    ctx->device.bLength = sizeof(struct USBDeviceDescriptor); // 18
+    ctx->device.bDescriptorType = USBDesc_Device;
+    ctx->device.bcdUSB = 0x0101;
+    ctx->device.bDeviceClass = USBClass_CDCControl;
+    ctx->device.bDeviceSubClass = 0x0;
+    ctx->device.bDeviceProtocol = 0x0;
+    ctx->device.bMaxPacketSizeEP0 = 64;
+    ctx->device.idVendor = 0xFFFF;
+    ctx->device.idProduct = 0x0001;
+    ctx->device.bcdDevice = 0x1234;
+    ctx->device.iManufacturer = 1;
+    ctx->device.iProduct = 2;
+    ctx->device.iSerialNumber = 3;
+    ctx->device.bNumConfigurations =1;
+
+    // Configuration
+    ctx->config.bLength = sizeof(struct USBConfigurationDescriptor); // 9
+    ctx->config.bDescriptorType = USBDesc_Configuration;
+    ctx->config.wTotalLength = 0x0030; // 48 bytes; includes config, interface and endpoints (not the strings)
+    ctx->config.bNumInterfaces = 2;
+    ctx->config.bConfigurationValue = 1;
+    ctx->config.iConfiguration = 0;
+    ctx->config.bmAttributes = 0x80; // Bus powered
+    ctx->config.MaxPower = 0xFA; // 500 mA
+
+    // Control Interface
+    ctx->control.bLength = sizeof(struct USBInterfaceDescriptor); // 9
+    ctx->control.bDescriptorType = USBDesc_Interface;
+    ctx->control.bInterfaceNumber = 0;   // Interface #0
+    ctx->control.bAlternateSetting = 0;
+    ctx->control.bNumEndpoints = 1;      // 1 endpoint (control)
+    ctx->control.bInterfaceClass = USBClass_CDCControl;
+    ctx->control.bInterfaceSubClass = 0x02; // Abstract
+    ctx->control.bInterfaceProtocol = 0xFF; // Vendor specific
+    ctx->control.iInterface = 0;
+
+    // Control Notification
+    ctx->notification.bLength = sizeof(struct USBEndpointDescriptor); // 7
+    ctx->notification.bDescriptorType = USBDesc_Endpoint;
+    ctx->notification.bEndpointAddress = 0x81;
+    ctx->notification.bmAttributes = 0x03; // Interrupt endpoint
+    ctx->notification.wMaxPacketSize = 64;
+    ctx->notification.bInterval = 1;       // Every millisecond
+
+    // Data Interface
+    ctx->data.bLength = sizeof(struct USBInterfaceDescriptor); // 9
+    ctx->data.bDescriptorType = USBDesc_Interface;
+    ctx->data.bInterfaceNumber = 1;   // Interface #1
+    ctx->data.bAlternateSetting = 0;
+    ctx->data.bNumEndpoints = 2;      // 2 endpoints (data in / data out)
+    ctx->data.bInterfaceClass = USBClass_CDCData;
+    ctx->data.bInterfaceSubClass = 0x00;
+    ctx->data.bInterfaceProtocol = 0x00;
+    ctx->data.iInterface = 0;
+
+    // Data in
+    ctx->input.bLength = sizeof(struct USBEndpointDescriptor); // 7
+    ctx->input.bDescriptorType = USBDesc_Endpoint;
+    ctx->input.bEndpointAddress = 0x82;   // EP2 in
+    ctx->input.bmAttributes = 0x02;       // Bulk endpoint
+    ctx->input.wMaxPacketSize = 64;
+    ctx->input.bInterval = 0;
+
+    // Data out
+    ctx->output.bLength = sizeof(struct USBEndpointDescriptor); // 7
+    ctx->output.bDescriptorType = USBDesc_Endpoint;
+    ctx->output.bEndpointAddress = 0x03;  // EP3 out
+    ctx->output.bmAttributes = 0x02;      // Bulk endpoint
+    ctx->output.wMaxPacketSize = 64;
+    ctx->output.bInterval = 0;
+
+    // Strings
+    ctx->strings[0].bLength = sizeof(struct USBStringLanguageDescriptor); // 4
+    ctx->strings[0].bDescriptorType = USBDesc_String;
+    ctx->strings[0].bString[0] = 0x0409; // English-United Sates
+    ctx->strings[1].bLength = sizeof(struct USBCommonDescriptor) + 5*2; // 12
+    ctx->strings[1].bDescriptorType = USBDesc_String;
+    __builtin_memcpy(ctx->strings[1].bString, vendorname, 10);
+    ctx->strings[2].bLength = sizeof(struct USBCommonDescriptor) + 18*2; // 38
+    ctx->strings[2].bDescriptorType = USBDesc_String;
+    __builtin_memcpy(ctx->strings[2].bString, devicename, 36);
+    ctx->strings[3].bLength = sizeof(struct USBCommonDescriptor) + 9*2; // 20
+    ctx->strings[3].bDescriptorType = USBDesc_String;
+    __builtin_memcpy(ctx->strings[3].bString, deviceserial, 9);
+}
+
 void USBInit(uint32_t enableInterrupts)
 {
+    // Generate descriptor table
+    USBMakeCDCDescriptors(&s_usb);
+
     USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
 
     USBCtlReset();
@@ -112,7 +219,7 @@ void USBInit(uint32_t enableInterrupts)
     if (enableInterrupts)
     {
         // Enable IRQs
-        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
+        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmIN3BAVIE);
         // bmSUSPIE is to be enabled after the device initializes
         USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
 

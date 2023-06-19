@@ -4,6 +4,138 @@
 extern volatile uint32_t *IO_USBCTRX;
 extern volatile uint32_t *IO_USBCSTA;
 
+// Device classes
+
+#define USBClass_Device									0x00
+#define USBClass_Audio									0x01
+#define USBClass_CDCControl								0x02
+#define USBClass_HID									0x03
+#define USBClass_Physical								0x05
+#define USBClass_Image									0x06
+#define USBClass_Printer								0x07
+#define USBClass_MassStorage							0x08
+#define USBClass_Hub									0x09
+#define USBClass_CDCData								0x0A
+#define USBClass_SmartCard								0x0B
+#define USBClass_ContentSecurity						0x0D
+#define USBClass_Video									0x0E
+#define USBClass_PersonalHealthcare						0x0F
+#define USBClass_AudioVideoDevices						0x10
+#define USBClass_BillboardDeviceClass					0x11
+#define USBClass_USBTypeCBridgeClass					0x12
+#define USBClass_USBBulkDisplayProtocolDeviceClass		0x13
+#define USBClass_I3CDeviceClass							0x3C
+#define USBClass_DiagnosticDevice						0xDC
+#define USBClass_WirelessController						0xE0
+#define USBClass_Miscellaneous							0xEF
+#define USBClass_ApplicationSpecific					0xFE
+#define USBClass_VendorSpecific							0xFF
+
+// Descriptor types
+
+#define USBDesc_Device						0x01
+#define USBDesc_Configuration				0x02
+#define USBDesc_String						0x03
+#define USBDesc_Interface					0x04
+#define USBDesc_Endpoint					0x05
+#define USBDesc_DeviceQualifier				0x06
+#define USBDesc_OtherSpeedConfiguration		0x07
+#define USBDesc_InterfacePower				0x08
+
+// CDC subclasses
+#define USBCDC_
+
+// Descriptors (always byte packed)
+
+#pragma pack(push, 1)
+
+struct USBCommonDescriptor
+{
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+};
+
+struct USBDeviceDescriptor
+{
+	uint8_t bLength;			// Length of total structure -> sizeof(USBDeviceDescriptor)
+	uint8_t bDescriptorType;	// Type of descriptor
+	uint16_t bcdUSB;			// Version in BCD
+	uint8_t  bDeviceClass;		// Device class
+	uint8_t bDeviceSubClass;	// Subclass in device group
+	uint8_t bDeviceProtocol;	// Protocol code
+	uint8_t bMaxPacketSizeEP0;	// Max packet size of endpoint0; 8,16,32 or 64
+	uint16_t idVendor;			// Vendor ID
+	uint16_t idProduct;			// Product code
+	uint16_t bcdDevice;			// Device code
+	uint8_t iManufacturer;		// Index of manufacturer string
+	uint8_t iProduct;			// Index of product string
+	uint8_t iSerialNumber;		// Index of serial number string
+	uint8_t bNumConfigurations;	// Number of configuration descriptors
+};
+
+struct USBConfigurationDescriptor
+{
+	uint8_t bLength;			// Length of total structure -> sizeof(USBConfigurationDescriptor)
+	uint8_t bDescriptorType;	// Type of descriptor
+	uint16_t wTotalLength;
+	uint8_t bNumInterfaces;
+	uint8_t bConfigurationValue;
+	uint8_t iConfiguration;
+	uint8_t bmAttributes;
+	uint8_t MaxPower;
+};
+
+struct USBEndpointDescriptor
+{
+	uint8_t bLength;			// Length of total structure -> sizeof(USBEndpointDescriptor)
+	uint8_t bDescriptorType;	// Type of descriptor
+	uint8_t bEndpointAddress;
+	uint8_t bmAttributes;
+	uint16_t wMaxPacketSize;
+	uint8_t bInterval;			// Interval in ms if this is an interrupt endpoint
+};
+
+struct USBInterfaceDescriptor
+{
+	uint8_t bLength;			// Length of total structure -> sizeof(USBInterfaceDescriptor)
+	uint8_t bDescriptorType;	// Type of descriptor
+	uint8_t bInterfaceNumber;
+	uint8_t bAlternateSetting;
+	uint8_t bNumEndpoints;
+	uint8_t bInterfaceClass;
+	uint8_t bInterfaceSubClass;
+	uint8_t bInterfaceProtocol;
+	uint8_t iInterface;
+};
+
+struct USBStringLanguageDescriptor
+{
+	uint8_t bLength;			// Length of total structure -> sizeof(USBStringLanguageDescriptor)
+	uint8_t bDescriptorType;	// Type of descriptor
+	uint16_t wLanguage;
+};
+
+struct USBStringDescriptor
+{
+	uint8_t bLength;			// Length of total structure -> sizeof(USBCommonDescriptor) + length of string
+	uint8_t bDescriptorType;	// Type of descriptor
+	char16_t bString[64];		// UTF16 characters
+};
+
+struct SUSBContext
+{
+    struct USBDeviceDescriptor device;
+    struct USBConfigurationDescriptor config;
+    struct USBInterfaceDescriptor control;
+    struct USBEndpointDescriptor notification;
+    struct USBInterfaceDescriptor data;
+    struct USBEndpointDescriptor input;
+    struct USBEndpointDescriptor output;
+    struct USBStringDescriptor strings[4];
+};
+
+#pragma pack(pop)
+
 void USBFlushOutputFIFO();
 uint8_t USBGetGPX();
 uint8_t USBReadByte(uint8_t command);
@@ -11,6 +143,7 @@ void USBWriteByte(uint8_t command, uint8_t data);
 int USBReadBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBInit(uint32_t enableInterrupts);
+struct SUSBContext *USBGetContext();
 
 // MAX3420E Registers
 #define rEP0FIFO    0<<3

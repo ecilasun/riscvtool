@@ -2,7 +2,6 @@
 #include "uart.h"
 #include "usbc.h"
 #include "leds.h"
-#include "usbcdata.h"
 
 #define STALL_EP0 USBWriteByte(rEPSTALLS, 0x23); 
 #define SETBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)|val));
@@ -39,24 +38,35 @@ void send_descriptor(uint8_t *SUD)
     desclen = 0;					// check for zero as error condition (no case statements satisfied)
     reqlen = SUD[wLengthL] + 256*SUD[wLengthH];	// 16-bit
 
+    // Access descriptor from usb utils
+    struct SUSBContext *uctx = USBGetContext();
+
+    uint8_t desctype = SUD[wValueH];
     UARTWrite("send_descriptor: 0x");
-    UARTWriteHexByte(SUD[wValueH]);
+    UARTWriteHexByte(desctype);
     UARTWrite("\n");
 
-	switch (SUD[wValueH])			// wValueH is descriptor type
+	switch (desctype)
 	{
 	    case  GD_DEVICE:
-              desclen = DD[0];	// descriptor length
-              pDdata = DD;
-              break;	
+        {
+              desclen = uctx->device.bLength;
+              pDdata = (unsigned char*)&uctx->device;
+              break;
+        }
 	    case  GD_CONFIGURATION:
-              desclen = CD[2];	// Config descriptor includes interface, HID, report and ep descriptors
-              pDdata = CD;
+        {
+              desclen = uctx->config.wTotalLength;
+              pDdata = (unsigned char*)&uctx->config;
               break;
+        }
 	    case  GD_STRING:
-              desclen = strDesc[SUD[wValueL]][0];   // wValueL=string index, array[0] is the length
-              pDdata = strDesc[SUD[wValueL]];       // point to first array element
+        {
+              uint8_t idx = SUD[wValueL];  // String index
+              desclen = uctx->strings[idx].bLength;
+              pDdata = (unsigned char*)&uctx->strings[idx];
               break;
+        }
 	}	// end switch on descriptor type
 
     if (desclen!=0) // one of the case statements above filled in a value
@@ -98,6 +108,36 @@ void std_request(uint8_t *SUD)
 	}
 }
 
+void class_request(uint8_t *SUD)
+{
+    UARTWrite("class_request: 0x");
+    UARTWriteHexByte(SUD[bRequest]);
+    UARTWrite("\n");
+
+    /*switch(SUD[bRequest])
+	{
+	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);              break;
+	    case	SR_SET_FEATURE:		    UARTWrite("feature(1)");           break;
+	    case	SR_CLEAR_FEATURE:	    UARTWrite("feature(0)");           break;
+	    case	SR_GET_STATUS:		    UARTWrite("get_status()");         break;
+	    case	SR_SET_INTERFACE:	    UARTWrite("set_interface()");      break;
+	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()");      break;
+	    case	SR_GET_CONFIGURATION:   get_configuration();               break;
+	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);            break;
+	    case	SR_SET_ADDRESS:
+        {
+            UARTWrite("setaddress: 0x");
+            uint32_t addr = USBReadByte(rFNADDR | 0x1);
+            UARTWriteHexByte(addr);
+            UARTWrite("\n");
+            break;
+        }
+	    default: STALL_EP0 break;
+	}*/
+
+    STALL_EP0
+}
+
 void DoSetup()
 {
     uint8_t SUD[8];
@@ -119,7 +159,7 @@ void DoSetup()
     switch(SUD[bmRequestType] & 0x60)
     {
         case 0x00: std_request(SUD); break;
-        case 0x20: UARTWrite("class_req()\n"); STALL_EP0 break; // class_req
+        case 0x20: class_request(SUD); break; // class_req
         case 0x40: UARTWrite("vendor_req()\n"); STALL_EP0 break; // vendor_req
         default:
         {
@@ -216,6 +256,7 @@ int main(int argc, char *argv[])
             if (usbIrq & bmURESDNIRQ) // Resume
             {
                 USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
+                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmIN3BAVIE);
                 // Suspended=0;
                 USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE /*| bmSUSPIE*/); // ?
             }
