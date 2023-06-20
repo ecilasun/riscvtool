@@ -83,7 +83,7 @@ int main()
 			io.DeltaTime = 1.0f / 60.0f;
 			ImGui::NewFrame();
 
-			//ImGui::ShowDemoWindow(NULL);
+			ImGui::ShowDemoWindow(NULL);
 
 			//ImGui::SetNextWindowPos(ImVec2(320,8), ImGuiCond_Always);
 			//ImGui::SetNextWindowSize(ImVec2(160, 160));
