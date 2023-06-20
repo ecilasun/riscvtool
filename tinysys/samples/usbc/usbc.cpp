@@ -181,11 +181,7 @@ int main(int argc, char *argv[])
     {
         UARTWrite("Bringing up USB-C\nUsing ISR in ROM\n");
         USBInit(1);
-
-        while(1)
-        {
-            // ISR will handle the rest
-        }
+        UARTWrite("USB ISR will handle further communications.\n");
     }
     else
     {
@@ -225,14 +221,6 @@ int main(int argc, char *argv[])
 		        DoSetup();
             }
 
-            if (epIrq & bmIN2BAVIRQ)
-            {
-                // TODO: asserts out of reset
-                // According to app notes we can't directly clear BAV bits
-                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-                // do_IN2();
-            }
-
             if (epIrq & bmIN3BAVIRQ)
             {
                 // TODO: asserts out of reset
@@ -256,9 +244,9 @@ int main(int argc, char *argv[])
             if (usbIrq & bmURESDNIRQ) // Resume
             {
                 USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
-                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmIN3BAVIE);
+                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
                 // Suspended=0;
-                USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE /*| bmSUSPIE*/); // ?
+                USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
             }
 
             /*if (epIrq & bmIN2BAVIRQ)

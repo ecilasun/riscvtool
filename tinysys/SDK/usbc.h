@@ -119,7 +119,11 @@ struct USBStringDescriptor
 {
 	uint8_t bLength;			// Length of total structure -> sizeof(USBCommonDescriptor) + length of string
 	uint8_t bDescriptorType;	// Type of descriptor
+#ifdef __cplusplus
 	char16_t bString[64];		// UTF16 characters
+#else
+	char bString[128];
+#endif
 };
 
 struct SUSBContext

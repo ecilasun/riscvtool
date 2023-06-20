@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.014"
+#define VERSIONSTRING "v1.015"
 
 static struct EVideoContext s_gpuContext;
 

@@ -110,9 +110,15 @@ void USBCtlReset()
     UARTWrite("OK\n");
 }
 
+#ifdef __cplusplus
 char16_t vendorname[] = u"ENGIN";
 char16_t devicename[] = u"tinysys usb serial";
 char16_t deviceserial[] = u"S/N 00001";
+#else
+char vendorname[] = {'E',0,'N',0,'G',0,'I',0,'N',0};
+char devicename[] = {'t',0,'i',0,'n',0,'y',0,'s',0,'y',0,'s',0,' ',0,'u',0,'s',0,'b',0,' ',0,'s',0,'e',0,'r',0,'i',0,'a',0,'l',0};
+char deviceserial[] = {'S',0,'/',0,'N',0,' ',0,'0',0,'0',0,'0',0,'0',0,'1',0};
+#endif
 
 void USBMakeCDCDescriptors(struct SUSBContext *ctx)
 {
@@ -195,7 +201,12 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     // Strings
     ctx->strings[0].bLength = sizeof(struct USBStringLanguageDescriptor); // 4
     ctx->strings[0].bDescriptorType = USBDesc_String;
+#ifdef __cplusplus
     ctx->strings[0].bString[0] = 0x0409; // English-United Sates
+#else
+    ctx->strings[0].bString[0] = 0x09; // English-United Sates
+    ctx->strings[0].bString[1] = 0x04;
+#endif
     ctx->strings[1].bLength = sizeof(struct USBCommonDescriptor) + 5*2; // 12
     ctx->strings[1].bDescriptorType = USBDesc_String;
     __builtin_memcpy(ctx->strings[1].bString, vendorname, 10);
@@ -219,7 +230,7 @@ void USBInit(uint32_t enableInterrupts)
     if (enableInterrupts)
     {
         // Enable IRQs
-        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmIN3BAVIE);
+        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
         // bmSUSPIE is to be enabled after the device initializes
         USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
 
