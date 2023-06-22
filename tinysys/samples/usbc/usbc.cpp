@@ -78,7 +78,7 @@ void send_descriptor(uint8_t *SUD)
     if (desclen != 0) // one of the case statements above filled in a value
 	{
 	    sendlen = (reqlen <= desclen) ? reqlen : desclen; // send the smaller of requested and avaiable
-        USBWriteBytes(rEP0FIFO,sendlen,pDdata);
+        USBWriteBytes(rEP0FIFO, sendlen, pDdata);
 	    USBWriteByte(rEP0BC | 0x1, sendlen);   // load EP0BC to arm the EP0-IN transfer & ACKSTAT
 	}
     else
@@ -174,8 +174,18 @@ void class_request(uint8_t *SUD)
             UARTWrite("\n");
 
             USBCDCLineCoding newcoding;
-            USBReadBytes(rSUDFIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
+            USBReadBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
             s_lineCoding = newcoding;
+
+            UARTWrite(" input Rate:");
+            UARTWriteHex(s_lineCoding.dwDTERate);
+            UARTWrite(" Format:");
+            UARTWriteHexByte(s_lineCoding.bCharFormat);
+            UARTWrite(" Parity:");
+            UARTWriteHexByte(s_lineCoding.bParityType);
+            UARTWrite(" Bits:");
+            UARTWriteHexByte(s_lineCoding.bDataBits);
+            UARTWrite("\n");
 
             //STALL_EP0 // umm.. do we ACK this?
 
@@ -195,6 +205,16 @@ void class_request(uint8_t *SUD)
 
             USBWriteBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&s_lineCoding);
             USBWriteByte(rEP0BC | 0x1, sizeof(USBCDCLineCoding));
+
+            UARTWrite(" output Rate:");
+            UARTWriteHex(s_lineCoding.dwDTERate);
+            UARTWrite(" Format:");
+            UARTWriteHexByte(s_lineCoding.bCharFormat);
+            UARTWrite(" Parity:");
+            UARTWriteHexByte(s_lineCoding.bParityType);
+            UARTWrite(" Bits:");
+            UARTWriteHexByte(s_lineCoding.bDataBits);
+            UARTWrite("\n");
 
             break;
         }
