@@ -11,7 +11,7 @@
 #define CLRBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)&~val));
 
 // 19200 baud, 1 stop bit, no parity, 8bit data
-static USBCDCLineCoding s_lineCoding{19200,0,0,8};
+static USBCDCLineCoding s_lineCoding{19200, 0, 0, 8};
 
 uint8_t configval = 0;
 
@@ -172,7 +172,13 @@ void class_request(uint8_t *SUD)
             UARTWrite(" setlinecoding 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite("\n");
-            STALL_EP0
+
+            USBCDCLineCoding newcoding;
+            USBReadBytes(rSUDFIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
+            s_lineCoding = newcoding;
+
+            //STALL_EP0 // umm.. do we ACK this?
+
             break;
         }
         case 0x21:
