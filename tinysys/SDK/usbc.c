@@ -129,7 +129,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     // Device
     ctx->device.bLength = sizeof(struct USBDeviceDescriptor); // 18
     ctx->device.bDescriptorType = USBDesc_Device;
-    ctx->device.bcdUSB = 0x0101;
+    ctx->device.bcdUSB = 0x0110;
     ctx->device.bDeviceClass = USBClass_CDCControl;
     ctx->device.bDeviceSubClass = 0x0;
     ctx->device.bDeviceProtocol = 0x0;

@@ -3,9 +3,15 @@
 #include "usbc.h"
 #include "leds.h"
 
+// See:
+// https://github.com/MicrochipTech/mla_usb/blob/master/src/usb_device_cdc.c
+
 #define STALL_EP0 USBWriteByte(rEPSTALLS, 0x23); 
 #define SETBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)|val));
 #define CLRBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)&~val));
+
+// 19200 baud, 1 stop bit, no parity, 8bit data
+static USBCDCLineCoding s_lineCoding{19200,0,0,8};
 
 uint8_t configval = 0;
 
@@ -13,7 +19,7 @@ void set_configuration(uint8_t *SUD)
 {
     configval = SUD[wValueL];       // Store the config value
 
-    UARTWrite("set_configuration: 0x");
+    UARTWrite(" set_configuration: 0x");
     UARTWriteHexByte(configval);
     UARTWrite("\n");
 
@@ -42,7 +48,7 @@ void send_descriptor(uint8_t *SUD)
     struct SUSBContext *uctx = USBGetContext();
 
     uint8_t desctype = SUD[wValueH];
-    UARTWrite("send_descriptor: 0x");
+    UARTWrite(" send_descriptor: 0x");
     UARTWriteHexByte(desctype);
     UARTWrite("\n");
 
@@ -69,10 +75,9 @@ void send_descriptor(uint8_t *SUD)
         }
 	}	// end switch on descriptor type
 
-    if (desclen!=0) // one of the case statements above filled in a value
+    if (desclen != 0) // one of the case statements above filled in a value
 	{
 	    sendlen = (reqlen <= desclen) ? reqlen : desclen; // send the smaller of requested and avaiable
-        //writebytes(rEP0FIFO,sendlen,pDdata);
         USBWriteBytes(rEP0FIFO,sendlen,pDdata);
 	    USBWriteByte(rEP0BC | 0x1, sendlen);   // load EP0BC to arm the EP0-IN transfer & ACKSTAT
 	}
@@ -88,17 +93,17 @@ void std_request(uint8_t *SUD)
 
     switch(SUD[bRequest])
 	{
-	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);              break;
-	    case	SR_SET_FEATURE:		    UARTWrite("feature(1)");           break;
-	    case	SR_CLEAR_FEATURE:	    UARTWrite("feature(0)");           break;
-	    case	SR_GET_STATUS:		    UARTWrite("get_status()");         break;
-	    case	SR_SET_INTERFACE:	    UARTWrite("set_interface()");      break;
-	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()");      break;
-	    case	SR_GET_CONFIGURATION:   get_configuration();               break;
-	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);            break;
+	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);                 break;
+	    case	SR_SET_FEATURE:		    UARTWrite(" feature(1)\n");           break;
+	    case	SR_CLEAR_FEATURE:	    UARTWrite(" feature(0)\n");           break;
+	    case	SR_GET_STATUS:		    UARTWrite(" get_status()\n");         break;
+	    case	SR_SET_INTERFACE:	    UARTWrite(" set_interface()\n");      break;
+	    case	SR_GET_INTERFACE:	    UARTWrite(" get_interface()\n");      break;
+	    case	SR_GET_CONFIGURATION:   get_configuration();                  break;
+	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);               break;
 	    case	SR_SET_ADDRESS:
         {
-            UARTWrite("setaddress: 0x");
+            UARTWrite(" setaddress: 0x");
             uint32_t addr = USBReadByte(rFNADDR | 0x1);
             UARTWriteHexByte(addr);
             UARTWrite("\n");
@@ -114,28 +119,94 @@ void class_request(uint8_t *SUD)
     UARTWriteHexByte(SUD[bRequest]);
     UARTWrite("\n");
 
-    /*switch(SUD[bRequest])
-	{
-	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);              break;
-	    case	SR_SET_FEATURE:		    UARTWrite("feature(1)");           break;
-	    case	SR_CLEAR_FEATURE:	    UARTWrite("feature(0)");           break;
-	    case	SR_GET_STATUS:		    UARTWrite("get_status()");         break;
-	    case	SR_SET_INTERFACE:	    UARTWrite("set_interface()");      break;
-	    case	SR_GET_INTERFACE:	    UARTWrite("get_interface()");      break;
-	    case	SR_GET_CONFIGURATION:   get_configuration();               break;
-	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);            break;
-	    case	SR_SET_ADDRESS:
+    // Microchip AN1247
+    // https://www.microchip.com/content/dam/mchp/documents/OTH/ProductDocuments/LegacyCollaterals/01247a.pdf
+    //
+    // req  type value length       data                            name
+    // 0    0x21 0     numdatabytes control protocol based command  sendencapsulatedcommand
+    // 1    0xA1 0     numdatabytes protocol dependent data         getencapsulatedresponse
+    // 0x20 0x21 0     7            line coding data                setlinecoding
+    // 0x21 0xA1 0     7            line coding data                getlinecoding
+    // 0x22 0x21 2     0            none                            setcontrollinestate
+
+    uint16_t reqlen = SUD[wLengthL] + 256*SUD[wLengthH];	// 16-bit
+
+    switch(SUD[bRequest])
+    {
+        case 0x00:
         {
-            UARTWrite("setaddress: 0x");
-            uint32_t addr = USBReadByte(rFNADDR | 0x1);
-            UARTWriteHexByte(addr);
+            // Command issued
+            UARTWrite(" sendencapsulatedcommand 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);
+            UARTWrite(" 0x");
+            UARTWriteHex(reqlen);
             UARTWrite("\n");
+
+            // RESPONSE_AVAILABLE(0x00000001) + 0x00000000
+            // or
+            // just two zeros for no response
+            uint8_t dummyresponse[0x08] = {};
+            USBWriteBytes(rEP0FIFO, 0x08, dummyresponse);
+            USBWriteByte(rEP0BC | 0x1, 0x08);
+
             break;
         }
-	    default: STALL_EP0 break;
-	}*/
+        case 0x01:
+        {
+            // Response requested
+            UARTWrite(" getencapsulatedresponse 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);
+            UARTWrite(" 0x");
+            UARTWriteHex(reqlen);
+            UARTWrite("\n");
 
-    STALL_EP0
+            // When unhandled, respond with a one-byte zero and do not stall the endpoint
+            USBWriteByte(rEP0FIFO, 0);
+            USBWriteByte(rEP0BC | 0x1, 1);
+
+            break;
+        }
+        case 0x20:
+        {
+            // Data rate/parity/number of stop bits etc
+            UARTWrite(" setlinecoding 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);
+            UARTWrite("\n");
+            STALL_EP0
+            break;
+        }
+        case 0x21:
+        {
+            // Data rate/parity/number of stop bits etc
+            // offset name        size description
+            // 0      dwDTERate   4    rate in bits per second
+            // 4      bCharFormat 1    stop bits: 0:1, 1:1.5, 2:2
+            // 5      bParityType 1    parity: 0:none,1:odd,2:even,3:mark,4:space
+            // 6      bDataBits   1    data bits: 5,6,7,8 or 16
+            UARTWrite(" getlinecoding 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);
+            UARTWrite("\n");
+
+            USBWriteBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&s_lineCoding);
+            USBWriteByte(rEP0BC | 0x1, sizeof(USBCDCLineCoding));
+
+            break;
+        }
+        case 0x22:
+        {
+            // bits  description
+            // 15:2  reserved
+            // 1     carrier control signal: 0:inactive,1:active
+            // 0     DTR: 0:notpresent, 1:present
+            UARTWrite(" setcontrollinestate 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);
+            UARTWrite("\n");
+
+            STALL_EP0
+
+            break;
+        }
+    }
 }
 
 void DoSetup()

@@ -49,6 +49,14 @@ extern volatile uint32_t *IO_USBCSTA;
 
 #pragma pack(push, 1)
 
+struct USBCDCLineCoding
+{
+    uint16_t dwDTERate;
+	uint8_t bCharFormat;
+	uint8_t bParityType;
+	uint8_t bDataBits;
+};
+
 struct USBCommonDescriptor
 {
 	uint8_t bLength;
