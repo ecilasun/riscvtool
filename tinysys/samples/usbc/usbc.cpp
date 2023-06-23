@@ -2,6 +2,7 @@
 #include "uart.h"
 #include "usbc.h"
 #include "leds.h"
+#include <malloc.h>
 
 // See:
 // https://github.com/MicrochipTech/mla_usb/blob/master/src/usb_device_cdc.c
@@ -13,25 +14,43 @@
 // 19200 baud, 1 stop bit, no parity, 8bit data
 static USBCDCLineCoding s_lineCoding{19200, 0, 0, 8};
 
-uint8_t configval = 0;
+static uint8_t devconfig = 0;
+static uint8_t devaddrs = 0;
+static uint8_t encapsulatedcommand[0x20];
 
 void set_configuration(uint8_t *SUD)
 {
-    configval = SUD[wValueL];       // Store the config value
+    devconfig = SUD[wValueL];       // Store the config value
 
     UARTWrite(" set_configuration: 0x");
-    UARTWriteHexByte(configval);
+    UARTWriteHexByte(devconfig);
     UARTWrite("\n");
 
-    if(configval != 0)              // If we are configured, 
+    if(devconfig != 0)              // If we are configured, 
         SETBIT(rUSBIEN, bmSUSPIE);  // start looking for SUSPEND interrupts
     USBReadByte(rFNADDR | 0x1);     // dummy read to set the ACKSTAT bit
 }
 
 void get_configuration(void)
 {
-	USBWriteByte(rEP0FIFO, configval);	// Send the config value
+    UARTWrite(" get_configuration: 0x");
+    UARTWriteHexByte(devconfig);
+    UARTWrite("\n");
+
+	USBWriteByte(rEP0FIFO, devconfig);	// Send the config value
 	USBWriteByte(rEP0BC | 0x1, 1);
+}
+
+void send_status(uint8_t *SUD)
+{
+    UARTWrite(" send_status\n");
+
+    // Device: 0x0 -> bus powered, no remove wakeup
+    // Interface: must be zero
+    // Endpoint: must be zero
+    uint8_t twozero[2] = {0, 0};
+    USBWriteBytes(rEP0FIFO, 2, (uint8_t*)&twozero);
+    USBWriteByte(rEP0BC | 0x1, 2);
 }
 
 void send_descriptor(uint8_t *SUD)
@@ -48,30 +67,32 @@ void send_descriptor(uint8_t *SUD)
     struct SUSBContext *uctx = USBGetContext();
 
     uint8_t desctype = SUD[wValueH];
-    UARTWrite(" send_descriptor: 0x");
-    UARTWriteHexByte(desctype);
-    UARTWrite("\n");
+    UARTWrite(" send_descriptor: ");
 
 	switch (desctype)
 	{
 	    case  GD_DEVICE:
         {
-              desclen = uctx->device.bLength;
-              pDdata = (unsigned char*)&uctx->device;
-              break;
+            UARTWrite("device");
+            desclen = uctx->device.bLength;
+            pDdata = (unsigned char*)&uctx->device;
+            break;
         }
 	    case  GD_CONFIGURATION:
         {
-              desclen = uctx->config.wTotalLength;
-              pDdata = (unsigned char*)&uctx->config;
-              break;
+            UARTWrite("config");
+            desclen = uctx->config.wTotalLength;
+            pDdata = (unsigned char*)&uctx->config;
+            break;
         }
 	    case  GD_STRING:
         {
-              uint8_t idx = SUD[wValueL];  // String index
-              desclen = uctx->strings[idx].bLength;
-              pDdata = (unsigned char*)&uctx->strings[idx];
-              break;
+            UARTWrite("string 0x");
+            uint8_t idx = SUD[wValueL];  // String index
+            UARTWriteHexByte(idx);
+            desclen = uctx->strings[idx].bLength;
+            pDdata = (unsigned char*)&uctx->strings[idx];
+            break;
         }
 	}	// end switch on descriptor type
 
@@ -83,33 +104,38 @@ void send_descriptor(uint8_t *SUD)
 	}
     else
         STALL_EP0  // none of the descriptor types match
+
+    UARTWrite("\n");
 }
 
 void std_request(uint8_t *SUD)
 {
-    UARTWrite("std_request: 0x");
-    UARTWriteHexByte(SUD[bRequest]);
-    UARTWrite("\n");
-
     switch(SUD[bRequest])
 	{
 	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);                 break;
-	    case	SR_SET_FEATURE:		    UARTWrite(" feature(1)\n");           break;
-	    case	SR_CLEAR_FEATURE:	    UARTWrite(" feature(0)\n");           break;
-	    case	SR_GET_STATUS:		    UARTWrite(" get_status()\n");         break;
-	    case	SR_SET_INTERFACE:	    UARTWrite(" set_interface()\n");      break;
-	    case	SR_GET_INTERFACE:	    UARTWrite(" get_interface()\n");      break;
+	    case	SR_SET_FEATURE:		    UARTWrite(" !set_feature\n");         break;
+	    case	SR_CLEAR_FEATURE:	    UARTWrite(" !clear_feature\n");       break;
+	    case	SR_GET_STATUS:		    send_status(SUD);                     break;
+	    case	SR_SET_INTERFACE:	    UARTWrite(" !set_interface\n");       break;
+	    case	SR_GET_INTERFACE:	    UARTWrite(" !get_interface\n");       break;
 	    case	SR_GET_CONFIGURATION:   get_configuration();                  break;
 	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);               break;
 	    case	SR_SET_ADDRESS:
         {
             UARTWrite(" setaddress: 0x");
-            uint32_t addr = USBReadByte(rFNADDR | 0x1);
-            UARTWriteHexByte(addr);
+            devaddrs = USBReadByte(rFNADDR | 0x1);
+            UARTWriteHexByte(devaddrs);
             UARTWrite("\n");
             break;
         }
-	    default: STALL_EP0 break;
+	    default:
+        {
+            UARTWrite("unimplemented std_request: 0x");
+            UARTWriteHexByte(SUD[bRequest]);
+            UARTWrite("\n");
+            STALL_EP0
+            break;
+        }
 	}
 }
 
@@ -140,14 +166,19 @@ void class_request(uint8_t *SUD)
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite(" 0x");
             UARTWriteHex(reqlen);
-            UARTWrite("\n");
+            UARTWrite(":");
 
             // RESPONSE_AVAILABLE(0x00000001) + 0x00000000
             // or
             // just two zeros for no response
-            uint8_t dummyresponse[0x08] = {};
-            USBWriteBytes(rEP0FIFO, 0x08, dummyresponse);
-            USBWriteByte(rEP0BC | 0x1, 0x08);
+            USBReadBytes(rEP0FIFO, reqlen, encapsulatedcommand);
+            for (uint16_t i=0;i<reqlen;++i)
+                UARTWriteHex(encapsulatedcommand[i]);
+            UARTWrite("\n");
+
+            uint8_t noresponse[2] = {0,0};
+            USBWriteBytes(rEP0FIFO, 2, noresponse);
+            USBWriteByte(rEP0BC | 0x1, 2);
 
             break;
         }
@@ -171,14 +202,13 @@ void class_request(uint8_t *SUD)
             // Data rate/parity/number of stop bits etc
             UARTWrite(" setlinecoding 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
-            UARTWrite("\n");
 
             USBCDCLineCoding newcoding;
             USBReadBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
             s_lineCoding = newcoding;
 
-            UARTWrite(" input Rate:");
-            UARTWriteHex(s_lineCoding.dwDTERate);
+            UARTWrite(" Rate:");
+            UARTWriteDecimal(s_lineCoding.dwDTERate);
             UARTWrite(" Format:");
             UARTWriteHexByte(s_lineCoding.bCharFormat);
             UARTWrite(" Parity:");
@@ -201,13 +231,12 @@ void class_request(uint8_t *SUD)
             // 6      bDataBits   1    data bits: 5,6,7,8 or 16
             UARTWrite(" getlinecoding 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
-            UARTWrite("\n");
 
             USBWriteBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&s_lineCoding);
             USBWriteByte(rEP0BC | 0x1, sizeof(USBCDCLineCoding));
 
-            UARTWrite(" output Rate:");
-            UARTWriteHex(s_lineCoding.dwDTERate);
+            UARTWrite(" Rate:");
+            UARTWriteDecimal(s_lineCoding.dwDTERate);
             UARTWrite(" Format:");
             UARTWriteHexByte(s_lineCoding.bCharFormat);
             UARTWrite(" Parity:");
@@ -274,6 +303,9 @@ int main(int argc, char *argv[])
 {
     UARTWrite("USB-C test\n");
 
+    SUSBContext *newctx = (SUSBContext*)malloc(sizeof(SUSBContext));
+    USBSetContext(newctx);
+
     if (argc>1)
     {
         UARTWrite("Bringing up USB-C\nUsing ISR in ROM\n");
@@ -326,7 +358,7 @@ int main(int argc, char *argv[])
                 // do_IN3();
             }
 
-            if ((configval != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+            if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
             {
                 // Should arrive here out of reset
                 USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear

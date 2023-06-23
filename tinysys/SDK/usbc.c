@@ -8,14 +8,19 @@ volatile uint32_t *IO_USBCSTA = (volatile uint32_t* ) (DEVICE_USBC+4); // Output
 
 static uint32_t statusF = 0;
 static uint32_t sparebyte = 0;
-static struct SUSBContext s_usb;
+static struct SUSBContext *s_usb = NULL;
 
 #define ASSERT_CS *IO_USBCTRX = 0x100;
 #define RESET_CS *IO_USBCTRX = 0x101;
 
+void USBSetContext(struct SUSBContext *ctx)
+{
+    s_usb = ctx;
+}
+
 struct SUSBContext *USBGetContext()
 {
-    return &s_usb;
+    return s_usb;
 }
 
 void USBFlushOutputFIFO()
@@ -111,13 +116,17 @@ void USBCtlReset()
 }
 
 #ifdef __cplusplus
-char16_t vendorname[] = u"ENGIN";
-char16_t devicename[] = u"tinysys usb serial";
-char16_t deviceserial[] = u"S/N 00001";
+char16_t vendorname[] = u"ENGIN"; // 10
+char16_t devicename[] = u"tinysys usb serial"; // 36
+char16_t deviceserial[] = u"EC000000"; // 16
+char16_t devicecontrol[] = u"control"; // 14
+char16_t devicedata[] = u"data"; // 8
 #else
 char vendorname[] = {'E',0,'N',0,'G',0,'I',0,'N',0};
 char devicename[] = {'t',0,'i',0,'n',0,'y',0,'s',0,'y',0,'s',0,' ',0,'u',0,'s',0,'b',0,' ',0,'s',0,'e',0,'r',0,'i',0,'a',0,'l',0};
-char deviceserial[] = {'S',0,'/',0,'N',0,' ',0,'0',0,'0',0,'0',0,'0',0,'1',0};
+char deviceserial[] = {'E',0,'C',0,'0',0,'0',0,'0',0,'0',0,'0',0,'0',0};
+char devicecontrol[] = {'c',0,'o',0,'n',0,'t',0,'r',0,'o',0,'l',0};
+char devicedata[] = {'d',0,'a',0,'t',0,'a',0};
 #endif
 
 void USBMakeCDCDescriptors(struct SUSBContext *ctx)
@@ -136,7 +145,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     ctx->device.bMaxPacketSizeEP0 = 64;
     ctx->device.idVendor = 0xFFFF;
     ctx->device.idProduct = 0x0001;
-    ctx->device.bcdDevice = 0x1234;
+    ctx->device.bcdDevice = 0x0001;
     ctx->device.iManufacturer = 1;
     ctx->device.iProduct = 2;
     ctx->device.iSerialNumber = 3;
@@ -161,7 +170,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     ctx->control.bInterfaceClass = USBClass_CDCControl;
     ctx->control.bInterfaceSubClass = 0x02; // Abstract
     ctx->control.bInterfaceProtocol = 0xFF; // Vendor specific
-    ctx->control.iInterface = 0;
+    ctx->control.iInterface = 4;
 
     // Control Notification
     ctx->notification.bLength = sizeof(struct USBEndpointDescriptor); // 7
@@ -180,7 +189,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     ctx->data.bInterfaceClass = USBClass_CDCData;
     ctx->data.bInterfaceSubClass = 0x00;
     ctx->data.bInterfaceProtocol = 0x00;
-    ctx->data.iInterface = 0;
+    ctx->data.iInterface = 5;
 
     // Data in
     ctx->input.bLength = sizeof(struct USBEndpointDescriptor); // 7
@@ -207,21 +216,31 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     ctx->strings[0].bString[0] = 0x09; // English-United Sates
     ctx->strings[0].bString[1] = 0x04;
 #endif
-    ctx->strings[1].bLength = sizeof(struct USBCommonDescriptor) + 5*2; // 12
+    ctx->strings[1].bLength = sizeof(struct USBCommonDescriptor) + 5*2; // 10
     ctx->strings[1].bDescriptorType = USBDesc_String;
     __builtin_memcpy(ctx->strings[1].bString, vendorname, 10);
-    ctx->strings[2].bLength = sizeof(struct USBCommonDescriptor) + 18*2; // 38
+    ctx->strings[2].bLength = sizeof(struct USBCommonDescriptor) + 18*2; // 36
     ctx->strings[2].bDescriptorType = USBDesc_String;
     __builtin_memcpy(ctx->strings[2].bString, devicename, 36);
-    ctx->strings[3].bLength = sizeof(struct USBCommonDescriptor) + 9*2; // 20
+    ctx->strings[3].bLength = sizeof(struct USBCommonDescriptor) + 8*2; // 16
     ctx->strings[3].bDescriptorType = USBDesc_String;
-    __builtin_memcpy(ctx->strings[3].bString, deviceserial, 9);
+    __builtin_memcpy(ctx->strings[3].bString, deviceserial, 16);
+    ctx->strings[4].bLength = sizeof(struct USBCommonDescriptor) + 7*2; // 14
+    ctx->strings[4].bDescriptorType = USBDesc_String;
+    __builtin_memcpy(ctx->strings[4].bString, devicecontrol, 14);
+    ctx->strings[5].bLength = sizeof(struct USBCommonDescriptor) + 4*2; // 8
+    ctx->strings[5].bDescriptorType = USBDesc_String;
+    __builtin_memcpy(ctx->strings[5].bString, devicedata, 8);
 }
 
 void USBInit(uint32_t enableInterrupts)
 {
+    // Must set context first
+    if (s_usb==NULL)
+        return;
+
     // Generate descriptor table
-    USBMakeCDCDescriptors(&s_usb);
+    USBMakeCDCDescriptors(s_usb);
 
     USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
 

@@ -143,7 +143,7 @@ struct SUSBContext
     struct USBInterfaceDescriptor data;
     struct USBEndpointDescriptor input;
     struct USBEndpointDescriptor output;
-    struct USBStringDescriptor strings[4];
+    struct USBStringDescriptor strings[6];
 };
 
 #pragma pack(pop)
@@ -155,6 +155,7 @@ void USBWriteByte(uint8_t command, uint8_t data);
 int USBReadBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBInit(uint32_t enableInterrupts);
+void USBSetContext(struct SUSBContext *ctx);
 struct SUSBContext *USBGetContext();
 
 // MAX3420E Registers
@@ -278,6 +279,12 @@ struct SUSBContext *USBGetContext();
 #define GD_DEVICE			0x01	// Get device descriptor: Device
 #define GD_CONFIGURATION	0x02	// Get device descriptor: Configuration
 #define GD_STRING			0x03	// Get device descriptor: String
+#define GD_INTERFACE		0x04	// Get device descriptor: Interface
+#define GD_ENDPOINT			0x05	// Get device descriptor: Endpoint
+#define GD_DEVICEQUALIFIER	0x06
+#define GD_OTHERSPEED		0x07
+#define GD_INTERFACEPOWER	0x08
+#define GD_ONTHEGO			0x09
 #define GD_HID				0x21	// Get descriptor: HID
 #define GD_REPORT			0x22	// Get descriptor: Report
 #define CS_INTERFACE		0x24	// Get descriptor: Interface
