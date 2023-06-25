@@ -290,6 +290,12 @@ struct SUSBContext *USBGetContext();
 #define CS_INTERFACE		0x24	// Get descriptor: Interface
 #define CS_ENDPOINT			0x25	// Get descriptor: Endpoint
 
+#define CDC_SENDENCAPSULATEDRESPONSE	0x00
+#define CDC_GETENCAPSULATEDRESPONSE 	0x01
+#define CDC_SETLINECODING				0x20
+#define CDC_GETLINECODING				0x21
+#define CDC_SETCONTROLLINESTATE			0x22
+
 // SETUP packet offsets
 #define bmRequestType 0
 #define bRequest 1

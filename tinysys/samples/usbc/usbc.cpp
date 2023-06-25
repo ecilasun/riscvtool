@@ -116,13 +116,13 @@ void std_request(uint8_t *SUD)
 	    case	SR_SET_FEATURE:
         {
             UARTWrite("set_feature\n");
-            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response
+            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
             break;
         }
 	    case	SR_CLEAR_FEATURE:
         {
             UARTWrite("clear_feature\n");
-            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response
+            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
             break;
         }
 	    case	SR_GET_STATUS:		    send_status(SUD);                     break;
@@ -165,7 +165,7 @@ void class_request(uint8_t *SUD)
 
     switch(SUD[bRequest])
     {
-        case 0x00:
+        case CDC_SENDENCAPSULATEDRESPONSE:
         {
             // Command issued
             UARTWrite("sendencapsulatedcommand 0x");
@@ -182,13 +182,14 @@ void class_request(uint8_t *SUD)
                 UARTWriteHex(encapsulatedcommand[i]);
             UARTWrite("\n");
 
-            uint8_t noresponse[2] = {0,0};
+            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
+            /*uint8_t noresponse[2] = {0,0};
             USBWriteBytes(rEP0FIFO, 2, noresponse);
-            USBWriteByte(rEP0BC | 0x1, 2);
+            USBWriteByte(rEP0BC | 0x1, 2);*/
 
             break;
         }
-        case 0x01:
+        case CDC_GETENCAPSULATEDRESPONSE:
         {
             // Response requested
             UARTWrite("getencapsulatedresponse 0x");
@@ -203,7 +204,7 @@ void class_request(uint8_t *SUD)
 
             break;
         }
-        case 0x20:
+        case CDC_SETLINECODING:
         {
             // Data rate/parity/number of stop bits etc
             UARTWrite("setlinecoding 0x");
@@ -211,23 +212,24 @@ void class_request(uint8_t *SUD)
 
             USBCDCLineCoding newcoding;
             USBReadBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
-            s_lineCoding = newcoding;
 
             UARTWrite(" Rate:");
-            UARTWriteDecimal(s_lineCoding.dwDTERate);
+            UARTWriteDecimal(newcoding.dwDTERate);
             UARTWrite(" Format:");
-            UARTWriteHexByte(s_lineCoding.bCharFormat);
+            UARTWriteHexByte(newcoding.bCharFormat);
             UARTWrite(" Parity:");
-            UARTWriteHexByte(s_lineCoding.bParityType);
+            UARTWriteHexByte(newcoding.bParityType);
             UARTWrite(" Bits:");
-            UARTWriteHexByte(s_lineCoding.bDataBits);
+            UARTWriteHexByte(newcoding.bDataBits);
             UARTWrite("\n");
 
-            //STALL_EP0 // umm.. do we ACK this?
+            s_lineCoding = newcoding;
+
+            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
 
             break;
         }
-        case 0x21:
+        case CDC_GETLINECODING:
         {
             // Data rate/parity/number of stop bits etc
             // offset name        size description
@@ -253,7 +255,7 @@ void class_request(uint8_t *SUD)
 
             break;
         }
-        case 0x22:
+        case CDC_SETCONTROLLINESTATE:
         {
             // bits  description
             // 15:2  reserved
@@ -263,7 +265,8 @@ void class_request(uint8_t *SUD)
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite("\n");
 
-            STALL_EP0
+            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
+            //STALL_EP0
 
             break;
         }
@@ -318,22 +321,23 @@ void DoSetup()
 
 void DoIN2()
 {
-    // TODO: EP2 data in
+    // ?
+}
+
+void DoOUT1()
+{
+    // TODO: EP1 data in
+
     uint8_t incoming[96];
     uint8_t cnt = USBReadByte(rEP2INBC);
     if (cnt)
     {
-        USBReadBytes(rEP2INFIFO, cnt, incoming);
+        USBReadBytes(rEP1OUTFIFO, cnt, incoming);
         UARTWrite("<");
         for (uint8_t i=0; i<cnt; ++i)
             UARTWriteHexByte(incoming[i]);
         UARTWrite("\n");
     }
-}
-
-void DoOUT3()
-{
-    // TODO: EP3 data out
 }
 
 int main(int argc, char *argv[])
@@ -393,6 +397,12 @@ int main(int argc, char *argv[])
                 DoIN2();
             }
 
+            if (epIrq & bmOUT1DAVIRQ)
+            {
+                USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
+                DoOUT1();
+            }
+
             if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
             {
                 // Should arrive here out of reset
@@ -410,7 +420,7 @@ int main(int argc, char *argv[])
             if (usbIrq & bmURESDNIRQ) // Resume
             {
                 USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
-                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE);
+                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
                 UARTWrite("resume\n");
                 // Suspended=0;
                 USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);

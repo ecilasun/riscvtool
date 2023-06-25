@@ -202,7 +202,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     // Data out
     ctx->output.bLength = sizeof(struct USBEndpointDescriptor); // 7
     ctx->output.bDescriptorType = USBDesc_Endpoint;
-    ctx->output.bEndpointAddress = 0x03;  // EP3 out
+    ctx->output.bEndpointAddress = 0x01;  // EP1 out
     ctx->output.bmAttributes = 0x02;      // Bulk endpoint
     ctx->output.wMaxPacketSize = 64;
     ctx->output.bInterval = 0;
@@ -249,7 +249,7 @@ void USBInit(uint32_t enableInterrupts)
     if (enableInterrupts)
     {
         // Enable IRQs
-        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE);
+        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
         // bmSUSPIE is to be enabled after the device initializes
         USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
 
