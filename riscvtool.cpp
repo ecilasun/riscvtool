@@ -325,7 +325,7 @@ void dumpelf(char *_filename, unsigned int groupsize)
     delete [] bytestosend;
 }
 
-void sendelf(char *_filename, const unsigned int _target=0x00000000)
+void sendelf(char *_filename, const unsigned int _target=0xFFFFFFFF)
 {
     FILE *fp;
     fp = fopen(_filename, "rb");
@@ -350,9 +350,13 @@ void sendelf(char *_filename, const unsigned int _target=0x00000000)
 
     SElfFileHeader32 *fheader = (SElfFileHeader32 *)bytestoread;
     SElfProgramHeader32 *pheader = (SElfProgramHeader32 *)(bytestoread+fheader->m_PHOff);
-    printf("Program VADDR=0x%.8X, PADDR 0x%.8X relocated to 0x%.8X\n", pheader->m_VAddr, pheader->m_PAddr, _target);
-    unsigned int relativeStartAddress = (fheader->m_Entry-pheader->m_PAddr)+_target;
-    printf("Executable entry point is at 0x%.8X (new relative entry point: 0x%.8X)\n", fheader->m_Entry, relativeStartAddress);
+    unsigned int relativeStartAddress = fheader->m_Entry;
+    if (_target != 0xFFFFFFFF)
+    {
+        printf("Program VADDR=0x%.8X, PADDR 0x%.8X relocated to 0x%.8X\n", pheader->m_VAddr, pheader->m_PAddr, _target);
+        relativeStartAddress = (fheader->m_Entry-pheader->m_PAddr)+_target;
+        printf("Executable entry point is at 0x%.8X (new relative entry point: 0x%.8X)\n", fheader->m_Entry, relativeStartAddress);
+    }
     unsigned int stringtableindex = fheader->m_SHStrndx;
     SElfSectionHeader32 *stringtablesection = (SElfSectionHeader32 *)(bytestoread+fheader->m_SHOff+fheader->m_SHEntSize*stringtableindex);
     char *names = (char*)(bytestoread+stringtablesection->m_Offset);
