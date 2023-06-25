@@ -18,7 +18,7 @@
 #if defined(CAT_LINUX)
 char devicename[512] = "/dev/ttyUSB1";
 #else // CAT_WINDOWS
-char devicename[512] = "\\\\.\\COM4";
+char devicename[512] = "\\\\.\\COM3";
 #endif
 
 unsigned int getfilelength(const fpos_t &endpos)
@@ -117,7 +117,7 @@ class CSerialPort{
                 printf("ERROR: can't get communication parameters\n");
         }
         else
-            printf("ERROR: can't open COM port\n");
+            printf("ERROR: can't open COM port %s\n", devicename);
         return false;
 #endif
     }
@@ -462,10 +462,10 @@ void sendelf(char *_filename, const unsigned int _target=0xFFFFFFFF)
 
 int main(int argc, char **argv)
 {
-    if (argc <= 4)
+    if (argc <= 3)
     {
-        printf("RISCVTool\n");
-        printf("Usage: riscvtool.exe binaryfilename [-sendelf hexaddress usbdevicename | -makerom groupbytesize]\n");
+        printf("RISCVTool 1.0\n");
+        printf("Usage: riscvtool.exe binaryfilename {-sendelf hexaddress [usbdevicename]} | {-makerom groupbytesize}\n");
         printf("NOTE: Default device name is %s", devicename);
         return -1;
     }
