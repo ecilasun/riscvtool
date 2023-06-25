@@ -90,7 +90,7 @@ target remote /dev/ttyUSB1
 ```
 
 This will break into the currently executing program. Use 'c' command to resume execution, or Ctrl+C to break at an arbitrary breakpoint. You can also set breakpoints when the program is paused by using 'b DrawConsole' for instance. On resume with 'c' the program will be stopped at the new breakpoint address.
-
+ 
 Please note that this is an entirely software based feature and its usage pattern / implementation may change over time.
 
 One very useful visual too to aid in debugging is gdbgui which you can find here:
@@ -102,6 +102,14 @@ NOTE: If the RISC-V compiler binaries (riscv64-unknown-elf-gcc or riscv64-unknow
 It is advised to build the rv32i / rv32if / rv32imf / rv32imaf libraries
 
 There's currently no compressed instruction support on any Neko SoCs, and there's no plan to do it in the foreseeable future. If this changes, code and documentation will be updated to reflect the changes.
+
+If you want to work on Windows and don't want to compile the toolchain, you could use the following link and download the latest riscv-v-gcc installer executable (risc-v-gcc10.1.0.exe at the time of writing this)
+
+https://gnutoolchains.com/risc-v/
+
+This will place all the toolchain files under C:\SysGCC\risc-v by default and make sure to have that path added to your %PATH% by using the 'Add binary directory to %PATH%' option.
+
+NOTE: One thing worth mentioning is that at this time that compiler toolchain was not aware of rv32imc_zicsr_zifencei so please set the makefile to use march=rv32imc in sample projects and ROM projects instead.
 
 # NOTES
 

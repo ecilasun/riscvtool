@@ -22,7 +22,7 @@ void set_configuration(uint8_t *SUD)
 {
     devconfig = SUD[wValueL];       // Store the config value
 
-    UARTWrite(" set_configuration: 0x");
+    UARTWrite("set_configuration: 0x");
     UARTWriteHexByte(devconfig);
     UARTWrite("\n");
 
@@ -33,7 +33,7 @@ void set_configuration(uint8_t *SUD)
 
 void get_configuration(void)
 {
-    UARTWrite(" get_configuration: 0x");
+    UARTWrite("get_configuration: 0x");
     UARTWriteHexByte(devconfig);
     UARTWrite("\n");
 
@@ -43,7 +43,7 @@ void get_configuration(void)
 
 void send_status(uint8_t *SUD)
 {
-    UARTWrite(" send_status\n");
+    UARTWrite("send_status\n");
 
     // Device: 0x0 -> bus powered, no remove wakeup
     // Interface: must be zero
@@ -67,7 +67,7 @@ void send_descriptor(uint8_t *SUD)
     struct SUSBContext *uctx = USBGetContext();
 
     uint8_t desctype = SUD[wValueH];
-    UARTWrite(" send_descriptor: ");
+    UARTWrite("send_descriptor: ");
 
 	switch (desctype)
 	{
@@ -113,16 +113,26 @@ void std_request(uint8_t *SUD)
     switch(SUD[bRequest])
 	{
 	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);                 break;
-	    case	SR_SET_FEATURE:		    UARTWrite(" !set_feature\n");         break;
-	    case	SR_CLEAR_FEATURE:	    UARTWrite(" !clear_feature\n");       break;
+	    case	SR_SET_FEATURE:
+        {
+            UARTWrite("set_feature\n");
+            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response
+            break;
+        }
+	    case	SR_CLEAR_FEATURE:
+        {
+            UARTWrite("clear_feature\n");
+            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response
+            break;
+        }
 	    case	SR_GET_STATUS:		    send_status(SUD);                     break;
-	    case	SR_SET_INTERFACE:	    UARTWrite(" !set_interface\n");       break;
-	    case	SR_GET_INTERFACE:	    UARTWrite(" !get_interface\n");       break;
+	    case	SR_SET_INTERFACE:	    UARTWrite("!set_interface\n");       break;
+	    case	SR_GET_INTERFACE:	    UARTWrite("!get_interface\n");       break;
 	    case	SR_GET_CONFIGURATION:   get_configuration();                  break;
 	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);               break;
 	    case	SR_SET_ADDRESS:
         {
-            UARTWrite(" setaddress: 0x");
+            UARTWrite("setaddress: 0x");
             devaddrs = USBReadByte(rFNADDR | 0x1);
             UARTWriteHexByte(devaddrs);
             UARTWrite("\n");
@@ -141,10 +151,6 @@ void std_request(uint8_t *SUD)
 
 void class_request(uint8_t *SUD)
 {
-    UARTWrite("class_request: 0x");
-    UARTWriteHexByte(SUD[bRequest]);
-    UARTWrite("\n");
-
     // Microchip AN1247
     // https://www.microchip.com/content/dam/mchp/documents/OTH/ProductDocuments/LegacyCollaterals/01247a.pdf
     //
@@ -162,7 +168,7 @@ void class_request(uint8_t *SUD)
         case 0x00:
         {
             // Command issued
-            UARTWrite(" sendencapsulatedcommand 0x");
+            UARTWrite("sendencapsulatedcommand 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite(" 0x");
             UARTWriteHex(reqlen);
@@ -185,7 +191,7 @@ void class_request(uint8_t *SUD)
         case 0x01:
         {
             // Response requested
-            UARTWrite(" getencapsulatedresponse 0x");
+            UARTWrite("getencapsulatedresponse 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite(" 0x");
             UARTWriteHex(reqlen);
@@ -200,7 +206,7 @@ void class_request(uint8_t *SUD)
         case 0x20:
         {
             // Data rate/parity/number of stop bits etc
-            UARTWrite(" setlinecoding 0x");
+            UARTWrite("setlinecoding 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
 
             USBCDCLineCoding newcoding;
@@ -229,7 +235,7 @@ void class_request(uint8_t *SUD)
             // 4      bCharFormat 1    stop bits: 0:1, 1:1.5, 2:2
             // 5      bParityType 1    parity: 0:none,1:odd,2:even,3:mark,4:space
             // 6      bDataBits   1    data bits: 5,6,7,8 or 16
-            UARTWrite(" getlinecoding 0x");
+            UARTWrite("getlinecoding 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
 
             USBWriteBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&s_lineCoding);
@@ -253,13 +259,19 @@ void class_request(uint8_t *SUD)
             // 15:2  reserved
             // 1     carrier control signal: 0:inactive,1:active
             // 0     DTR: 0:notpresent, 1:present
-            UARTWrite(" setcontrollinestate 0x");
+            UARTWrite("setcontrollinestate 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite("\n");
 
             STALL_EP0
 
             break;
+        }
+        default:
+        {
+            UARTWrite("unknown class_request: 0x");
+            UARTWriteHexByte(SUD[bRequest]);
+            UARTWrite("\n");
         }
     }
 }
@@ -269,7 +281,7 @@ void DoSetup()
     uint8_t SUD[8];
     USBReadBytes(rSUDFIFO, 8, SUD);
 
-    if (SUD[0] != 0xFF)
+    /*if (SUD[0] != 0xFF)
     {
         UARTWriteHexByte(SUD[0]);
         UARTWriteHexByte(SUD[1]);
@@ -280,13 +292,18 @@ void DoSetup()
         UARTWriteHexByte(SUD[6]);
         UARTWriteHexByte(SUD[7]);
         UARTWrite("\n");
-    }
+    }*/
 
     switch(SUD[bmRequestType] & 0x60)
     {
         case 0x00: std_request(SUD); break;
-        case 0x20: class_request(SUD); break; // class_req
-        case 0x40: UARTWrite("vendor_req()\n"); STALL_EP0 break; // vendor_req
+        case 0x20: class_request(SUD); break;
+        case 0x40:
+        {
+            UARTWrite("vendor_req()\n");
+            STALL_EP0
+            break;
+        }
         default:
         {
             UARTWrite("unknown_req(): 0x");
@@ -297,6 +314,26 @@ void DoSetup()
         }
     }
 
+}
+
+void DoIN2()
+{
+    // TODO: EP2 data in
+    uint8_t incoming[96];
+    uint8_t cnt = USBReadByte(rEP2INBC);
+    if (cnt)
+    {
+        USBReadBytes(rEP2INFIFO, cnt, incoming);
+        UARTWrite("<");
+        for (uint8_t i=0; i<cnt; ++i)
+            UARTWriteHexByte(incoming[i]);
+        UARTWrite("\n");
+    }
+}
+
+void DoOUT3()
+{
+    // TODO: EP3 data out
 }
 
 int main(int argc, char *argv[])
@@ -327,7 +364,6 @@ int main(int argc, char *argv[])
             {*/
 
             uint32_t currLED = LEDGetState();
-            LEDSetState(currLED | 0x8);
 
             // Initial value of rEPIRQ should be 0x19
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
@@ -347,48 +383,38 @@ int main(int argc, char *argv[])
             {
     		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
         		// Setup data available, 8 bytes data to follow
+                LEDSetState(currLED | 0x8);
 		        DoSetup();
             }
 
-            if (epIrq & bmIN3BAVIRQ)
+            if (epIrq & bmIN2BAVIRQ)
             {
-                // TODO: asserts out of reset
-                // According to app notes we can't directly clear BAV bits
-                USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
-                // do_IN3();
+                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
+                DoIN2();
             }
 
             if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
             {
                 // Should arrive here out of reset
                 USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
+                UARTWrite("suspend\n");
                 // Suspended = 1
             }
 
             if (usbIrq & bmURESIRQ) // Bus reset
             {
                 USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
+                UARTWrite("busreset\n");
             }
 
             if (usbIrq & bmURESDNIRQ) // Resume
             {
                 USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
-                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
+                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE);
+                UARTWrite("resume\n");
                 // Suspended=0;
                 USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
             }
-
-            /*if (epIrq & bmIN2BAVIRQ)
-            {
-                // TODO: asserts out of reset
-                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-            }
-
-            if (epIrq & bmIN0BAVIRQ)
-            {
-                // TODO: asserts out of reset
-                USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
-            }*/
 
             LEDSetState(currLED);
         }

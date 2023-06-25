@@ -249,7 +249,7 @@ void USBInit(uint32_t enableInterrupts)
     if (enableInterrupts)
     {
         // Enable IRQs
-        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN3BAVIE);
+        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE);
         // bmSUSPIE is to be enabled after the device initializes
         USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
 
