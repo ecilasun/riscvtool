@@ -122,7 +122,7 @@ class CSerialPort{
 #endif
     }
 
-    uint32_t Send(const char *_sendbytes, unsigned int _sendlength)
+    uint32_t Send(const unsigned char *_sendbytes, unsigned int _sendlength)
     {
 #if defined(CAT_LINUX)
         int n = write(serial_port, _sendbytes, _sendlength);
@@ -325,6 +325,75 @@ void dumpelf(char *_filename, unsigned int groupsize)
     delete [] bytestosend;
 }
 
+void sendfile(char *_filename)
+{
+    FILE *fp;
+    fp = fopen(_filename, "rb");
+    if (!fp)
+    {
+        printf("ERROR: can't open ELF file %s\n", _filename);
+        return;
+    }
+
+	unsigned int filebytesize = 0;
+	fpos_t pos, endpos;
+	fgetpos(fp, &pos);
+	fseek(fp, 0, SEEK_END);
+	fgetpos(fp, &endpos);
+	fsetpos(fp, &pos);
+    filebytesize = getfilelength(endpos);
+
+    if (filebytesize > 65536)
+    {
+        printf("Can't send files larger than 64K\n");
+        return;
+    }
+
+    unsigned char *bytestoread = new unsigned char[filebytesize];
+    fread(bytestoread, 1, filebytesize, fp);
+    fclose(fp);
+
+    CSerialPort serial;
+    if (serial.Open() == false)
+        return;
+
+    // Send length up to 64K
+    uint8_t HH = (filebytesize>>24)&0xFF;
+    uint8_t HL = (filebytesize>>16)&0xFF;
+    uint8_t LH = (filebytesize>>8)&0xFF;
+    uint8_t LL = filebytesize&0xFF;
+    serial.Send(&HH, 1);
+    serial.Send(&HL, 1);
+    serial.Send(&LH, 1);
+    serial.Send(&LL, 1);
+    // Wait a bit for the receiving end to start accepting
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    uint32_t totalLength = ((HH&0xFF)<<24) | ((HL&0xFF)<<16) | ((LH&0xFF)<<8) | (LL&0xFF);
+    printf("Sending %d bytes over %s @115200 bps\n", totalLength, devicename);
+
+    // Send the file bytes
+    uint32_t num64BytePackets = totalLength/64;
+    uint32_t leftoverBytes = totalLength%64;
+    uint32_t i = 0;
+    for (i=0; i<num64BytePackets; ++i)
+    {
+        serial.Send(&bytestoread[i*64], 64);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+
+    if (leftoverBytes)
+    {
+        serial.Send(&bytestoread[i*64], leftoverBytes);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+
+    serial.Close();
+    printf("File sent\n");
+
+    delete [] bytestoread;
+}
+
 void sendelf(char *_filename, const unsigned int _target=0xFFFFFFFF)
 {
     FILE *fp;
@@ -365,7 +434,7 @@ void sendelf(char *_filename, const unsigned int _target=0xFFFFFFFF)
     if (serial.Open() == false)
         return;
 
-    printf("Sending ELF binary over COM4 @115200 bps\n");
+    printf("Sending ELF binary over %s @115200 bps\n", devicename);
 
     // Send all binary sections to their correct addresses
     for(int i=0; i<fheader->m_SHNum; ++i)
@@ -412,16 +481,16 @@ void sendelf(char *_filename, const unsigned int _target=0xFFFFFFFF)
             uint32_t byteswritten = 0;
 
             // Send the string "B\r"
-            byteswritten += serial.Send(commandtosend, commandlength);
+            byteswritten += serial.Send((unsigned char*)commandtosend, commandlength);
             // Wait a bit for the receiving end to start accepting
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send 8 byte header
-            byteswritten += serial.Send((char*)blobheader, 8);
+            byteswritten += serial.Send((unsigned char*)blobheader, 8);
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
             // Send data
-            byteswritten += serial.Send((char*)(bytestoread+sheader->m_Offset), sheader->m_Size);
+            byteswritten += serial.Send((unsigned char*)(bytestoread+sheader->m_Offset), sheader->m_Size);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
             if (byteswritten != 0)
@@ -445,12 +514,12 @@ void sendelf(char *_filename, const unsigned int _target=0xFFFFFFFF)
         uint32_t byteswritten = 0;
 
         // Send the string "R\r"
-        byteswritten += serial.Send(commandtosend, commandlength);
+        byteswritten += serial.Send((unsigned char*)commandtosend, commandlength);
         // Wait a bit for the receiving end to start accepting
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
         // Send start address
-        byteswritten += serial.Send((char*)blobheader, 4);
+        byteswritten += serial.Send((unsigned char*)blobheader, 4);
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
@@ -465,7 +534,7 @@ int main(int argc, char **argv)
     if (argc <= 3)
     {
         printf("RISCVTool 1.0\n");
-        printf("Usage: riscvtool.exe binaryfilename {-sendelf hexaddress [usbdevicename]} | {-makerom groupbytesize}\n");
+        printf("Usage: riscvtool.exe binaryfilename {-sendelf hexaddress [usbdevicename]} | {-sendfile [usbdevicename]} | {-makerom groupbytesize}\n");
         printf("NOTE: Default device name is %s", devicename);
         return -1;
     }
@@ -481,6 +550,12 @@ int main(int argc, char **argv)
         if (argc > 4)
             strcpy(devicename, argv[4]);
         sendelf(argv[1], target);
+    }
+    if (strstr(argv[2], "-sendfile"))
+    {
+        if (argc > 3)
+            strcpy(devicename, argv[3]);
+        sendfile(argv[1]);
     }
     return 0;
 }

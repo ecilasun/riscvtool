@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.015"
+#define VERSIONSTRING "v1.017"
 
 static struct EVideoContext s_gpuContext;
 
@@ -23,6 +23,7 @@ static uint32_t s_execParamCount = 1;
 static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 static int s_refreshConsoleOut = 1;
+static int s_stop_ring_buffer = 0;
 
 void _stubTask() {
 	// NOTE: This task won't actually run
@@ -72,13 +73,78 @@ void DeviceDefaultState()
 	GPUSetVMode(&s_gpuContext, EVS_Disable);
 }
 
-void uget(const char *savename)
+void receive_file(const char *savename)
 {
 	// TODO: Load file from remote over UART
 	if (!savename)
-		UARTWrite("usage: uget targetfilename\n");
+		UARTWrite("usage: rcv targetfilename\n");
 	else
-		UARTWrite("TODO: Add task to receive files\n");
+	{
+		UARTWrite("Waiting for file '");
+		UARTWrite(savename);
+		UARTWrite("'...\n");
+
+		s_stop_ring_buffer = 1;
+
+		uint32_t HH=0, HL=0, LH=0, LL=0;
+		int state = 0;
+		int done = 0;
+		do
+		{
+			switch (state)
+			{
+				case 0: if (RingBufferRead(&HH, sizeof(uint32_t))) state = 1; break;
+				case 1: if (RingBufferRead(&HL, sizeof(uint32_t))) state = 2; break;
+				case 2: if (RingBufferRead(&LH, sizeof(uint32_t))) state = 3; break;
+				case 3: if (RingBufferRead(&LL, sizeof(uint32_t))) state = 4; break;
+				case 4: {
+					uint32_t bytecount = ((HH&0xFF)<<24) | ((HL&0xFF)<<16) | ((LH&0xFF)<<8) | (LL&0xFF);
+					UARTWrite("Receiving 0x");
+					UARTWriteHex(bytecount);
+					UARTWrite(" bytes...");
+
+					if (bytecount > 65536)
+					{
+						UARTWrite("Unsupported file size\n");
+						s_stop_ring_buffer = 0;
+						return;
+					}
+
+					FIL fp;
+					FRESULT res = f_open(&fp, savename, FA_CREATE_ALWAYS | FA_WRITE);
+					if (res == FR_OK)
+					{
+						// 4- Write all future bytes to file
+						uint32_t cnt = 0;
+						uint32_t D;
+						while (cnt != bytecount)
+						{
+							if (RingBufferRead(&D, sizeof(uint32_t)))
+							{
+								D = D&0xFF;
+								UINT wb = 0;
+								f_write(&fp, &D, 1, &wb);
+								//if ((cnt%64)==0) UARTWrite(".");
+								++cnt;
+							}
+						}
+						f_close(&fp);
+						UARTWrite("done\n");
+						state = 5;
+					}
+					else
+						UARTWrite("Target file could not be created\n");
+
+					break;
+				}
+				default:
+					done = 1;
+				break;
+			}
+		} while (!done);
+		
+		s_stop_ring_buffer = 0;
+	}
 }
 
 void ExecuteCmd(char *_cmd)
@@ -89,7 +155,7 @@ void ExecuteCmd(char *_cmd)
 
 	uint32_t loadELF = 0;
 
-	if (!strcmp(command, "dir"))
+	if (!strcmp(command, "ls"))
 	{
 		const char *path = strtok(NULL, " ");
 		if (!path)
@@ -105,7 +171,7 @@ void ExecuteCmd(char *_cmd)
 	{
 		UnmountDrive();
 	}
-	else if (!strcmp(command, "cls"))
+	else if (!strcmp(command, "clear"))
 	{
 		UARTWrite("\033[H\033[0m\033[2J");
 	}
@@ -125,7 +191,7 @@ void ExecuteCmd(char *_cmd)
 			UARTWrite(" Kbytes\n");
 		}
 	}
-	else if (!strcmp(command, "prc"))
+	else if (!strcmp(command, "proc"))
 	{
 		struct STaskContext *ctx = GetTaskContext();
 		if (ctx->numTasks==1)
@@ -149,11 +215,11 @@ void ExecuteCmd(char *_cmd)
 			}
 		}
 	}
-	else if (!strcmp(command, "del"))
+	else if (!strcmp(command, "rm"))
 	{
 		const char *path = strtok(NULL, " ");
 		if (!path)
-			UARTWrite("usage: del fname\n");
+			UARTWrite("usage: rm fname\n");
 		else
 			remove(path);
 	}
@@ -169,10 +235,10 @@ void ExecuteCmd(char *_cmd)
 			strncpy(s_workdir, path, 64);
 		}
 	}
-	else if (!strcmp(command, "get"))
+	else if (!strcmp(command, "rcv"))
 	{
 		const char *savename = strtok(NULL, " ");
-		uget(savename);
+		receive_file(savename);
 	}
 	else if (!strcmp(command, "ver"))
 	{
@@ -192,14 +258,14 @@ void ExecuteCmd(char *_cmd)
 		// Bright blue
 		UARTWrite("\033[0m\n\033[94m");
 		UARTWrite("tinysys ROM OS\n");
-		UARTWrite("dir [path]: Show list of files in cwd or path\n");
-		UARTWrite("cls: Clear terminal\n");
+		UARTWrite("ls [path]: Show list of files in cwd or path\n");
+		UARTWrite("clear: Clear terminal\n");
 		UARTWrite("mem: Show available memory\n");
 		UARTWrite("tmp: Show device temperature\n");
-		UARTWrite("del fname: Delete file\n");
+		UARTWrite("rm fname: Delete file\n");
 		UARTWrite("cwd path: Change working directory\n");
-		UARTWrite("get fname: Save binary from UART to micro sd card\n");
-		UARTWrite("prc: Show process info\n");
+		UARTWrite("rcv fname: Receive and save a file to storage\n");
+		UARTWrite("proc: Show process info\n");
 		UARTWrite("ver: Show version info\n");
 		UARTWrite("mount: mount drive sd:\n");
 		UARTWrite("umount: unmount drive sd:\n");
@@ -316,7 +382,7 @@ int main()
 		int execcmd = 0;
 
 		// NOTE: In debug mode none of the following UART dependent code will work
-		while (RingBufferRead(&uartData, sizeof(uint32_t)))
+		while (!s_stop_ring_buffer && RingBufferRead(&uartData, sizeof(uint32_t)))
 		{
 			uint8_t asciicode = (uint8_t)(uartData&0xFF);
 			++s_refreshConsoleOut;

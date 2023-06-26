@@ -1,1 +1,1 @@
-..\..\build\release\riscvtool.exe led.elf -sendelf -1 \\.\COM3
+..\..\build\release\riscvtool.exe led.elf -sendfile \\.\COM3
