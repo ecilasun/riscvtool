@@ -48,6 +48,7 @@
 #define DEVICE_USBC (DEVICE_BASE+0x7000)
 #define DEVICE_APUC (DEVICE_BASE+0x8000)
 #define DEVICE_OPL2 (DEVICE_BASE+0x9000)
+#define DEVICE_USBA (DEVICE_BASE+0xA000)
 // NOTE: Add more devices after this point
 
 uint64_t E32ReadTime();
