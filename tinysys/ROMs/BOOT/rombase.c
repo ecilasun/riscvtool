@@ -1,7 +1,7 @@
 #include "rombase.h"
 #include "sdcard.h"
-#include "usbhandler.h"
-
+#include "usbchandler.h"
+#include "usbahandler.h"
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -411,6 +411,7 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 				if (hwid&1) HandleUART();
 				else if (hwid&2) HandleSDCardDetect();
 				else if (hwid&4) HandleUSBC();
+				else if (hwid&8) HandleUSBA();
 				else // No familiar bit set, unknown device
 				{
 					ReportError(32, "Unknown hardware device, core halted", code, hwid, PC);

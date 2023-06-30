@@ -379,13 +379,13 @@ void sendfile(char *_filename)
     for (i=0; i<num64BytePackets; ++i)
     {
         serial.Send(&bytestoread[i*64], 64);
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     if (leftoverBytes)
     {
         serial.Send(&bytestoread[i*64], leftoverBytes);
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     serial.Close();

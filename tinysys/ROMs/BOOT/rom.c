@@ -124,7 +124,8 @@ void receive_file(const char *savename)
 								D = D&0xFF;
 								UINT wb = 0;
 								f_write(&fp, &D, 1, &wb);
-								//if ((cnt%64)==0) UARTWrite(".");
+								/*if ((cnt%64)==0)
+									*IO_UARTRX = 0xFF;*/
 								++cnt;
 							}
 						}
