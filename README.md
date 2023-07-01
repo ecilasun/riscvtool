@@ -119,9 +119,11 @@ Adding tinysys as a test serial device via generic driver:
 ```
 unplug the usb device
 type following in a terminal
- echo FFFF 0001 >/sys/bus/usb-serial/drivers/generic/new_id
-(if the echo fails you can use sudo nano and write FFFF 0001 to the new_id file and save/close it)
-re-plug the usb device and start usbc on the device
+ sudo nano /sys/bus/usb-serial/drivers/generic/new_id
+and enter / save the following in the new file
+ FFFF 0001
+which is the VID/PID of tinysys. This associates the device with the generic serial driver.
+Re-plug the usb device and start usbc on the device
 now it should enumerate as a generic serial device with a warning in dmesg
 ```
 

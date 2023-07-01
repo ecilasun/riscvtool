@@ -6,6 +6,7 @@
 
 // See:
 // https://github.com/MicrochipTech/mla_usb/blob/master/src/usb_device_cdc.c
+// https://github.com/tlh24/myopen/blob/master/firmware_stage7/usb.c
 
 #define STALL_EP0 USBWriteByte(rEPSTALLS, 0x23); 
 #define SETBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)|val));
@@ -319,17 +320,22 @@ void DoSetup()
 
 }
 
-void DoIN2()
+void DoIN2(uint8_t outval)
 {
-    // ?
+    // NOTE: If there's nothing going out just write zero to the INBC
+
+    // Send something
+    //USBWriteByte(rEP2INFIFO, outval);
+    //USBWriteByte(rEP2INBC, 1); // One byte out
+
+    USBWriteByte(rEP2INBC, 0); // Nothing to send
 }
 
 void DoOUT1()
 {
-    // TODO: EP1 data in
-
+    // Incoming EP1 data package
     uint8_t incoming[96];
-    uint8_t cnt = USBReadByte(rEP2INBC);
+    uint8_t cnt = USBReadByte(rEP1OUTBC) & 63; // Cap size to 0..63
     if (cnt)
     {
         USBReadBytes(rEP1OUTFIFO, cnt, incoming);
@@ -394,7 +400,7 @@ int main(int argc, char *argv[])
             if (epIrq & bmIN2BAVIRQ)
             {
                 USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-                DoIN2();
+                DoIN2('E');
             }
 
             if (epIrq & bmOUT1DAVIRQ)
