@@ -428,11 +428,9 @@ void BufferIncomingData()
 {
     // Incoming EP1 data package
     uint8_t cnt = USBReadByte(rEP1OUTBC) & 63; // Cap size to 0..63
+    s_inputbufferlen = cnt;
     if (cnt)
-    {
-        s_inputbufferlen = cnt;
         USBReadBytes(rEP1OUTFIFO, cnt, s_inputbuffer);
-    }
 }
 
 int main(int argc, char *argv[])
