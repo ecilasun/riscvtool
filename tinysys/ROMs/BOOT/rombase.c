@@ -1,7 +1,7 @@
 #include "rombase.h"
 #include "sdcard.h"
-#include "usbchandler.h"
-#include "usbahandler.h"
+#include "usbserialhandler.h"
+#include "usbhidhandler.h"
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>

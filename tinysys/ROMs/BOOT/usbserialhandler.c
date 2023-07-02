@@ -1,8 +1,7 @@
-#include "basesystem.h"
-#include "uart.h"
-#include "usbc.h"
+#include "usbserialhandler.h"
+#include "usbserial.h"
 #include "leds.h"
-#include <malloc.h>
+#include "uart.h"
 
 // See:
 // https://github.com/MicrochipTech/mla_usb/blob/master/src/usb_device_cdc.c
@@ -13,7 +12,7 @@
 #define CLRBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)&~val));
 
 // 19200 baud, 1 stop bit, no parity, 8bit data
-static USBCDCLineCoding s_lineCoding{19200, 0, 0, 8};
+static struct USBCDCLineCoding s_lineCoding = {19200, 0, 0, 8};
 
 static uint8_t s_outputbuffer[64];
 static uint32_t s_outputbufferlen = 0;
@@ -32,20 +31,19 @@ void set_configuration(uint8_t *SUD)
 {
     devconfig = SUD[wValueL];       // Store the config value
 
-    UARTWrite("set_configuration: 0x");
+    /*UARTWrite("set_configuration: 0x");
     UARTWriteHexByte(devconfig);
-    UARTWrite("\n");
+    UARTWrite("\n");*/
 
     if(devconfig != 0)              // If we are configured, 
         SETBIT(rUSBIEN, bmSUSPIE);  // start looking for SUSPEND interrupts
     USBReadByte(rFNADDR | 0x1);     // dummy read to set the ACKSTAT bit
 }
-
 void get_configuration(void)
 {
-    UARTWrite("get_configuration: 0x");
+    /*UARTWrite("get_configuration: 0x");
     UARTWriteHexByte(devconfig);
-    UARTWrite("\n");
+    UARTWrite("\n");*/
 
 	USBWriteByte(rEP0FIFO, devconfig);	// Send the config value
 	USBWriteByte(rEP0BC | 0x1, 1);
@@ -53,7 +51,7 @@ void get_configuration(void)
 
 void send_status(uint8_t *SUD)
 {
-    UARTWrite("send_status\n");
+    //UARTWrite("send_status\n");
 
     // Device: 0x0 -> bus powered, no remove wakeup
     // Interface: must be zero
@@ -77,29 +75,29 @@ void send_descriptor(uint8_t *SUD)
     struct SUSBContext *uctx = USBGetContext();
 
     uint8_t desctype = SUD[wValueH];
-    UARTWrite("send_descriptor: ");
+    //UARTWrite("send_descriptor: ");
 
 	switch (desctype)
 	{
 	    case  GD_DEVICE:
         {
-            UARTWrite("device");
+            //UARTWrite("device");
             desclen = uctx->device.bLength;
             pDdata = (unsigned char*)&uctx->device;
             break;
         }
 	    case  GD_CONFIGURATION:
         {
-            UARTWrite("config");
+            //UARTWrite("config");
             desclen = uctx->config.wTotalLength;
             pDdata = (unsigned char*)&uctx->config;
             break;
         }
 	    case  GD_STRING:
         {
-            UARTWrite("string 0x");
+            //UARTWrite("string 0x");
             uint8_t idx = SUD[wValueL];  // String index
-            UARTWriteHexByte(idx);
+            //UARTWriteHexByte(idx);
             desclen = uctx->strings[idx].bLength;
             pDdata = (unsigned char*)&uctx->strings[idx];
             break;
@@ -115,7 +113,7 @@ void send_descriptor(uint8_t *SUD)
     else
         STALL_EP0  // none of the descriptor types match
 
-    UARTWrite("\n");
+    //UARTWrite("\n");
 }
 
 void featurecontrol(int ctltype, uint16_t value, uint16_t index)
@@ -125,8 +123,8 @@ void featurecontrol(int ctltype, uint16_t value, uint16_t index)
 
     if (value == 0x00) // ENDPOINT_HALT
     {
-        UARTWrite("endpoint_halt: 0x");
-        UARTWriteHexByte(index);
+        /*UARTWrite("endpoint_halt: 0x");
+        UARTWriteHexByte(index);*/
 
         uint8_t stallmask = USBReadByte(rEPSTALLS);
         if (ctltype == 1) // Set
@@ -134,37 +132,37 @@ void featurecontrol(int ctltype, uint16_t value, uint16_t index)
             if (index==0x81) // Control
             {
                 stallmask |= bmSTLEP1OUT;
-                UARTWrite(" -> halted");
+                //UARTWrite(" -> halted");
                 addrx0x81stalled = 1;
             }
-            else
-                UARTWrite(" -> can't halt");
+            /*else
+                UARTWrite(" -> can't halt");*/
         }
         else // Clear
         {
             if (index==0x81) // Control
             {
                 stallmask &= ~bmSTLEP1OUT;
-                UARTWrite(" -> resumed");
+                //UARTWrite(" -> resumed");
                 addrx0x81stalled = 0;
                 USBWriteByte(rCLRTOGS, bmCTGEP1OUT);
             }
-            else
-                UARTWrite(" -> can't resume");
+            /*else
+                UARTWrite(" -> can't resume");*/
         }
-        UARTWrite("\n");
+        //UARTWrite("\n");
         USBWriteByte(rEPSTALLS, stallmask | bmACKSTAT);
     }
     else if (value == 0x01) // REMOTE_WAKEUP
     {
-        uint8_t addrs = USBReadByte(rFNADDR);
-        UARTWrite("remote_wakeup 0x");
+        /*uint8_t addrs =*/ USBReadByte(rFNADDR);
+        /*UARTWrite("remote_wakeup 0x");
         UARTWriteHexByte(addrs);
-        UARTWrite("\n");
+        UARTWrite("\n");*/
     }
     else // Unknown
     {
-        UARTWrite("unknown feature control\n");
+        //UARTWrite("unknown feature control\n");
         STALL_EP0
     }
 }
@@ -183,9 +181,9 @@ void std_request(uint8_t *SUD)
             uint16_t value = (SUD[wValueH]<<8) | SUD[wValueL];
             uint16_t index = (SUD[wIndexH]<<8) | SUD[wIndexL];
 
-            UARTWrite("set_feature type:0x");
+            /*UARTWrite("set_feature type:0x");
             UARTWriteHexByte(SUD[bmRequestType]);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             switch (SUD[bmRequestType])
             {
@@ -205,9 +203,9 @@ void std_request(uint8_t *SUD)
             uint16_t value = (SUD[wValueH]<<8) | SUD[wValueL];
             uint16_t index = (SUD[wIndexH]<<8) | SUD[wIndexL];
 
-            UARTWrite("clear_feature type:0x");
+            /*UARTWrite("clear_feature type:0x");
             UARTWriteHexByte(SUD[bmRequestType]);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             switch (SUD[bmRequestType])
             {
@@ -229,17 +227,17 @@ void std_request(uint8_t *SUD)
 	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);              break;
 	    case	SR_SET_ADDRESS:
         {
-            UARTWrite("setaddress: 0x");
+            //UARTWrite("setaddress: 0x");
             devaddrs = USBReadByte(rFNADDR | 0x1);
-            UARTWriteHexByte(devaddrs);
-            UARTWrite("\n");
+            /*UARTWriteHexByte(devaddrs);
+            UARTWrite("\n");*/
             break;
         }
 	    default:
         {
-            UARTWrite("unimplemented std_request: 0x");
+            /*UARTWrite("unimplemented std_request: 0x");
             UARTWriteHexByte(SUD[bRequest]);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
             STALL_EP0
             break;
         }
@@ -265,19 +263,19 @@ void class_request(uint8_t *SUD)
         case CDC_SENDENCAPSULATEDRESPONSE:
         {
             // Command issued
-            UARTWrite("sendencapsulatedcommand 0x");
+            /*UARTWrite("sendencapsulatedcommand 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite(" 0x");
             UARTWriteHex(reqlen);
-            UARTWrite(":");
+            UARTWrite(":");*/
 
             // RESPONSE_AVAILABLE(0x00000001) + 0x00000000
             // or
             // just two zeros for no response
             USBReadBytes(rEP0FIFO, reqlen, encapsulatedcommand);
-            for (uint16_t i=0;i<reqlen;++i)
+            /*for (uint16_t i=0;i<reqlen;++i)
                 UARTWriteHex(encapsulatedcommand[i]);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
             /*uint8_t noresponse[2] = {0,0};
@@ -289,11 +287,11 @@ void class_request(uint8_t *SUD)
         case CDC_GETENCAPSULATEDRESPONSE:
         {
             // Response requested
-            UARTWrite("getencapsulatedresponse 0x");
+            /*UARTWrite("getencapsulatedresponse 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite(" 0x");
             UARTWriteHex(reqlen);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             // When unhandled, respond with a one-byte zero and do not stall the endpoint
             USBWriteByte(rEP0FIFO, 0);
@@ -304,13 +302,13 @@ void class_request(uint8_t *SUD)
         case CDC_SETLINECODING:
         {
             // Data rate/parity/number of stop bits etc
-            UARTWrite("setlinecoding 0x");
-            UARTWriteHexByte(SUD[bmRequestType]);
+            /*UARTWrite("setlinecoding 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);*/
 
-            USBCDCLineCoding newcoding;
-            USBReadBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
+            struct USBCDCLineCoding newcoding;
+            USBReadBytes(rEP0FIFO, sizeof(struct USBCDCLineCoding), (uint8_t*)&newcoding);
 
-            UARTWrite(" Rate:");
+            /*UARTWrite(" Rate:");
             UARTWriteDecimal(newcoding.dwDTERate);
             UARTWrite(" Format:");
             UARTWriteHexByte(newcoding.bCharFormat);
@@ -318,7 +316,7 @@ void class_request(uint8_t *SUD)
             UARTWriteHexByte(newcoding.bParityType);
             UARTWrite(" Bits:");
             UARTWriteHexByte(newcoding.bDataBits);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             s_lineCoding = newcoding;
 
@@ -334,13 +332,13 @@ void class_request(uint8_t *SUD)
             // 4      bCharFormat 1    stop bits: 0:1, 1:1.5, 2:2
             // 5      bParityType 1    parity: 0:none,1:odd,2:even,3:mark,4:space
             // 6      bDataBits   1    data bits: 5,6,7,8 or 16
-            UARTWrite("getlinecoding 0x");
-            UARTWriteHexByte(SUD[bmRequestType]);
+            /*UARTWrite("getlinecoding 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);*/
 
-            USBWriteBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&s_lineCoding);
-            USBWriteByte(rEP0BC | 0x1, sizeof(USBCDCLineCoding));
+            USBWriteBytes(rEP0FIFO, sizeof(struct USBCDCLineCoding), (uint8_t*)&s_lineCoding);
+            USBWriteByte(rEP0BC | 0x1, sizeof(struct USBCDCLineCoding));
 
-            UARTWrite(" Rate:");
+            /*UARTWrite(" Rate:");
             UARTWriteDecimal(s_lineCoding.dwDTERate);
             UARTWrite(" Format:");
             UARTWriteHexByte(s_lineCoding.bCharFormat);
@@ -348,7 +346,7 @@ void class_request(uint8_t *SUD)
             UARTWriteHexByte(s_lineCoding.bParityType);
             UARTWrite(" Bits:");
             UARTWriteHexByte(s_lineCoding.bDataBits);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             break;
         }
@@ -358,9 +356,9 @@ void class_request(uint8_t *SUD)
             // 15:2  reserved
             // 1     carrier control signal: 0:inactive,1:active
             // 0     DTR: 0:notpresent, 1:present
-            UARTWrite("setcontrollinestate 0x");
+            /*UARTWrite("setcontrollinestate 0x");
             UARTWriteHexByte(SUD[bmRequestType]);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
 
             USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
             //STALL_EP0
@@ -369,9 +367,9 @@ void class_request(uint8_t *SUD)
         }
         default:
         {
-            UARTWrite("unknown class_request: 0x");
+            /*UARTWrite("unknown class_request: 0x");
             UARTWriteHexByte(SUD[bRequest]);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
         }
     }
 }
@@ -381,34 +379,21 @@ void DoSetup()
     uint8_t SUD[8];
     USBReadBytes(rSUDFIFO, 8, SUD);
 
-    /*if (SUD[0] != 0xFF)
-    {
-        UARTWriteHexByte(SUD[0]);
-        UARTWriteHexByte(SUD[1]);
-        UARTWriteHexByte(SUD[2]);
-        UARTWriteHexByte(SUD[3]);
-        UARTWriteHexByte(SUD[4]);
-        UARTWriteHexByte(SUD[5]);
-        UARTWriteHexByte(SUD[6]);
-        UARTWriteHexByte(SUD[7]);
-        UARTWrite("\n");
-    }*/
-
     switch(SUD[bmRequestType] & 0x60)
     {
         case 0x00: std_request(SUD); break;
         case 0x20: class_request(SUD); break;
         case 0x40:
         {
-            UARTWrite("vendor_req()\n");
+            //UARTWrite("vendor_req()\n");
             STALL_EP0
             break;
         }
         default:
         {
-            UARTWrite("unknown_req(): 0x");
+            /*UARTWrite("unknown_req(): 0x");
             UARTWriteHexByte(SUD[bmRequestType] & 0x60);
-            UARTWrite("\n");
+            UARTWrite("\n");*/
             STALL_EP0
             break;
         }
@@ -434,97 +419,65 @@ void BufferIncomingData()
         USBReadBytes(rEP1OUTFIFO, cnt, s_inputbuffer);
 }
 
-int main(int argc, char *argv[])
+void HandleUSBC()
 {
-    UARTWrite("USB-C test\n");
+	uint32_t currLED = LEDGetState();
+	LEDSetState(currLED | 0x8);
 
-    SUSBContext *newctx = (SUSBContext*)malloc(sizeof(SUSBContext));
-    USBSetContext(newctx);
+	// Initial value of rEPIRQ should be 0x19
+	uint8_t epIrq = USBReadByte(rEPIRQ);
+	uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-    if (argc>1)
-    {
-        UARTWrite("Bringing up USB-C\nUsing ISR in ROM\n");
-        USBInit(1);
-        UARTWrite("USB ISR will handle further communications.\n");
-    }
-    else
-    {
-        UARTWrite("Bringing up USB-C\nUsing polling\n");
-        USBInit(0);
+	if (s_suspended)
+	{
+		// Resume bus traffic
+		if (USBReadByte(rUSBIRQ) & bmBUSACTIRQ)
+			s_suspended = 0;
+	}
 
-        // Ordinarily ROM listens to this
-        while (1)
-        {
-            if (s_suspended)
-            {
-                // Resume bus traffic
-                if (USBReadByte(rUSBIRQ) & bmBUSACTIRQ)
-                    s_suspended = 0;
-            }
+	if (epIrq & bmSUDAVIRQ)
+	{
+		// Setup data available, 8 bytes data to follow
+		DoSetup();
+		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
+	}
 
-            uint32_t currLED = LEDGetState();
+	if (epIrq & bmOUT1DAVIRQ)
+	{
+		// Input
+		BufferIncomingData();
+		USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
+	}
 
-            // Initial value of rEPIRQ should be 0x19
-	        uint8_t epIrq = USBReadByte(rEPIRQ);
-            uint8_t usbIrq = USBReadByte(rUSBIRQ);
+	if (epIrq & bmIN2BAVIRQ)
+	{
+		USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
+		// Output
+		EmitBufferedOutput();
+	}
 
-            if (epIrq & bmSUDAVIRQ)
-            {
-        		// Setup data available, 8 bytes data to follow
-                LEDSetState(currLED | 0x8);
-		        DoSetup();
-    		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
-            }
+	if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+	{
+		// Should arrive here out of reset
+		//UARTWrite("suspend\n");
+		s_suspended = 1;
+		USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
+	}
 
-            if (epIrq & bmOUT1DAVIRQ)
-            {
-                // Input
-                BufferIncomingData();
-                USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
-            }
+	if (usbIrq & bmURESIRQ) // Bus reset
+	{
+		//UARTWrite("busreset\n");
+		USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
+	}
 
-            if (epIrq & bmIN2BAVIRQ)
-            {
-                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-                // Output
-                EmitBufferedOutput();
-            }
+	if (usbIrq & bmURESDNIRQ) // Resume
+	{
+		USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
+		//UARTWrite("resume\n");
+		s_suspended = 0;
+		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
+		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear URESDN irq
+	}
 
-            if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
-            {
-                // Should arrive here out of reset
-                UARTWrite("suspend\n");
-                s_suspended = 1;
-                USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
-            }
-
-            if (usbIrq & bmURESIRQ) // Bus reset
-            {
-                UARTWrite("busreset\n");
-                USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
-            }
-
-            if (usbIrq & bmURESDNIRQ) // Resume
-            {
-                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
-                UARTWrite("resume\n");
-                s_suspended = 0;
-                USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
-                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear URESDN irq
-            }
-
-            LEDSetState(currLED);
-
-            // Exhaust incoming data buffer and echo to debug and the new com port
-            if (s_inputbufferlen)
-            {
-                s_outputbufferlen = s_inputbufferlen;
-                for (uint8_t i=0; i<s_inputbufferlen; ++i)
-                    *IO_UARTTX = s_outputbuffer[i] = s_inputbuffer[i];
-                s_inputbufferlen = 0;
-            }
-        }
-    }
-
-    return 0;
+	LEDSetState(currLED);
 }

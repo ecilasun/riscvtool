@@ -6,12 +6,13 @@
 #include "apu.h"
 #include "gpu.h"
 #include "opl2.h"
+#include "usbserial.h"
 
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.017"
+#define VERSIONSTRING "v1.018"
 
 static struct EVideoContext s_gpuContext;
 
@@ -24,6 +25,8 @@ static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 static int s_refreshConsoleOut = 1;
 static int s_stop_ring_buffer = 0;
+
+static struct SUSBContext s_usbserialctx;
 
 void _stubTask() {
 	// NOTE: This task won't actually run
@@ -125,7 +128,7 @@ void receive_file(const char *savename)
 								UINT wb = 0;
 								f_write(&fp, &D, 1, &wb);
 								/*if ((cnt%64)==0)
-									*IO_UARTRX = 0xFF;*/
+									*IO_UARTRX = 0xFF;*/ // TODO: We need to send ack after each packet, also add CRC check.
 								++cnt;
 							}
 						}
@@ -254,22 +257,29 @@ void ExecuteCmd(char *_cmd)
 		UARTWriteDecimal(temp_centigrates);
 		UARTWrite("\n");
 	}
+	else if (!strcmp(command, "usb"))
+	{
+		// Start USB port with serial device configuration
+		UARTWrite("Initializing USB serial\n");
+		USBInit(1);
+	}
 	else if (!strcmp(command, "help"))
 	{
 		// Bright blue
 		UARTWrite("\033[0m\n\033[94m");
-		UARTWrite("tinysys ROM OS\n");
-		UARTWrite("ls [path]: Show list of files in cwd or path\n");
+		UARTWrite("Available commands\n");
+		UARTWrite("ver: Show version info\n");
 		UARTWrite("clear: Clear terminal\n");
-		UARTWrite("mem: Show available memory\n");
-		UARTWrite("tmp: Show device temperature\n");
-		UARTWrite("rm fname: Delete file\n");
 		UARTWrite("cwd path: Change working directory\n");
+		UARTWrite("ls [path]: Show list of files in cwd or path\n");
+		UARTWrite("rm fname: Delete file\n");
 		UARTWrite("rcv fname: Receive and save a file to storage\n");
 		UARTWrite("proc: Show process info\n");
-		UARTWrite("ver: Show version info\n");
-		UARTWrite("mount: mount drive sd:\n");
-		UARTWrite("umount: unmount drive sd:\n");
+		UARTWrite("mount: Mount drive sd:\n");
+		UARTWrite("umount: Unmount drive sd:\n");
+		UARTWrite("usb: Start USB serial port\n");
+		UARTWrite("mem: Show available memory\n");
+		UARTWrite("tmp: Show device temperature\n");
 		UARTWrite("Any other input will load a file from sd: with matching name\n");
 		UARTWrite("CTRL+C terminates current program\n");
 		UARTWrite("\033[0m\n");
@@ -365,15 +375,19 @@ int main()
 	LEDSetState(0x9);
 	TaskAdd(taskctx, "kernelStub", _stubTask, TS_RUNNING, QUARTER_MILLISECOND_IN_TICKS);
 
-	// Ready to start, silence LEDs
+	// Ready to start, silence LED activity since other systems need it
 	LEDSetState(0x0);
 
 	// Splash - we drop to embedded OS if there's no boot image (boot.elf)
 	UARTWrite("\033[H\033[0m\033[2J\033[96;40mtinysys embedded OS " VERSIONSTRING "\033[0m\n\n");
+	UARTWrite("Use 'help' a list of available commands\n");
 
 	// Start the timer and hardware interrupt handlers.
 	// This is where all task switching and other interrupt handling occurs
 	InstallISR();
+
+	// Allocate usb context but don't start it yet
+    USBSetContext(&s_usbserialctx);
 
 	// Main CLI loop
 	while (1)

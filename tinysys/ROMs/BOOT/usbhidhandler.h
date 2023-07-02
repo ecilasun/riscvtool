@@ -1,3 +1,3 @@
-#include "usbc.h"
+#include "usbhid.h"
 
 void HandleUSBA();

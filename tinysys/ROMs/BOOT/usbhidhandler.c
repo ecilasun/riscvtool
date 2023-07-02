@@ -1,4 +1,4 @@
-//#include "usbahandler.h"
+#include "usbhidhandler.h"
 #include "leds.h"
 #include "uart.h"
 

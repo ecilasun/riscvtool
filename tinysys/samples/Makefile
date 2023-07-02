@@ -25,7 +25,7 @@ folders = \
 	jpegview \
 	led \
 	vgmplayer \
-	usbc \
+	usbserial \
 	dump \
 
 # Rules
