@@ -175,7 +175,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     // Control Notification
     ctx->notification.bLength = sizeof(struct USBEndpointDescriptor); // 7
     ctx->notification.bDescriptorType = USBDesc_Endpoint;
-    ctx->notification.bEndpointAddress = 0x81;
+    ctx->notification.bEndpointAddress = 0x81; // Is this EP1 in???
     ctx->notification.bmAttributes = 0x03; // Interrupt endpoint
     ctx->notification.wMaxPacketSize = 64;
     ctx->notification.bInterval = 1;       // Every millisecond

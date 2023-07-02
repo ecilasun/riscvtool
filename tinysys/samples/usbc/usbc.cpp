@@ -24,6 +24,7 @@ static uint32_t s_inputbufferlen = 0;
 static uint8_t devconfig = 0;
 static uint8_t devaddrs = 0;
 static uint8_t encapsulatedcommand[0x20];
+static uint32_t addrx0x81stalled = 0;
 
 void set_configuration(uint8_t *SUD)
 {
@@ -115,6 +116,45 @@ void send_descriptor(uint8_t *SUD)
     UARTWrite("\n");
 }
 
+void featurecontrol(int ctltype, uint16_t value, uint16_t index)
+{
+    // ctltype == 0 -> clear
+    // ctltype == 1 -> set
+
+    if (value == 0x00 && index==0x81) // ENDPOINT_HALT
+    {
+        UARTWrite("endpoint_halt: ");
+        uint8_t stallmask = USBReadByte(rEPSTALLS);
+        if (ctltype == 1) // Set
+        {
+            stallmask |= bmSTLEP1OUT;
+            UARTWrite("halted");
+            addrx0x81stalled = 1;
+        }
+        else // Clear
+        {
+            stallmask &= ~bmSTLEP1OUT;
+            UARTWrite("resumed");
+            addrx0x81stalled = 0;
+            USBWriteByte(rCLRTOGS, bmCTGEP1OUT);
+        }
+        UARTWrite("\n");
+        USBWriteByte(rEPSTALLS, stallmask | bmACKSTAT);
+    }
+    else if (value == 0x01) // REMOTE_WAKEUP
+    {
+        uint8_t addrs = USBReadByte(rFNADDR);
+        UARTWrite("remote_wakeup 0x");
+        UARTWriteHexByte(addrs);
+        UARTWrite("\n");
+    }
+    else // Unknown
+    {
+        UARTWrite("unknown feature control\n");
+        STALL_EP0
+    }
+}
+
 void std_request(uint8_t *SUD)
 {
     switch(SUD[bRequest])
@@ -122,7 +162,10 @@ void std_request(uint8_t *SUD)
 	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);                 break;
 	    case	SR_SET_FEATURE:
         {
-            UARTWrite("set_feature 0x");
+            uint16_t value = (SUD[wValueH]<<8) | SUD[wValueL];
+            uint16_t index = (SUD[wIndexH]<<8) | SUD[wIndexL];
+
+            UARTWrite("set_feature type:0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite("\n");
 
@@ -133,7 +176,7 @@ void std_request(uint8_t *SUD)
                 // Interface
                 case 0x01: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
                 // Endpoint
-                case 0x02: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+                case 0x02: featurecontrol(1, value, index); break;
                 // Unknown
                 default: STALL_EP0 break;
             }
@@ -141,7 +184,10 @@ void std_request(uint8_t *SUD)
         }
 	    case	SR_CLEAR_FEATURE:
         {
-            UARTWrite("clear_feature 0x");
+            uint16_t value = (SUD[wValueH]<<8) | SUD[wValueL];
+            uint16_t index = (SUD[wIndexH]<<8) | SUD[wIndexL];
+
+            UARTWrite("clear_feature type:0x");
             UARTWriteHexByte(SUD[bmRequestType]);
             UARTWrite("\n");
 
@@ -152,17 +198,17 @@ void std_request(uint8_t *SUD)
                 // Interface
                 case 0x01: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
                 // Endpoint
-                case 0x02: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+                case 0x02: featurecontrol(0, value, index); break;
                 // Unknown
                 default: STALL_EP0 break;
             }
             break;
         }
-	    case	SR_GET_STATUS:		    send_status(SUD);                     break;
+	    case	SR_GET_STATUS:		    send_status(SUD);                    break;
 	    case	SR_SET_INTERFACE:	    UARTWrite("!set_interface\n");       break;
 	    case	SR_GET_INTERFACE:	    UARTWrite("!get_interface\n");       break;
-	    case	SR_GET_CONFIGURATION:   get_configuration();                  break;
-	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);               break;
+	    case	SR_GET_CONFIGURATION:   get_configuration();                 break;
+	    case	SR_SET_CONFIGURATION:   set_configuration(SUD);              break;
 	    case	SR_SET_ADDRESS:
         {
             UARTWrite("setaddress: 0x");
