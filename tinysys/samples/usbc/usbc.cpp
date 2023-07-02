@@ -21,6 +21,8 @@ static uint32_t s_outputbufferlen = 0;
 static uint8_t s_inputbuffer[64];
 static uint32_t s_inputbufferlen = 0;
 
+static uint32_t s_suspended = 0;
+
 static uint8_t devconfig = 0;
 static uint8_t devaddrs = 0;
 static uint8_t encapsulatedcommand[0x20];
@@ -454,11 +456,12 @@ int main(int argc, char *argv[])
         // Ordinarily ROM listens to this
         while (1)
         {
-            /*if (Suspended)
-                check_for_resume();
-            
-            if (MAX_Int_Pending()
-            {*/
+            if (s_suspended)
+            {
+                // Resume bus traffic
+                if (USBReadByte(rUSBIRQ) & bmBUSACTIRQ)
+                    s_suspended = 0;
+            }
 
             uint32_t currLED = LEDGetState();
 
@@ -466,59 +469,49 @@ int main(int argc, char *argv[])
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-            /*if (epIrq != 0xFF && usbIrq != 0xFF)
-            {
-                UARTWriteHexByte(epIrq);
-                UARTWrite(":");
-                UARTWriteHexByte(usbIrq);
-                UARTWrite(":");
-                UARTWriteHexByte(USBGetGPX());
-                UARTWrite("\n");
-            }*/
-
             if (epIrq & bmSUDAVIRQ)
             {
-    		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // clear SUDAV irq
         		// Setup data available, 8 bytes data to follow
                 LEDSetState(currLED | 0x8);
 		        DoSetup();
+    		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
             }
 
             if (epIrq & bmIN2BAVIRQ)
             {
                 // Output
-                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
                 EmitBufferedOutput();
+                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
             }
 
             if (epIrq & bmOUT1DAVIRQ)
             {
                 // Input
-                USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
                 BufferIncomingData();
+                USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
             }
 
             if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
             {
                 // Should arrive here out of reset
-                USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
                 UARTWrite("suspend\n");
-                // Suspended = 1
+                s_suspended = 1;
+                USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
             }
 
             if (usbIrq & bmURESIRQ) // Bus reset
             {
-                USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
                 UARTWrite("busreset\n");
+                USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
             }
 
             if (usbIrq & bmURESDNIRQ) // Resume
             {
-                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // clear URESDN irq
                 USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
                 UARTWrite("resume\n");
-                // Suspended=0;
+                s_suspended = 0;
                 USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
+                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear URESDN irq
             }
 
             LEDSetState(currLED);
@@ -529,7 +522,7 @@ int main(int argc, char *argv[])
                 // Echo what we're recevied to the debug port
                 for (uint8_t i=0; i<s_inputbufferlen; ++i)
                     *IO_UARTTX = s_inputbuffer[i];
-                // Also echo back the thing we've just received to the usb-c port
+                // Echo back the thing we've just received to the usb-c port
                 for (uint8_t i=0; i<s_inputbufferlen; ++i)
                     s_outputbuffer[i] = s_inputbuffer[i];
                 s_outputbufferlen = s_inputbufferlen;
@@ -540,20 +533,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-
-// From Bringing up USB using MAX3420
-/*UARTWrite("Testing IEN\nShould see: 01 02 04 08 10 20 40 80\n");
-uint8_t wr = 0x01; // initial register write value 
-for(int j=0; j<8; j++) 
-{ 
-    USBWriteByte(rUSBIEN, wr);
-
-    uint8_t rd = USBReadByte(rUSBIEN);
-
-    UARTWriteHexByte(rd);
-    UARTWrite(" ");
-
-    wr <<= 1; // Put a breakpoint here. Values of 'rd' should be 01,02,04,08,10,20,40,80 
-}
-UARTWrite("\n");*/
