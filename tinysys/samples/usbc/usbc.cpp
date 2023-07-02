@@ -413,7 +413,6 @@ void DoSetup()
             break;
         }
     }
-
 }
 
 void EmitBufferedOutput()
@@ -477,18 +476,18 @@ int main(int argc, char *argv[])
     		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
             }
 
-            if (epIrq & bmIN2BAVIRQ)
-            {
-                // Output
-                EmitBufferedOutput();
-                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-            }
-
             if (epIrq & bmOUT1DAVIRQ)
             {
                 // Input
                 BufferIncomingData();
                 USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
+            }
+
+            if (epIrq & bmIN2BAVIRQ)
+            {
+                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
+                // Output
+                EmitBufferedOutput();
             }
 
             if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
@@ -516,16 +515,12 @@ int main(int argc, char *argv[])
 
             LEDSetState(currLED);
 
-            // Exhaust incoming data buffer
+            // Exhaust incoming data buffer and echo to debug and the new com port
             if (s_inputbufferlen)
             {
-                // Echo what we're recevied to the debug port
-                for (uint8_t i=0; i<s_inputbufferlen; ++i)
-                    *IO_UARTTX = s_inputbuffer[i];
-                // Echo back the thing we've just received to the usb-c port
-                for (uint8_t i=0; i<s_inputbufferlen; ++i)
-                    s_outputbuffer[i] = s_inputbuffer[i];
                 s_outputbufferlen = s_inputbufferlen;
+                for (uint8_t i=0; i<s_inputbufferlen; ++i)
+                    *IO_UARTTX = s_outputbuffer[i] = s_inputbuffer[i];
                 s_inputbufferlen = 0;
             }
         }

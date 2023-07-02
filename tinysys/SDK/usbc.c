@@ -119,13 +119,11 @@ void USBCtlReset()
 char16_t vendorname[] = u"ENGIN"; // 10
 char16_t devicename[] = u"tinysys usb serial"; // 36
 char16_t deviceserial[] = u"EC000000"; // 16
-char16_t devicecontrol[] = u"control"; // 14
 char16_t devicedata[] = u"data"; // 8
 #else
 char vendorname[] = {'E',0,'N',0,'G',0,'I',0,'N',0};
 char devicename[] = {'t',0,'i',0,'n',0,'y',0,'s',0,'y',0,'s',0,' ',0,'u',0,'s',0,'b',0,' ',0,'s',0,'e',0,'r',0,'i',0,'a',0,'l',0};
 char deviceserial[] = {'E',0,'C',0,'0',0,'0',0,'0',0,'0',0,'0',0,'0',0};
-char devicecontrol[] = {'c',0,'o',0,'n',0,'t',0,'r',0,'o',0,'l',0};
 char devicedata[] = {'d',0,'a',0,'t',0,'a',0};
 #endif
 
@@ -155,41 +153,22 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     ctx->config.bLength = sizeof(struct USBConfigurationDescriptor); // 9
     ctx->config.bDescriptorType = USBDesc_Configuration;
     ctx->config.wTotalLength = 0x0020; // 32 bytes; includes config, interface and endpoints (not the strings)
-    ctx->config.bNumInterfaces = 1;//2;
+    ctx->config.bNumInterfaces = 1;
     ctx->config.bConfigurationValue = 1;
     ctx->config.iConfiguration = 0;
     ctx->config.bmAttributes = 0x80; // Bus powered
-    ctx->config.MaxPower = 0xFA; // 500 mA
-
-    // Control Interface
-    /*ctx->control.bLength = sizeof(struct USBInterfaceDescriptor); // 9
-    ctx->control.bDescriptorType = USBDesc_Interface;
-    ctx->control.bInterfaceNumber = 0;   // Interface #0
-    ctx->control.bAlternateSetting = 0;
-    ctx->control.bNumEndpoints = 1;      // 1 endpoint (control)
-    ctx->control.bInterfaceClass = USBClass_CDCControl;
-    ctx->control.bInterfaceSubClass = 0x02; // Abstract
-    ctx->control.bInterfaceProtocol = 0xFF; // Vendor specific
-    ctx->control.iInterface = 4;
-
-    // Control Notification
-    ctx->notification.bLength = sizeof(struct USBEndpointDescriptor); // 7
-    ctx->notification.bDescriptorType = USBDesc_Endpoint;
-    ctx->notification.bEndpointAddress = 0x81; // Is this EP1 in???
-    ctx->notification.bmAttributes = 0x03; // Interrupt endpoint
-    ctx->notification.wMaxPacketSize = 64;
-    ctx->notification.bInterval = 1;       // Every millisecond*/
+    ctx->config.MaxPower = 0xFA; // 500 mA (for the entire device)
 
     // Data Interface
     ctx->data.bLength = sizeof(struct USBInterfaceDescriptor); // 9
     ctx->data.bDescriptorType = USBDesc_Interface;
-    ctx->data.bInterfaceNumber = 0;//1;   // Interface #1
+    ctx->data.bInterfaceNumber = 0;   // Interface #1
     ctx->data.bAlternateSetting = 0;
     ctx->data.bNumEndpoints = 2;      // 2 endpoints (data in / data out)
     ctx->data.bInterfaceClass = USBClass_CDCData;
     ctx->data.bInterfaceSubClass = 0x00;
     ctx->data.bInterfaceProtocol = 0x00;
-    ctx->data.iInterface = 5;
+    ctx->data.iInterface = 4;
 
     // Data in
     ctx->input.bLength = sizeof(struct USBEndpointDescriptor); // 7
@@ -225,12 +204,9 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     ctx->strings[3].bLength = sizeof(struct USBCommonDescriptor) + 8*2; // 16
     ctx->strings[3].bDescriptorType = USBDesc_String;
     __builtin_memcpy(ctx->strings[3].bString, deviceserial, 16);
-    ctx->strings[4].bLength = sizeof(struct USBCommonDescriptor) + 7*2; // 14
+    ctx->strings[4].bLength = sizeof(struct USBCommonDescriptor) + 4*2; // 8
     ctx->strings[4].bDescriptorType = USBDesc_String;
-    __builtin_memcpy(ctx->strings[4].bString, devicecontrol, 14);
-    ctx->strings[5].bLength = sizeof(struct USBCommonDescriptor) + 4*2; // 8
-    ctx->strings[5].bDescriptorType = USBDesc_String;
-    __builtin_memcpy(ctx->strings[5].bString, devicedata, 8);
+    __builtin_memcpy(ctx->strings[4].bString, devicedata, 8);
 }
 
 void USBInit(uint32_t enableInterrupts)
