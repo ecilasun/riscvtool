@@ -3,7 +3,7 @@
 #include "uart.h"
 
 
-void HandleUSBA()
+void HandleUSBHID()
 {
 	uint32_t currLED = LEDGetState();
 	LEDSetState(currLED | 0x4);

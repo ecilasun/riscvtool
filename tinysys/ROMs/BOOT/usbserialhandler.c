@@ -2,6 +2,7 @@
 #include "usbserial.h"
 #include "leds.h"
 #include "uart.h"
+#include "ringbuffer.h"
 
 // See:
 // https://github.com/MicrochipTech/mla_usb/blob/master/src/usb_device_cdc.c
@@ -16,9 +17,6 @@ static struct USBCDCLineCoding s_lineCoding = {19200, 0, 0, 8};
 
 static uint8_t s_outputbuffer[64];
 static uint32_t s_outputbufferlen = 0;
-
-static uint8_t s_inputbuffer[64];
-static uint32_t s_inputbufferlen = 0;
 
 static uint32_t s_suspended = 0;
 
@@ -414,12 +412,18 @@ void BufferIncomingData()
 {
     // Incoming EP1 data package
     uint8_t cnt = USBReadByte(rEP1OUTBC) & 63; // Cap size to 0..63
-    s_inputbufferlen = cnt;
     if (cnt)
-        USBReadBytes(rEP1OUTFIFO, cnt, s_inputbuffer);
+    {
+        // Stash incoming data into the ringbuffer
+        for (uint8_t i=0; i<cnt; ++i)
+        {
+            uint32_t incoming = USBReadByte(rEP1OUTFIFO);
+            RingBufferWrite(&incoming, sizeof(uint32_t));
+        }
+    }
 }
 
-void HandleUSBC()
+void HandleUSBSerial()
 {
 	uint32_t currLED = LEDGetState();
 	LEDSetState(currLED | 0x8);

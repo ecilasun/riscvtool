@@ -1,1 +1,2 @@
-void HandleUSBC();
+
+void HandleUSBSerial();

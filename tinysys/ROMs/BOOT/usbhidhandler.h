@@ -1,3 +1,3 @@
 #include "usbhid.h"
 
-void HandleUSBA();
+void HandleUSBHID();

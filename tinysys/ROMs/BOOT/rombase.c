@@ -410,8 +410,8 @@ void __attribute__((aligned(16))) __attribute__((naked)) interrupt_service_routi
 
 				if (hwid&1) HandleUART();
 				else if (hwid&2) HandleSDCardDetect();
-				else if (hwid&4) HandleUSBC();
-				else if (hwid&8) HandleUSBA();
+				else if (hwid&4) HandleUSBSerial();
+				else if (hwid&8) HandleUSBHID();
 				else // No familiar bit set, unknown device
 				{
 					ReportError(32, "Unknown hardware device, core halted", code, hwid, PC);
