@@ -121,22 +121,34 @@ void featurecontrol(int ctltype, uint16_t value, uint16_t index)
     // ctltype == 0 -> clear
     // ctltype == 1 -> set
 
-    if (value == 0x00 && index==0x81) // ENDPOINT_HALT
+    if (value == 0x00) // ENDPOINT_HALT
     {
-        UARTWrite("endpoint_halt: ");
+        UARTWrite("endpoint_halt: 0x");
+        UARTWriteHexByte(index);
+
         uint8_t stallmask = USBReadByte(rEPSTALLS);
         if (ctltype == 1) // Set
         {
-            stallmask |= bmSTLEP1OUT;
-            UARTWrite("halted");
-            addrx0x81stalled = 1;
+            if (index==0x81) // Control
+            {
+                stallmask |= bmSTLEP1OUT;
+                UARTWrite(" -> halted");
+                addrx0x81stalled = 1;
+            }
+            else
+                UARTWrite(" -> can't halt");
         }
         else // Clear
         {
-            stallmask &= ~bmSTLEP1OUT;
-            UARTWrite("resumed");
-            addrx0x81stalled = 0;
-            USBWriteByte(rCLRTOGS, bmCTGEP1OUT);
+            if (index==0x81) // Control
+            {
+                stallmask &= ~bmSTLEP1OUT;
+                UARTWrite(" -> resumed");
+                addrx0x81stalled = 0;
+                USBWriteByte(rCLRTOGS, bmCTGEP1OUT);
+            }
+            else
+                UARTWrite(" -> can't resume");
         }
         UARTWrite("\n");
         USBWriteByte(rEPSTALLS, stallmask | bmACKSTAT);
@@ -159,7 +171,11 @@ void std_request(uint8_t *SUD)
 {
     switch(SUD[bRequest])
 	{
-	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);                 break;
+	    case	SR_GET_DESCRIPTOR:
+        {
+            send_descriptor(SUD);
+            break;
+        }
 	    case	SR_SET_FEATURE:
         {
             uint16_t value = (SUD[wValueH]<<8) | SUD[wValueL];
