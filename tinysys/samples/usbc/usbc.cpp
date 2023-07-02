@@ -15,6 +15,12 @@
 // 19200 baud, 1 stop bit, no parity, 8bit data
 static USBCDCLineCoding s_lineCoding{19200, 0, 0, 8};
 
+static uint8_t s_outputbuffer[64];
+static uint32_t s_outputbufferlen = 0;
+
+static uint8_t s_inputbuffer[64];
+static uint32_t s_inputbufferlen = 0;
+
 static uint8_t devconfig = 0;
 static uint8_t devaddrs = 0;
 static uint8_t encapsulatedcommand[0x20];
@@ -116,14 +122,40 @@ void std_request(uint8_t *SUD)
 	    case	SR_GET_DESCRIPTOR:	    send_descriptor(SUD);                 break;
 	    case	SR_SET_FEATURE:
         {
-            UARTWrite("set_feature\n");
-            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
+            UARTWrite("set_feature 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);
+            UARTWrite("\n");
+
+            switch (SUD[bmRequestType])
+            {
+                // EP0
+                case 0x00: STALL_EP0 break;
+                // Interface
+                case 0x01: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+                // Endpoint
+                case 0x02: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+                // Unknown
+                default: STALL_EP0 break;
+            }
             break;
         }
 	    case	SR_CLEAR_FEATURE:
         {
-            UARTWrite("clear_feature\n");
-            USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
+            UARTWrite("clear_feature 0x");
+            UARTWriteHexByte(SUD[bmRequestType]);
+            UARTWrite("\n");
+
+            switch (SUD[bmRequestType])
+            {
+                // EP0
+                case 0x00: STALL_EP0 break;
+                // Interface
+                case 0x01: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+                // Endpoint
+                case 0x02: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+                // Unknown
+                default: STALL_EP0 break;
+            }
             break;
         }
 	    case	SR_GET_STATUS:		    send_status(SUD);                     break;
@@ -320,29 +352,24 @@ void DoSetup()
 
 }
 
-void DoIN2(uint8_t outval)
+void EmitBufferedOutput()
 {
-    // NOTE: If there's nothing going out just write zero to the INBC
-
-    // Send something
-    //USBWriteByte(rEP2INFIFO, outval);
-    //USBWriteByte(rEP2INBC, 1); // One byte out
-
-    USBWriteByte(rEP2INBC, 0); // Nothing to send
+    // If we have something pending in the output buffer, stream it out
+    if (s_outputbufferlen != 0)
+        USBWriteBytes(rEP2INFIFO, s_outputbufferlen, s_outputbuffer);
+    USBWriteByte(rEP2INBC, s_outputbufferlen); // Zero or more bytes output
+    // Done sending
+    s_outputbufferlen = 0;
 }
 
-void DoOUT1()
+void BufferIncomingData()
 {
     // Incoming EP1 data package
-    uint8_t incoming[96];
     uint8_t cnt = USBReadByte(rEP1OUTBC) & 63; // Cap size to 0..63
     if (cnt)
     {
-        USBReadBytes(rEP1OUTFIFO, cnt, incoming);
-        UARTWrite("<");
-        for (uint8_t i=0; i<cnt; ++i)
-            UARTWriteHexByte(incoming[i]);
-        UARTWrite("\n");
+        s_inputbufferlen = cnt;
+        USBReadBytes(rEP1OUTFIFO, cnt, s_inputbuffer);
     }
 }
 
@@ -399,14 +426,16 @@ int main(int argc, char *argv[])
 
             if (epIrq & bmIN2BAVIRQ)
             {
+                // Output
                 USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-                DoIN2('E');
+                EmitBufferedOutput();
             }
 
             if (epIrq & bmOUT1DAVIRQ)
             {
+                // Input
                 USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
-                DoOUT1();
+                BufferIncomingData();
             }
 
             if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
@@ -433,6 +462,19 @@ int main(int argc, char *argv[])
             }
 
             LEDSetState(currLED);
+
+            // Exhaust incoming data buffer
+            if (s_inputbufferlen)
+            {
+                // Echo what we're recevied to the debug port
+                for (uint8_t i=0; i<s_inputbufferlen; ++i)
+                    *IO_UARTTX = s_inputbuffer[i];
+                // Also echo back the thing we've just received to the usb-c port
+                for (uint8_t i=0; i<s_inputbufferlen; ++i)
+                    s_outputbuffer[i] = s_inputbuffer[i];
+                s_outputbufferlen = s_inputbufferlen;
+                s_inputbufferlen = 0;
+            }
         }
     }
 
