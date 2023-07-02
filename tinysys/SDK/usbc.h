@@ -139,8 +139,8 @@ struct SUSBContext
 {
     struct USBDeviceDescriptor device;
     struct USBConfigurationDescriptor config;
-    struct USBInterfaceDescriptor control;
-    struct USBEndpointDescriptor notification;
+    // struct USBInterfaceDescriptor control;
+    // struct USBEndpointDescriptor notification;
     struct USBInterfaceDescriptor data;
     struct USBEndpointDescriptor input;
     struct USBEndpointDescriptor output;

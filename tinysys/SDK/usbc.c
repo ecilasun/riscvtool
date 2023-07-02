@@ -138,7 +138,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     // Device
     ctx->device.bLength = sizeof(struct USBDeviceDescriptor); // 18
     ctx->device.bDescriptorType = USBDesc_Device;
-    ctx->device.bcdUSB = 0x0110;
+    ctx->device.bcdUSB = 0x0101;
     ctx->device.bDeviceClass = USBClass_CDCControl;
     ctx->device.bDeviceSubClass = 0x0;
     ctx->device.bDeviceProtocol = 0x0;
@@ -154,15 +154,15 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     // Configuration
     ctx->config.bLength = sizeof(struct USBConfigurationDescriptor); // 9
     ctx->config.bDescriptorType = USBDesc_Configuration;
-    ctx->config.wTotalLength = 0x0030; // 48 bytes; includes config, interface and endpoints (not the strings)
-    ctx->config.bNumInterfaces = 2;
+    ctx->config.wTotalLength = 0x0020; // 32 bytes; includes config, interface and endpoints (not the strings)
+    ctx->config.bNumInterfaces = 1;//2;
     ctx->config.bConfigurationValue = 1;
     ctx->config.iConfiguration = 0;
     ctx->config.bmAttributes = 0x80; // Bus powered
     ctx->config.MaxPower = 0xFA; // 500 mA
 
     // Control Interface
-    ctx->control.bLength = sizeof(struct USBInterfaceDescriptor); // 9
+    /*ctx->control.bLength = sizeof(struct USBInterfaceDescriptor); // 9
     ctx->control.bDescriptorType = USBDesc_Interface;
     ctx->control.bInterfaceNumber = 0;   // Interface #0
     ctx->control.bAlternateSetting = 0;
@@ -178,12 +178,12 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     ctx->notification.bEndpointAddress = 0x81; // Is this EP1 in???
     ctx->notification.bmAttributes = 0x03; // Interrupt endpoint
     ctx->notification.wMaxPacketSize = 64;
-    ctx->notification.bInterval = 1;       // Every millisecond
+    ctx->notification.bInterval = 1;       // Every millisecond*/
 
     // Data Interface
     ctx->data.bLength = sizeof(struct USBInterfaceDescriptor); // 9
     ctx->data.bDescriptorType = USBDesc_Interface;
-    ctx->data.bInterfaceNumber = 1;   // Interface #1
+    ctx->data.bInterfaceNumber = 0;//1;   // Interface #1
     ctx->data.bAlternateSetting = 0;
     ctx->data.bNumEndpoints = 2;      // 2 endpoints (data in / data out)
     ctx->data.bInterfaceClass = USBClass_CDCData;
