@@ -37,6 +37,7 @@ void set_configuration(uint8_t *SUD)
         SETBIT(rUSBIEN, bmSUSPIE);  // start looking for SUSPEND interrupts
     USBReadByte(rFNADDR | 0x1);     // dummy read to set the ACKSTAT bit
 }
+
 void get_configuration(void)
 {
     /*UARTWrite("get_configuration: 0x");
@@ -432,12 +433,13 @@ void HandleUSBSerial()
 	uint8_t epIrq = USBReadByte(rEPIRQ);
 	uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-	if (s_suspended)
+	if (s_suspended && (usbIrq & bmBUSACTIRQ)) // Remote wake up
 	{
 		// Resume bus traffic
-		if (USBReadByte(rUSBIRQ) & bmBUSACTIRQ)
-			s_suspended = 0;
+		s_suspended = 0;
 	}
+
+    // Endpoint irq
 
 	if (epIrq & bmSUDAVIRQ)
 	{
@@ -460,7 +462,17 @@ void HandleUSBSerial()
 		EmitBufferedOutput();
 	}
 
-	if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+    if (epIrq & bmIN3BAVIRQ)
+    {
+        USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
+    }
+
+    if (epIrq & bmIN0BAVIRQ)
+    {
+        USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
+    }
+
+	if (/*(devconfig != 0) &&*/ (usbIrq & bmSUSPIRQ)) // Suspend
 	{
 		// Should arrive here out of reset
 		//UARTWrite("suspend\n");
@@ -480,7 +492,7 @@ void HandleUSBSerial()
 		//UARTWrite("resume\n");
 		s_suspended = 0;
 		USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
-		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear URESDN irq
+		USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear
 	}
 
 	LEDSetState(currLED);

@@ -1,1 +1,1 @@
-../../build/release/riscvtool usbc.elf -sendfile /dev/ttyUSB0
+../../build/release/riscvtool usbserial.elf -sendfile /dev/ttyUSB0

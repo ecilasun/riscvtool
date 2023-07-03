@@ -455,18 +455,31 @@ int main(int argc, char *argv[])
         // Ordinarily ROM listens to this
         while (1)
         {
-            if (s_suspended)
-            {
-                // Resume bus traffic
-                if (USBReadByte(rUSBIRQ) & bmBUSACTIRQ)
-                    s_suspended = 0;
-            }
-
             uint32_t currLED = LEDGetState();
 
             // Initial value of rEPIRQ should be 0x19
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
+
+            if (s_suspended)
+            {
+                // Resume bus traffic due to bus activity
+                if (usbIrq & bmBUSACTIRQ)
+                    s_suspended = 0;
+            }
+
+	        /*if (epIrq)
+            {
+                UARTWrite("epIrq 0x");
+                UARTWriteHexByte(epIrq);
+                UARTWrite("\n");
+            }
+            if (usbIrq)
+            {
+                UARTWrite("usbIrq 0x");
+                UARTWriteHexByte(usbIrq);
+                UARTWrite("\n");
+            }*/
 
             if (epIrq & bmSUDAVIRQ)
             {
@@ -490,12 +503,24 @@ int main(int argc, char *argv[])
                 EmitBufferedOutput();
             }
 
-            if ((devconfig != 0) && (usbIrq & bmSUSPIRQ)) // Suspend
+            if (epIrq & bmIN3BAVIRQ)
             {
-                // Should arrive here out of reset
-                UARTWrite("suspend\n");
-                s_suspended = 1;
+                USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
+            }
+
+            if (epIrq & bmIN0BAVIRQ)
+            {
+                USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
+            }
+
+            if ((usbIrq & bmSUSPIRQ)) // Suspend
+            {
                 USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
+                // Should arrive here out of reset
+                UARTWrite("suspend (config = 0x");
+                UARTWriteHexByte(devconfig); // Expecting this to be non-zero
+                UARTWrite("\n");
+                s_suspended = 1;
             }
 
             if (usbIrq & bmURESIRQ) // Bus reset
@@ -506,17 +531,16 @@ int main(int argc, char *argv[])
 
             if (usbIrq & bmURESDNIRQ) // Resume
             {
-                USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
+                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear URESDN irq
                 UARTWrite("resume\n");
                 s_suspended = 0;
-                USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
-                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear URESDN irq
+                USBEnableIRQs();
             }
 
             LEDSetState(currLED);
 
             // Exhaust incoming data buffer and echo to debug and the new com port
-            if (s_inputbufferlen)
+            if (s_inputbufferlen && !s_suspended)
             {
                 s_outputbufferlen = s_inputbufferlen;
                 for (uint8_t i=0; i<s_inputbufferlen; ++i)

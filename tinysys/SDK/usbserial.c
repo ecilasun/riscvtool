@@ -91,28 +91,22 @@ void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer)
 
 void USBCtlReset()
 {
-    // Reset
-    USBWriteByte(rUSBCTL, bmCHIPRES);    // reset the MAX3420E 
-    USBWriteByte(rUSBCTL, 0);            // remove the reset
+    // Reset MAX3420E by setting res high then low
+    USBWriteByte(rUSBCTL, bmCHIPRES);
+    USBWriteByte(rUSBCTL, 0);
 
+    // Wait for all output to be sent to the device
     USBFlushOutputFIFO();
     E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
 
-    // Wait for oscillator OK interrupt
-    UARTWrite("Waiting for 12MHz oscillator...");
+    // Wait for oscillator OK interrupt for the 12MHz external clock
     uint8_t rd = 0;
     while ((rd & bmOSCOKIRQ) == 0)
     {
         rd = USBReadByte(rUSBIRQ);
         E32Sleep(3*ONE_MILLISECOND_IN_TICKS);
     }
-    USBWriteByte(rUSBIRQ, bmOSCOKIRQ);
-
-    USBWriteByte(rGPIO, 0x0);            // No GPIO output
-
-    if (rd&bmBUSACTIRQ)
-        UARTWrite("usb bus active,\n");
-    UARTWrite("OK\n");
+    USBWriteByte(rUSBIRQ, bmOSCOKIRQ); // Clear IRQ
 }
 
 #ifdef __cplusplus
@@ -209,6 +203,14 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
     __builtin_memcpy(ctx->strings[4].bString, devicedata, 8);
 }
 
+void USBEnableIRQs()
+{
+    // Enable IRQs
+    USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
+    // bmSUSPIE is to be enabled after the device initializes
+    USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE /*| bmSUSPIE*/);
+}
+
 void USBInit(uint32_t enableInterrupts)
 {
     // Must set context first
@@ -218,20 +220,22 @@ void USBInit(uint32_t enableInterrupts)
     // Generate descriptor table
     USBMakeCDCDescriptors(s_usb);
 
-    USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF); // MAX3420: SPI=full-duplex
+    // MAX3420: SPI=full-duplex
+    USBWriteByte(rPINCTL, bmFDUPSPI | bmINTLEVEL | gpxSOF);
 
+    // Reset the chip and wait for clock to stabilize
     USBCtlReset();
+
+    // Turn off GPIO
+    USBWriteByte(rGPIO, 0x0);
+
+    // Connect
+    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE);
 
     if (enableInterrupts)
     {
-        // Enable IRQs
-        USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
-        // bmSUSPIE is to be enabled after the device initializes
-        USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE | bmSUSPIE);
-
+        USBEnableIRQs();
         // Enable interrupt generation via INT pin
         USBWriteByte(rCPUCTL, bmIE);
     }
-
-    USBWriteByte(rUSBCTL, bmCONNECT | bmVBGATE);
 }

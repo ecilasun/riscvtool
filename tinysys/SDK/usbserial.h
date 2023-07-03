@@ -157,6 +157,7 @@ int USBReadBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer);
 void USBInit(uint32_t enableInterrupts);
 void USBSetContext(struct SUSBContext *ctx);
+void USBEnableIRQs();
 struct SUSBContext *USBGetContext();
 
 // MAX3420E Registers

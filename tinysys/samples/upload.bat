@@ -1,1 +1,1 @@
-..\..\build\release\riscvtool.exe usbc.elf -sendfile \\.\COM3
+..\..\build\release\riscvtool.exe usbserial.elf -sendfile \\.\COM3
