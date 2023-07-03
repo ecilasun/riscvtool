@@ -531,7 +531,7 @@ int main(int argc, char *argv[])
 
             if (usbIrq & bmURESDNIRQ) // Resume
             {
-                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear URESDN irq
+                USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear
                 UARTWrite("resume\n");
                 s_suspended = 0;
                 USBEnableIRQs();
