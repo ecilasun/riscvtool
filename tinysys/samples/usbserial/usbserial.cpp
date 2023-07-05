@@ -445,12 +445,21 @@ int main(int argc, char *argv[])
     {
         UARTWrite("Bringing up USB-C\nUsing ISR in ROM\n");
         USBInit(1);
+
+        UARTWrite("MAX3420 die rev# ");
+        UARTWriteHexByte(USBReadByte(rRevision));
+        UARTWrite("\n");
+
         UARTWrite("USB ISR will handle further communications.\n");
     }
     else
     {
         UARTWrite("Bringing up USB-C\nUsing polling\n");
         USBInit(0);
+
+        UARTWrite("MAX3420 die rev# ");
+        UARTWriteHexByte(USBReadByte(rRevision));
+        UARTWrite("\n");
 
         // Ordinarily ROM listens to this
         while (1)
@@ -461,12 +470,14 @@ int main(int argc, char *argv[])
 	        uint8_t epIrq = USBReadByte(rEPIRQ);
             uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-            if (s_suspended)
+	        /*if (epIrq || usbIrq)
             {
-                // Resume bus traffic due to bus activity
-                if (usbIrq & bmBUSACTIRQ)
-                    s_suspended = 0;
-            }
+                UARTWrite("epIrq 0x");
+                UARTWriteHexByte(epIrq);
+                UARTWrite(" usbIrq 0x");
+                UARTWriteHexByte(usbIrq);
+                UARTWrite("\n");
+            }*/
 
 	        /*if (epIrq)
             {
@@ -483,10 +494,10 @@ int main(int argc, char *argv[])
 
             if (epIrq & bmSUDAVIRQ)
             {
+    		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
         		// Setup data available, 8 bytes data to follow
                 LEDSetState(currLED | 0x8);
 		        DoSetup();
-    		    USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
             }
 
             if (epIrq & bmOUT1DAVIRQ)
@@ -498,9 +509,9 @@ int main(int argc, char *argv[])
 
             if (epIrq & bmIN2BAVIRQ)
             {
-                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
                 // Output
                 EmitBufferedOutput();
+                USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
             }
 
             if (epIrq & bmIN3BAVIRQ)
@@ -513,23 +524,30 @@ int main(int argc, char *argv[])
                 USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
             }
 
-            if ((usbIrq & bmSUSPIRQ)) // Suspend
+            if (usbIrq & bmSUSPIRQ) // suspend enter
             {
-                USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
+                USBWriteByte(rUSBIRQ, bmSUSPIRQ);/// | bmBUSACTIRQ); // Clear
                 // Should arrive here out of reset
-                UARTWrite("suspend (config = 0x");
-                UARTWriteHexByte(devconfig); // Expecting this to be non-zero
-                UARTWrite("\n");
-                s_suspended = 1;
+                UARTWrite("suspend\n");
+                if (devconfig == 1)
+                    s_suspended = 1;
             }
 
-            if (usbIrq & bmURESIRQ) // Bus reset
+            if (usbIrq & bmBUSACTIRQ) // suspend exit
             {
-                UARTWrite("busreset\n");
-                USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
+                USBWriteByte(rUSBIRQ, bmBUSACTIRQ);
+                // USBReadByte(rFNADDR | 0x1);     // do I need to ack this?
+                if (devconfig == 1)
+                    s_suspended = 0;
             }
 
-            if (usbIrq & bmURESDNIRQ) // Resume
+            if (usbIrq & bmURESIRQ) // reset enter
+            {
+                USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
+                UARTWrite("busreset\n");
+            }
+
+            if (usbIrq & bmURESDNIRQ) // reset exit
             {
                 USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear
                 UARTWrite("resume\n");
