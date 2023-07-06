@@ -206,7 +206,7 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
 void USBEnableIRQs()
 {
     // Enable IRQs
-    USBWriteByte(rEPIEN, bmSUDAVIE | bmIN2BAVIE | bmOUT1DAVIE);
+    USBWriteByte(rEPIEN, bmSUDAVIE | /*bmIN2BAVIE |*/ bmOUT1DAVIE);
     USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
 }
 
