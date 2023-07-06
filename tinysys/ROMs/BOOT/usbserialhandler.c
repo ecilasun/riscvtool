@@ -15,8 +15,8 @@
 // 19200 baud, 1 stop bit, no parity, 8bit data
 static struct USBCDCLineCoding s_lineCoding = {19200, 0, 0, 8};
 
-static uint8_t s_outputbuffer[64];
-static uint32_t s_outputbufferlen = 0;
+//static uint8_t s_outputbuffer[64];
+//static uint32_t s_outputbufferlen = 0;
 
 static uint32_t s_suspended = 0;
 
@@ -399,7 +399,7 @@ void DoSetup()
 	}
 }
 
-void EmitBufferedOutput()
+/*void EmitBufferedOutput()
 {
 	// If we have something pending in the output buffer, stream it out
 	if (s_outputbufferlen != 0)
@@ -407,7 +407,7 @@ void EmitBufferedOutput()
 	USBWriteByte(rEP2INBC, s_outputbufferlen); // Zero or more bytes output
 	// Done sending
 	s_outputbufferlen = 0;
-}
+}*/
 
 void BufferIncomingData()
 {
@@ -447,12 +447,12 @@ void HandleUSBSerial()
 		BufferIncomingData();
 		USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
 	}
-	else if (epIrq & bmIN2BAVIRQ)
+	/*else if (epIrq & bmIN2BAVIRQ)
 	{
 		USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
 		// Output
 		EmitBufferedOutput();
-	}
+	}*/
 	else if (epIrq & bmIN3BAVIRQ)
 	{
 		USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear

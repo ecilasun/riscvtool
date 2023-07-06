@@ -1,2 +1,3 @@
 
 void HandleUSBSerial();
+void USBEmitBufferedOutput();

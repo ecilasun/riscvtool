@@ -206,6 +206,8 @@ void USBMakeCDCDescriptors(struct SUSBContext *ctx)
 void USBEnableIRQs()
 {
     // Enable IRQs
+    // NOTE: bmIN2BAVIE is disabled since having it on spams the INT pin beyond practical serviceability
+    // Try to push data by polling from main thread instead
     USBWriteByte(rEPIEN, bmSUDAVIE | /*bmIN2BAVIE |*/ bmOUT1DAVIE);
     USBWriteByte(rUSBIEN, bmURESIE | bmURESDNIE);
 }

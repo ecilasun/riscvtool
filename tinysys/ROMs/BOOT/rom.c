@@ -25,6 +25,10 @@ static int32_t s_cmdLen = 0;
 static uint32_t s_startAddress = 0;
 static int s_refreshConsoleOut = 1;
 static int s_stop_ring_buffer = 0;
+static int s_usbserialenabled = 0;
+
+static int s_outputbuffer[64];
+static int s_outputbufferlen = 0;
 
 static struct SUSBContext s_usbserialctx;
 
@@ -260,8 +264,14 @@ void ExecuteCmd(char *_cmd)
 	else if (!strcmp(command, "usb"))
 	{
 		// Start USB port with serial device configuration
-		UARTWrite("Initializing USB serial\n");
-		USBInit(1);
+		if (s_usbserialenabled == 0)
+		{
+			UARTWrite("Initializing USB serial\n");
+			USBInit(1);
+			s_usbserialenabled = 1;
+		}
+		else
+			UARTWrite("USB serial already enabled\n");
 	}
 	else if (!strcmp(command, "help"))
 	{
@@ -400,6 +410,9 @@ int main()
 		while (!s_stop_ring_buffer && RingBufferRead(&uartData, sizeof(uint32_t)))
 		{
 			uint8_t asciicode = (uint8_t)(uartData&0xFF);
+			if (s_usbserialenabled)
+				s_outputbuffer[s_outputbufferlen++] = asciicode;
+
 			++s_refreshConsoleOut;
 			switch (asciicode)
 			{
@@ -475,6 +488,21 @@ int main()
 			UARTWrite(s_workdir);
 			UARTWrite(":");
 			UARTWrite(s_cmdString);
+		}
+
+		// Echo to USB serial
+		if (s_outputbufferlen && s_usbserialenabled)
+		{
+			uint8_t epIrq = USBReadByte(rEPIRQ);
+			if (epIrq & bmIN2BAVIRQ)
+			{
+				--s_outputbufferlen;
+				USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
+				USBWriteByte(rEP2INFIFO, s_outputbuffer[0]);
+				USBWriteByte(rEP2INBC, 1);
+				if (s_outputbufferlen)
+					__builtin_memcpy(&s_outputbuffer[0], &s_outputbuffer[1], s_outputbufferlen);
+			}
 		}
 	}
 
