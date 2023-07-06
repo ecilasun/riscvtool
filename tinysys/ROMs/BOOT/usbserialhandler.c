@@ -433,12 +433,6 @@ void HandleUSBSerial()
 	uint8_t epIrq = USBReadByte(rEPIRQ);
 	uint8_t usbIrq = USBReadByte(rUSBIRQ);
 
-	if (s_suspended && (usbIrq & bmBUSACTIRQ)) // Remote wake up
-	{
-		// Resume bus traffic
-		s_suspended = 0;
-	}
-
 	// Endpoint irq
 
 	if (epIrq & bmSUDAVIRQ)
@@ -447,48 +441,43 @@ void HandleUSBSerial()
 		DoSetup();
 		USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
 	}
-
-	if (epIrq & bmOUT1DAVIRQ)
+	else if (epIrq & bmOUT1DAVIRQ)
 	{
 		// Input
 		BufferIncomingData();
 		USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
 	}
-
-	if (epIrq & bmIN2BAVIRQ)
+	else if (epIrq & bmIN2BAVIRQ)
 	{
 		USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
 		// Output
 		EmitBufferedOutput();
 	}
-
-	if (epIrq & bmIN3BAVIRQ)
+	else if (epIrq & bmIN3BAVIRQ)
 	{
 		USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
 	}
-
-	if (epIrq & bmIN0BAVIRQ)
+	else if (epIrq & bmIN0BAVIRQ)
 	{
 		USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
 	}
 
-	if (/*(devconfig != 0) &&*/ (usbIrq & bmSUSPIRQ)) // Suspend
+	if (usbIrq & bmSUSPIRQ)
 	{
-		USBWriteByte(rUSBIRQ, bmSUSPIRQ | bmBUSACTIRQ); // Clear
-		// Should arrive here out of reset
-		/*UARTWrite("suspend (config = 0x");
-		UARTWriteHexByte(devconfig); // Expecting this to be non-zero
-		UARTWrite("\n");*/
+		USBWriteByte(rUSBIRQ, bmSUSPIRQ); // Clear
 		s_suspended = 1;
 	}
-
-	if (usbIrq & bmURESIRQ) // Bus reset
+	else if (usbIrq & bmBUSACTIRQ)
+	{
+		USBWriteByte(rUSBIRQ, bmBUSACTIRQ); // Clear
+		s_suspended = 0;
+	}
+	else if (usbIrq & bmURESIRQ) // Bus reset
 	{
 		//UARTWrite("busreset\n");
 		USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
 	}
-
-	if (usbIrq & bmURESDNIRQ) // Resume
+	else if (usbIrq & bmURESDNIRQ) // Resume
 	{
         USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear
 		//UARTWrite("resume\n");
