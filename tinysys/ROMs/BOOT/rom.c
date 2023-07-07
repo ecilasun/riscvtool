@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define VERSIONSTRING "v1.019"
+#define VERSIONSTRING "v1.020"
 
 static struct EVideoContext s_gpuContext;
 
@@ -493,8 +493,8 @@ int main()
 		// Echo to USB serial
 		if (s_outputbufferlen && s_usbserialenabled)
 		{
-			if (USBSerialWrite(s_outputbuffer, s_outputbufferlen))
-				s_outputbufferlen = 0;
+			USBSerialWrite(s_outputbuffer, s_outputbufferlen);
+			s_outputbufferlen = 0;
 		}
 	}
 

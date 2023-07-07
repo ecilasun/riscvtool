@@ -8,15 +8,12 @@
 // https://github.com/MicrochipTech/mla_usb/blob/master/src/usb_device_cdc.c
 // https://github.com/tlh24/myopen/blob/master/firmware_stage7/usb.c
 
-#define STALL_EP0 USBWriteByte(rEPSTALLS, 0x23); 
-#define SETBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)|val));
-#define CLRBIT(reg,val) USBWriteByte(reg, (USBReadByte(reg)&~val));
+#define STALL_EP0 MAX3420WriteByte(rEPSTALLS, 0x23); 
+#define SETBIT(reg,val) MAX3420WriteByte(reg, (MAX3420ReadByte(reg)|val));
+#define CLRBIT(reg,val) MAX3420WriteByte(reg, (MAX3420ReadByte(reg)&~val));
 
 // 19200 baud, 1 stop bit, no parity, 8bit data
 static USBCDCLineCoding s_lineCoding{19200, 0, 0, 8};
-
-static uint8_t s_outputbuffer[64];
-static uint32_t s_outputbufferlen = 0;
 
 static uint8_t s_inputbuffer[64];
 static uint32_t s_inputbufferlen = 0;
@@ -38,7 +35,7 @@ void set_configuration(uint8_t *SUD)
 
 	if(devconfig != 0)			  // If we are configured, 
 		SETBIT(rUSBIEN, bmSUSPIE);  // start looking for SUSPEND interrupts
-	USBReadByte(rFNADDR | 0x1);	 // dummy read to set the ACKSTAT bit
+	MAX3420ReadByte(rFNADDR | 0x1);	 // dummy read to set the ACKSTAT bit
 }
 
 void get_configuration(void)
@@ -47,8 +44,8 @@ void get_configuration(void)
 	UARTWriteHexByte(devconfig);
 	UARTWrite("\n");
 
-	USBWriteByte(rEP0FIFO, devconfig);	// Send the config value
-	USBWriteByte(rEP0BC | 0x1, 1);
+	MAX3420WriteByte(rEP0FIFO, devconfig);	// Send the config value
+	MAX3420WriteByte(rEP0BC | 0x1, 1);
 }
 
 void send_status(uint8_t *SUD)
@@ -59,8 +56,8 @@ void send_status(uint8_t *SUD)
 	// Interface: must be zero
 	// Endpoint: must be zero
 	uint8_t twozero[2] = {0, 0};
-	USBWriteBytes(rEP0FIFO, 2, (uint8_t*)&twozero);
-	USBWriteByte(rEP0BC | 0x1, 2);
+	MAX3420WriteBytes(rEP0FIFO, 2, (uint8_t*)&twozero);
+	MAX3420WriteByte(rEP0BC | 0x1, 2);
 }
 
 void send_descriptor(uint8_t *SUD)
@@ -74,7 +71,7 @@ void send_descriptor(uint8_t *SUD)
 	reqlen = SUD[wLengthL] + 256*SUD[wLengthH];	// 16-bit
 
 	// Access descriptor from usb utils
-	struct SUSBContext *uctx = USBGetContext();
+	struct SUSBContext *uctx = USBSerialGetContext();
 
 	uint8_t desctype = SUD[wValueH];
 	UARTWrite("send_descriptor: ");
@@ -109,8 +106,8 @@ void send_descriptor(uint8_t *SUD)
 	if (desclen != 0) // one of the case statements above filled in a value
 	{
 		sendlen = (reqlen <= desclen) ? reqlen : desclen; // send the smaller of requested and avaiable
-		USBWriteBytes(rEP0FIFO, sendlen, pDdata);
-		USBWriteByte(rEP0BC | 0x1, sendlen);   // load EP0BC to arm the EP0-IN transfer & ACKSTAT
+		MAX3420WriteBytes(rEP0FIFO, sendlen, pDdata);
+		MAX3420WriteByte(rEP0BC | 0x1, sendlen);   // load EP0BC to arm the EP0-IN transfer & ACKSTAT
 	}
 	else
 		STALL_EP0  // none of the descriptor types match
@@ -128,7 +125,7 @@ void featurecontrol(int ctltype, uint16_t value, uint16_t index)
 		UARTWrite("endpoint_halt: 0x");
 		UARTWriteHexByte(index);
 
-		uint8_t stallmask = USBReadByte(rEPSTALLS);
+		uint8_t stallmask = MAX3420ReadByte(rEPSTALLS);
 		if (ctltype == 1) // Set
 		{
 			if (index==0x81) // Control
@@ -147,17 +144,17 @@ void featurecontrol(int ctltype, uint16_t value, uint16_t index)
 				stallmask &= ~bmSTLEP1OUT;
 				UARTWrite(" -> resumed");
 				addrx0x81stalled = 0;
-				USBWriteByte(rCLRTOGS, bmCTGEP1OUT);
+				MAX3420WriteByte(rCLRTOGS, bmCTGEP1OUT);
 			}
 			else
 				UARTWrite(" -> can't resume");
 		}
 		UARTWrite("\n");
-		USBWriteByte(rEPSTALLS, stallmask | bmACKSTAT);
+		MAX3420WriteByte(rEPSTALLS, stallmask | bmACKSTAT);
 	}
 	else if (value == 0x01) // REMOTE_WAKEUP
 	{
-		uint8_t addrs = USBReadByte(rFNADDR);
+		uint8_t addrs = MAX3420ReadByte(rFNADDR);
 		UARTWrite("remote_wakeup 0x");
 		UARTWriteHexByte(addrs);
 		UARTWrite("\n");
@@ -192,7 +189,7 @@ void std_request(uint8_t *SUD)
 				// EP0
 				case 0x00: STALL_EP0 break;
 				// Interface
-				case 0x01: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+				case 0x01: MAX3420WriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
 				// Endpoint
 				case 0x02: featurecontrol(1, value, index); break;
 				// Unknown
@@ -214,7 +211,7 @@ void std_request(uint8_t *SUD)
 				// EP0
 				case 0x00: STALL_EP0 break;
 				// Interface
-				case 0x01: USBWriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
+				case 0x01: MAX3420WriteByte(rEP0BC | 0x1, 0); break; // Zero byte response - ACK
 				// Endpoint
 				case 0x02: featurecontrol(0, value, index); break;
 				// Unknown
@@ -230,7 +227,7 @@ void std_request(uint8_t *SUD)
 		case	SR_SET_ADDRESS:
 		{
 			UARTWrite("setaddress: 0x");
-			devaddrs = USBReadByte(rFNADDR | 0x1);
+			devaddrs = MAX3420ReadByte(rFNADDR | 0x1);
 			UARTWriteHexByte(devaddrs);
 			UARTWrite("\n");
 			break;
@@ -274,15 +271,15 @@ void class_request(uint8_t *SUD)
 			// RESPONSE_AVAILABLE(0x00000001) + 0x00000000
 			// or
 			// just two zeros for no response
-			USBReadBytes(rEP0FIFO, reqlen, encapsulatedcommand);
+			MAX3420ReadBytes(rEP0FIFO, reqlen, encapsulatedcommand);
 			for (uint16_t i=0;i<reqlen;++i)
 				UARTWriteHex(encapsulatedcommand[i]);
 			UARTWrite("\n");
 
-			USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
+			MAX3420WriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
 			/*uint8_t noresponse[2] = {0,0};
-			USBWriteBytes(rEP0FIFO, 2, noresponse);
-			USBWriteByte(rEP0BC | 0x1, 2);*/
+			MAX3420WriteBytes(rEP0FIFO, 2, noresponse);
+			MAX3420WriteByte(rEP0BC | 0x1, 2);*/
 
 			break;
 		}
@@ -296,8 +293,8 @@ void class_request(uint8_t *SUD)
 			UARTWrite("\n");
 
 			// When unhandled, respond with a one-byte zero and do not stall the endpoint
-			USBWriteByte(rEP0FIFO, 0);
-			USBWriteByte(rEP0BC | 0x1, 1);
+			MAX3420WriteByte(rEP0FIFO, 0);
+			MAX3420WriteByte(rEP0BC | 0x1, 1);
 
 			break;
 		}
@@ -308,7 +305,7 @@ void class_request(uint8_t *SUD)
 			UARTWriteHexByte(SUD[bmRequestType]);
 
 			USBCDCLineCoding newcoding;
-			USBReadBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
+			MAX3420ReadBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&newcoding);
 
 			UARTWrite(" Rate:");
 			UARTWriteDecimal(newcoding.dwDTERate);
@@ -322,7 +319,7 @@ void class_request(uint8_t *SUD)
 
 			s_lineCoding = newcoding;
 
-			USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
+			MAX3420WriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
 
 			break;
 		}
@@ -337,8 +334,8 @@ void class_request(uint8_t *SUD)
 			UARTWrite("getlinecoding 0x");
 			UARTWriteHexByte(SUD[bmRequestType]);
 
-			USBWriteBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&s_lineCoding);
-			USBWriteByte(rEP0BC | 0x1, sizeof(USBCDCLineCoding));
+			MAX3420WriteBytes(rEP0FIFO, sizeof(USBCDCLineCoding), (uint8_t*)&s_lineCoding);
+			MAX3420WriteByte(rEP0BC | 0x1, sizeof(USBCDCLineCoding));
 
 			UARTWrite(" Rate:");
 			UARTWriteDecimal(s_lineCoding.dwDTERate);
@@ -362,7 +359,7 @@ void class_request(uint8_t *SUD)
 			UARTWriteHexByte(SUD[bmRequestType]);
 			UARTWrite("\n");
 
-			USBWriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
+			MAX3420WriteByte(rEP0BC | 0x1, 0); // Zero byte response - ACK
 			//STALL_EP0
 
 			break;
@@ -379,7 +376,7 @@ void class_request(uint8_t *SUD)
 void DoSetup()
 {
 	uint8_t SUD[8];
-	USBReadBytes(rSUDFIFO, 8, SUD);
+	MAX3420ReadBytes(rSUDFIFO, 8, SUD);
 
 	/*if (SUD[0] != 0xFF)
 	{
@@ -415,39 +412,26 @@ void DoSetup()
 	}
 }
 
-void EmitBufferedOutput()
-{
-	// If we have something pending in the output buffer, stream it out
-	if (s_outputbufferlen != 0)
-		USBWriteBytes(rEP2INFIFO, s_outputbufferlen, s_outputbuffer);
-	USBWriteByte(rEP2INBC, s_outputbufferlen); // Zero or more bytes output
-	// Done sending
-	s_outputbufferlen = 0;
-}
-
 void BufferIncomingData()
 {
 	// Incoming EP1 data package
-	uint8_t cnt = USBReadByte(rEP1OUTBC) & 63; // Cap size to 0..63
+	uint8_t cnt = MAX3420ReadByte(rEP1OUTBC) & 63; // Cap size to 0..63
 	s_inputbufferlen = cnt;
 	if (cnt)
-		USBReadBytes(rEP1OUTFIFO, cnt, s_inputbuffer);
+		MAX3420ReadBytes(rEP1OUTFIFO, cnt, s_inputbuffer);
 }
 
 int main(int argc, char *argv[])
 {
 	UARTWrite("USB-C test\n");
 
-	SUSBContext *newctx = (SUSBContext*)malloc(sizeof(SUSBContext));
-	USBSetContext(newctx);
-
 	if (argc>1)
 	{
 		UARTWrite("Bringing up USB-C\nUsing ISR in ROM\n");
-		USBInit(1);
+		USBSerialInit(1);
 
 		UARTWrite("MAX3420 die rev# ");
-		UARTWriteHexByte(USBReadByte(rRevision));
+		UARTWriteHexByte(MAX3420ReadByte(rRevision));
 		UARTWrite("\n");
 
 		UARTWrite("USB ISR will handle further communications.\n");
@@ -455,10 +439,10 @@ int main(int argc, char *argv[])
 	else
 	{
 		UARTWrite("Bringing up USB-C\nUsing polling\n");
-		USBInit(0);
+		USBSerialInit(0);
 
 		UARTWrite("MAX3420 die rev# ");
-		UARTWriteHexByte(USBReadByte(rRevision));
+		UARTWriteHexByte(MAX3420ReadByte(rRevision));
 		UARTWrite("\n");
 
 		// Ordinarily ROM listens to this
@@ -467,8 +451,8 @@ int main(int argc, char *argv[])
 			uint32_t currLED = LEDGetState();
 
 			// Initial value of rEPIRQ should be 0x19
-			uint8_t epIrq = USBReadByte(rEPIRQ);
-			uint8_t usbIrq = USBReadByte(rUSBIRQ);
+			uint8_t epIrq = MAX3420ReadByte(rEPIRQ);
+			uint8_t usbIrq = MAX3420ReadByte(rUSBIRQ);
 
 			/*if (epIrq || usbIrq)
 			{
@@ -481,7 +465,7 @@ int main(int argc, char *argv[])
 
 			if (epIrq & bmSUDAVIRQ)
 			{
-				USBWriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
+				MAX3420WriteByte(rEPIRQ, bmSUDAVIRQ); // Clear
 				// Setup data available, 8 bytes data to follow
 				LEDSetState(currLED | 0x8);
 				DoSetup();
@@ -491,29 +475,29 @@ int main(int argc, char *argv[])
 			{
 				// Input
 				BufferIncomingData();
-				USBWriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
+				MAX3420WriteByte(rEPIRQ, bmOUT1DAVIRQ); // Clear
 			}
 
-			if (epIrq & bmIN2BAVIRQ)
+			/*if (epIrq & bmIN2BAVIRQ) - Not used
 			{
 				// Output
 				EmitBufferedOutput();
-				USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-			}
+				MAX3420WriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
+			}*/
 
 			if (epIrq & bmIN3BAVIRQ)
 			{
-				USBWriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
+				MAX3420WriteByte(rEPIRQ, bmIN3BAVIRQ); // Clear
 			}
 
 			if (epIrq & bmIN0BAVIRQ)
 			{
-				USBWriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
+				MAX3420WriteByte(rEPIRQ, bmIN0BAVIRQ); // Clear
 			}
 
 			if (usbIrq & bmSUSPIRQ) // suspend enter
 			{
-				USBWriteByte(rUSBIRQ, bmSUSPIRQ);/// | bmBUSACTIRQ); // Clear
+				MAX3420WriteByte(rUSBIRQ, bmSUSPIRQ);/// | bmBUSACTIRQ); // Clear
 				// Should arrive here out of reset
 				UARTWrite("suspend\n");
 				if (devconfig == 1)
@@ -522,24 +506,24 @@ int main(int argc, char *argv[])
 
 			if (usbIrq & bmBUSACTIRQ) // suspend exit
 			{
-				USBWriteByte(rUSBIRQ, bmBUSACTIRQ);
-				// USBReadByte(rFNADDR | 0x1);	 // do I need to ack this?
+				MAX3420WriteByte(rUSBIRQ, bmBUSACTIRQ);
+				// MAX3420ReadByte(rFNADDR | 0x1);	 // do I need to ack this?
 				if (devconfig == 1)
 					s_suspended = 0;
 			}
 
 			if (usbIrq & bmURESIRQ) // reset enter
 			{
-				USBWriteByte(rUSBIRQ, bmURESIRQ); // Clear
+				MAX3420WriteByte(rUSBIRQ, bmURESIRQ); // Clear
 				UARTWrite("busreset\n");
 			}
 
 			if (usbIrq & bmURESDNIRQ) // reset exit
 			{
-				USBWriteByte(rUSBIRQ, bmURESDNIRQ); // Clear
+				MAX3420WriteByte(rUSBIRQ, bmURESDNIRQ); // Clear
 				UARTWrite("resume\n");
 				s_suspended = 0;
-				USBEnableIRQs();
+				MAX3420EnableIRQs();
 			}
 
 			LEDSetState(currLED);
@@ -547,9 +531,9 @@ int main(int argc, char *argv[])
 			// Exhaust incoming data buffer and echo to debug and the new com port
 			if (s_inputbufferlen && !s_suspended)
 			{
-				s_outputbufferlen = s_inputbufferlen;
+				USBSerialWrite(s_inputbuffer, s_inputbufferlen);
 				for (uint8_t i=0; i<s_inputbufferlen; ++i)
-					*IO_UARTTX = s_outputbuffer[i] = s_inputbuffer[i];
+					*IO_UARTTX = s_inputbuffer[i];
 				s_inputbufferlen = 0;
 			}
 		}

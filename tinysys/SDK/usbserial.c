@@ -245,12 +245,13 @@ void USBSerialInit(uint32_t enableInterrupts)
 
 int USBSerialWrite(uint8_t *buffer, const uint32_t length)
 {
-	uint8_t epIrq = MAX3420ReadByte(rEPIRQ);
-	if (epIrq & bmIN2BAVIRQ && length != 0)
+	if (length != 0)
 	{
+		// Submit
+		MAX3420WriteByte(rCPUCTL, 0); // Disable interrupts
 		MAX3420WriteBytes(rEP2INFIFO, length, buffer);
 		MAX3420WriteByte(rEP2INBC, length);
-		MAX3420WriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
+		MAX3420WriteByte(rCPUCTL, bmIE); // Enable interrupts
 		return 1;
 	}
 	return 0;
