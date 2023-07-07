@@ -149,16 +149,18 @@ struct SUSBContext
 
 #pragma pack(pop)
 
-void USBFlushOutputFIFO();
-uint8_t USBGetGPX();
-uint8_t USBReadByte(uint8_t command);
-void USBWriteByte(uint8_t command, uint8_t data);
-int USBReadBytes(uint8_t command, uint8_t length, uint8_t *buffer);
-void USBWriteBytes(uint8_t command, uint8_t length, uint8_t *buffer);
-void USBInit(uint32_t enableInterrupts);
-void USBSetContext(struct SUSBContext *ctx);
-void USBEnableIRQs();
-struct SUSBContext *USBGetContext();
+void MAX3420FlushOutputFIFO();
+uint8_t MAX3420GetGPX();
+uint8_t MAX3420ReadByte(uint8_t command);
+void MAX3420WriteByte(uint8_t command, uint8_t data);
+int MAX3420ReadBytes(uint8_t command, uint8_t length, uint8_t *buffer);
+void MAX3420WriteBytes(uint8_t command, uint8_t length, uint8_t *buffer);
+void MAX3420EnableIRQs();
+
+void USBSerialSetContext(struct SUSBContext *ctx);
+struct SUSBContext *USBSerialGetContext();
+void USBSerialInit(uint32_t enableInterrupts);
+int USBSerialWrite(uint8_t *buffer, const uint32_t length);
 
 // MAX3420E Registers
 #define rEP0FIFO    0<<3

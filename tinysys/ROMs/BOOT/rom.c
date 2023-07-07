@@ -27,7 +27,7 @@ static int s_refreshConsoleOut = 1;
 static int s_stop_ring_buffer = 0;
 static int s_usbserialenabled = 0;
 
-static int s_outputbuffer[64];
+static uint8_t s_outputbuffer[64];
 static int s_outputbufferlen = 0;
 
 static struct SUSBContext s_usbserialctx;
@@ -267,7 +267,7 @@ void ExecuteCmd(char *_cmd)
 		if (s_usbserialenabled == 0)
 		{
 			UARTWrite("Initializing USB serial\n");
-			USBInit(1);
+			USBSerialInit(1);
 			s_usbserialenabled = 1;
 		}
 		else
@@ -397,7 +397,7 @@ int main()
 	InstallISR();
 
 	// Allocate usb context but don't start it yet
-    USBSetContext(&s_usbserialctx);
+    USBSerialSetContext(&s_usbserialctx);
 
 	// Main CLI loop
 	while (1)
@@ -493,16 +493,8 @@ int main()
 		// Echo to USB serial
 		if (s_outputbufferlen && s_usbserialenabled)
 		{
-			uint8_t epIrq = USBReadByte(rEPIRQ);
-			if (epIrq & bmIN2BAVIRQ)
-			{
-				--s_outputbufferlen;
-				USBWriteByte(rEPIRQ, bmIN2BAVIRQ); // Clear
-				USBWriteByte(rEP2INFIFO, s_outputbuffer[0]);
-				USBWriteByte(rEP2INBC, 1);
-				if (s_outputbufferlen)
-					__builtin_memcpy(&s_outputbuffer[0], &s_outputbuffer[1], s_outputbufferlen);
-			}
+			if (USBSerialWrite(s_outputbuffer, s_outputbufferlen))
+				s_outputbufferlen = 0;
 		}
 	}
 
