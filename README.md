@@ -114,16 +114,3 @@ NOTE: One thing worth mentioning is that at this time that compiler toolchain wa
 # NOTES
 
 This tool is a simple environment with most things set up for all the platforms under https://github.com/ecilasun/ repo. It's mostly used internally, but if you take a design from that repo, this provides a good starting point to roll your own software. Be advised that all software has been tested with and geared to use a gcc-riscv 32bit environment, therefore any compiler changes and/or bit width changes are untested at this moment.
-
-Adding tinysys as a test serial device via generic driver:
-```
-unplug the usb device
-type following in a terminal
- sudo nano /sys/bus/usb-serial/drivers/generic/new_id
-and enter / save the following in the new file
- FFFF 0001
-which is the VID/PID of tinysys. This associates the device with the generic serial driver.
-Re-plug the usb device and start usbc on the device
-now it should enumerate as a generic serial device with a warning in dmesg
-```
-
